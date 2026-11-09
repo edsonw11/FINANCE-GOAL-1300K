@@ -1,0 +1,35 @@
+/**
+ * ui/charts/tower-chart.js
+ * Responsibility: Tower chart (real and projected net worth).
+ */
+function drawTower(real,proj,hit){
+  const goal=S.goal,all=real.concat(proj),N=all.length;
+  const W=980,H=410,L=70,R=14,T=30,B=46,pw=W-L-R,ph=H-T-B;
+  const ymax=Math.max(goal*1.1,...all.map(a=>a.t))*1.02,y=v=>T+ph-v/ymax*ph,bw=pw/N,w=Math.min(bw*0.7,48),step=ymax>1.5e6?5e5:2e5;
+  const last=real[real.length-1];
+  let s=`<defs><pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="${css('--proj')}" fill-opacity=".3"/><line x1="0" y1="0" x2="0" y2="7" stroke="${css('--proj')}" stroke-width="3"/></pattern></defs>`;
+  for(let g=0;g<=ymax;g+=step)s+=`<line x1="${L}" x2="${W-R}" y1="${y(g)}" y2="${y(g)}" stroke="${css('--line')}"/><text x="${L-8}" y="${y(g)+4}" text-anchor="end" font-size="12" fill="${css('--muted')}">${g?(g/1e6).toFixed(1).replace('.',',')+' M':'0'}</text>`;
+  const every=Math.ceil(N/13);
+  all.forEach((r,j)=>{
+    const x=L+j*bw+(bw-w)/2,isReal=j<real.length;
+    if(isReal){let acc=0;const nz=r.bal.map((v,n)=>[v,n]).filter(z=>z[0]>0);
+      nz.forEach(([v,n],q)=>{const yt=y(acc+v),h=y(acc)-yt-(q>0?2:0);s+=`<path d="${rr(x,yt,w,Math.max(h,1),q===nz.length-1?4:0)}" fill="${accColor(S.accounts[n].id)}"/>`;acc+=v;});
+      if(r.ap>0)s+=`<text x="${x+w/2}" y="${y(r.t)-23}" text-anchor="middle" font-size="11" font-weight="700" fill="${css('--apo')}">+${(r.ap/1000).toFixed(r.ap<10000?1:0).replace('.',',')}k</text>`;
+      s+=`<text x="${x+w/2}" y="${y(r.t)-9}" text-anchor="middle" font-size="12" font-weight="700" fill="${css('--ink')}">${(r.t/1e6).toFixed(3).replace('.',',')}</text>`;
+    } else {s+=`<path d="${rr(x,y(r.t),w,y(0)-y(r.t),4)}" fill="url(#hatch)" stroke="${css('--proj')}" stroke-width="1.5"/>`;
+      if(hit>0&&j===real.length-1+hit)s+=`<text x="${x+w/2}" y="${y(r.t)-9}" text-anchor="middle" font-size="13" font-weight="700" fill="${css('--rec')}">✅ ${(r.t/1e6).toFixed(3).replace('.',',')}</text>`;}
+    if(j%every===0||(hit>0&&j===real.length-1+hit))s+=`<text x="${x+w/2}" y="${H-B+18}" text-anchor="middle" font-size="12" fill="${css('--ink2')}">${mShort(r.m)}</text>`;
+    s+=`<rect class="hit" data-j="${j}" x="${L+j*bw}" y="${T}" width="${bw}" height="${ph}" fill="transparent"/>`;
+  });
+  s+=`<line x1="${L}" x2="${W-R}" y1="${y(goal)}" y2="${y(goal)}" stroke="${css('--meta')}" stroke-width="2.5" stroke-dasharray="7 5"/><text x="${L+4}" y="${y(goal)-7}" font-size="13" font-weight="700" fill="${css('--meta')}">🎯 Meta ${f0(goal)}</text>`;
+  const svg=$('chTower');svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.innerHTML=s;
+  const tip=$('tip'),box=$('box');
+  svg.querySelectorAll('.hit').forEach(el=>{
+    el.onmousemove=e=>{const j=+el.dataset.j,r=all[j];let h;
+      if(j<real.length)h=`<b>${mLabel(r.m)}</b><br>Total: ${f2(r.t)}<br>`+S.accounts.map((a,n)=>r.bal[n]>0?`${esc(a.name)}: ${f0(r.bal[n])}`:'').filter(Boolean).join('<br>')+(r.ap?`<br>🏦 Aportes: ${f0(r.ap)}`:'')+`<br>Falta: ${f0(Math.max(goal-r.t,0))}`;
+      else h=`<b>${mLabel(r.m)}</b> · projeção<br>Total: ${f0(r.t)}<br>${r.t>=goal?'✅ meta atingida':'Falta: '+f0(goal-r.t)}`;
+      tip.innerHTML=h;const bb=box.getBoundingClientRect();tip.style.left=Math.min(e.clientX-bb.left+14,bb.width-240)+'px';tip.style.top=(e.clientY-bb.top+14)+'px';tip.style.opacity=1;};
+    el.onmouseleave=()=>tip.style.opacity=0;});
+  $('lgTower').innerHTML=S.accounts.map(a=>`<span><i style="background:${accColor(a.id)}"></i>${esc(a.name)}</span>`).join('')+
+    `<span><i style="background:repeating-linear-gradient(45deg,var(--proj) 0 3px,transparent 3px 6px);border:1px solid var(--proj)"></i>Projeção</span><span><i style="background:var(--meta);height:3px;vertical-align:3px"></i>Meta</span>`;
+}
