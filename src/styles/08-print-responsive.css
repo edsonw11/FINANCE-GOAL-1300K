@@ -1,0 +1,8 @@
+/* 08-print-responsive.css: Print and small screens */
+@media print{
+  header,.chips,#toast,.banner,button,.mnav,#tip,#tip2,.seg,#t-lanc form{display:none!important}
+  body{background:#fff;color:#000}.card{box-shadow:none;break-inside:avoid}
+  section.tab{display:block!important}#t-lanc .card:first-of-type,#t-cfg{display:none!important}
+  main{max-width:none;padding:0}
+}
+@media(max-width:640px){.hero{grid-column:auto;flex-direction:column;align-items:flex-start}.catrow{grid-template-columns:110px 1fr 90px 44px}.today{display:none}}
