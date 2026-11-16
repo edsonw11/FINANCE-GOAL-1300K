@@ -12,10 +12,10 @@ const P={
  target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
  clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
  trend:'<path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
- plus:'<path d="M12 5v14M5 12h14"/>', minus:'<path d="M5 12h14"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>', menu:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>', minus:'<path d="M5 12h14"/>',
  bank:'<path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/>',
  scale:'<path d="M12 3v18M7 21h10M5 7h14"/><path d="M5 7l-3 8a4 4 0 0 0 6 0zM19 7l-3 8a4 4 0 0 0 6 0z"/>'};
-const svg=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[k]}</svg>`;
+export const svg=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[k]}</svg>`;
 P.tag='<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/>';
 P.card='<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>';
-const EM={'💳':'card','💰':'wallet','🎯':'target','⏱️':'clock','📈':'trend','➕':'plus','➖':'minus','🏦':'bank','🧮':'scale'};
+export const EM={'💳':'card','💰':'wallet','🎯':'target','⏱️':'clock','📈':'trend','➕':'plus','➖':'minus','🏦':'bank','🧮':'scale'};

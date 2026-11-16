@@ -1,0 +1,21 @@
+/** Money mask, parsing to a number and cent-exact sums (core/money.js, core/format.js). */
+const {createContext,suite}=require('./harness');
+module.exports=()=>{const {run}=createContext(),{eq,res}=suite('money');
+  eq('mask 123456',run("formatMoneyDigits('123456')"),'R$ 1.234,56');
+  eq('mask 1 digit',run("formatMoneyDigits('1')"),'R$ 0,01');
+  eq('mask 100',run("formatMoneyDigits('100')"),'R$ 1,00');
+  eq('mask ignores letters',run("formatMoneyDigits('12a3b')"),'R$ 1,23');
+  eq('mask leading zeros',run("formatMoneyDigits('000507')"),'R$ 5,07');
+  eq('mask only letters',run("formatMoneyDigits('abc')"),'');
+  eq('mask millions',run("formatMoneyDigits('130000000')"),'R$ 1.300.000,00');
+  eq('parse masked',run("parseMoney('R$ 1.234,56')"),1234.56);
+  eq('parse plain',run("parseMoney('1500')"),1500);
+  eq('parse thousands dot',run("parseMoney('1.500')"),1500);
+  eq('parse comma',run("parseMoney('99,9')"),99.9);
+  eq('parse rounds to cents',run("parseMoney('10,005')"),10.01);
+  eq('parse empty',run("parseMoney('')"),0);
+  eq('mask -> number -> text',run("m2(parseMoney(formatMoneyDigits('123456')))"),'R$ 1.234,56');
+  eq('sum 0.1+0.2',run("sumMoney([0.1,0.2])"),0.3);
+  eq('sum ten 0.1',run("sumMoney(Array(10).fill(0.1))"),1);
+  eq('sum with negatives',run("sumMoney([100,-33.33,-33.33,-33.34])"),0);
+  return res;};

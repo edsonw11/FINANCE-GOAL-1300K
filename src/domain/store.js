@@ -2,12 +2,16 @@
  * domain/store.js
  * Responsibility: Application state (S) and localStorage persistence: seed, load, save, migrations.
  */
-const seed=()=>({v:2,goal:1300000,rate:12.5,planned:0,nid:1,
+import { STORAGE_KEY } from '../core/config.js';
+import { today } from '../core/dates.js';
+import { balance } from './accounts.js';
+import { invalidateAllocation } from './card-invoices.js';
+export const seed=()=>({v:2,goal:1300000,rate:12.5,planned:0,nid:1,
   accounts:[{id:'nu',name:'Nubank'},{id:'in',name:'Inter'},{id:'s28',name:'Tesouro Selic 2028'},{id:'s31',name:'Tesouro Selic 2031'}],
   snaps:[['nu',157062.83,true,159830.14],['in',154796,true],['s28',395040,true],['s31',423375,true]].map(([acc,value,est,gross])=>gross?({date:'2026-11-06',acc,value,est,gross}):({date:'2026-11-06',acc,value,est})),
   tx:[]});
 // Santander was emptied: moves the balance to Nubank and archives the account (once)
-function migrate(){
+export function migrate(){
   const sa=S.accounts.find(a=>a.id==='sa'),nu=S.accounts.find(a=>a.id==='nu');
   if(!sa||sa.archived||!nu)return;
   const d=today(),vSa=balance('sa',d).v,vNu=balance('nu',d).v;
@@ -16,7 +20,27 @@ function migrate(){
   S.snaps.push({date:d,acc:'sa',value:0,est:false});
   sa.archived=true;save();
 }
-function load(){try{const r=JSON.parse(localStorage.getItem(STORAGE_KEY));if(r&&r.v===2)return r;}catch(e){}return seed();}
-var _al=null;
-function save(){_al=null;localStorage.setItem(STORAGE_KEY,JSON.stringify(S));}
-let S=load(), cur=mOf(today()), type='despesa', filt='todos', q='', editId=null;
+// storage is injected (DIP): the browser uses localStorage; tests pass an in-memory one
+let storage=typeof localStorage!=='undefined'?localStorage:{getItem:()=>null,setItem:()=>{}};
+function configureStorage(adapter){storage=adapter;}
+function load(){try{const r=JSON.parse(storage.getItem(STORAGE_KEY));if(r&&r.v===2)return r;}catch(e){}return seed();}
+export function save(){invalidateAllocation();storage.setItem(STORAGE_KEY,JSON.stringify(S));}
+// swaps the whole state (backup import, reset); the caller saves it through transact()
+export function replaceState(next){S=next;invalidateAllocation();}
+/**
+ * transact(mutate): runs a change and saves it.
+ * - saving fails (storage full, private mode): the change is undone and false is returned,
+ *   so the screen keeps what the user typed and explains the problem;
+ * - the command refuses (returns {error}): the change is undone, nothing is saved, the error is returned;
+ * - otherwise: returns the command result (or true).
+ */
+export function transact(mutate){
+  const before=JSON.stringify(S);
+  const restore=()=>{S=JSON.parse(before);invalidateAllocation();};
+  let r;
+  try{r=mutate();}catch(e){restore();transact.lastError=e;return false;}
+  if(r&&r.error){restore();return r;}
+  try{save();}catch(e){restore();transact.lastError=e;return false;}
+  return r===undefined?true:r;
+}
+export let S=load();

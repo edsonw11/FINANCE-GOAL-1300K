@@ -1,26 +1,49 @@
 /**
- * ui/views/lancamentos-list.js
- * Responsibility: Transactions tab: table of the month's transactions.
+ * ui/views/transaction-list.js
+ * Responsibility: Transactions tab: list of the month's transactions, filtered by type, expense group
+ * and search (rules in domain/transaction-filter.js); tap a row for the detail.
  */
-function paymentTag(t){
-  if(t.type==='aporte')return '<span class="mut">—</span>';
-  if(t.type==='fatura')return '<span class="tag pay-conta">Conta</span>';
-  if(t.fonte==='cartao')return '<span class="tag pay-cartao">Cartão · fatura '+mShort(dueMonth(t.date))+'</span>';
-  if(t.fonte==='beneficio')return '<span class="tag pay-vr">VR/VA</span>';
-  return `<span class="tag pay-conta">${t.type==='receita'?'Conta':'Pix / conta'}</span>`;
-}
-function renderTransactions(){
-  const ql=q.toLowerCase();
-  document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.f===filt));
-  const list=S.tx.filter(t=>mOf(t.date)===cur&&(filt==='todos'||t.type===filt)&&(!ql||((t.desc||'')+' '+(t.cat||'')+' '+(t.acc?accName(t.acc):'')).toLowerCase().includes(ql))).sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
-  $('txTbl').innerHTML=list.length?`<tr><th>Data</th><th>Tipo</th><th>Categoria / Destino</th><th>Pago com</th><th>Descrição</th><th class="r" style="text-align:right">Valor</th><th></th></tr>`+
-    list.map(t=>{const sign=t.type==='receita'?'+':(t.type==='despesa'||t.type==='fatura')?'−':'→';const cls=t.type==='receita'?'pos':t.type==='despesa'?'neg':'';
-      const lbl=t.type==='aporte'?'🏦 '+esc(accName(t.acc)):t.type==='fatura'?'💳 Pagamento da fatura<br><span class="mut">'+invoiceItems(t).length+' compra(s) identificada(s)'+(invoiceUndetailed(t)>0?' · <b style="color:var(--warn)">'+f2(invoiceUndetailed(t))+' sem detalhe</b>':'')+'</span>':(t.splits&&t.splits.length?catParts(t).map(p=>icon(t.type,p.cat)+' '+esc(p.cat)+' <span class="mut">'+f2(p.value)+'</span>').join('<br>'):icon(t.type,t.cat)+' '+esc(t.cat));
-      return `<tr><td>${formatDateBR(t.date)}</td><td><span class="tag ${t.type}">${t.type}</span></td><td>${lbl}</td><td>${paymentTag(t)}</td><td class="mut">${esc(t.desc||'')}</td><td class="r ${cls}" style="text-align:right">${sign} ${f2(t.value)}</td><td style="text-align:right"><button class="btn sm" data-edit="${t.id}">editar</button> <button class="btn sm dng" data-del="${t.id}">${t.type==='fatura'?'cancelar pagamento':'apagar'}</button></td></tr>`;}).join('')
-    :`<tr><td class="empty" colspan="7">Nenhum lançamento em ${mLabel(cur)}.</td></tr>`;
-  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const t=S.tx.find(x=>x.id===+b.dataset.del);if(!t)return;
-    if(t.type==='fatura'){if(!cancelPay(t))return;return;}
-    S.tx=S.tx.filter(x=>x.id!==t.id);save();render();toast('Lançamento apagado');});
-  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>startEdit(+b.dataset.edit));
+import { $, esc } from '../../core/dom.js';
+import { f2 } from '../../core/format.js';
+import { mLabel } from '../../core/dates.js';
+import { catParts } from '../../domain/transactions.js';
+import { ALL_TYPES, filterTransactions, listTotal } from '../../domain/transaction-filter.js';
+import { groupIcon, groupNames } from '../../domain/category-groups.js';
+import { invoiceItems, invoiceUndetailed } from '../../domain/card-invoices.js';
+import { ui } from '../ui-state.js';
+import { paymentLabel, signedMoney, txRow } from '../components/breakdown.js';
+import { fillCategoryOptions } from './transaction-form.js';
+import { deleteTxFlow } from './transaction-actions.js';
+import { openTxForm } from './transaction-form-sheet.js';
+export function renderTransactions(){
+  document.querySelectorAll('.chip[data-f]').forEach(c=>{c.classList.toggle('on',c.dataset.f===ui.filt);c.setAttribute('aria-pressed',c.dataset.f===ui.filt);});
+  renderGroupFilter();
+  const rows=filterTransactions(ui.cur,{type:ui.filt,group:ui.group,query:ui.q}),filtered=!!(ui.q||ui.group||ui.filt!==ALL_TYPES);
+  // grouped by day, newest first; Editar/Excluir buttons on wide screens, tap the row on phones
+  let day='',h='';
+  rows.forEach(({t,value})=>{
+    if(t.date!==day){day=t.date;h+=`<div class="li-day">${new Date(day+'T12:00').toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'})}</div>`;}
+    const sub=[t.type==='fatura'?invoiceItems(t).length+' compra(s) identificada(s)'+(invoiceUndetailed(t)>0?' · '+f2(invoiceUndetailed(t))+' sem detalhe':''):t.desc&&t.cat?(t.splits&&t.splits.length?catParts(t).map(p=>p.cat).join(' + '):t.cat):'',paymentLabel(t)].filter(Boolean).join(' · ');
+    h+=txRow(t,{sub,value:ui.group?value:undefined,actions:`<span class="li-act"><button type="button" class="btn sm" data-edit="${t.id}" aria-label="Editar">Editar</button><button type="button" class="btn sm dng" data-del="${t.id}">${t.type==='fatura'?'Cancelar pagamento':'Excluir'}</button></span>`});
+  });
+  const tot=listTotal(rows),signed=ui.filt===ALL_TYPES&&!ui.group;
+  $('txList').innerHTML=rows.length?`<div class="li-sum"><span>${rows.length} lançamento(s)${ui.group?' em '+esc(ui.group):''}</span><span>${signed?'Saldo da lista: ':'Total: '}<b>${signed?signedMoney(tot):f2(Math.abs(tot))}</b></span></div>`+h
+    :`<div class="empty">${filtered?'Nada encontrado com este filtro. <button type="button" class="btn sm" id="clearFilt">Limpar filtro</button>':'Nenhum lançamento em '+mLabel(ui.cur)+'.<br>Toque em “+” para adicionar o primeiro.'}</div>`;
+  const cf=$('clearFilt');if(cf)cf.onclick=()=>{ui.filt=ALL_TYPES;ui.q='';ui.group='';$('qBox').value='';renderTransactions();};
   fillCategoryOptions();
+}
+// expense group select: lists the groups that have categories; keeps the choice if it still exists
+function renderGroupFilter(){
+  const sel=$('grpSel'),names=groupNames();
+  if(ui.group&&!names.includes(ui.group))ui.group='';
+  sel.innerHTML='<option value="">Todos os grupos</option>'+names.map(g=>`<option value="${esc(g)}">${groupIcon(g)} ${esc(g)}</option>`).join('');
+  sel.value=ui.group;sel.classList.toggle('on',!!ui.group);
+}
+export function bindTransactionList(){
+  $('grpSel').onchange=e=>{ui.group=e.target.value;renderTransactions();};
+  $('txList').addEventListener('click',e=>{
+    const d=e.target.closest('[data-del]'),ed=e.target.closest('[data-edit]');
+    if(d)deleteTxFlow(+d.dataset.del);
+    if(ed)openTxForm({id:+ed.dataset.edit});
+  });
 }

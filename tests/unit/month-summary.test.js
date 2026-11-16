@@ -1,0 +1,26 @@
+/** Month totals equal the sum of the records listed in each card detail (domain/month-summary.js). */
+const {createContext,suite}=require('./harness');
+const fixture=`S=seed();S.tx=[];var _id=1;var add=o=>S.tx.push(Object.assign({id:_id++},o));
+add({type:'receita',date:'2026-10-05',value:5000,cat:'Salário',fonte:'caixa'});
+add({type:'receita',date:'2026-10-06',value:800,cat:'VR',fonte:'beneficio'});
+add({type:'despesa',date:'2026-10-07',value:350,cat:'Mercado',fonte:'caixa'});
+add({type:'despesa',date:'2026-10-08',value:120.1,cat:'Mercado',fonte:'beneficio'});
+add({type:'despesa',date:'2026-09-20',value:200.2,cat:'Lazer',fonte:'cartao'});
+add({type:'despesa',date:'2026-10-02',value:99.9,cat:'Saúde',fonte:'cartao'});
+add({type:'fatura',date:'2026-10-07',value:300,cat:'Fatura do cartão',fm:'2026-10'});
+add({type:'aporte',date:'2026-10-10',value:1000,acc:'nu'});_al=null;`;
+module.exports=()=>{const {run}=createContext(),{eq,res}=suite('month summary');
+  run(fixture);
+  const s=run("monthSummary('2026-10')"),tot=a=>Math.round(a.reduce((x,y)=>x+y,0)*100)/100;
+  eq('income total',s.income.total,5800);
+  eq('income = items',s.income.total,tot(s.income.items.map(t=>t.value)));
+  eq('expenses = items + undetailed',s.expenses.total,tot(s.expenses.items.map(t=>t.value).concat(s.expenses.undetailed.map(u=>u.value))));
+  eq('undetailed part of invoice (cents)',s.expenses.undetailed.map(u=>u.value),[99.8]);
+  eq('cash = in - out - invoices - contributions',s.cash.total,5000-350-300-1000);
+  eq('voucher balance',s.voucher.total,679.9);
+  eq('open card',s.openCard.total,99.9);
+  eq('contributions',s.contributions.total,1000);
+  eq('category items = catMonth',tot(run("categoryItems('2026-10','Mercado')").map(i=>i.value)),run("catMonth('2026-10')['Mercado']"));
+  eq('monthSpending = expenses total',run("monthSpending('2026-10')"),s.expenses.total);
+  return res;};
+module.exports.fixture=fixture;

@@ -12,35 +12,60 @@ Data lives only in the browser (`localStorage`, key `metaapp.v2`). Export a back
 
 | I want to | Do this |
 |---|---|
-| Open the app | Open `index.html` in the browser (works over `file://`) |
+| Open the app (development) | `scripts/serve.sh` and open `http://127.0.0.1:8000/index.html` (ES modules need http) |
+| Open the app without a server | open `index.html` (it forwards to `dist/finance_goal_1300k.html`, same data) or the dist file itself; run `python3 scripts/build.py` after changing `src/` |
 | Build a single file to keep or share | `python3 scripts/build.py` → `dist/finance_goal_1300k.html` |
-| Run a quick test | `scripts/smoke.sh` (headless Chrome; use `CHROME=chromium` if needed) |
+| Open on the phone (same Wi-Fi) | `scripts/serve-phone.sh` (serves dist/ with caching disabled) and open the printed `http://<pc-ip>:8080/` (today `http://192.168.15.13:8080/`); on the phone, "Add to Home screen" makes it an app icon |
+| Run the unit tests | `node tests/run-unit.js` (one file per module in `tests/unit/`, plus the architecture and module-graph rules) |
+| Run the end-to-end test | `scripts/smoke.sh` (headless Chrome; use `CHROME=chromium` if needed) |
+| Check phone widths | `scripts/mobile-check.sh` (320, 360, 375, 390, 430, 768 px: no horizontal scroll, readable charts, 44 px targets) |
+| Take a screenshot | serve the folder on port 8765, then `scripts/shot.sh 390 844 /tmp/a.png "demo&tab=resumo"` |
 
-> Scripts are loaded with classic `<script src>` tags (not ES modules) because modules do not work over `file://`.
-> The load order is defined in `index.html` and reused by `build.py`.
+> The source is **ES modules**: `index.html` loads only `src/app.js`, and every file imports what it uses
+> (one named import per line, relative `.js` paths). `tools/module-graph.cjs` reads that graph: `build.py`
+> uses it to bundle everything into one classic script for `dist/` (so the built file still opens from
+> `file://`), and the unit tests use it to load core + domain in evaluation order.
+> `src/package.json` (`"type": "module"`) lets Node import the core/domain modules directly.
 
 ## Structure
 
 ```
-index.html            tab markup and pop-ups + script load order
+index.html            tab markup and pop-ups; loads src/app.js as a module
 src/
-  styles/             CSS in cascade order (01 … 08)
-  core/               no business rules: config, DOM, formatting, dates, input masks
+  styles/             CSS in cascade order (01 … 10; 08 components, 08-screens per-screen classes, 09 mobile, 10 print)
+  core/               no business rules: config, DOM, formatting, dates, money (cents)
   domain/             rules and data, NO access to DOM/toast/render
     store.js          state S + localStorage (load/save/migrate)
     accounts.js       accounts and balances
     transactions.js   transaction queries
     investments.js    real series and projection
     categories.js     category catalog
+    category-groups.js expense groups (Moradia = condomínio, luz, água, gás...): group of a category, suggestion by name
     card-cycle.js     card cycle (closing, due date, which invoice a purchase belongs to)
     card-invoices.js  purchases of each invoice, undetailed amount, open invoices
+    month-summary.js  month totals AND the records behind each one (cards and details share it)
+    spending.js       12-month spending window, totals by group, the records of a group/category in a month
+    spending-stats.js trend line (least squares) and per-group profile (fixed / variable / occasional)
+    budgets.js        monthly budget per group: spent, remaining, ok / near (80%) / over, pace projection, alerts
+    monthly-bills.js  recurring bills (once a month, stable value) and their status this month: paid / scheduled / missing
+    transaction-filter.js transaction list filter (type, group, search) and its signed total
+    card-status.js    purchases, totals and status of one invoice
+    invoice-payment.js payment plan (full / checked / partial), pay, classify the undetailed part
+    transaction-builder.js validate and save a transaction (new, series, edit + future ones)
+    *-commands.js     categories, accounts/balances, settings/backup import: validate, change, or return {error}
+    demo-data.js      test data (marked demo:true)
   ui/                 everything that touches the DOM
+    components/       reusable pieces: money-input, date-input, sheet, confirm, field-error,
+                      stack-table, breakdown (rows and list views), command (runCommand),
+                      detail-registry (what each card opens)
     charts/           SVG chart drawing
     views/            one screen (or part of a screen) per file + its events (bindXxx)
     render.js         orchestrates rendering
-  app.js              bootstrap: wires everything and renders
-tests/smoke.js        smoke scenario (DOM only)
-scripts/              build.py and smoke.sh
+    ui-state.js       what the screen shows now (month, filters, form being edited): one shared object
+  app.js              bootstrap: imports and wires everything, renders
+tests/                run-unit.js + unit/*.test.js (Node), smoke.js (end-to-end, DOM only), mobile-check.js, shot.js
+scripts/              build.py, serve.sh, serve-phone.sh, smoke.sh, mobile-check.sh, shot.sh
+tools/                module-graph.cjs (import graph, bundle for dist/)
 dist/                 generated single file
 ```
 
@@ -48,9 +73,14 @@ dist/                 generated single file
 
 `core` ← `domain` ← `ui` ← `app.js`
 
-- `core` and `domain` do **not** use `document`, `toast`, `render` or `confirm` (checked by searching the code).
+- `core` and `domain` do **not** use `document`, `toast`, `render` or dialogs.
+- `ui/` **never changes the state** (`S`) nor calls `save()`: it calls a domain command through `runCommand()`
+  (which wraps `transact()`: rollback on failure, `{error}` shown to the user, then `render()`).
 - `ui/views/*` read from `domain` and write to the DOM; each view exposes `renderXxx()` and `bindXxx()`.
-- `app.js` only calls the `bindXxx()` functions and `render()`.
+- Imports only point down the layers (core imports only core, domain never imports ui), every module is
+  reachable from `app.js` and every imported name exists (`tests/unit/modules.test.js`).
+- These rules are **tests** (`tests/unit/architecture.test.js`, `modules.test.js`), so a regression fails the build.
+- `app.js` only calls the `registerXxx()` / `bindXxx()` functions and `render()`.
 
 ### Naming
 
@@ -59,21 +89,66 @@ Code, file names, comments and docs are in English. Two things intentionally sta
 - **UI text** (labels, messages): the app is used in pt-BR.
 - **Persisted data keys and values** (`type: 'receita' | 'despesa' | 'aporte' | 'fatura'`, `fonte`, `serie`, `fm`, `items`, category names): renaming them would break saved data and old backups. To change them, add a versioned migration in `domain/store.js` first.
 
+## UX building blocks
+
+| Need | Component | Notes |
+|---|---|---|
+| Money fields | `ui/components/money-input.js` | Opt in with `data-money`. Only digits are accepted and the last two are cents (`123456` → `R$ 1.234,56`); numeric keypad on phones; paste is parsed. The stored value is always a number (`parseMoney`). |
+| Money math | `core/money.js` | `sumMoney`, `roundMoney`: totals are summed in integer cents. |
+| Date fields | `ui/components/date-input.js` | `datePicker(input)`: shows `dd/mm/aaaa`, opens the native calendar on tap, `.value` stays ISO `yyyy-mm-dd` (no timezone shift). |
+| Details | `ui/components/sheet.js` | One dialog with a view stack (list → record → edit) and a back button; bottom sheet on phones. |
+| Confirmation | `ui/components/confirm.js` | `askConfirm({title, html, ok, danger, check})` → Promise. Replaces every `confirm()`. |
+| Validation | `ui/components/field-error.js` | Message next to the field, `aria-invalid`, cleared on change. |
+| Safe save | `transact(fn)` in `domain/store.js` | If saving fails, the change is undone and the form keeps what was typed. |
+
+Expense **groups**: each expense category has a `group` (`S.groups` holds the group names and icons). The summary list,
+the analysis and the trend tooltip add up by group (`groupMonth`), the group sheet shows the split by category and
+drills down into one category. New categories get a group suggested by name (`GROUP_KEYWORDS` in `core/config.js`:
+"Wellhub" → Saúde); the Categorias tab lets the user change it or type a new group.
+
+**Budgets** (`S.budgets = {group: value}`): set per group in Categorias, shown in Resumo with a progress bar, and the
+save toast warns when an expense takes a group to 80% / 100%. **Monthly bills** (Resumo): expenses that came once a
+month with a stable value in at least 2 of the last 3 months; a missing bill opens the form already filled ("Lançar"),
+and "Não é conta" hides a false positive (`S.billsIgnored`). The **Lançamentos** tab filters by group. Goal and
+projection share one tab (Meta).
+
+**Styling:** presentation lives in `src/styles`. Markup has no fixed inline style: `style="..."` is only written for
+values computed at runtime (bar widths, account colors), visibility uses the `hidden` attribute (global
+`[hidden]{display:none!important}`) and CSS never selects on `[style*=...]`. `tests/unit/no-inline-styles.test.js`
+enforces it.
+
+Every summary card has `data-kpi` and opens its records from `monthSummary()`, the same function that computes the card, so the items always add up to the total.
+
 ## SOLID: what is applied and what is missing
 
 **Applied**
-- **SRP:** each file has one responsibility, stated in its header (e.g. `card-cycle.js` only decides closing/due dates; `transaction-save.js` only saves).
-- **Layers / DIP (partial):** business rules do not depend on the DOM. The UI depends on the domain, never the other way around.
-- **ISP:** each screen exposes only `render` and `bind`.
+- **SRP:** each file has one responsibility, stated in its header (checked by a test). Screens only read
+  fields and draw; rules live in the domain (`transaction-builder`, `invoice-payment`, `card-status`,
+  `spending-stats`, `*-commands`). Settings, backup and investments are separate screens.
+- **OCP:** what a card opens is registered (`registerDetail(key, factory)` / `registerLink(kind, fn)`).
+  A new card registers itself; the click handling does not change.
+- **DIP:** persistence is injected (`configureStorage(adapter)`); tests use an in-memory storage, including a
+  failing one. Screens depend on commands, not on the shape of the state.
+- **ISP:** each screen exposes only `render` and `bind`; components expose one function each.
+- **No duplicated rules:** the trend line, category statistics, month totals and invoice status exist once.
 
-**Not done yet (next steps, by value)**
-1. **Global state `S`:** the domain reads and writes `S` directly. Next: an injectable `Store` (`store.get()`, `store.update(fn)`) so the domain can be tested without a browser (DIP).
-2. **Large handlers:** `transaction-save.js` and `pay-invoice.js` mix form reading, validation and persistence. Split into a pure `buildTransaction()` + persist + refresh.
-3. **OCP:** `renderFlow` / `renderInsights` use fixed lists of indicators. Replace with a card registry so new ones can be added without editing existing code.
-4. **Unit tests** for `domain/` (card cycle, invoice allocation, projection) running in Node.
-5. **ES modules:** once the app is served by a local server (`python3 -m http.server`), move from classic scripts to `import/export`.
-6. **Data keys in English** via a versioned migration (see Naming).
+**Still open (by value)**
+1. **State as a module variable:** commands read/write the shared `S`. Passing the state explicitly
+   (`saveTransaction(state, d)`) would make every function pure; the tests already isolate it per file.
+2. **Data keys in English** via a versioned migration (see Naming).
 
 ## History
 
 Extracted from `~/Downloads/meta_1300k_app.html` (single file, ~1,300 lines) **without changing behavior**: the final DOM of a full scenario (generate test data, tabs, enter a card purchase, partial invoice payment, cancel it, disable a category, remove test data) is identical to the original file's.
+
+UX overhaul (Nov 2026): calendar date fields, R$ money mask, clickable summary cards with the records behind each total, record detail with edit/delete (with confirmation), mobile-first layout (bottom navigation, "+" button, bottom sheets, tables as cards), unit/e2e/width tests.
+
+SOLID refactor (Nov 2026): screens no longer change the state (commands + runCommand), rules moved to the domain
+(builder, payment plan, invoice status, statistics), card details registry (OCP), injectable storage (DIP),
+one unit test file per module + architecture rules as tests.
+
+ES modules (Nov 2026): classic scripts → `import/export` with the shared UI state in `ui/ui-state.js`; `dist/` is a
+bundle built from the import graph. Expense groups (Moradia, Saúde...) with drill-down into categories.
+
+Budgets per group, monthly bills, group filter, Meta + Projeção in one tab, and every fixed inline style moved to CSS
+classes (Nov 2026; screenshots before/after identical at 1280 and 485 px).

@@ -1,0 +1,187 @@
+/* 08-screens.css: the look of the larger screens (static styles that used to be inline).
+   Values that come from data (bar widths, account colors) stay inline in the views. */
+
+/* ---- small helpers used by several screens */
+.r{text-align:right}
+.nw{white-space:nowrap}
+.b8{font-weight:800}
+.sec-label{font-size:12px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.sec-label.sm{margin-bottom:6px}
+.tone-rec{color:var(--rec)}
+
+/* ---- summary: spending analysis (ui/views/summary-insights.js) */
+.ins-head{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:baseline}
+.ins-title{font-weight:700;font-size:16px}
+.ins-tiles{grid-template-columns:repeat(auto-fit,minmax(210px,1fr));margin:12px 0 18px}
+.ins-k{font-size:11.5px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em}
+.ins-v{font-size:23px;font-weight:800;letter-spacing:-.02em;margin:3px 0 1px}
+.ins-s{font-size:12.5px;color:var(--ink2)}
+.ins-read{grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:4px 28px;margin-bottom:10px}
+.ins-note{--tone:var(--brand);border-left:4px solid var(--tone);padding:2px 0 2px 12px;margin:0 0 12px}
+.ins-note.warn{--tone:var(--warn)}.ins-note.good{--tone:var(--rec)}
+.ins-note-h{font-size:11.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--tone)}
+.ins-note-x{font-size:14px;line-height:1.5;margin-top:2px}
+.ins-groups{border-top:1px solid var(--line);padding-top:14px}
+.ins-help{margin:8px 0 0}
+.ins-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.ins-table th{font-size:11.5px;color:var(--ink2);text-transform:uppercase;letter-spacing:.05em;font-weight:700;padding:6px 8px;border-bottom:1px solid var(--line);text-align:left}
+.ins-table th.r{text-align:right}
+.ins-table tbody td{padding:9px 8px;border-bottom:1px solid var(--line)}
+.ins-table tfoot td{padding:10px 8px}
+.ins-table tfoot .mut{font-size:12.5px}
+.ins-share{min-width:150px;width:30%}
+.ins-share-row{display:flex;align-items:center;gap:8px}
+.ins-share-row .mut{font-size:12.5px;width:34px;text-align:right}
+.ins-bar{flex:1;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.ins-bar>i{display:block;height:100%;background:var(--brand);border-radius:99px}
+.ins-pct{font-weight:500}
+#trendIns tbody tr.rowsel td:first-child{box-shadow:inset 4px 0 0 var(--brand)}
+.kind-pill{--k:var(--muted);font-size:11.5px;font-weight:700;color:var(--k);border:1px solid var(--k);border-radius:99px;padding:1px 8px;white-space:nowrap}
+.kind-pill.fixed{--k:var(--brand)}.kind-pill.variable{--k:var(--warn)}
+.mt-6{margin-top:6px}.mt-8{margin-top:8px}.mt-10{margin-top:10px}.mt-12{margin-top:12px}.mt-14{margin-top:14px}
+.tc{text-align:center}
+.fs12{font-size:12px}
+input.w-auto,select.w-auto,.w-auto{width:auto}
+.btn.btn-ghost{background:transparent;border-color:transparent;color:var(--muted)}
+
+/* ---- pay invoice, quick mode (ui/views/pay-invoice.js) */
+.pay-q{font-weight:700;margin-bottom:10px}
+.pay-inv{border:1px solid var(--line);border-radius:12px;margin:0 0 8px;overflow:hidden}
+.pay-inv.on{border-color:var(--brand);background:color-mix(in srgb,var(--brand) 5%,var(--card))}
+.pay-inv-h{display:flex;gap:12px;align-items:center;padding:12px 14px;cursor:pointer}
+.pay-caret{width:14px;color:var(--muted)}
+.pay-inv-t{flex:1}
+.pay-inv-t>b{font-size:15px;color:var(--ink)}
+.pay-inv-t>.mut{font-size:12.5px}
+.late-t{color:var(--bad)}
+.pay-inv-v{font-size:18px;color:var(--ink)}
+.pay-body{padding:4px 14px 14px}
+.pay-hint{margin:0 0 8px}
+.pay-line{display:flex;gap:10px;align-items:center;margin:0 0 6px;font-size:14px}
+.pay-line-t{flex:1;color:var(--ink)}
+.tap-t{cursor:pointer}
+.pay-new{margin:8px 0 14px}
+.pay-amount{border-top:1px solid var(--line);padding-top:12px}
+.pay-opt{display:flex;gap:10px;align-items:center;margin:0 0 8px;font-weight:500;color:var(--ink);cursor:pointer}
+.pay-opt.last{margin:0}
+.pay-part{margin:8px 0 0 26px;max-width:220px}
+.pay-go{margin-top:14px;align-items:center}
+.pay-fut{margin-top:6px}
+.pay-fut>summary{cursor:pointer;color:var(--ink2);font-weight:600;padding:8px 2px}
+.pay-paid{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+.pay-paid-h{font-weight:700;margin-bottom:8px}
+.pay-paid-h .mut{font-weight:500;font-size:12.5px}
+.empty.pay-empty{padding:18px}
+
+/* ---- card tab (ui/views/credit-card.js) */
+table .r,table th.r,table td.r{text-align:right}
+.mb-14{margin-bottom:14px}
+.w-150{width:150px}
+.h-42{height:42px}
+.f.f2{flex:2}
+.card-title{font-weight:700;margin-bottom:6px}
+.title-note{font-weight:500;font-size:13px}
+tr.cyc-row{cursor:pointer}
+tr.cyc-row.on{background:color-mix(in srgb,var(--brand) 11%,var(--card))}
+tr.warn-row{background:color-mix(in srgb,var(--warn) 16%,var(--card))}
+.cc-detail{background:linear-gradient(135deg,color-mix(in srgb,var(--c1) 8%,var(--card)),var(--card) 60%)}
+.cc-head{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.cc-label{font-size:12.5px;color:var(--ink2);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.cc-amount{font-size:32px;font-weight:800;letter-spacing:-.03em;margin:4px 0}
+.cc-sub{font-size:14px;color:var(--ink2)}
+.cc-deadline{font-size:14px;margin-top:6px}
+.cc-paid{margin-bottom:18px}
+.cc-paid-h{display:flex;justify-content:space-between;font-weight:700;margin-bottom:6px}
+.row.cc-classify{margin-top:10px;align-items:flex-end}
+
+/* ---- summary: spending trend chart and its month explanation (ui/views/summary-trend.js) */
+#chTrend .tb{cursor:pointer}
+.kpi .trend-none,.trend-none{font-size:18px;font-weight:600;color:var(--muted)}
+.tt-m{font-weight:700}
+.tt-v{font-size:15px;margin:2px 0 6px}
+.tt-dim{opacity:.7}
+.tt-dim2{opacity:.65}
+.tt-sm{font-size:12px}
+.tt-n{font-weight:500}
+.tt-pct{font-weight:800;font-size:15px}
+.tt-up{color:#ff8a80}
+.tt-dn{color:#6ee7b7}
+.tt-sec{border-top:1px solid rgba(255,255,255,.2);margin-top:8px;padding-top:6px}
+.tt-row{display:flex;justify-content:space-between;gap:14px}
+
+/* ---- shared small pieces (categories, investments, details, charts) */
+.m0{margin:0}.mt-2{margin-top:2px}.mb-6{margin-bottom:6px}
+.help.mb4{margin:0 0 4px}
+.help.mb8-only{margin:0 0 8px}
+.help.mt-12.mb8{margin:12px 0 8px}
+.fw5{font-weight:500}.fw7{font-weight:700}.fs125{font-size:12.5px}
+.f1{flex:1}
+.grow{flex:1;min-width:0}
+.warn-c{color:var(--warn)}
+.tone-des{color:var(--des)}
+.list-title{font-weight:700;margin-bottom:10px}
+input.icon-in{width:54px;text-align:center}
+input.icon-in.sm{width:46px}
+.row.cat-line{gap:8px;margin-bottom:8px;align-items:center;flex-wrap:nowrap}
+.row.cat-line.exp{margin-bottom:4px}
+.row.cat-fields{gap:8px;flex:1;min-width:0;flex-wrap:nowrap;align-items:center}
+.row.cat-fields.off{opacity:.5}
+.row.cat-new{gap:8px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line);align-items:center;flex-wrap:nowrap}
+.sug-h{font-size:12px;font-weight:700;color:var(--ink2);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 6px}
+.sug-opt{display:flex;gap:10px;align-items:center;margin:0 0 6px;font-size:14.5px;color:var(--ink);font-weight:500;cursor:pointer}
+.sug-opt.has{cursor:default}
+.snap-grid{grid-column:1/-1;display:grid;grid-template-columns:minmax(120px,1.2fr) 1fr 1fr;gap:10px}
+.snap-grid.c{align-items:center}
+.swatch{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
+i.swatch-total{background:var(--line)}
+.cm-bar.part>i{background:var(--muted)}
+tr.row-hit{background:color-mix(in srgb,var(--rec) 13%,var(--card))}
+/* chart legends */
+.legend i.lg-real{background:var(--brand)}
+.legend i.lg-line{height:3px;vertical-align:3px}
+.legend i.lg-base{background:repeating-linear-gradient(90deg,var(--brand) 0 6px,transparent 6px 10px)}
+.legend i.lg-low{background:repeating-linear-gradient(90deg,var(--warn) 0 3px,transparent 3px 8px)}
+.legend i.lg-goal{background:var(--meta)}
+.legend i.lg-proj{background:repeating-linear-gradient(45deg,var(--proj) 0 3px,transparent 3px 6px);border:1px solid var(--proj)}
+
+/* ---- index.html static layout (formerly inline styles) ---- */
+.head-row{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:baseline}
+.grid.trend-sum{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin:12px 0 14px}
+.rel{position:relative}
+.tip-box{position:absolute;pointer-events:none;opacity:0;transition:opacity .08s;z-index:5;background:var(--ink);color:var(--card);padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.5;min-width:240px;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.legend i.lg-bar{background:var(--brand);opacity:.35}
+.legend i.lg-cur{background:repeating-linear-gradient(45deg,var(--brand) 0 3px,transparent 3px 6px);border:1px solid var(--brand)}
+.legend i.lg-rec{background:var(--rec)}
+.legend i.lg-des{background:var(--des)}
+.legend i.lg-apo{background:var(--apo)}
+.legend i.lg-warn{background:var(--warn)}
+.card-title.tight{margin-bottom:4px}
+.spacer-10{height:10px}
+.mb-12{margin-bottom:12px}
+.ml-8{margin-left:8px}
+.mr-8{margin-right:8px}
+.box-dashed{padding:12px;border:1px dashed var(--line);border-radius:12px}
+.help.mb10-only{margin:0 0 10px}
+.help.mb12-only{margin:0 0 12px}
+.row.ai-c{align-items:center}
+label.apply-opt{margin:14px 0 0;font-size:14px;color:var(--ink);font-weight:500;cursor:pointer}
+label.apply-opt.sm{font-size:13.5px}
+.row.fm-row{margin:0 0 10px;align-items:center;gap:10px}
+.mw-190{max-width:190px}.mw-200{max-width:200px}.mw-260{max-width:260px}
+label.check-opt{display:flex;gap:8px;align-items:center;margin:0;cursor:pointer;color:var(--ink);font-weight:500}
+label.check-opt.note{margin:0 0 8px;font-size:13px;color:var(--ink2)}
+.f.f-note{font-size:13px;color:var(--ink2)}
+.f.f-note.f14{flex:1.4}.f.f-note.f2{flex:2}
+dialog h3.dlg-h{margin:0 0 8px;font-size:18px}
+dialog h3.dlg-h.s4{margin-bottom:4px}
+dialog h3.dlg-h.s14{margin-bottom:14px}
+.formgrid.cols-2{grid-template-columns:1fr 1fr}
+.span-all{grid-column:1/-1}
+.row.dlg-foot{margin-top:18px;justify-content:flex-end}
+.row.dlg-foot.between{justify-content:space-between;align-items:center}
+.row.dlg-foot.s16{margin-top:16px}
+.btn-pair{display:flex;gap:8px}
+dialog.dlg-wide{width:min(580px,94vw)}
+.dlg-p{margin:0 0 12px;color:var(--ink2);font-size:13.5px}
+.dlg-p.lg{font-size:14px}
+.scroll-list{max-height:52vh;overflow:auto;padding-right:6px}

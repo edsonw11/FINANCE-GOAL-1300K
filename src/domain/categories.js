@@ -1,9 +1,16 @@
 /**
  * domain/categories.js
- * Responsibility: Category catalog: create, rename, usage, icon and monthly totals.
+ * Responsibility: Category catalog: create, rename, usage, icon and monthly totals (groups live in category-groups.js).
  */
+import { DEFAULT_CATEGORIES, LEG, SUGGESTED_CATEGORIES } from '../core/config.js';
+import { sum } from '../core/format.js';
+import { roundMoney } from '../core/money.js';
+import { S, save } from './store.js';
+import { catParts, txIn } from './transactions.js';
+import { invoiceUndetailed } from './card-invoices.js';
+import { assignDefaultGroups } from './category-groups.js';
 // ---- category catalog ----
-function initCats(){
+export function initCats(){
   if(!S.cats){
   const mk=(t)=>{const m=new Map(Object.entries(DEFAULT_CATEGORIES[t]).map(([n,i])=>[n,i]));
     S.tx.forEach(x=>{if(x.type!==t)return;if(x.cat&&!m.has(x.cat))m.set(x.cat,x.cat==='Contas (luz, água, net)'?'💡':'🏷️');(x.splits||[]).forEach(sp=>{if(!m.has(sp.cat))m.set(sp.cat,'🏷️');});});
@@ -21,12 +28,13 @@ function initCats(){
     else if(!has)d.push({name:'Imprevistos / Outros',icon:'⚠️'});
     [['Renda Extra','➕'],['Serviços','🛠️']].forEach(([n,i])=>{if(!S.cats.receita.some(c=>c.name.toLowerCase()===n.toLowerCase()))S.cats.receita.splice(Math.max(S.cats.receita.length-1,0),0,{name:n,icon:i});});
     S.catsV3=true;save();}
+  if(!S.catsV4){assignDefaultGroups();S.catsV4=true;save();} // once: expense categories get their group (Luz, Água... in Moradia)
 }
-function ensureCat(t,name){if(!name||!S.cats||!S.cats[t])return;if(!S.cats[t].some(c=>c.name===name))S.cats[t].push({name,icon:'🏷️'});}
-function catUse(t,name){let n=0,v=0;S.tx.forEach(x=>{if(x.type!==t)return;
+export function ensureCat(t,name){if(!name||!S.cats||!S.cats[t])return;if(!S.cats[t].some(c=>c.name===name))S.cats[t].push({name,icon:'🏷️'});}
+export function catUse(t,name){let n=0,v=0;S.tx.forEach(x=>{if(x.type!==t)return;
   const parts=t==='despesa'?catParts(x):[{cat:x.cat,value:x.value}];
   const hit=parts.filter(p=>p.cat===name);if(hit.length){n++;v+=sum(hit.map(p=>p.value));}});return {n,v};}
-function renameCat(t,from,to){S.tx.forEach(x=>{if(x.type!==t)return;if(x.cat===from)x.cat=to;(x.splits||[]).forEach(sp=>{if(sp.cat===from)sp.cat=to;});});}
-const icon=(t,c)=>((((S.cats||{})[t])||[]).find(x=>x.name===c)||{}).icon||(DEFAULT_CATEGORIES[t]&&DEFAULT_CATEGORIES[t][c])||LEG[c]||'🏷️';
-function catMonth(m){const c={};txIn(m,'despesa').forEach(t=>catParts(t).forEach(p=>c[p.cat]=(c[p.cat]||0)+p.value));
+export function renameCat(t,from,to){S.tx.forEach(x=>{if(x.type!==t)return;if(x.cat===from)x.cat=to;(x.splits||[]).forEach(sp=>{if(sp.cat===from)sp.cat=to;});});}
+export const icon=(t,c)=>((((S.cats||{})[t])||[]).find(x=>x.name===c)||{}).icon||(DEFAULT_CATEGORIES[t]&&DEFAULT_CATEGORIES[t][c])||LEG[c]||'🏷️';
+export function catMonth(m){const c={};txIn(m,'despesa').forEach(t=>catParts(t).forEach(p=>c[p.cat]=roundMoney((c[p.cat]||0)+p.value)));
   txIn(m,'fatura').forEach(t=>{const u=invoiceUndetailed(t);if(u>0)c['Cartão (sem detalhe)']=(c['Cartão (sem detalhe)']||0)+u;});return c;}

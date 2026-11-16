@@ -2,7 +2,13 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- file-redirect: ES modules do not load from file://, so the source page opens the built single file
+     (same file:// storage, so the data is the same). scripts/build.py removes this block from dist/. -->
+<script id="file-redirect">if(location.protocol==='file:')location.replace('dist/finance_goal_1300k.html'+location.hash);</script>
+<!-- /file-redirect -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2f5fd0">
+<meta name="format-detection" content="telephone=no">
 <title>Meta R$ 1,3 M · Finanças</title>
 <link rel="stylesheet" href="src/styles/01-tokens.css">
 <link rel="stylesheet" href="src/styles/02-base-layout.css">
@@ -11,7 +17,10 @@
 <link rel="stylesheet" href="src/styles/05-tables-tags.css">
 <link rel="stylesheet" href="src/styles/06-widgets.css">
 <link rel="stylesheet" href="src/styles/07-polish.css">
-<link rel="stylesheet" href="src/styles/08-print-responsive.css">
+<link rel="stylesheet" href="src/styles/08-components.css">
+<link rel="stylesheet" href="src/styles/08-screens.css">
+<link rel="stylesheet" href="src/styles/09-mobile.css">
+<link rel="stylesheet" href="src/styles/10-print.css">
 </head>
 <body>
 <header><div class="hd">
@@ -21,7 +30,6 @@
     <button data-t="lanc" data-i="receipt">Lançamentos</button>
     <button data-t="cartao" data-i="card">Cartão</button>
     <button data-t="meta" data-i="target">Meta</button>
-    <button data-t="proj" data-i="trend">Projeção</button>
     <button data-t="inv" data-i="brief">Investimentos</button>
     <button data-t="cad" data-i="tag">Categorias</button>
     <button data-t="cfg" data-i="sliders">Ajustes</button>
@@ -36,28 +44,32 @@
   <div class="ph"><h1>Resumo do mês</h1><p>Quanto entrou, quanto saiu e onde o dinheiro foi.</p></div>
   <div id="bkNote"></div>
 
-  <div class="mnav"><button data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab1"></div><button data-mv="1" aria-label="Próximo mês">›</button></div>
-  <div class="grid g4" id="kFlow" style="margin-top:10px"></div>
-  <div class="card" style="margin-top:14px">
-    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:baseline"><div style="font-weight:700">Gastos mês a mês</div><div class="help" style="margin:0">Clique numa barra para abrir o mês</div></div>
-    <div class="grid" id="trendSum" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin:12px 0 14px"></div>
-    <div id="trendWrap" style="position:relative"><svg id="chTrend" role="img" aria-label="Despesas por mês com linha de tendência"></svg><div id="trendTip" style="position:absolute;pointer-events:none;opacity:0;transition:opacity .08s;z-index:5;background:var(--ink);color:var(--card);padding:10px 12px;border-radius:10px;font-size:13px;line-height:1.5;min-width:240px;box-shadow:0 6px 20px rgba(0,0,0,.25)"></div></div>
-    <div id="trendDemo" style="margin-top:8px"></div>
-    <div class="legend"><span><i style="background:var(--brand);opacity:.35"></i>Despesas do mês</span><span><i style="background:var(--brand)"></i>Mês selecionado</span><span><i style="background:repeating-linear-gradient(45deg,var(--brand) 0 3px,transparent 3px 6px);border:1px solid var(--brand)"></i>Mês em andamento</span><span><i style="background:var(--brand);height:3px;vertical-align:3px"></i>Curva dos gastos</span><span><i style="background:var(--warn);height:3px;vertical-align:3px"></i>Tendência</span></div>
+  <div class="mnav"><button data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab1" aria-live="polite"></div><button data-mv="1" aria-label="Próximo mês">›</button><button class="btn sm mtoday" data-mtoday hidden>Hoje</button></div>
+  <div class="grid g4 mt-10" id="kFlow"></div>
+  <div class="grid g2 sum-pair">
+    <div class="card" id="budgetCard"></div>
+    <div class="card" id="billsCard"></div>
   </div>
-  <div class="card" id="trendIns" style="margin-top:14px"></div>
-  <div class="grid g2" style="margin-top:14px">
-    <div class="card"><div style="font-weight:700;margin-bottom:6px">Receitas × despesas × aportes (6 meses)</div><svg id="chFlow" role="img" aria-label="Receitas, despesas e aportes por mês"></svg>
-      <div class="legend"><span><i style="background:var(--rec)"></i>Receitas</span><span><i style="background:var(--des)"></i>Despesas</span><span><i style="background:var(--apo)"></i>Aportes</span></div></div>
-    <div class="card"><div style="font-weight:700;margin-bottom:4px">Onde gastei no mês</div><div id="cats"></div></div>
+  <div class="card mt-14">
+    <div class="head-row"><div class="fw7">Gastos mês a mês</div><div class="help m0">Toque numa barra para ver o mês</div></div>
+    <div class="grid trend-sum" id="trendSum"></div>
+    <div class="rel" id="trendWrap"><svg id="chTrend" role="img" aria-label="Despesas por mês com linha de tendência"></svg><div class="tip-box" id="trendTip"></div></div>
+    <div id="trendSel"></div><div class="mt-8" id="trendDemo"></div>
+    <div class="legend"><span><i class="lg-bar"></i>Despesas do mês</span><span><i class="lg-real"></i>Mês selecionado</span><span><i class="lg-cur"></i>Mês em andamento</span><span><i class="lg-line lg-real"></i>Curva dos gastos</span><span><i class="lg-line lg-warn"></i>Tendência</span></div>
+  </div>
+  <div class="card mt-14" id="trendIns"></div>
+  <div class="grid g2 mt-14">
+    <div class="card"><div class="card-title">Receitas × despesas × aportes (6 meses)</div><svg id="chFlow" role="img" aria-label="Receitas, despesas e aportes por mês"></svg>
+      <div class="legend"><span><i class="lg-rec"></i>Receitas</span><span><i class="lg-des"></i>Despesas</span><span><i class="lg-apo"></i>Aportes</span></div></div>
+    <div class="card"><div class="card-title tight">Onde gastei no mês</div><div class="help mb4">Toque numa categoria para ver os lançamentos.</div><div id="cats"></div></div>
   </div>
 </section>
 
 <!-- CARTÃO -->
 <section class="tab" id="t-cartao">
   <div class="ph"><h1>Cartão de crédito</h1><p>O que foi pago em cada fatura e o que ainda falta identificar.</p></div>
-  <div class="mnav"><button data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab3"></div><button data-mv="1" aria-label="Próximo mês">›</button></div>
-  <div style="height:10px"></div>
+  <div class="mnav"><button data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab3" aria-live="polite"></div><button data-mv="1" aria-label="Próximo mês">›</button><button class="btn sm mtoday" data-mtoday hidden>Hoje</button></div>
+  <div class="spacer-10"></div>
   <div id="cycleBox"></div>
 
   <div class="card" id="cardBox"></div><datalist id="catListD"></datalist>
@@ -65,23 +77,19 @@
 
 <!-- META -->
 <section class="tab" id="t-meta">
-  <div class="ph"><h1>Minha meta</h1><p>Quanto você já tem, quanto falta e a evolução do patrimônio.</p></div>
+  <div class="ph"><h1>Minha meta</h1><p>Quanto você já tem, quanto falta, a evolução do patrimônio e a projeção até a meta.</p></div>
 
   <div class="grid g4" id="kMeta"></div>
-  <div class="card" style="margin-top:14px">
+  <div class="card mt-14">
     <div class="chartbox" id="box"><svg id="chTower" role="img" aria-label="Evolução do patrimônio líquido: real e projeção"></svg><div id="tip"></div></div>
     <div class="legend" id="lgTower"></div>
     <div class="help" id="paceMsg"></div>
   </div>
-</section>
-
-<!-- PROJEÇÃO -->
-<section class="tab" id="t-proj">
-  <div class="ph"><h1>Projeção mês a mês</h1><p>Juros sobre juros a partir do saldo de hoje, com o aporte planejado.</p></div>
-
-  <div class="card">
+  <!-- projection (was its own tab; now part of the goal) -->
+  <div class="card mt-14" id="projCard">
+    <div class="card-h"><h2 class="card-t">Projeção mês a mês</h2><div class="help flush">Juros sobre juros a partir do saldo de hoje, com o aporte planejado.</div></div>
     <div class="chartbox" id="box2"><svg id="chProj" role="img" aria-label="Projeção do patrimônio líquido: cenário base, cenário conservador e meta"></svg><div id="tip2"></div></div>
-    <div class="legend" id="lgProj" style="margin-bottom:14px"></div>
+    <div class="legend mb-14" id="lgProj"></div>
     <div class="scroll"><table id="projTbl"></table></div>
     <div class="help" id="projHelp"></div>
   </div>
@@ -90,51 +98,57 @@
 <!-- LANÇAMENTOS -->
 <section class="tab" id="t-lanc">
   <div class="ph"><h1>Lançamentos</h1><p>Registre receitas, despesas e aportes. Leva poucos segundos.</p></div>
-  <h2>➕ Novo lançamento</h2>
-  <div class="card">
-    <div class="seg" id="typeSeg">
+  <div class="quick-add" aria-label="Novo lançamento">
+    <button type="button" class="btn qa des" data-new="despesa">➖ Nova despesa</button><button type="button" class="btn qa rec" data-new="receita">➕ Nova receita</button>
+    <button type="button" class="btn qa fat" data-new="fatura">💳 Pagar fatura</button><button type="button" class="btn qa apo" data-new="aporte">🏦 Aporte</button>
+  </div>
+  <div id="txFormHome"><h2>➕ Novo lançamento</h2>
+  <div class="card" id="txForm">
+    <div class="seg" id="typeSeg" role="radiogroup" aria-label="Tipo de lançamento">
       <label><input type="radio" name="tp" value="despesa" checked><span>➖ Despesa</span></label>
       <label><input type="radio" name="tp" value="receita"><span>➕ Receita</span></label>
       <label><input type="radio" name="tp" value="fatura"><span>💳 Pagar fatura</span></label>
       <label><input type="radio" name="tp" value="aporte"><span>🏦 Aporte (investir)</span></label>
     </div>
-    <div class="formgrid" id="fGrid" style="margin-top:14px">
-      <div><label for="fDate">Data</label><input type="date" id="fDate"></div>
-      <div><label for="fVal">Valor (R$)</label><input id="fVal" inputmode="decimal" placeholder="0,00"></div>
-      <div id="wCat"><label for="fCat">Categoria</label><input id="fCat" list="catList" placeholder="Escolha ou digite"><datalist id="catList"></datalist></div>
-      <div id="wAcc" style="display:none"><label for="fAcc">Investir em</label><select id="fAcc"></select></div>
+    <div class="formgrid mt-14" id="fGrid">
+      <div class="f-val"><label for="fVal">Valor <span class="req" aria-hidden="true">*</span></label><input id="fVal" data-money placeholder="R$ 0,00" required aria-required="true"></div>
+      <div><label for="fDate">Data <span class="req" aria-hidden="true">*</span></label><input type="date" id="fDate" required></div>
+      <div id="wCat" class="f-wide"><label for="fCat">Categoria</label><input id="fCat" list="catList" placeholder="Escolha abaixo ou digite"><datalist id="catList"></datalist><div class="chips qchips" id="catChips"></div></div>
+      <div id="wAcc" hidden><label for="fAcc">Investir em</label><select id="fAcc"></select></div>
       <div id="wFonte"><label for="fFonte" id="lFonte">Pago com</label><select id="fFonte"></select></div>
-      <div><label for="fDesc">Descrição (opcional)</label><input id="fDesc" placeholder="Ex.: mercado, salário, aporte"></div>
+      <div><label for="fDesc">Descrição <span class="opt">(opcional)</span></label><input id="fDesc" placeholder="Ex.: mercado, salário, aporte" enterkeyhint="done"></div>
       <div><label for="fRep">Repetir</label><select id="fRep"><option value="1">Não repetir</option></select></div>
     </div>
-    <div id="wSplit" style="margin-top:14px">
+    <div class="mt-14" id="wSplit">
       <button type="button" class="btn sm" id="splitBtn">✂️ Dividir em categorias</button>
-      <span class="help" id="splitHint" style="margin-left:8px"></span>
-      <div id="splitBox" style="display:none;margin-top:10px;padding:12px;border:1px dashed var(--line);border-radius:12px">
-        <div class="help" style="margin:0 0 10px">Exemplo: fatura de R$ 350 que inclui R$ 99,90 de Wellhub (Saúde). Informe só as partes de <b>outra</b> categoria; o que sobrar fica na categoria principal acima.</div>
+      <span class="help ml-8" id="splitHint"></span>
+      <div class="box-dashed mt-10" id="splitBox" hidden>
+        <div class="help mb10-only">Exemplo: fatura de R$ 350 que inclui R$ 99,90 de Wellhub (Saúde). Informe só as partes de <b>outra</b> categoria; o que sobrar fica na categoria principal acima.</div>
         <div id="splitRows"></div>
-        <div class="row" style="margin-top:8px;align-items:center"><button type="button" class="btn sm" id="splitAdd">+ adicionar parte</button><span class="help" id="splitSum" style="margin:0"></span></div>
+        <div class="row mt-8 ai-c"><button type="button" class="btn sm" id="splitAdd">+ adicionar parte</button><span class="help m0" id="splitSum"></span></div>
       </div>
     </div>
-    <label id="wApply" style="display:none;margin:14px 0 0;font-size:14px;color:var(--ink);font-weight:500;cursor:pointer"><input type="checkbox" id="fApply" checked style="width:auto;margin-right:8px">Aplicar também aos <b id="applyN">0</b> lançamentos futuros iguais (próximos meses)</label>
-    <div id="fatBox" style="display:none;margin-top:14px;padding:12px;border:1px dashed var(--line);border-radius:12px">
-      <div class="help" style="margin:0 0 10px"><b>O que está nesta fatura?</b> Aparecem as compras do ciclo desta fatura (fechamento e vencimento ficam em Ajustes). O que sobrar entra como “Cartão (sem detalhe)”, para não ficar de fora dos seus gastos.</div>
-      <div class="row" style="margin:0 0 10px;align-items:center;gap:10px"><label for="fFm" style="margin:0">Fatura que vence em</label><input type="month" id="fFm" style="max-width:170px"><span class="help" id="fmRange" style="margin:0"></span></div>
-      <label style="display:flex;gap:8px;align-items:center;margin:0 0 8px;font-size:13px;color:var(--ink2);font-weight:500;cursor:pointer"><input type="checkbox" id="fAll" style="width:auto">Mostrar compras de qualquer data (para quando a fatura teve um ciclo diferente do normal)</label>
+    <label class="apply-opt" id="wApply" hidden><input class="w-auto mr-8" type="checkbox" id="fApply" checked>Aplicar também aos <b id="applyN">0</b> lançamentos futuros iguais (próximos meses)</label>
+    <div class="box-dashed mt-14" id="fatBox" hidden>
+      <div class="help mb10-only"><b>O que está nesta fatura?</b> Aparecem as compras do ciclo desta fatura (fechamento e vencimento ficam em Ajustes). O que sobrar entra como “Cartão (sem detalhe)”, para não ficar de fora dos seus gastos.</div>
+      <div class="row fm-row"><label class="m0" for="fFm">Fatura que vence em</label><select class="mw-200" id="fFm"></select><span class="help m0" id="fmRange"></span></div>
+      <label class="check-opt note"><input class="w-auto" type="checkbox" id="fAll">Mostrar compras de qualquer data (para quando a fatura teve um ciclo diferente do normal)</label>
       <div id="fatList"></div>
-      <div style="margin-top:8px"><button type="button" class="btn sm" id="nfAdd">+ Adicionar compra esquecida</button></div>
-      <div class="row" style="margin-top:8px;align-items:center"><button type="button" class="btn sm" id="fatUse">Usar a soma das marcadas como valor da fatura</button><span class="help" id="fatSum" style="margin:0"></span></div>
+      <div class="mt-8"><button type="button" class="btn sm" id="nfAdd">+ Adicionar compra esquecida</button></div>
+      <div class="row mt-8 ai-c"><button type="button" class="btn sm" id="fatUse">Usar a soma das marcadas como valor da fatura</button><span class="help m0" id="fatSum"></span></div>
     </div>
-    <div id="payBox" style="display:none;margin-top:14px"></div>
-    <div class="row" id="fActions" style="margin-top:14px"><button class="btn pri" id="fSave">Adicionar</button><button class="btn" id="fCancel" style="display:none">Cancelar edição</button><span class="help" id="fHelp"></span></div>
-  </div>
+    <div class="mt-14" id="payBox" hidden></div>
+    <div class="help" id="fHelp"></div>
+    <div class="row f-actions" id="fActions"><button type="button" class="btn" id="fCancel" hidden>Cancelar edição</button><button type="button" class="btn pri" id="fSave">Adicionar despesa</button></div>
+  </div></div>
   <h2>📋 Lançamentos do mês</h2>
-  <div class="mnav"><button data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab2"></div><button data-mv="1" aria-label="Próximo mês">›</button></div>
-  <div class="chips" id="chips">
+  <div class="mnav"><button data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab2" aria-live="polite"></div><button data-mv="1" aria-label="Próximo mês">›</button><button class="btn sm mtoday" data-mtoday hidden>Hoje</button></div>
+  <div class="chips" id="chips" role="toolbar" aria-label="Filtrar lançamentos">
     <button class="chip on" data-f="todos">Todos</button><button class="chip" data-f="receita">Receitas</button><button class="chip" data-f="despesa">Despesas</button><button class="chip" data-f="fatura">Faturas</button><button class="chip" data-f="aporte">Aportes</button>
-    <input id="qBox" type="search" placeholder="Buscar descrição ou categoria">
+    <select id="grpSel" class="grp-sel" aria-label="Filtrar por grupo de despesa"></select>
+    <input id="qBox" type="search" placeholder="Buscar descrição ou categoria" aria-label="Buscar lançamentos">
   </div>
-  <div class="card" style="padding:6px 12px"><div class="scroll"><table class="tl" id="txTbl"></table></div></div>
+  <div class="card lst-card"><div class="lst" id="txList"></div></div>
 </section>
 
 <!-- INVESTIMENTOS -->
@@ -142,121 +156,93 @@
   <div class="ph"><h1>Investimentos</h1><p>Saldo de cada conta e evolução mensal do patrimônio.</p></div>
   <h2>💼 Onde está meu dinheiro</h2>
   <div class="card"><div id="accList"></div>
-    <div class="row" style="margin-top:12px"><div class="f" style="max-width:260px"><label for="newAcc">Adicionar conta/investimento</label><input id="newAcc" placeholder="Ex.: XP CDB"></div><button class="btn" id="addAcc">Adicionar</button></div></div>
+    <div class="row mt-12"><div class="f mw-260"><label for="newAcc">Adicionar conta/investimento</label><input id="newAcc" placeholder="Ex.: XP CDB"></div><button class="btn" id="addAcc">Adicionar</button></div></div>
   <h2>🔄 Atualizar saldos</h2>
   <div class="card">
-    <div class="help" style="margin:0 0 12px">Abra o app de cada banco e digite o <b>saldo líquido</b> de hoje (já sem IR). Os aportes que você lançou depois desta data entram sozinhos. Não digite aportes aqui.</div>
+    <div class="help mb12-only">Abra o app de cada banco e digite o <b>saldo líquido</b> de hoje (já sem IR). Os aportes que você lançou depois desta data entram sozinhos. Não digite aportes aqui.</div>
     <div class="formgrid" id="snapForm"></div>
-    <div class="row" style="margin-top:14px"><div class="f" style="max-width:190px"><label for="snapDate">Saldo válido em</label><input type="date" id="snapDate"></div><button class="btn pri" id="snapSave">Salvar saldos</button></div>
+    <div class="row mt-14"><div class="f mw-190"><label for="snapDate">Saldo válido em</label><input type="date" id="snapDate" required></div><button class="btn pri" id="snapSave">Salvar saldos</button></div>
   </div>
   <h2>📈 Histórico do patrimônio</h2>
-  <div class="card"><div class="scroll"><table id="histTbl"></table></div>
+  <div class="card"><div class="scroll"><table id="histTbl" class="stack"></table></div>
     <div class="help">“Rendimento” só aparece nos meses em que você atualizou os saldos. É a diferença do patrimônio, menos os aportes.</div></div>
 </section>
 
 <!-- AJUSTES -->
 <section class="tab" id="t-cad">
   <div class="ph"><h1>Categorias</h1><p>Crie, renomeie ou apague categorias. Use a chave à esquerda para ativar ou desativar: categoria desativada some das listas de lançamento, mas o histórico continua.</p></div>
-  <div style="margin-bottom:12px"><button class="btn" id="sugOpen">✨ Ver categorias sugeridas</button></div>
+  <div class="mb-12"><button class="btn" id="sugOpen">✨ Ver categorias sugeridas</button></div>
   <div class="grid g2" id="catPage"></div>
-  <div class="help" style="margin-top:12px">Ao renomear, todos os lançamentos antigos mudam junto. Ao apagar uma categoria que já foi usada, você escolhe para qual outra categoria os lançamentos vão.</div>
+  <div class="help mt-12">Ao renomear, todos os lançamentos antigos mudam junto. Ao apagar uma categoria que já foi usada, você escolhe para qual outra categoria os lançamentos vão.</div>
 </section>
 
 <section class="tab" id="t-cfg">
   <div class="ph"><h1>Ajustes</h1><p>Meta, premissas da projeção e backup dos dados.</p></div>
   <h2>🎯 Premissas</h2>
   <div class="card"><div class="row">
-    <div class="f"><label for="goal">Meta líquida (R$)</label><input id="goal" inputmode="decimal"></div>
+    <div class="f"><label for="goal">Meta líquida</label><input id="goal" data-money></div>
     <div class="f"><label for="rate">Rendimento líquido (% ao ano)</label><input id="rate" inputmode="decimal"></div>
-    <div class="f"><label for="planned">Aporte mensal planejado (R$)</label><input id="planned" inputmode="decimal"></div></div>
-    <div class="row" style="margin-top:14px">
-      <div class="f"><label for="cClose">Cartão: melhor dia de compra</label><input id="cClose" inputmode="numeric"></div>
-      <div class="f"><label for="cDue">Cartão: dia do vencimento</label><input id="cDue" inputmode="numeric"></div>
-      <div class="f" style="flex:1.4;font-size:13px;color:var(--ink2)"><label style="display:flex;gap:8px;align-items:center;margin:0;cursor:pointer;color:var(--ink);font-weight:500"><input type="checkbox" id="cBiz" style="width:auto">Se o fechamento cair em fim de semana, passa para o próximo dia útil</label></div>
-      <div class="f" style="flex:2;font-size:13px;color:var(--ink2)">O <b>melhor dia de compra</b> é o dia em que começa a fatura nova (a anterior fecha no dia anterior). Veja no app do banco, na fatura: “melhor data de compra”.</div></div>
+    <div class="f"><label for="planned">Aporte mensal planejado</label><input id="planned" data-money></div></div>
+    <div class="row mt-14">
+      <div class="f"><label for="cClose">Cartão: melhor dia de compra</label><input id="cClose" inputmode="numeric" maxlength="2"></div>
+      <div class="f"><label for="cDue">Cartão: dia do vencimento</label><input id="cDue" inputmode="numeric" maxlength="2"></div>
+      <div class="f f-note f14"><label class="check-opt"><input class="w-auto" type="checkbox" id="cBiz">Se o fechamento cair em fim de semana, passa para o próximo dia útil</label></div>
+      <div class="f f-note f2">O <b>melhor dia de compra</b> é o dia em que começa a fatura nova (a anterior fecha no dia anterior). Veja no app do banco, na fatura: “melhor data de compra”.</div></div>
     <div class="help" id="avgHelp"></div>
     <div class="help">Referência: CDI 14,75% bruto ≈ 12,5% líquido (IR 15%). Se a Selic cair, use um valor menor (seu relatório usa 11,16%).</div></div>
   <h2>🧰 Dados</h2>
   <div class="card"><div class="row">
     <button class="btn" id="exp">⬇️ Exportar backup</button><button class="btn" id="imp">⬆️ Importar backup</button>
-    <input type="file" id="file" accept="application/json" style="display:none"><button class="btn dng" id="reset">🗑️ Apagar tudo</button></div>
-    <div class="row" style="margin-top:12px;align-items:center"><button class="btn" id="demoOn">🧪 Gerar dados de teste (dez/2025 a out/2026)</button><button class="btn" id="demoOff">Remover dados de teste</button><span class="help" id="demoN" style="margin:0"></span></div>
+    <input type="file" id="file" accept="application/json" hidden><button class="btn dng" id="reset">🗑️ Apagar tudo</button></div>
+    <div class="row mt-12 ai-c"><button class="btn" id="demoOn">🧪 Gerar dados de teste (dez/2025 a out/2026)</button><button class="btn" id="demoOff">Remover dados de teste</button><span class="help m0" id="demoN"></span></div>
     <div class="help">Os dados ficam só neste navegador. Exporte um backup de vez em quando. Backups da versão anterior (acompanhamento) também podem ser importados.</div></div>
   <div class="note" id="estNote"></div>
 </section>
 <p class="foot">Educacional, não é recomendação de investimento. Projeção: saldo<sub>n</sub> = saldo<sub>n−1</sub> × (1+taxa)<sup>1/12</sup> + aporte planejado.</p>
 </main>
-<dialog id="itemDlg"><form id="itemForm" style="margin:0">
-  <h3 id="itemTitle" style="margin:0 0 14px;font-size:18px">Editar compra</h3>
-  <div class="formgrid" style="grid-template-columns:1fr 1fr">
-    <div style="grid-column:1/-1"><label for="dCat">Categoria</label><input id="dCat" list="catListD" placeholder="Ex.: Transporte"></div>
-    <div style="grid-column:1/-1"><label for="dDesc">Descrição</label><input id="dDesc" placeholder="Ex.: Uber"></div>
-    <div><label for="dVal">Valor (R$)</label><input id="dVal" inputmode="decimal" placeholder="0,00"></div>
-    <div><label for="dDate">Data</label><input type="date" id="dDate"></div>
+<dialog id="itemDlg"><form class="m0" id="itemForm">
+  <h3 class="dlg-h s14" id="itemTitle">Editar compra</h3>
+  <div class="formgrid cols-2">
+    <div class="span-all"><label for="dCat">Categoria <span class="req" aria-hidden="true">*</span></label><input id="dCat" list="catListD" placeholder="Ex.: Transporte"></div>
+    <div class="span-all"><label for="dDesc">Descrição <span class="opt">(opcional)</span></label><input id="dDesc" placeholder="Ex.: Uber"></div>
+    <div><label for="dVal">Valor <span class="req" aria-hidden="true">*</span></label><input id="dVal" data-money placeholder="R$ 0,00"></div>
+    <div><label for="dDate">Data <span class="req" aria-hidden="true">*</span></label><input type="date" id="dDate"></div>
   </div>
-  <label id="dApplyW" style="display:none;margin:14px 0 0;font-size:13.5px;color:var(--ink);font-weight:500;cursor:pointer"><input type="checkbox" id="dApply" checked style="width:auto;margin-right:8px">Aplicar também aos <b id="dApplyN">0</b> lançamentos futuros iguais</label>
-  <div class="row" style="margin-top:18px;justify-content:space-between;align-items:center">
-    <button type="button" class="btn dng" id="dDel">Apagar compra</button>
-    <span style="display:flex;gap:8px"><button type="button" class="btn" id="dCancel">Cancelar</button><button type="button" class="btn pri" id="dSave">Salvar</button></span>
+  <label class="apply-opt sm" id="dApplyW" hidden><input class="w-auto mr-8" type="checkbox" id="dApply" checked>Aplicar também aos <b id="dApplyN">0</b> lançamentos futuros iguais</label>
+  <div class="row dlg-foot between">
+    <button type="button" class="btn dng" id="dDel">Excluir</button>
+    <span class="btn-pair"><button type="button" class="btn" id="dCancel">Cancelar</button><button type="button" class="btn pri" id="dSave">Salvar</button></span>
   </div>
 </form></dialog>
-<dialog id="sugDlg" style="width:min(580px,94vw)"><div style="margin:0">
-  <h3 style="margin:0 0 4px;font-size:18px">Categorias sugeridas</h3>
-  <p style="margin:0 0 12px;color:var(--ink2);font-size:13.5px">Já marquei as que mais combinam com o que você lança. As que você já tem aparecem desativadas. Menos categorias é mais rápido de preencher: marque só o que for usar.</p>
-  <div id="sugList" style="max-height:52vh;overflow:auto;padding-right:6px"></div>
-  <div class="row" style="margin-top:16px;justify-content:flex-end"><button type="button" class="btn" id="sugCancel">Fechar</button><button type="button" class="btn pri" id="sugOk">Adicionar selecionadas</button></div>
+<dialog class="dlg-wide" id="sugDlg"><div class="m0">
+  <h3 class="dlg-h s4">Categorias sugeridas</h3>
+  <p class="dlg-p">Já marquei as que mais combinam com o que você lança. As que você já tem aparecem desativadas. Menos categorias é mais rápido de preencher: marque só o que for usar.</p>
+  <div class="scroll-list" id="sugList"></div>
+  <div class="row dlg-foot s16"><button type="button" class="btn" id="sugCancel">Fechar</button><button type="button" class="btn pri" id="sugOk">Adicionar selecionadas</button></div>
 </div></dialog>
-<dialog id="catDlg"><form id="catForm" style="margin:0">
-  <h3 id="catDlgTitle" style="margin:0 0 8px;font-size:18px">Apagar categoria</h3>
-  <p id="catDlgText" style="margin:0 0 12px;color:var(--ink2);font-size:14px"></p>
+<dialog id="catDlg"><form class="m0" id="catForm">
+  <h3 class="dlg-h" id="catDlgTitle">Apagar categoria</h3>
+  <p class="dlg-p lg" id="catDlgText"></p>
   <label for="catTo">Mover os lançamentos para</label><select id="catTo"></select>
-  <div class="row" style="margin-top:18px;justify-content:flex-end"><button type="button" class="btn" id="catCancel">Cancelar</button><button type="button" class="btn dng" id="catOk">Mover e apagar</button></div>
+  <div class="row dlg-foot"><button type="button" class="btn" id="catCancel">Cancelar</button><button type="button" class="btn dng" id="catOk">Mover e apagar</button></div>
 </form></dialog>
-<dialog id="catMDlg" style="width:min(760px,95vw);max-height:92vh;overflow:auto"><div style="margin:0">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><h3 id="cmTitle" style="margin:0;font-size:19px"></h3><button type="button" class="btn sm" id="cmClose">Fechar</button></div>
-  <div id="cmBody"></div>
-</div></dialog>
-<div id="toast"></div>
+<dialog id="sheet" class="sheet" aria-labelledby="shTitle">
+  <div class="sh-grab" aria-hidden="true"></div>
+  <div class="sh-head"><button type="button" class="sh-btn" id="shBack" aria-label="Voltar" hidden>‹</button><div class="sh-tt"><h3 id="shTitle"></h3><div id="shSub"></div></div><button type="button" class="sh-btn" id="shClose" aria-label="Fechar">✕</button></div>
+  <div class="sh-body" id="shBody" tabindex="-1" autofocus></div>
+  <div class="sh-foot" id="shFoot" hidden></div>
+</dialog>
+<dialog id="confirmDlg" class="confirm" aria-labelledby="cfTitle">
+  <h3 id="cfTitle"></h3><div id="cfText"></div>
+  <label id="cfCheckW" class="cf-check" hidden><input type="checkbox" id="cfCheck"><span id="cfCheckL"></span></label>
+  <div class="cf-actions"><button type="button" class="btn" id="cfCancel">Cancelar</button><button type="button" class="btn pri" id="cfOk">Confirmar</button></div>
+</dialog>
+<button type="button" id="fab" class="fab" aria-label="Novo lançamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+<nav id="bnav" class="bnav" aria-label="Menu principal">
+  <button data-t="resumo" data-i="chart" class="on">Resumo</button><button data-t="lanc" data-i="receipt">Lançamentos</button><button data-t="cartao" data-i="card">Cartão</button><button data-t="meta" data-i="target">Meta</button><button data-t="more" data-i="menu">Mais</button>
+</nav>
+<div id="toast" popover="manual" role="status" aria-live="polite"></div>
 
-<script src="src/core/config.js"></script>
-<script src="src/core/dom.js"></script>
-<script src="src/core/format.js"></script>
-<script src="src/core/dates.js"></script>
-<script src="src/core/input-masks.js"></script>
-<script src="src/domain/store.js"></script>
-<script src="src/domain/accounts.js"></script>
-<script src="src/domain/transactions.js"></script>
-<script src="src/domain/investments.js"></script>
-<script src="src/domain/categories.js"></script>
-<script src="src/domain/card-cycle.js"></script>
-<script src="src/domain/card-invoices.js"></script>
-<script src="src/ui/icons.js"></script>
-<script src="src/ui/toast.js"></script>
-<script src="src/ui/chrome.js"></script>
-<script src="src/ui/render.js"></script>
-<script src="src/ui/navigation.js"></script>
-<script src="src/ui/charts/chart-utils.js"></script>
-<script src="src/ui/charts/tower-chart.js"></script>
-<script src="src/ui/charts/projection-chart.js"></script>
-<script src="src/ui/views/kpi.js"></script>
-<script src="src/ui/views/goal.js"></script>
-<script src="src/ui/views/projection.js"></script>
-<script src="src/ui/views/summary-cashflow.js"></script>
-<script src="src/ui/views/summary-trend.js"></script>
-<script src="src/ui/views/summary-insights.js"></script>
-<script src="src/ui/views/credit-card.js"></script>
-<script src="src/ui/views/transaction-list.js"></script>
-<script src="src/ui/views/transaction-form.js"></script>
-<script src="src/ui/views/transaction-split.js"></script>
-<script src="src/ui/views/invoice-form.js"></script>
-<script src="src/ui/views/transaction-form-events.js"></script>
-<script src="src/ui/views/transaction-save.js"></script>
-<script src="src/ui/views/pay-invoice.js"></script>
-<script src="src/ui/views/item-dialog.js"></script>
-<script src="src/ui/views/investments.js"></script>
-<script src="src/ui/views/categories.js"></script>
-<script src="src/ui/views/settings.js"></script>
-<script src="src/ui/views/settings-demo.js"></script>
-<script src="src/app.js"></script>
+<script type="module" src="src/app.js"></script>
 </body>
 </html>
