@@ -10,6 +10,8 @@ export const seed=()=>({v:2,goal:1300000,rate:12.5,planned:0,nid:1,
   accounts:[{id:'nu',name:'Nubank'},{id:'in',name:'Inter'},{id:'s28',name:'Tesouro Selic 2028'},{id:'s31',name:'Tesouro Selic 2031'}],
   snaps:[['nu',157062.83,true,159830.14],['in',154796,true],['s28',395040,true],['s31',423375,true]].map(([acc,value,est,gross])=>gross?({date:'2026-11-06',acc,value,est,gross}):({date:'2026-11-06',acc,value,est})),
   tx:[]});
+// nothing at all: no accounts, balances or records (what "Apagar tudo" leaves; the goal and the rate are settings and are kept)
+export const blankState=()=>({v:2,goal:S?S.goal:1300000,rate:S?S.rate:12.5,planned:0,nid:1,accounts:[],snaps:[],tx:[]});
 // Santander was emptied: moves the balance to Nubank and archives the account (once)
 export function migrate(){
   const sa=S.accounts.find(a=>a.id==='sa'),nu=S.accounts.find(a=>a.id==='nu');

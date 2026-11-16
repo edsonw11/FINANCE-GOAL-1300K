@@ -230,6 +230,22 @@
     const pf=$('portfolio').textContent;need(/Ações/.test(pf)&&/FIIs/.test(pf)&&/PETR4/.test(pf)&&/HGLG11/.test(pf),'portfolio: '+pf.slice(0,200));
     $('impOpenInv').click();await chooseFile('nota.txt',note);await waitFor(()=>q('#ntList .imp-row'),'note review 2');$('ntGo').click();await tick();$('cfOk').click();await waitFor(()=>!$('sheet').open,'note again');
     need(stored().tx.length===n0+2,'duplicated aportes');});
-  await step('remove test data',async()=>{$('demoOff').click();await confirmYes();need(!/lançamentos de teste/.test($('demoN').textContent),'still there');});
+  await step('remove test data',async()=>{$('demoOff').click();await confirmYes();need(!/lançamentos de teste/.test($('demoN').textContent),'still there');
+    need(!/teste/.test($('accList').textContent)&&!/teste/.test($('portfolio').textContent),'demo investments still there');});
+  await step('generate test data fills investments and portfolio; "Apagar tudo" leaves nothing',async()=>{
+    $('demoOn').click();await tick();if($('confirmDlg').open)$('cfOk').click();await tick();
+    need(/Renda fixa \(teste\)/.test($('accList').textContent),'demo account missing');need(/PETR4/.test($('portfolio').textContent),'demo portfolio missing');
+    const circles=qa('#distCard svg.donut circle[data-key]').length,calls=qa('#distCard .donut-call'),pcts=calls.map(c=>parseFloat(c.querySelector('.donut-pct').textContent.replace(',','.')));
+    need(circles>=4&&circles===calls.length,'slices '+circles+' vs labels '+calls.length);need(Math.abs(pcts.reduce((a,b)=>a+b,0)-100)<0.6,'label % sum '+pcts.reduce((a,b)=>a+b,0));
+    need(!$('distCard').querySelector('.dist-legend'),'no separate legend');
+    const ys=side=>calls.filter(c=>c.querySelector('.donut-name').getAttribute('text-anchor')===side).map(c=>+c.querySelector('.donut-name').getAttribute('y')).sort((x,y)=>x-y);
+    need(['start','end'].every(sd=>ys(sd).every((y,i,a)=>i===0||y-a[i-1]>=20)),'labels overlap: '+ys('start')+' | '+ys('end'));
+    q('[data-dist-by=type]').click();const tl=qa('#distCard .donut-name').map(e=>e.textContent);
+    need(/Renda fixa/.test(tl.join('|'))&&/Ações/.test(tl.join('|')),'by type: '+tl);
+    qa('#distCard .donut-call')[0].dispatchEvent(new MouseEvent('click',{bubbles:true}));need($('distCard').querySelectorAll('.donut circle[opacity]').length>=1&&/R\$/.test($('distCard').querySelector('.donut-top').textContent),'selecting a label dims the others');
+    qa('#distCard .donut-call')[0].dispatchEvent(new MouseEvent('click',{bubbles:true}));need(!$('distCard').querySelector('.donut circle[opacity]'),'second click clears');q('[data-dist-by=account]').click();
+    $('reset').click();await confirmYes();await tick();await tick();
+    need($('accList').children.length<=1,'accounts left: '+$('accList').textContent.slice(0,120));need(!/PETR4|HGLG11/.test($('portfolio').textContent),'portfolio left');
+    need(stored().tx.length===0&&!(stored().trades||[]).length&&stored().snaps.length===0,'storage not empty');});
   document.documentElement.setAttribute('data-smoke',out.concat(errs).join(' | '));
 })();

@@ -45,7 +45,7 @@
   #chips{flex-wrap:wrap;overflow:visible;margin:10px 0}
   #chips input{max-width:none;margin:4px 0 0;flex:1 1 100%;order:9}
   .qchips{flex-wrap:wrap;margin:8px 0 0;padding:0;overflow:visible}
-  .row{gap:10px}.f{min-width:0;flex:1 1 140px}
+  .row{gap:10px}.f{min-width:0;flex:1 1 140px}.f.f-note,.f.f-note.f14,.f.f-note.f2{flex:1 1 100%}
   .formgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
   .formgrid>div{min-width:0}
   .f-val input{font-size:22px;font-weight:800;min-height:52px}

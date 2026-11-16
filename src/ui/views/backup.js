@@ -4,7 +4,7 @@
  * by the domain) and "erase everything".
  */
 import { $ } from '../../core/dom.js';
-import { S, replaceState, seed } from '../../domain/store.js';
+import { S, replaceState, blankState } from '../../domain/store.js';
 import { importBackup } from '../../domain/settings-commands.js';
 import { toast } from '../toast.js';
 import { askConfirm } from '../components/confirm.js';
@@ -25,6 +25,6 @@ $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileR
     const r=importBackup(d);if(r.error)return toast('⚠️ '+r.error);
     runCommand(()=>replaceState(r.state),{ok:r.converted?'Backup antigo convertido. Confira os saldos em Investimentos.':'✅ Backup importado'});};
   rd.readAsText(f);e.target.value='';};
-$('reset').onclick=async()=>{if(await askConfirm({title:'Apagar tudo',html:'Apagar <b>todos</b> os lançamentos, saldos e ajustes e voltar ao estado inicial?<div class="bd-note mt-10">Não dá para desfazer. Exporte um backup antes, se quiser guardar.</div>',ok:'Apagar tudo',danger:true}))
-  runCommand(()=>replaceState(seed()),{ok:'Dados apagados'});};
+$('reset').onclick=async()=>{if(await askConfirm({title:'Apagar tudo',html:'Apagar <b>todos</b> os lançamentos, contas de investimento, carteira, saldos e importações? Fica só a meta e a taxa.<div class="bd-note mt-10">Não dá para desfazer. Exporte um backup antes, se quiser guardar.</div>',ok:'Apagar tudo',danger:true}))
+  runCommand(()=>replaceState(blankState()),{ok:'Tudo apagado: lançamentos, investimentos, carteira e saldos'});};
 }

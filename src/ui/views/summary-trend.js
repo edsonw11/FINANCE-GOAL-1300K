@@ -52,7 +52,7 @@ export function renderTrend(){
     g+=`<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="${css('--card')}" stroke-width="6" stroke-linecap="round" pointer-events="none"/><line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="${c}" stroke-width="3" stroke-linecap="round" pointer-events="none"/>`+
       `<text x="${x1+14}" y="${y1+4}" font-size="${narrow?10.5:12}" font-weight="700" fill="${c}" pointer-events="none">${slope>=0?'▲':'▼'} ${pc(rel)}${narrow?'':'/mês'}</text>`;}
   else if(!narrow)g+=`<text x="${L+8}" y="${T+6}" font-size="12" fill="${css('--muted')}">A linha de tendência aparece com 3 meses fechados com despesas.</text>`;
-  $('trendDemo').innerHTML=n<3?'<button type="button" class="btn sm" id="trendDemoBtn">🧪 Gerar dados de teste (dez/2025 a out/2026)</button> <span class="help flush">Para ver a linha de tendência. Depois remova em Ajustes → Dados.</span>':(S.tx.some(t=>t.demo)?'<span class="help flush">🧪 Gráfico com dados de teste. Remova em Ajustes → Dados.</span>':'');
+  $('trendDemo').innerHTML=n<3?'<button type="button" class="btn sm" id="trendDemoBtn">🧪 Gerar dados de teste (últimos 12 meses)</button> <span class="help flush">Para ver a linha de tendência. Depois remova em Ajustes → Dados.</span>':(S.tx.some(t=>t.demo)?'<span class="help flush">🧪 Gráfico com dados de teste. Remova em Ajustes → Dados.</span>':'');
   if($('trendDemoBtn'))$('trendDemoBtn').onclick=generateDemoData;
   sv.setAttribute('viewBox',`0 0 ${W} ${H}`);sv.innerHTML=g;
   sv.querySelectorAll('.tb').forEach(el=>el.onclick=()=>{ui.cur=el.dataset.tm;render();});

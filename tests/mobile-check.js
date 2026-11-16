@@ -23,6 +23,8 @@
       D.getElementById('demoOn').click();await wait(50);
       D.querySelector('#t-resumo [data-mv="-1"]').click();await wait(20); // previous month, which has closed data
       for(const t of ['resumo','lanc','cartao','meta','inv','cad','cfg']){D.querySelector('#nav [data-t='+t+']').click();await wait(30);check('tab '+t);
+        // a help note inside a form row must use the full row, not a narrow sliver
+        D.documentElement.clientWidth<=430&&D.querySelectorAll('#t-'+t+' .f-note').forEach(n=>{const row=n.parentElement.getBoundingClientRect().width;if(n.getBoundingClientRect().width<row*0.6)bad.push('narrow note on '+t+': '+Math.round(n.getBoundingClientRect().width)+'/'+Math.round(row));});
         // charts: drawn at (about) real size, so the text is not shrunk
         D.querySelectorAll('#t-'+t+' svg[id^=ch][viewBox]').forEach(sv=>{const vb=+sv.getAttribute('viewBox').split(' ')[2],r=sv.getBoundingClientRect().width;
           if(r&&w<=430&&r/vb<0.9)bad.push(t+' chart '+sv.id+' scaled '+(r/vb).toFixed(2));});

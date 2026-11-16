@@ -41,5 +41,20 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('commands');
   // demo data
   run("S=seed();S.tx=[{id:1,type:'despesa',date:'2026-10-01',value:9,cat:'Mercado',fonte:'caixa'}];initCats();");
   const n=run("addDemoData()");ok('demo created',n>100&&run("S.tx.filter(t=>t.demo).length")===n);
+  const kinds=run("[...new Set(S.tx.filter(t=>t.demo).map(t=>t.type+'/'+t.fonte))].sort()");
+  ok('demo has expenses (cash and card), income and aportes',['aporte/undefined','despesa/caixa','despesa/cartao','receita/caixa'].every(k=>kinds.includes(k)));
+  ok('demo has a portfolio with stocks, FIIs and ETFs',['acao','fii','etf'].every(c=>run("S.trades.some(t=>t.cls==="+JSON.stringify(c)+")")));
+  ok('demo created accounts for the portfolio',run("S.accounts.some(a=>a.demo)"));
+  ok('demo investments have balances (simulated)',run("S.accounts.filter(a=>a.demo&&/teste/.test(a.name)).every(a=>balance(a.id,'2026-11-10').v>0)"));
+  run("S.nid=1000");const accBefore=run("S.accounts.filter(a=>!a.demo).length");
   eq('demo removal keeps real data',[run("removeDemoData()"),run("S.tx.length")],[n,1]);
+  eq('removal takes everything: trades, accounts it created, their balances',run("[S.trades.length,S.accounts.length,S.snaps.some(s=>/^a/.test(s.acc))]"),[0,accBefore,false]);
+  eq('blank state has no investments at all',run("(b=>[b.accounts.length,b.snaps.length,b.tx.length])(blankState())"),[0,0,0]);
+  ok('screens that need the series do not break on a blank app',run("(S=blankState(),initCats(),realSeries().length===1&&avgContribution(realSeries())===0&&project(realSeries()).proj.length>0)"));
+  eq('nothing left to remove',run("hasDemoData()"),false);
+  run("addDemoData();addDemoData()");eq('generating twice does not pile up',run("S.trades.filter(t=>t.demo).length"),12);
+  eq('demo covers the last 12 months, the current one included, with nothing in the future',
+    run("(()=>{const ms=[...new Set(S.tx.filter(t=>t.demo).map(t=>t.date.slice(0,7)))].sort();return [ms.length,ms[ms.length-1]===today().slice(0,7),S.tx.every(t=>t.date<=today())]})()"),[12,true,true]);
+  eq('demo has 4 investment accounts with a balance every month',run("(()=>{const a=S.accounts.filter(x=>x.demo&&/teste/.test(x.name));return [a.length,a.every(x=>S.snaps.filter(s=>s.acc===x.id).length===12)]})()"),[4,true]);
+  run("removeDemoData()");
   return res;};

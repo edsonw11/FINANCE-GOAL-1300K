@@ -12,12 +12,12 @@
   --bg:#f3f5f9; --card:#ffffff; --ink:#18202f; --ink2:#566074; --muted:#8a94a8; --line:#e4e8f0; --soft:#f0f3f9;
   --brand:#2f5fd0; --rec:#17956f; --des:#e0483f; --apo:#3b82f6; --warn:#d99a1c; --meta:#d6336c; --proj:#9db6e0;
   --shadow:0 1px 2px rgba(20,30,50,.05),0 4px 14px rgba(20,30,50,.05);
-  --c0:#8a05be; --c1:#e8710a; --c2:#2f6fd0; --c3:#1f9d83; --c4:#7b869b; --c5:#c2410c; --c6:#0e7490; --c7:#a21caf;
+  --c0:#8a05be; --c1:#e8710a; --c2:#2f6fd0; --c3:#1f9d83; --c4:#7b869b; --c5:#c2410c; --c6:#0e7490; --c7:#a21caf; --c8:#b8860b; --c9:#4d7c0f; --c10:#be123c; --c11:#4338ca;
 }
 @media (prefers-color-scheme: dark){
   :root{--bg:#0e121a; --card:#171c27; --ink:#eef1f7; --ink2:#b3bccd; --muted:#7a859a; --line:#262d3d; --soft:#1e2433;
     --brand:#6b9bec; --rec:#3cc4a6; --des:#ff7a70; --apo:#6aa3ff; --warn:#f0b94a; --meta:#ff6b9a; --proj:#4a6aa5; --shadow:none;
-    --c0:#b65be0; --c1:#f29a4a; --c2:#6b9bec; --c3:#3cc4a6; --c4:#9aa5ba; --c5:#f08a5a; --c6:#4cc3dd; --c7:#d27be0;}
+    --c0:#b65be0; --c1:#f29a4a; --c2:#6b9bec; --c3:#3cc4a6; --c4:#9aa5ba; --c5:#f08a5a; --c6:#4cc3dd; --c7:#d27be0; --c8:#e0b84a; --c9:#8fcf5a; --c10:#f27a95; --c11:#8c8cf0;}
 }
 </style>
 <style>
@@ -512,7 +512,7 @@ label.apply-opt.sm{font-size:13.5px}
 label.check-opt{display:flex;gap:8px;align-items:center;margin:0;cursor:pointer;color:var(--ink);font-weight:500}
 label.check-opt.note{margin:0 0 8px;font-size:13px;color:var(--ink2)}
 .f.f-note{font-size:13px;color:var(--ink2)}
-.f.f-note.f14{flex:1.4}.f.f-note.f2{flex:2}
+.f.f-note.f14{flex:1.4 1 220px}.f.f-note.f2{flex:2 1 260px} /* a basis, so a note wraps to its own line instead of squeezing into a sliver */
 dialog h3.dlg-h{margin:0 0 8px;font-size:18px}
 dialog h3.dlg-h.s4{margin-bottom:4px}
 dialog h3.dlg-h.s14{margin-bottom:14px}
@@ -596,6 +596,16 @@ dialog.dlg-wide{width:min(580px,94vw)}
 .pf-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}.pf-total b{font-size:1.3em}
 .pf-group{margin-bottom:12px}.pf-head{display:flex;justify-content:space-between;border-bottom:1px solid var(--line,#e5e7eb);padding-bottom:4px;margin-bottom:4px}
 .pf-row{display:grid;grid-template-columns:5.5em 1fr auto;gap:8px;padding:3px 0;font-size:.95em}
+
+.dist-tabs{display:inline-flex;gap:4px;background:var(--soft);border-radius:999px;padding:3px;margin-bottom:12px}
+.dist-tab{border:0;background:transparent;color:var(--ink2);font:inherit;font-weight:600;padding:6px 14px;border-radius:999px;cursor:pointer;min-height:36px}
+.dist-tab.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.donut circle[data-key]{cursor:pointer}
+
+.donut{display:block;width:100%;max-width:700px;margin:0 auto;height:auto}
+.donut-top.sm{font-size:14px}.donut-top{font-size:22px;font-weight:800;fill:var(--ink)}.donut-bottom{font-size:11px;fill:var(--ink2)}
+.donut-name{font-size:12px;font-weight:700;fill:var(--ink)}.donut-pct{font-size:12px;font-weight:800}.donut-bottom{font-size:12px}
+.donut-call,.donut circle[data-key]{cursor:pointer}
 </style>
 <style>
 /* 09-mobile.css: phones and small tablets (mobile-first adjustments, 320 to 720 px) */
@@ -645,7 +655,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
   #chips{flex-wrap:wrap;overflow:visible;margin:10px 0}
   #chips input{max-width:none;margin:4px 0 0;flex:1 1 100%;order:9}
   .qchips{flex-wrap:wrap;margin:8px 0 0;padding:0;overflow:visible}
-  .row{gap:10px}.f{min-width:0;flex:1 1 140px}
+  .row{gap:10px}.f{min-width:0;flex:1 1 140px}.f.f-note,.f.f-note.f14,.f.f-note.f2{flex:1 1 100%}
   .formgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
   .formgrid>div{min-width:0}
   .f-val input{font-size:22px;font-weight:800;min-height:52px}
@@ -883,6 +893,8 @@ dialog.dlg-wide{width:min(580px,94vw)}
 <!-- INVESTIMENTOS -->
 <section class="tab" id="t-inv">
   <div class="ph"><h1>Investimentos</h1><p>Saldo de cada conta e evolução mensal do patrimônio.</p></div>
+  <h2>🍩 Distribuição dos investimentos</h2>
+  <div class="card" id="distCard"></div>
   <h2>💼 Onde está meu dinheiro</h2>
   <div class="card"><div id="accList"></div>
     <div class="row mt-12"><div class="f mw-260"><label for="newAcc">Adicionar conta/investimento</label><input id="newAcc" placeholder="Ex.: XP CDB"></div><button class="btn" id="addAcc">Adicionar</button></div></div>
@@ -928,7 +940,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
   <div class="card"><div class="row">
     <button class="btn" id="exp">⬇️ Exportar backup</button><button class="btn" id="imp">⬆️ Importar backup</button>
     <input type="file" id="file" accept="application/json" hidden><button class="btn dng" id="reset">🗑️ Apagar tudo</button></div>
-    <div class="row mt-12 ai-c"><button class="btn" id="demoOn">🧪 Gerar dados de teste (dez/2025 a out/2026)</button><button class="btn" id="demoOff">Remover dados de teste</button><span class="help m0" id="demoN"></span></div>
+    <div class="row mt-12 ai-c"><button class="btn" id="demoOn">🧪 Gerar dados de teste (últimos 12 meses)</button><button class="btn" id="demoOff">Remover dados de teste</button><span class="help m0" id="demoN"></span></div>
     <div class="help">Os dados ficam só neste navegador. Exporte um backup de vez em quando. Backups da versão anterior (acompanhamento) também podem ser importados.</div></div>
   <div class="note" id="estNote"></div>
 </section>
@@ -986,7 +998,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
  * Responsibility: Static constants and catalogs (storage key, palette, month names, default and suggested categories).
  */
 const STORAGE_KEY='metaapp.v2';
-const COLORS=['--c0','--c1','--c2','--c3','--c4','--c5','--c6','--c7'];
+const COLORS=['--c0','--c1','--c2','--c3','--c4','--c5','--c6','--c7','--c8','--c9','--c10','--c11'];
 const MONTH_NAMES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 const DEFAULT_CATEGORIES={despesa:{'Moradia':'🏠','Mercado':'🛒','Transporte':'🚗','Saúde':'💊','Lazer':'🎬','Restaurantes':'🍽️','Alimentação (outros)':'🥐','Educação':'📚','Luz':'💡','Água':'💧','Internet':'🌐','Telefone':'📱','Gás':'🔥','Assinaturas':'📺','Cartão de crédito':'💳','Viagem':'✈️','Imprevistos / Outros':'⚠️'},
             receita:{'Salário':'💼','VR/VA (benefício)':'🍴','Freelance':'🧑‍💻','Rendimentos':'📈','Renda Extra':'➕','Serviços':'🛠️','Outros':'💰'}};
@@ -1219,6 +1231,8 @@ const seed=()=>({v:2,goal:1300000,rate:12.5,planned:0,nid:1,
   accounts:[{id:'nu',name:'Nubank'},{id:'in',name:'Inter'},{id:'s28',name:'Tesouro Selic 2028'},{id:'s31',name:'Tesouro Selic 2031'}],
   snaps:[['nu',157062.83,true,159830.14],['in',154796,true],['s28',395040,true],['s31',423375,true]].map(([acc,value,est,gross])=>gross?({date:'2026-11-06',acc,value,est,gross}):({date:'2026-11-06',acc,value,est})),
   tx:[]});
+// nothing at all: no accounts, balances or records (what "Apagar tudo" leaves; the goal and the rate are settings and are kept)
+const blankState=()=>({v:2,goal:S?S.goal:1300000,rate:S?S.rate:12.5,planned:0,nid:1,accounts:[],snaps:[],tx:[]});
 // Santander was emptied: moves the balance to Nubank and archives the account (once)
 function migrate(){
   const sa=S.accounts.find(a=>a.id==='sa'),nu=S.accounts.find(a=>a.id==='nu');
@@ -1819,6 +1833,31 @@ function stackTables(root){
   });
 }
 
+// ---- src/domain/ticker-class.js
+/**
+ * domain/ticker-class.js
+ * Responsibility: tells which kind of asset a B3 ticker is (stock, FII, ETF, BDR) so the portfolio is
+ * grouped in a way a person understands. A guess from the ticker and the name on the note; the user can
+ * correct it in the review. Pure rules, no data.
+ */
+const ASSET_CLASS={stock:'acao',fii:'fii',etf:'etf',bdr:'bdr'};
+const ASSET_LABEL={acao:'Ações',fii:'FIIs',etf:'ETFs',bdr:'BDRs'};
+const ASSET_ICON={acao:'📈',fii:'🏢',etf:'🧺',bdr:'🌎'};
+const ASSET_ORDER=['acao','fii','etf','bdr'];
+// ETFs that end in 11 (the ones that are common in Brazil); a name with ETF/ISHARES/INDEX also counts
+const KNOWN_ETF=new Set(['IVVB11','BOVA11','SMAL11','HASH11','GOLD11','DIVO11','FIND11','MATB11','NASD11','SPXI11','XINA11','BOVV11','QBTC11','ETHE11','B5P211','IMAB11','IRFM11','LFTS11','LFTB11']);
+// units that end in 11 but are stocks
+const KNOWN_UNIT=new Set(['SANB11','TAEE11','KLBN11','BPAC11','ALUP11','SAPR11','ENGI11','CPLE11','BRBI11','SULA11','ITUB11','IGTI11','AZUL11']);
+function classOfTicker(ticker,name){
+  const t=String(ticker||'').toUpperCase(),n=String(name||'').toUpperCase();
+  if(/^[A-Z]{4}(34|35|39)$/.test(t))return ASSET_CLASS.bdr;
+  if(KNOWN_ETF.has(t)||/\b(ETF|ISHARES|INDEX|INDICE)\b/.test(n))return ASSET_CLASS.etf;
+  if(KNOWN_UNIT.has(t))return ASSET_CLASS.stock;
+  if(/^[A-Z]{4}11$/.test(t))return ASSET_CLASS.fii;
+  if(/\bFII\b/.test(n))return ASSET_CLASS.fii;
+  return ASSET_CLASS.stock;
+}
+
 // ---- src/domain/investments.js
 /**
  * domain/investments.js
@@ -1829,8 +1868,30 @@ function stackTables(root){
 
 
 
-function firstMonth(){const ds=S.snaps.map(s=>s.date).concat(S.tx.filter(t=>t.type==='aporte').map(t=>t.date)).sort();return mOf(ds[0]);}
+
+function firstMonth(){const ds=S.snaps.map(s=>s.date).concat(S.tx.filter(t=>t.type==='aporte').map(t=>t.date)).sort();return mOf(ds[0]||today());} // no balance or aporte yet (a blank app): start this month
 function monthsList(){const a=mIdx(firstMonth()),b=mIdx(mOf(today()));const r=[];for(let i=a;i<=b;i++)r.push(mKey(i));return r;}
+// where the money is, as {total, items:[{id, name, value, share, count}]} biggest first (share of the total).
+// by 'account': one item per account with a balance; beyond MAX_SLICES the small ones become "Outras".
+// by 'type': accounts named like an asset class (Ações, FIIs, ETFs, BDRs) by class, everything else is "Renda fixa e outros".
+const DIST_MAX_SLICES=7,DIST_OTHER_ID='_other',DIST_FIXED_ID='_fixed';
+function investmentDistribution(day=today(),by='account'){
+  const rows=S.accounts.filter(a=>!a.archived).map(a=>({id:a.id,name:a.name,value:balance(a.id,day).v})).filter(r=>r.value>0.005);
+  const tot=rows.reduce((x,r)=>x+r.value,0);
+  let items=rows.map(r=>({...r,count:1}));
+  if(by==='type'){
+    const g={};
+    rows.forEach(r=>{const cls=Object.keys(ASSET_LABEL).find(k=>ASSET_LABEL[k]===r.name),id=cls||DIST_FIXED_ID,name=cls?r.name:'Renda fixa e outros';
+      const x=g[id]||(g[id]={id,name,value:0,count:0});x.value+=r.value;x.count++;});
+    items=Object.values(g);
+  }
+  items.sort((a,b)=>b.value-a.value);
+  if(by!=='type'&&items.length>DIST_MAX_SLICES+1){
+    const rest=items.slice(DIST_MAX_SLICES),sum=rest.reduce((x,r)=>x+r.value,0);
+    items=items.slice(0,DIST_MAX_SLICES).concat([{id:DIST_OTHER_ID,name:'Outras ('+rest.length+')',value:sum,count:rest.length}]);
+  }
+  return {total:tot,items:items.map(r=>({...r,share:tot?r.value/tot:0}))};
+}
 function realSeries(){
   const ms=monthsList();
   return ms.map((m,n)=>{
@@ -3075,31 +3136,97 @@ function bindInsights(){
   $('sheet').addEventListener('close',()=>{const b=$('trendIns'),tr=ui.selectedInsightCategory&&[...b.querySelectorAll('[data-cm]')].find(x=>x.querySelector('td').textContent.trim().endsWith(ui.selectedInsightCategory));if(tr)markSel(b,tr);});
 }
 
-// ---- src/domain/demo-data.js
+// ---- src/domain/demo-extras.js
 /**
- * domain/demo-data.js
- * Responsibility: test data (Dec/2025 to Oct/2026) marked with demo:true, so it can be removed
- * without touching the user's real records. Deterministic (seeded random).
+ * domain/demo-extras.js
+ * Responsibility: the rest of the test data, so that every screen has something to show: salary and extra
+ * income, contributions (aportes), card purchases, and a small portfolio (trades of stocks, FIIs and ETFs with
+ * the contribution each buy creates). Everything is marked demo:true, so removeDemoData() takes it all away.
+ * Deterministic: the same call always creates the same records.
  */
 
 
 
 
-const hasDemoData=()=>S.tx.some(t=>t.demo);
-function removeDemoData(){const n=S.tx.filter(t=>t.demo).length;S.tx=S.tx.filter(t=>!t.demo);invalidateAllocation();return n;}
+const DEMO_MONTHS=12;
+// the last 12 months, ending in the current one (so the screen the user opens first has data)
+const demoMonths=()=>{const end=mIdx(mOf(today()));return Array.from({length:DEMO_MONTHS},(_,k)=>mKey(end-(DEMO_MONTHS-1)+k));};
+// a day of that month, never later than today (no records in the future)
+const demoDate=(month,day)=>{const t=today(),d=month+'-'+String(day).padStart(2,'0');return d>t?t:d;};
+// [month offset from the first month, ticker, class, side, qty, price]
+const DEMO_TRADES=[[0,'PETR4','acao','C',100,36.4],[1,'HGLG11','fii','C',20,155.2],[2,'IVVB11','etf','C',10,298.5],[3,'VALE3','acao','C',40,62.1],
+  [4,'HGLG11','fii','C',15,157.9],[5,'PETR4','acao','C',60,37.8],[6,'IVVB11','etf','C',8,305.3],[8,'VALE3','acao','V',15,64.7],[9,'XPLG11','fii','C',30,98.4],[10,'BOVA11','etf','C',12,128.6],[11,'HGLG11','fii','C',10,161.3],[11,'ITSA4','acao','C',200,10.2]];
+const demoAccountFor=cls=>{
+  const name=ASSET_LABEL[cls],found=S.accounts.find(a=>!a.archived&&a.name===name);
+  if(found)return found.id;
+  const id='a'+(S.nid++);S.accounts.push({id,name,demo:true});return id;
+};
+// investment accounts with made-up balances that grow every month, so the Investments screen and the chart are full
+const DEMO_ACCOUNTS=[['Renda fixa (teste)',18000,0.009,1500],['Tesouro Selic (teste)',30000,0.010,0],['CDB liquidez diária (teste)',9000,0.0085,300],['Reserva de emergência (teste)',12000,0.008,0]];
+function addDemoAccounts(months){
+  const ids=DEMO_ACCOUNTS.map(([name,v0,rate,aporte])=>{
+    const id='a'+(S.nid++);S.accounts.push({id,name,demo:true});
+    let v=v0;months.forEach((m,k)=>{
+      const date=demoDate(m,28),gross=Math.round(v*1.03*100)/100;
+      S.snaps.push({date,acc:id,value:Math.round(v*100)/100,est:false,gross});
+      v=v*(1+rate)+aporte;});
+    return id;});
+  return {ids};
+}
+const put=(t)=>{S.tx.push({id:S.nid++,demo:true,...t});};
+function addDemoExtras(){
+  const months=demoMonths(),accs=addDemoAccounts(months);
+  ensureCat('receita','Salário');ensureCat('receita','Outros');ensureCat('despesa','Mercado');ensureCat('despesa','Lazer');
+  months.forEach((m,k)=>{
+    put({type:'receita',date:demoDate(m,5),value:6500+k*40,desc:'Salário (teste)',cat:'Salário',fonte:'caixa'});
+    if(k%4===2)put({type:'receita',date:demoDate(m,20),value:850,desc:'Renda extra (teste)',cat:'Outros',fonte:'caixa'});
+    // the monthly aporte of each account is also a record, so the yield of the month is only the growth
+    DEMO_ACCOUNTS.forEach(([name,,,aporte],i)=>{if(aporte>0)put({type:'aporte',date:demoDate(m,6),value:aporte,desc:'Aporte mensal (teste)',acc:accs.ids[i]});});
+    [['Mercado','Compra no cartão (teste)',240+k*6,9],['Lazer','Cinema e jantar (teste)',180+k*5,17]].forEach(([cat,desc,v,day])=>
+      put({type:'despesa',date:demoDate(m,day),value:v,desc,cat,fonte:'cartao'}));
+  });
+  DEMO_TRADES.forEach(([k,ticker,cls,side,qty,price],i)=>{
+    const date=demoDate(months[k],12),fees=Math.round(qty*price*0.0005*100)/100+1;
+    S.trades=S.trades||[];
+    S.trades.push({id:'t'+(S.nid++),key:'demo:'+i,demo:true,date,ticker,cls,name:'',side,qty,price,fees});
+    if(side==='C')put({type:'aporte',date,value:Math.round((qty*price+fees)*100)/100,desc:'Compra '+ticker+' '+qty+' × '+String(price).replace('.',','),acc:demoAccountFor(cls)});
+  });
+}
+
+// ---- src/domain/demo-data.js
+/**
+ * domain/demo-data.js
+ * Responsibility: test data (the last 12 months, ending now) marked with demo:true, so it can be removed
+ * (all of it: records, trades, accounts it created) without touching the user's real records. Deterministic (seeded random).
+ */
+
+
+
+
+const hasDemoData=()=>S.tx.some(t=>t.demo)||(S.trades||[]).some(t=>t.demo);
+// takes away EVERYTHING the test data created: records, trades, the accounts it made and their balances
+function removeDemoData(){
+  const n=S.tx.filter(t=>t.demo).length;
+  S.tx=S.tx.filter(t=>!t.demo);
+  S.trades=(S.trades||[]).filter(t=>!t.demo);
+  const gone=new Set(S.accounts.filter(a=>a.demo).map(a=>a.id));
+  S.accounts=S.accounts.filter(a=>!a.demo);S.snaps=S.snaps.filter(s=>!gone.has(s.acc));
+  invalidateAllocation();return n;
+}
 function addDemoData(){
   removeDemoData();
   let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
   const base=[['Moradia','Condomínio',685,0,5],['Internet','Internet',120,0,10],['Luz','Conta de luz',190,.25,15],['Mercado','Mercado',880,.18,8],['Mercado','Mercado',420,.3,22],
     ['Transporte','Combustível',260,.25,12],['Saúde','Plano e farmácia',340,.3,18],['Restaurantes','Restaurantes e delivery',300,.4,20],['Lazer','Lazer e passeios',240,.5,25],['Assinaturas','Streaming e apps',95,.05,3]];
   let n=0;
-  for(let k=0;k<11;k++){const m=mKey(mIdx('2025-12')+k),g=1+k*0.012; // slow rise of ~1.2% per month
+  demoMonths().forEach((m,k)=>{const g=1+k*0.012; // slow rise of ~1.2% per month
     base.forEach(([cat,desc,v,var_,day])=>{ensureCat('despesa',cat);
       const val=Math.round(v*(cat==='Moradia'||cat==='Internet'||cat==='Assinaturas'?(1+k*0.004):g)*(1+(rnd()*2-1)*var_)*100)/100;
-      S.tx.push({id:S.nid++,type:'despesa',date:m+'-'+String(day).padStart(2,'0'),value:val,desc,cat,fonte:'caixa',demo:true});n++;});
-    if(k===3||k===7){ensureCat('despesa','Imprevistos / Outros');S.tx.push({id:S.nid++,type:'despesa',date:m+'-27',value:Math.round((500+rnd()*700)*100)/100,desc:'Imprevisto (teste)',cat:'Imprevistos / Outros',fonte:'caixa',demo:true});n++;}}
+      S.tx.push({id:S.nid++,type:'despesa',date:demoDate(m,day),value:val,desc,cat,fonte:'caixa',demo:true});n++;});
+    if(k===3||k===7){ensureCat('despesa','Imprevistos / Outros');S.tx.push({id:S.nid++,type:'despesa',date:demoDate(m,27),value:Math.round((500+rnd()*700)*100)/100,desc:'Imprevisto (teste)',cat:'Imprevistos / Outros',fonte:'caixa',demo:true});n++;}});
+  addDemoExtras();
   invalidateAllocation();
-  return n;
+  return S.tx.filter(t=>t.demo).length;
 }
 
 // ---- src/ui/views/settings-demo.js
@@ -3112,13 +3239,13 @@ function addDemoData(){
 
 
 
-function renderDemo(){const n=S.tx.filter(t=>t.demo).length;$('demoN').textContent=n?n+' lançamentos de teste no app':'';$('demoOff').disabled=!n;}
+function renderDemo(){const n=S.tx.filter(t=>t.demo).length,tr=(S.trades||[]).filter(t=>t.demo).length;$('demoN').textContent=n?n+' lançamentos e '+tr+' negócios de teste no app':'';$('demoOff').disabled=!hasDemoData();}
 const generateDemoData=async()=>{
   if(hasDemoData()&&!await askConfirm({title:'Dados de teste',text:'Já existem dados de teste. Substituir por novos?',ok:'Substituir'}))return;
-  runCommand(addDemoData,{ok:n=>'🧪 '+n+' lançamentos de teste criados. Veja o gráfico no Resumo.'});};
+  runCommand(addDemoData,{ok:n=>'🧪 '+n+' lançamentos de teste criados (gastos, receitas, aportes, cartão e carteira).'});};
 function bindDemo(){
 $('demoOn').onclick=generateDemoData;
-$('demoOff').onclick=async()=>{const n=S.tx.filter(t=>t.demo).length;if(!n||!await askConfirm({title:'Remover dados de teste',text:'Remover os '+n+' lançamentos de teste? Seus lançamentos reais ficam.',ok:'Remover',danger:true}))return;
+$('demoOff').onclick=async()=>{if(!hasDemoData()||!await askConfirm({title:'Remover dados de teste',text:'Remover todos os dados de teste (lançamentos, aportes, negócios da carteira e contas criadas por eles)? O que você lançou de verdade fica.',ok:'Remover',danger:true}))return;
   runCommand(removeDemoData,{ok:'Dados de teste removidos'});};
 }
 
@@ -3177,7 +3304,7 @@ function renderTrend(){
     g+=`<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="${css('--card')}" stroke-width="6" stroke-linecap="round" pointer-events="none"/><line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="${c}" stroke-width="3" stroke-linecap="round" pointer-events="none"/>`+
       `<text x="${x1+14}" y="${y1+4}" font-size="${narrow?10.5:12}" font-weight="700" fill="${c}" pointer-events="none">${slope>=0?'▲':'▼'} ${pc(rel)}${narrow?'':'/mês'}</text>`;}
   else if(!narrow)g+=`<text x="${L+8}" y="${T+6}" font-size="12" fill="${css('--muted')}">A linha de tendência aparece com 3 meses fechados com despesas.</text>`;
-  $('trendDemo').innerHTML=n<3?'<button type="button" class="btn sm" id="trendDemoBtn">🧪 Gerar dados de teste (dez/2025 a out/2026)</button> <span class="help flush">Para ver a linha de tendência. Depois remova em Ajustes → Dados.</span>':(S.tx.some(t=>t.demo)?'<span class="help flush">🧪 Gráfico com dados de teste. Remova em Ajustes → Dados.</span>':'');
+  $('trendDemo').innerHTML=n<3?'<button type="button" class="btn sm" id="trendDemoBtn">🧪 Gerar dados de teste (últimos 12 meses)</button> <span class="help flush">Para ver a linha de tendência. Depois remova em Ajustes → Dados.</span>':(S.tx.some(t=>t.demo)?'<span class="help flush">🧪 Gráfico com dados de teste. Remova em Ajustes → Dados.</span>':'');
   if($('trendDemoBtn'))$('trendDemoBtn').onclick=generateDemoData;
   sv.setAttribute('viewBox',`0 0 ${W} ${H}`);sv.innerHTML=g;
   sv.querySelectorAll('.tb').forEach(el=>el.onclick=()=>{ui.cur=el.dataset.tm;render();});
@@ -3438,29 +3565,109 @@ function saveSnapshots(date,rows){
   });
 }
 
-// ---- src/domain/ticker-class.js
+// ---- src/ui/charts/donut-chart.js
 /**
- * domain/ticker-class.js
- * Responsibility: tells which kind of asset a B3 ticker is (stock, FII, ETF, BDR) so the portfolio is
- * grouped in a way a person understands. A guess from the ticker and the name on the note; the user can
- * correct it in the review. Pure rules, no data.
+ * ui/charts/donut-chart.js
+ * Responsibility: a ring (donut) chart as SVG markup, with a leader line from each slice to its label
+ * ("Renda fixa  30%") placed on the left or right side of the ring. Labels on one side are spread
+ * vertically so they never overlap. Each slice is a circle stroke, so the slices always fill the ring exactly.
+ * Pure: values in, markup out. donutSvg(slices:[{value, color, name, text, key, dim}], opts) -> string
+ *   opts: {compact, centerTop, centerBottom, ariaLabel}
  */
-const ASSET_CLASS={stock:'acao',fii:'fii',etf:'etf',bdr:'bdr'};
-const ASSET_LABEL={acao:'Ações',fii:'FIIs',etf:'ETFs',bdr:'BDRs'};
-const ASSET_ICON={acao:'📈',fii:'🏢',etf:'🧺',bdr:'🌎'};
-const ASSET_ORDER=['acao','fii','etf','bdr'];
-// ETFs that end in 11 (the ones that are common in Brazil); a name with ETF/ISHARES/INDEX also counts
-const KNOWN_ETF=new Set(['IVVB11','BOVA11','SMAL11','HASH11','GOLD11','DIVO11','FIND11','MATB11','NASD11','SPXI11','XINA11','BOVV11','QBTC11','ETHE11','B5P211','IMAB11','IRFM11','LFTS11','LFTB11']);
-// units that end in 11 but are stocks
-const KNOWN_UNIT=new Set(['SANB11','TAEE11','KLBN11','BPAC11','ALUP11','SAPR11','ENGI11','CPLE11','BRBI11','SULA11','ITUB11','IGTI11','AZUL11']);
-function classOfTicker(ticker,name){
-  const t=String(ticker||'').toUpperCase(),n=String(name||'').toUpperCase();
-  if(/^[A-Z]{4}(34|35|39)$/.test(t))return ASSET_CLASS.bdr;
-  if(KNOWN_ETF.has(t)||/\b(ETF|ISHARES|INDEX|INDICE)\b/.test(n))return ASSET_CLASS.etf;
-  if(KNOWN_UNIT.has(t))return ASSET_CLASS.stock;
-  if(/^[A-Z]{4}11$/.test(t))return ASSET_CLASS.fii;
-  if(/\bFII\b/.test(n))return ASSET_CLASS.fii;
-  return ASSET_CLASS.stock;
+
+const GAP=1.5;       // visual space between slices, in ring units (only when there is more than one)
+const LINE_H=13;     // height of one line of label text
+const MARGIN=16;     // space kept above and below the labels
+// compact (phones): drawn at the real width, so the text keeps its size; the ring takes what the labels leave
+// wide: drawn at a fixed design width and scaled
+function layout(o,maxLines,perSide){
+  const compact=!!o.compact,w=compact?(o.width||340):620,zone=compact?66:150,ro=Math.min(compact?96:130,w/2-zone-16),t=Math.round(ro*0.4);
+  const step=(maxLines+1)*LINE_H+8,h=Math.max(2*ro+2*MARGIN+24,perSide*step+2*MARGIN);
+  return {w,h,ro,t,step,chars:Math.floor(zone/(compact?6.1:7)),cx:w/2,cy:h/2};
+}
+// a name on at most two lines of `chars` characters (the second ends with … when it does not fit)
+function wrapName(name,chars){
+  const words=String(name).split(' '),lines=[''];
+  words.forEach(w=>{const cur=lines[lines.length-1];
+    if(!cur)lines[lines.length-1]=w;else if((cur+' '+w).length<=chars)lines[lines.length-1]=cur+' '+w;else lines.push(w);});
+  const cut=l=>l.length>chars?l.slice(0,chars-1)+'…':l;
+  if(lines.length>2){const rest=lines.slice(1).join(' ');lines.length=1;lines.push(rest);}
+  return lines.map(cut);
+}
+// labels of one side: sorted by wanted y, then pushed apart (down, then back up if they hit the bottom)
+function spreadLabels(ys,min,top,bottom){
+  const order=ys.map((y,i)=>i).sort((a,b)=>ys[a]-ys[b]),out=ys.slice();
+  let prev=top-min;order.forEach(i=>{out[i]=Math.max(ys[i],prev+min);prev=out[i];});
+  let next=bottom+min;for(let k=order.length-1;k>=0;k--){const i=order[k];out[i]=Math.min(out[i],next-min);next=out[i];}
+  return out;
+}
+function donutSvg(slices,o){
+  o=o||{};
+  const total=slices.reduce((x,y)=>x+y.value,0),probe=layout(o,1,1),named=slices.map(x=>({x,lines:wrapName(x.name,probe.chars)}));
+  const maxLines=Math.max(1,...named.map(n=>n.lines.length));
+  // first pass only to know how many labels end up on each side
+  const sideOf=[];{let off=0;named.forEach(n=>{const f=total?n.x.value/total:0,mid=(off+f/2);sideOf.push(Math.sin(2*Math.PI*mid)>=0?1:-1);off+=f;});}
+  const perSide=Math.max(1,sideOf.filter(v=>v>0).length,sideOf.filter(v=>v<0).length);
+  const z=layout(o,maxLines,perSide),cx=z.cx,cy=z.cy,r=z.ro-z.t/2,C=2*Math.PI*r;
+  let off=0;const arcs=[],marks=[];
+  named.forEach(({x,lines})=>{
+    const len=total>0?C*x.value/total:0,gap=slices.length>1?Math.min(GAP,len*0.5):0,ang=2*Math.PI*(off+len/2)/C-Math.PI/2,k=x.key!==undefined?` data-key="${esc(x.key)}"`:'';
+    arcs.push(`<circle${k} cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${x.color}"${x.dim?' opacity="0.3"':''} stroke-width="${z.t}" stroke-dasharray="${(len-gap).toFixed(2)} ${(C-len+gap).toFixed(2)}" stroke-dashoffset="${(-off).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})"><title>${esc(x.name)}: ${esc(x.text)}</title></circle>`);
+    marks.push({x,lines,ang,side:Math.cos(ang)>=0?1:-1});off+=len;
+  });
+  marks.forEach(m=>{m.wantY=cy+(z.ro+14)*Math.sin(m.ang);});
+  [-1,1].forEach(side=>{
+    const own=marks.filter(m=>m.side===side),ys=spreadLabels(own.map(m=>m.wantY),z.step,MARGIN+z.step/2,z.h-MARGIN-z.step/2);own.forEach((m,i)=>{m.ly=ys[i];});
+  });
+  const colX=side=>cx+side*(z.ro+22);
+  const callouts=marks.filter(()=>total>0).map(m=>{
+    const {x,lines,ang,side}=m,ax=cx+(z.ro+1)*Math.cos(ang),ay=cy+(z.ro+1)*Math.sin(ang),ex=cx+(z.ro+10)*Math.cos(ang),ey=cy+(z.ro+10)*Math.sin(ang),lx=colX(side),tx=lx+side*4;
+    const k=x.key!==undefined?` data-key="${esc(x.key)}"`:'',anchor=side>0?'start':'end',block=(lines.length+1)*LINE_H,y0=m.ly-block/2+LINE_H-3;
+    return `<g class="donut-call"${k}${x.dim?' opacity="0.35"':''}><polyline points="${ax.toFixed(1)},${ay.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)} ${lx.toFixed(1)},${m.ly.toFixed(1)}" fill="none" stroke="${x.color}" stroke-width="1.4"/>`+
+      lines.map((l,i)=>`<text x="${tx.toFixed(1)}" y="${(y0+i*LINE_H).toFixed(1)}" text-anchor="${anchor}" class="donut-name">${esc(l)}</text>`).join('')+
+      `<text x="${tx.toFixed(1)}" y="${(y0+lines.length*LINE_H).toFixed(1)}" text-anchor="${anchor}" class="donut-pct" fill="${x.color}">${esc(x.text)}</text></g>`;}).join('');
+  return `<svg viewBox="0 0 ${z.w} ${z.h}" class="donut" role="img" aria-label="${esc(o.ariaLabel||'Distribuição')}"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--soft)" stroke-width="${z.t}"/>${arcs.join('')}${callouts}`+
+    (o.centerTop?`<text x="${cx}" y="${cy-1}" text-anchor="middle" class="donut-top${o.compact?' sm':''}">${o.centerTop}</text>`:'')+
+    (o.centerBottom?`<text x="${cx}" y="${cy+15}" text-anchor="middle" class="donut-bottom">${o.centerBottom}</text>`:'')+`</svg>`;
+}
+
+// ---- src/ui/views/distribution-view.js
+/**
+ * ui/views/distribution-view.js
+ * Responsibility: the "Distribuição dos investimentos" card: a ring with the share of each part of the net worth,
+ * two ways to look at it (by account or by type: fixed income, stocks, FIIs, ETFs). Each slice has a line to its
+ * name and percentage (no separate legend). Tapping a slice or its label highlights it and shows its value in the middle. Read only; numbers come from the domain.
+ */
+
+
+
+
+
+
+
+// compactMoney money for the middle of a small ring: R$ 1,25 mi, R$ 124 mil
+const compactMoney=v=>v>=1e6?'R$ '+(v/1e6).toFixed(2).replace('.',',')+' mi':v>=1e4?'R$ '+Math.round(v/1e3)+' mil':f0(v);
+const view={by:'account',sel:null};
+const TYPE_COLOR={_fixed:'--c4',acao:'--c0',fii:'--c1',etf:'--c2',bdr:'--c3'};
+const colorOf=i=>i.id===DIST_OTHER_ID?css('--mut')||'#9aa5ba':view.by==='type'?css(TYPE_COLOR[i.id]||COLORS[0]):accColor(i.id);
+const tabs=()=>`<div class="dist-tabs" role="tablist">${[['account','Por conta'],['type','Por tipo']].map(([k,l])=>`<button type="button" role="tab" aria-selected="${view.by===k}" class="dist-tab${view.by===k?' on':''}" data-dist-by="${k}">${l}</button>`).join('')}</div>`;
+function renderDistribution(){
+  const el=$('distCard');if(!el)return;
+  const d=investmentDistribution(undefined,view.by);
+  if(!d.items.length){el.innerHTML='<div class="help">Sem saldo nos investimentos ainda. Atualize os saldos abaixo (ou importe um extrato de custódia) e a distribuição aparece aqui.</div>';return;}
+  if(view.sel&&!d.items.some(i=>i.id===view.sel))view.sel=null;
+  const pick=d.items.find(i=>i.id===view.sel);
+  const slices=d.items.map(i=>({value:i.value,color:colorOf(i),key:i.id,dim:!!pick&&pick.id!==i.id,name:i.name+(i.count>1&&view.by==='type'?' ('+i.count+')':''),text:pc(i.share)}));
+  const narrow=window.innerWidth<=640;
+  el.innerHTML=`${tabs()}${donutSvg(slices,{compact:narrow,width:Math.min(window.innerWidth-56,600),
+      centerTop:(narrow?compactMoney:f0)(pick?pick.value:d.total),centerBottom:pick?esc(pick.name):'total',ariaLabel:'Distribuição dos investimentos: '+d.items.map(i=>i.name+' '+pc(i.share)).join(', ')})}`;
+}
+function bindDistribution(){
+  const el=$('distCard');if(!el)return;
+  const choose=key=>{view.sel=view.sel===key?null:key;renderDistribution();};
+  el.onclick=e=>{
+    const t=e.target.closest('[data-dist-by]');if(t){view.by=t.dataset.distBy;view.sel=null;renderDistribution();return;}
+    const k=e.target.closest('[data-key]');if(k)choose(k.dataset.key);};
 }
 
 // ---- src/domain/portfolio.js
@@ -3543,8 +3750,9 @@ function renderPortfolio(){
 
 
 
+
 function renderInvestments(){
-  const d=today();renderPortfolio();
+  const d=today();renderDistribution();renderPortfolio();
   $('accList').innerHTML=active().map(a=>{const b=balance(a.id,d);const sn=b.snap;
     const sub=sn?`Saldo informado em ${formatDateBR(sn.date)}${sn.est?' (estimado 🟠)':''}${b.v!==sn.value?' + aportes depois':''}`:'Sem saldo informado';
     return `<div class="acc"><i style="background:${accColor(a.id)}"></i><div class="nm">${esc(a.name)}<span class="sb">${sub}</span></div><button class="btn sm" data-arq="${a.id}" title="Remover da lista (o histórico é mantido)">arquivar</button><div class="vl r">${f2(b.v)}<span class="sb fw5">${b.g!==null?'bruto '+f2(b.g)+' · IR '+f2(b.g-b.v):'bruto não informado'}</span></div></div>`;}).join('')+
@@ -3559,6 +3767,7 @@ function renderInvestments(){
       return `<tr><td>${mShort(r.m)}</td><td>${f2(r.t)}</td><td>${r.ap?f2(r.ap):'—'}</td><td class="${cls}">${r.y===null?'—':f2(r.y)}</td><td class="${cls}">${r.y===null?'—':pc(r.y/r.prev)}</td><td class="mut">${exp===null?'—':f2(exp)}</td></tr>`;}).join('');
 }
 function bindInvestments(){
+bindDistribution();
 $('snapSave').onclick=()=>{const d=$('snapDate').value;if(!d)return fieldError($('snapDate'),'Escolha a data dos saldos');
   const rows=active().map(a=>({acc:a.id,value:parseMoney($('s_'+a.id).value),gross:parseMoney($('g_'+a.id).value)}));
   runCommand(()=>saveSnapshots(d,rows),{ok:'✅ Saldos salvos em '+formatDateBR(d)});};
@@ -3759,8 +3968,8 @@ $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileR
     const r=importBackup(d);if(r.error)return toast('⚠️ '+r.error);
     runCommand(()=>replaceState(r.state),{ok:r.converted?'Backup antigo convertido. Confira os saldos em Investimentos.':'✅ Backup importado'});};
   rd.readAsText(f);e.target.value='';};
-$('reset').onclick=async()=>{if(await askConfirm({title:'Apagar tudo',html:'Apagar <b>todos</b> os lançamentos, saldos e ajustes e voltar ao estado inicial?<div class="bd-note mt-10">Não dá para desfazer. Exporte um backup antes, se quiser guardar.</div>',ok:'Apagar tudo',danger:true}))
-  runCommand(()=>replaceState(seed()),{ok:'Dados apagados'});};
+$('reset').onclick=async()=>{if(await askConfirm({title:'Apagar tudo',html:'Apagar <b>todos</b> os lançamentos, contas de investimento, carteira, saldos e importações? Fica só a meta e a taxa.<div class="bd-note mt-10">Não dá para desfazer. Exporte um backup antes, se quiser guardar.</div>',ok:'Apagar tudo',danger:true}))
+  runCommand(()=>replaceState(blankState()),{ok:'Tudo apagado: lançamentos, investimentos, carteira e saldos'});};
 }
 
 // ---- src/ui/render.js

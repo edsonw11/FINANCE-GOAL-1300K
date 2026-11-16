@@ -199,3 +199,6 @@ Um PDF “Extrato de Custódia” é o saldo em uma data, não movimentações. 
 
 ## Carteira e nota de corretagem
 Em Investimentos, a **Carteira** agrupa os ativos por tipo (ações, FIIs, ETFs, BDRs), com quantidade, preço médio (custos incluídos) e total investido por ticker. Ela vem das notas de corretagem importadas (PDF ou texto): cada compra vira um negócio em `S.trades` e um aporte na conta do tipo (criada se faltar); cada venda só reduz a posição (preço médio) e aparece no resultado. Módulos: `ticker-class`, `brokerage-note`, `portfolio`, `trade-commit` (domain) e `portfolio-view`, `import-note-view` (ui). Sem cotação: o valor de mercado vem do saldo da conta em “Atualizar saldos”.
+
+## Auditoria dos cálculos e distribuição
+`tests/unit/calc-audit.test.js` gera os dados de teste (12 meses) e recalcula cada número **sem usar as funções do app**, só dos lançamentos: totais e percentuais do mês, categorias, patrimônio, rendimento e % no mês, anel da meta, projeção e data da meta, orçamentos, faturas do cartão, carteira e a tendência de gastos. Divergência = número errado na tela. Em Investimentos, o gráfico de anel mostra a parcela de cada conta no patrimônio (`investmentDistribution`, `ui/charts/donut-chart.js`).

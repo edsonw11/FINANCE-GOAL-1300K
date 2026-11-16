@@ -171,7 +171,7 @@ label.apply-opt.sm{font-size:13.5px}
 label.check-opt{display:flex;gap:8px;align-items:center;margin:0;cursor:pointer;color:var(--ink);font-weight:500}
 label.check-opt.note{margin:0 0 8px;font-size:13px;color:var(--ink2)}
 .f.f-note{font-size:13px;color:var(--ink2)}
-.f.f-note.f14{flex:1.4}.f.f-note.f2{flex:2}
+.f.f-note.f14{flex:1.4 1 220px}.f.f-note.f2{flex:2 1 260px} /* a basis, so a note wraps to its own line instead of squeezing into a sliver */
 dialog h3.dlg-h{margin:0 0 8px;font-size:18px}
 dialog h3.dlg-h.s4{margin-bottom:4px}
 dialog h3.dlg-h.s14{margin-bottom:14px}

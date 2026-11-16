@@ -66,3 +66,13 @@
 .pf-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}.pf-total b{font-size:1.3em}
 .pf-group{margin-bottom:12px}.pf-head{display:flex;justify-content:space-between;border-bottom:1px solid var(--line,#e5e7eb);padding-bottom:4px;margin-bottom:4px}
 .pf-row{display:grid;grid-template-columns:5.5em 1fr auto;gap:8px;padding:3px 0;font-size:.95em}
+
+.dist-tabs{display:inline-flex;gap:4px;background:var(--soft);border-radius:999px;padding:3px;margin-bottom:12px}
+.dist-tab{border:0;background:transparent;color:var(--ink2);font:inherit;font-weight:600;padding:6px 14px;border-radius:999px;cursor:pointer;min-height:36px}
+.dist-tab.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.donut circle[data-key]{cursor:pointer}
+
+.donut{display:block;width:100%;max-width:700px;margin:0 auto;height:auto}
+.donut-top.sm{font-size:14px}.donut-top{font-size:22px;font-weight:800;fill:var(--ink)}.donut-bottom{font-size:11px;fill:var(--ink2)}
+.donut-name{font-size:12px;font-weight:700;fill:var(--ink)}.donut-pct{font-size:12px;font-weight:800}.donut-bottom{font-size:12px}
+.donut-call,.donut circle[data-key]{cursor:pointer}
