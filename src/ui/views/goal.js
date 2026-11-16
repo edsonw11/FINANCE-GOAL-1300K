@@ -11,6 +11,8 @@ import { project, realSeries } from '../../domain/investments.js';
 import { drawTower } from '../charts/tower-chart.js';
 import { kpi } from './kpi.js';
 import { renderProj } from './projection.js';
+// an annual rate above this is not shown: a single month does not say anything reliable about a year
+const MAX_SHOWN_ANNUAL=1;
 export function renderMeta(){
   const real=realSeries(),last=real[real.length-1],{proj,hit,m}=project(real),goal=S.goal;
   const prog=Math.min(last.t/goal,1);
@@ -24,7 +26,7 @@ export function renderMeta(){
   drawTower(real,proj,hit);renderProj(real,hit);
   const ylast=[...real].reverse().find(r=>r.y!==null);
   if(ylast){const mo=ylast.y/ylast.prev,ann=Math.pow(1+mo,12)-1;
-    $('paceMsg').innerHTML=`📊 Em ${mShort(ylast.m)} o rendimento real foi ${f0(ylast.y)} (${pc(mo)} no mês, ~${pc(ann)} ao ano), <b class="${ann>=S.rate/100?'pos':'neg'}">${ann>=S.rate/100?'acima':'abaixo'}</b> da premissa de ${String(S.rate).replace('.',',')}% a.a.`;
+    $('paceMsg').innerHTML=`📊 Em ${mShort(ylast.m)} o rendimento real foi ${f0(ylast.y)} (${pc(mo)} no mês${ann<=MAX_SHOWN_ANNUAL?', ~'+pc(ann)+' ao ano':''}), <b class="${ann>=S.rate/100?'pos':'neg'}">${ann>=S.rate/100?'acima':'abaixo'}</b> da premissa de ${String(S.rate).replace('.',',')}% a.a.`;
   } else $('paceMsg').textContent='ℹ️ Em Investimentos, atualize os saldos no fim do mês para comparar o rendimento real com a projeção.';
 }
 function paceChip(real){

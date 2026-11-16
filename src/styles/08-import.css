@@ -21,11 +21,11 @@
 .imp-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
 .imp-tiles>div{border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .imp-tiles span{font-size:11.5px;color:var(--ink2)}.imp-tiles b{font-size:18px}.imp-tiles small{font-size:11px;color:var(--ink2);overflow-wrap:anywhere}
-.imp-tiles .warn{border-color:var(--warn)}
+.imp-tiles .warn{border-color:var(--warn-ink)}
 .imp-pick-sum{font-size:13.5px;margin:8px 0}
 .imp-note{font-size:12.5px;color:var(--ink2);margin-top:4px;line-height:1.35}
-.imp-note.warn-n{color:var(--warn)}.imp-note.bad-n{color:var(--des);font-weight:600}
-.imp-note.dup-c{color:var(--ink2);font-weight:600}.imp-note.dup-p{color:var(--warn)}
+.imp-note.warn-n{color:var(--warn-ink)}.imp-note.bad-n{color:var(--des);font-weight:600}
+.imp-note.dup-c{color:var(--ink2);font-weight:600}.imp-note.dup-p{color:var(--warn-ink)}
 .imp-opts-d{margin:8px 0;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13.5px}.imp-opts-d summary{cursor:pointer;color:var(--ink2)}
 .imp-opts input[type=checkbox],.imp-rest input[type=checkbox]{width:22px;height:22px;min-height:0;flex:none;margin:0}
 .imp-opts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:10px 0}
@@ -76,3 +76,13 @@
 .donut-top.sm{font-size:14px}.donut-top{font-size:22px;font-weight:800;fill:var(--ink)}.donut-bottom{font-size:11px;fill:var(--ink2)}
 .donut-name{font-size:12px;font-weight:700;fill:var(--ink)}.donut-pct{font-size:12px;font-weight:800}.donut-bottom{font-size:12px}
 .donut-call,.donut circle[data-key]{cursor:pointer}
+/* allocation targets */
+.tg{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.tg-opt{font-size:13px;font-weight:400}
+.tg-row{display:grid;grid-template-columns:minmax(0,1fr) 52px 84px;gap:4px 10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.tg-n{display:flex;align-items:center;gap:8px;min-width:0}.tg-n i{width:12px;height:12px;border-radius:3px;flex:none}
+.tg-now{text-align:right;font-weight:700}
+.tg-in input{width:100%;min-height:44px;text-align:right}
+.tg-gap{grid-column:1 / -1;font-size:13px;color:var(--ink2)}
+.tg-row.over .tg-gap{color:var(--warn-ink)}.tg-row.under .tg-gap{color:var(--brand)}.tg-row.on .tg-gap{color:var(--rec)}
+.tg-row.none .tg-gap{display:none}

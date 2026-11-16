@@ -22,7 +22,11 @@
     try{
       D.getElementById('demoOn').click();await wait(50);
       D.querySelector('#t-resumo [data-mv="-1"]').click();await wait(20); // previous month, which has closed data
-      for(const t of ['resumo','lanc','cartao','meta','inv','cad','cfg']){D.querySelector('#nav [data-t='+t+']').click();await wait(30);check('tab '+t);
+      for(const t of ['resumo','lanc','cartao','meta','cad','cfg']){D.querySelector('#nav [data-t='+t+']').click();await wait(30);check('tab '+t);
+        // every control a finger must hit is at least 44px (invisible/hidden ones are skipped)
+        D.documentElement.clientWidth<=430&&[...D.querySelectorAll('#t-'+t+' button,#t-'+t+' [role=button],#t-'+t+' select,#t-'+t+' summary,#t-'+t+' input:not([type=hidden]):not([hidden])')]
+          .filter(e=>e.offsetParent!==null&&!e.closest('[hidden]')).forEach(e=>{const r=e.getBoundingClientRect();
+            if(r.width&&(r.height<43.5||r.width<43.5)&&!/^(INPUT)$/.test(e.tagName+(e.type==='checkbox'?'':'x')))bad.push('small target on '+t+': '+(e.id||e.className||e.tagName)+' '+Math.round(r.width)+'x'+Math.round(r.height));});
         // a help note inside a form row must use the full row, not a narrow sliver
         D.documentElement.clientWidth<=430&&D.querySelectorAll('#t-'+t+' .f-note').forEach(n=>{const row=n.parentElement.getBoundingClientRect().width;if(n.getBoundingClientRect().width<row*0.6)bad.push('narrow note on '+t+': '+Math.round(n.getBoundingClientRect().width)+'/'+Math.round(row));});
         // charts: drawn at (about) real size, so the text is not shrunk

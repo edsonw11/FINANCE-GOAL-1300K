@@ -117,7 +117,7 @@ tr.warn-row{background:color-mix(in srgb,var(--warn) 16%,var(--card))}
 .fw5{font-weight:500}.fw7{font-weight:700}.fs125{font-size:12.5px}
 .f1{flex:1}
 .grow{flex:1;min-width:0}
-.warn-c{color:var(--warn)}
+.warn-c{color:var(--warn-ink)}
 .tone-des{color:var(--des)}
 .list-title{font-weight:700;margin-bottom:10px}
 input.icon-in{width:54px;text-align:center}
@@ -185,3 +185,15 @@ dialog.dlg-wide{width:min(580px,94vw)}
 .dlg-p{margin:0 0 12px;color:var(--ink2);font-size:13.5px}
 .dlg-p.lg{font-size:14px}
 .scroll-list{max-height:52vh;overflow:auto;padding-right:6px}
+
+.adv{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.adv>summary{cursor:pointer;font-weight:700;color:var(--ink2);min-height:44px;display:flex;align-items:center}
+.adv-body{display:flex;flex-direction:column;gap:14px;padding-top:6px}.adv-item{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.adv-danger{border-top:1px dashed var(--line);padding-top:14px}
+/* Summary top: what to do now + savings rate + reserve */
+.todo{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.todo-item{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
+.todo-item:hover{background:var(--bg)}
+.health.good .v{color:var(--rec)}.health.negative .v,.health.low .v{color:var(--des)}.health.ok .v{color:var(--warn-ink)}
+.more-opts>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--ink2);font-size:14px;font-weight:600}
+.inv-all>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.part-h{margin:28px 0 0;padding-top:14px;border-top:1px solid var(--line)}

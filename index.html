@@ -30,9 +30,8 @@
     <button data-t="resumo" class="on" data-i="chart">Resumo</button>
     <button data-t="lanc" data-i="receipt">Lançamentos</button>
     <button data-t="cartao" data-i="card">Cartão</button>
-    <button data-t="meta" data-i="target">Meta</button>
-    <button data-t="inv" data-i="brief">Investimentos</button>
-    <button data-t="cad" data-i="tag">Categorias</button>
+    <button data-t="meta" data-i="target">Patrimônio</button>
+        <button data-t="cad" data-i="tag">Categorias</button>
     <button data-t="cfg" data-i="sliders">Ajustes</button>
   </nav>
   <div class="today" id="todayLbl"></div>
@@ -46,6 +45,8 @@
   <div id="bkNote"></div>
 
   <div class="mnav"><button data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab1" aria-live="polite"></div><button data-mv="1" aria-label="Próximo mês">›</button><button class="btn sm mtoday" data-mtoday hidden>Hoje</button></div>
+  <div class="card mt-10" id="todoCard" hidden></div>
+  <div class="grid g2 mt-10" id="healthRow"></div>
   <div class="grid g4 mt-10" id="kFlow"></div>
   <div class="grid g2 sum-pair">
     <div class="card" id="budgetCard"></div>
@@ -78,7 +79,7 @@
 
 <!-- META -->
 <section class="tab" id="t-meta">
-  <div class="ph"><h1>Minha meta</h1><p>Quanto você já tem, quanto falta, a evolução do patrimônio e a projeção até a meta.</p></div>
+  <div class="ph"><h1>Patrimônio e meta</h1><p>Quanto você já tem, quanto falta, a projeção até a meta e onde o dinheiro está investido.</p></div>
 
   <div class="grid g4" id="kMeta"></div>
   <div class="card mt-14">
@@ -94,6 +95,27 @@
     <div class="scroll"><table id="projTbl"></table></div>
     <div class="help" id="projHelp"></div>
   </div>
+  <!-- investments (was its own tab; now part of the net worth) -->
+  <div id="invStart" class="inv-part"><h2 class="part-h">Investimentos: onde está seu dinheiro</h2><p class="help">Saldo de cada conta, carteira e evolução mensal.</p></div>
+  <h2>🍩 Distribuição dos investimentos</h2>
+  <div class="card" id="distCard"></div>
+  <h2>💼 Onde está meu dinheiro</h2>
+  <div class="card"><div id="accList"></div>
+    <div class="row mt-12"><div class="f mw-260"><label for="newAcc">Adicionar conta/investimento</label><input id="newAcc" placeholder="Ex.: XP CDB"></div><button class="btn" id="addAcc">Adicionar</button></div></div>
+  <h2>📊 Carteira</h2>
+  <div class="card" id="portfolio"></div>
+  <h2>📥 Importar</h2>
+  <div class="card"><div class="help">Do extrato da corretora ou do banco. <b>Extrato de custódia (PDF)</b> atualiza o saldo. <b>Nota de corretagem</b> (PDF): compras viram aporte e entram na Carteira. <b>Extrato de movimentações</b> (CSV, OFX ou PDF): o que entrou vira <b>aporte</b>; resgate, rendimento e IR são ignorados.</div>
+    <button type="button" class="btn imp-open" id="impOpenInv">📥 Importar saldo ou aportes</button></div>
+  <h2>🔄 Atualizar saldos</h2>
+  <div class="card">
+    <div class="help mb12-only">Abra o app de cada banco e digite o <b>saldo líquido</b> de hoje (já sem IR). Os aportes que você lançou depois desta data entram sozinhos. Não digite aportes aqui.</div>
+    <div class="formgrid" id="snapForm"></div>
+    <div class="row mt-14"><div class="f mw-190"><label for="snapDate">Saldo válido em</label><input type="date" id="snapDate" required></div><button class="btn pri" id="snapSave">Salvar saldos</button></div>
+  </div>
+  <h2>📈 Histórico do patrimônio</h2>
+  <div class="card"><div class="scroll"><table id="histTbl" class="stack"></table></div>
+    <div class="help">“Rendimento” só aparece nos meses em que você atualizou os saldos. É a diferença do patrimônio, menos os aportes.</div></div>
 </section>
 
 <!-- LANÇAMENTOS -->
@@ -109,7 +131,7 @@
       <div class="qe-row"><input id="qeText" placeholder="Ex.: gastei 85,90 no mercado hoje" enterkeyhint="go" aria-describedby="qeHelp"><button type="submit" class="btn pri" id="qeGo">Preencher</button></div>
       <div class="help" id="qeHelp">Escreva como falaria: “recebi 5.000 de salário dia 5”, “paguei 230 de internet no cartão”. Você confere antes de salvar.</div>
     </form>
-    <button type="button" class="btn imp-open" id="impOpen">📥 Importar extrato ou fatura (CSV, OFX)</button>
+    <button type="button" class="btn imp-open" id="impOpen">📥 Importar extrato ou fatura (CSV, OFX, PDF)</button>
     <input type="file" id="impFile" hidden>
   </div>
   <div id="txFormHome"><h2>➕ Novo lançamento</h2>
@@ -127,10 +149,13 @@
       <div id="wCat" class="f-wide"><label for="fCat">Categoria</label><input id="fCat" list="catList" placeholder="Escolha abaixo ou digite"><datalist id="catList"></datalist><div class="chips qchips" id="catChips"></div></div>
       <div id="wAcc" hidden><label for="fAcc">Investir em</label><select id="fAcc"></select></div>
       <div id="wFonte"><label for="fFonte" id="lFonte">Pago com</label><select id="fFonte"></select></div>
-      <div><label for="fDesc">Descrição <span class="opt">(opcional)</span></label><input id="fDesc" placeholder="Ex.: mercado, salário, aporte" enterkeyhint="done"><div class="chips qchips" id="descSug" aria-live="polite"></div></div>
+      <div><label for="fDesc">Descrição <span class="opt">(opcional)</span></label><input id="fDesc" placeholder="Ex.: mercado" enterkeyhint="done"><div class="chips qchips" id="descSug" aria-live="polite"></div></div>
+    </div>
+    <details class="more-opts mt-14" id="wMore"><summary>Mais opções: repetir todo mês, dividir em categorias</summary>
+    <div class="formgrid mt-10">
       <div><label for="fRep">Repetir</label><select id="fRep"><option value="1">Não repetir</option></select></div>
     </div>
-    <div class="mt-14" id="wSplit">
+    <div class="mt-10" id="wSplit">
       <button type="button" class="btn sm" id="splitBtn">✂️ Dividir em categorias</button>
       <span class="help ml-8" id="splitHint"></span>
       <div class="box-dashed mt-10" id="splitBox" hidden>
@@ -139,6 +164,7 @@
         <div class="row mt-8 ai-c"><button type="button" class="btn sm" id="splitAdd">+ adicionar parte</button><span class="help m0" id="splitSum"></span></div>
       </div>
     </div>
+    </details>
     <label class="apply-opt" id="wApply" hidden><input class="w-auto mr-8" type="checkbox" id="fApply" checked>Aplicar também aos <b id="applyN">0</b> lançamentos futuros iguais (próximos meses)</label>
     <div class="box-dashed mt-14" id="fatBox" hidden>
       <div class="help mb10-only"><b>O que está nesta fatura?</b> Aparecem as compras do ciclo desta fatura (fechamento e vencimento ficam em Ajustes). O que sobrar entra como “Cartão (sem detalhe)”, para não ficar de fora dos seus gastos.</div>
@@ -162,29 +188,6 @@
   <div class="card lst-card"><div class="lst" id="txList"></div></div>
 </section>
 
-<!-- INVESTIMENTOS -->
-<section class="tab" id="t-inv">
-  <div class="ph"><h1>Investimentos</h1><p>Saldo de cada conta e evolução mensal do patrimônio.</p></div>
-  <h2>🍩 Distribuição dos investimentos</h2>
-  <div class="card" id="distCard"></div>
-  <h2>💼 Onde está meu dinheiro</h2>
-  <div class="card"><div id="accList"></div>
-    <div class="row mt-12"><div class="f mw-260"><label for="newAcc">Adicionar conta/investimento</label><input id="newAcc" placeholder="Ex.: XP CDB"></div><button class="btn" id="addAcc">Adicionar</button></div></div>
-  <h2>📊 Carteira</h2>
-  <div class="card" id="portfolio"></div>
-  <h2>📥 Importar</h2>
-  <div class="card"><div class="help">Do extrato da corretora ou do banco. <b>Extrato de custódia (PDF)</b> atualiza o saldo. <b>Nota de corretagem</b> (PDF): compras viram aporte e entram na Carteira. <b>Extrato de movimentações</b> (CSV, OFX ou PDF): o que entrou vira <b>aporte</b>; resgate, rendimento e IR são ignorados.</div>
-    <button type="button" class="btn imp-open" id="impOpenInv">📥 Importar saldo ou aportes</button></div>
-  <h2>🔄 Atualizar saldos</h2>
-  <div class="card">
-    <div class="help mb12-only">Abra o app de cada banco e digite o <b>saldo líquido</b> de hoje (já sem IR). Os aportes que você lançou depois desta data entram sozinhos. Não digite aportes aqui.</div>
-    <div class="formgrid" id="snapForm"></div>
-    <div class="row mt-14"><div class="f mw-190"><label for="snapDate">Saldo válido em</label><input type="date" id="snapDate" required></div><button class="btn pri" id="snapSave">Salvar saldos</button></div>
-  </div>
-  <h2>📈 Histórico do patrimônio</h2>
-  <div class="card"><div class="scroll"><table id="histTbl" class="stack"></table></div>
-    <div class="help">“Rendimento” só aparece nos meses em que você atualizou os saldos. É a diferença do patrimônio, menos os aportes.</div></div>
-</section>
 
 <!-- AJUSTES -->
 <section class="tab" id="t-cad">
@@ -198,7 +201,7 @@
   <div class="ph"><h1>Ajustes</h1><p>Meta, premissas da projeção e backup dos dados.</p></div>
   <h2>🎯 Premissas</h2>
   <div class="card"><div class="row">
-    <div class="f"><label for="goal">Meta líquida</label><input id="goal" data-money></div>
+    <div class="f f-full"><label for="goal">Meta líquida</label><input id="goal" data-money></div>
     <div class="f"><label for="rate">Rendimento líquido (% ao ano)</label><input id="rate" inputmode="decimal"></div>
     <div class="f"><label for="planned">Aporte mensal planejado</label><input id="planned" data-money></div></div>
     <div class="row mt-14">
@@ -211,9 +214,14 @@
   <h2>🧰 Dados</h2>
   <div class="card"><div class="row">
     <button class="btn" id="exp">⬇️ Exportar backup</button><button class="btn" id="imp">⬆️ Importar backup</button>
-    <input type="file" id="file" accept="application/json" hidden><button class="btn dng" id="reset">🗑️ Apagar tudo</button></div>
-    <div class="row mt-12 ai-c"><button class="btn" id="demoOn">🧪 Gerar dados de teste (últimos 12 meses)</button><button class="btn" id="demoOff">Remover dados de teste</button><span class="help m0" id="demoN"></span></div>
-    <div class="help">Os dados ficam só neste navegador. Exporte um backup de vez em quando. Backups da versão anterior (acompanhamento) também podem ser importados.</div></div>
+    <input type="file" id="file" accept="application/json" hidden></div>
+    <div class="help">Os dados ficam só neste navegador. Exporte um backup de vez em quando. O app também guarda sozinho uma cópia do dia anterior. Backups da versão anterior (acompanhamento) também podem ser importados.</div>
+    <details class="adv"><summary>Avançado</summary>
+      <div class="adv-body">
+        <div class="adv-item"><button class="btn" id="restoreAuto" hidden>↩️ Restaurar cópia automática</button><span class="help m0" id="restoreAutoNote"></span></div>
+        <div class="adv-item"><button class="btn" id="demoOn">🧪 Gerar dados de teste (últimos 12 meses)</button><button class="btn" id="demoOff">Remover dados de teste</button><span class="help m0" id="demoN"></span></div>
+        <div class="adv-item adv-danger"><button class="btn dng" id="reset">🗑️ Apagar tudo</button><span class="help m0">Apaga lançamentos, investimentos, carteira e saldos deste navegador. Exporte um backup antes.</span></div>
+      </div></details></div>
   <div class="note" id="estNote"></div>
 </section>
 <p class="foot">Educacional, não é recomendação de investimento. Projeção: saldo<sub>n</sub> = saldo<sub>n−1</sub> × (1+taxa)<sup>1/12</sup> + aporte planejado.</p>
@@ -257,7 +265,7 @@
 </dialog>
 <button type="button" id="fab" class="fab" aria-label="Novo lançamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 <nav id="bnav" class="bnav" aria-label="Menu principal">
-  <button data-t="resumo" data-i="chart" class="on">Resumo</button><button data-t="lanc" data-i="receipt">Lançamentos</button><button data-t="cartao" data-i="card">Cartão</button><button data-t="meta" data-i="target">Meta</button><button data-t="more" data-i="menu">Mais</button>
+  <button data-t="resumo" data-i="chart" class="on">Resumo</button><button data-t="lanc" data-i="receipt">Lançamentos</button><button data-t="cartao" data-i="card">Cartão</button><button data-t="meta" data-i="target">Patrimônio</button><button data-t="more" data-i="menu">Mais</button>
 </nav>
 <div id="toast" popover="manual" role="status" aria-live="polite"></div>
 

@@ -12,7 +12,7 @@ export const REASON_TEXT={
   pagamento_fatura:'Pagamento de fatura: já está nas compras do cartão. Registre em “Pagar fatura” para não contar duas vezes.',
   transferencia:'Parece movimentação entre suas contas ou investimento, não é receita nem despesa.',
   estorno:'Estorno ou crédito no cartão: o app não tem lançamento negativo. Registre como receita só se quiser.',
-  resgate:'Resgate ou saída do investimento: não é gasto nem receita. O saldo se atualiza em Investimentos.',
+  resgate:'Resgate ou saída do investimento: não é gasto nem receita. O saldo se atualiza na aba Patrimônio.',
   rendimento:'Rendimento, imposto ou taxa do investimento: já está no saldo, não é um lançamento.'};
 export const FLAG_TEXT={
   'maybe-transfer':'Pix/TED/transferência: confirme se é gasto ou renda de verdade e não uma transferência sua.',

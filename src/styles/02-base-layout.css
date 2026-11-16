@@ -12,3 +12,4 @@ nav button:hover{background:var(--soft)} nav button.on{background:color-mix(in s
 main{max-width:1080px;margin:0 auto;padding:22px 18px 70px}
 section.tab{display:none} section.tab.on{display:block}
 h2{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink2);margin:30px 0 10px;font-weight:700}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

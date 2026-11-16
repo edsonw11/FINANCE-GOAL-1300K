@@ -55,7 +55,7 @@
   /* new record: big buttons instead of the inline form */
   .quick-add{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 4px}
   .quick-add .btn{min-height:52px;font-size:15px;padding:8px}
-  .quick-add .des{color:var(--des)}.quick-add .rec{color:var(--rec)}.quick-add .apo{color:var(--apo)}.quick-add .fat{color:var(--warn)}
+  .quick-add .des{color:var(--des)}.quick-add .rec{color:var(--rec)}.quick-add .apo{color:var(--apo)}.quick-add .fat{color:var(--warn-ink)}
   #txFormHome{display:none}
   .lst-card{padding:4px 10px}
   .li-act{display:none}
@@ -130,3 +130,17 @@
   table.stack td .dp{flex:1 1 140px}
 }
 @media (max-width:360px){#projTbl{font-size:12.5px}#projTbl td,#projTbl th{padding:8px 3px;letter-spacing:0}}
+/* touch targets: at least 44px in both directions on phones and touch screens (WCAG 2.5.5 / iOS guideline) */
+@media (max-width:720px),(pointer:coarse){
+  .btn.sm,.chip,.dist-tab,.bill-hide,.dist-row,.check-opt,summary{min-height:44px}
+  .btn.sm,.dist-tab,.bill-hide{min-width:44px}
+  .check-opt{display:flex;align-items:center;gap:10px}
+  .check-opt input[type=checkbox],input[type=checkbox].w-auto{width:24px;height:24px;flex:none}
+  .rowclick{min-height:44px}tr.rowclick>td{height:44px}
+}
+@media (max-width:720px){
+  .tab{padding-bottom:104px} /* room for the + button and the bottom bar over the last item */
+  .f.f-full{flex:1 1 100%}
+}
+/* projection table: on a phone keep month, interest, final balance and % of the goal */
+@media (max-width:720px){#projTbl th:nth-child(2),#projTbl td:nth-child(2),#projTbl th:nth-child(4),#projTbl td:nth-child(4),#projTbl th:nth-child(7),#projTbl td:nth-child(7),#projTbl th:nth-child(8),#projTbl td:nth-child(8){display:none}}

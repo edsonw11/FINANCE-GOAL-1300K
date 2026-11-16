@@ -14,13 +14,19 @@ function monthsList(){const a=mIdx(firstMonth()),b=mIdx(mOf(today()));const r=[]
 // by 'account': one item per account with a balance; beyond MAX_SLICES the small ones become "Outras".
 // by 'type': accounts named like an asset class (Ações, FIIs, ETFs, BDRs) by class, everything else is "Renda fixa e outros".
 export const DIST_MAX_SLICES=7,DIST_OTHER_ID='_other',DIST_FIXED_ID='_fixed';
+// the type of an account by its name: an asset class (Ações, FIIs...) or fixed income and others
+export function typeOfAccount(name){
+  const cls=Object.keys(ASSET_LABEL).find(k=>ASSET_LABEL[k]===name);
+  return cls?{id:cls,name}:{id:DIST_FIXED_ID,name:'Renda fixa e outros'};
+}
+export const TYPE_ORDER=[DIST_FIXED_ID,'acao','fii','etf','bdr'];
 export function investmentDistribution(day=today(),by='account'){
   const rows=S.accounts.filter(a=>!a.archived).map(a=>({id:a.id,name:a.name,value:balance(a.id,day).v})).filter(r=>r.value>0.005);
   const tot=rows.reduce((x,r)=>x+r.value,0);
   let items=rows.map(r=>({...r,count:1}));
   if(by==='type'){
     const g={};
-    rows.forEach(r=>{const cls=Object.keys(ASSET_LABEL).find(k=>ASSET_LABEL[k]===r.name),id=cls||DIST_FIXED_ID,name=cls?r.name:'Renda fixa e outros';
+    rows.forEach(r=>{const {id,name}=typeOfAccount(r.name);
       const x=g[id]||(g[id]={id,name,value:0,count:0});x.value+=r.value;x.count++;});
     items=Object.values(g);
   }
@@ -31,12 +37,21 @@ export function investmentDistribution(day=today(),by='account'){
   }
   return {total:tot,items:items.map(r=>({...r,share:tot?r.value/tot:0}))};
 }
+const firstSnapshot=acc=>S.snaps.filter(s=>s.acc===acc).reduce((m,s)=>!m||s.date<m?s.date:m,null);
+// accounts whose FIRST balance was entered in (from, to]: that balance is where they start, not yield
+const startedIn=(from,to)=>S.accounts.map(a=>a.id).filter(id=>{const f=firstSnapshot(id);return f&&f>from&&f<=to;});
+const contributionsTo=(acc,m,to)=>sum(S.tx.filter(t=>t.type==='aporte'&&t.acc===acc&&mOf(t.date)===m&&t.date<=to).map(t=>t.value));
 export function realSeries(){
   const ms=monthsList();
   return ms.map((m,n)=>{
     const d=asOf(m),t=total(d),ap=contributionsInMonth(m);
     let y=null;
-    if(n>0){const pd=asOf(ms[n-1]);const upd=S.snaps.some(s=>s.date>pd&&s.date<=d);if(upd)y=t-total(pd)-ap;}
+    if(n>0){
+      const pd=asOf(ms[n-1]),fresh=startedIn(pd,d);
+      // a month only has a yield when a balance of an account that already existed was updated
+      const upd=S.snaps.some(s=>s.date>pd&&s.date<=d&&!fresh.includes(s.acc));
+      if(upd)y=t-total(pd)-ap-sum(fresh.map(a=>balance(a,d).v-balance(a,pd).v-contributionsTo(a,m,d)));
+    }
     return {m,d,t,ap,y,bal:S.accounts.map(a=>balance(a.id,d).v),prev:n>0?total(asOf(ms[n-1])):null};
   });
 }

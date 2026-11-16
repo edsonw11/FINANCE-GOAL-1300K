@@ -5,7 +5,7 @@
  */
 import { monthEnd } from '../core/dates.js';
 import { roundMoney } from '../core/money.js';
-import { S, seed } from './store.js';
+import { S, seed, autoBackup, replaceState } from './store.js';
 import { CARD, ruleClosing } from './card-cycle.js';
 const DEFAULT_GOAL=1300000;
 export function setGoalSettings({goal,rate,planned}){S.goal=goal>0?goal:DEFAULT_GOAL;S.rate=rate>0?rate:0;S.planned=planned>0?roundMoney(planned):0;}
@@ -26,4 +26,11 @@ export function importBackup(d){
     e.bal.forEach((v,i)=>{if(n.accounts[i])n.snaps.push({date:monthEnd(k),acc:n.accounts[i].id,value:v,est:!!e.est});});
     e.ap.forEach((v,i)=>{if(v>0&&n.accounts[i])n.tx.push({id:n.nid++,date:k+'-15',type:'aporte',acc:n.accounts[i].id,value:v,desc:'importado'});});});
   return {state:n,converted:true};
+}
+
+// puts back the automatic copy of the day before (kept by the store); {error} when there is none
+export function restoreAutoBackup(){
+  const b=autoBackup();
+  if(!b)return {error:'Ainda não existe cópia automática'};
+  replaceState(b.state);return {day:b.day};
 }

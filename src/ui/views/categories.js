@@ -14,9 +14,12 @@ import { addCategories, addCategory, deleteCategoryAt, renameCategoryAt, setCate
 import { toast } from '../toast.js';
 import { askConfirm } from '../components/confirm.js';
 import { runCommand } from '../components/command.js';
+import { moreMenu, bindMoreMenus } from '../components/more-menu.js';
+// groups the user opened stay open when the page is drawn again (every change redraws it)
+const openGroups=new Set();
 // one category line: switch, icon, name, usage and delete (+ the group field for expenses)
 function categoryRow(t,c,i){const u=catUse(t,c.name),use=`${u.n} lanç. · ${f0(u.v)}`;
-  const line=`<div class="row cat-line${t==='despesa'?' exp':''}"><label class="sw" title="${c.off?'Desativada: não aparece nas listas de lançamento':'Ativa: aparece nas listas de lançamento'}"><input type="checkbox" data-co="${t}|${i}" ${c.off?'':'checked'}><span></span></label><div class="row cat-fields${c.off?' off':''}"><input class="ci icon-in" data-ci="${t}|${i}" value="${esc(c.icon)}" maxlength="4" aria-label="Ícone"><input class="ci grow" data-cn="${t}|${i}" value="${esc(c.name)}" aria-label="Nome"><span class="mut cat-use">${use}</span></div><button class="btn sm dng" data-cd="${t}|${i}" aria-label="Excluir ${esc(c.name)}">Excluir</button></div>`;
+  const line=`<div class="row cat-line${t==='despesa'?' exp':''}"><label class="sw" title="${c.off?'Desativada: não aparece nas listas de lançamento':'Ativa: aparece nas listas de lançamento'}"><input type="checkbox" data-co="${t}|${i}" ${c.off?'':'checked'}><span></span></label><div class="row cat-fields${c.off?' off':''}"><input class="ci icon-in" data-ci="${t}|${i}" value="${esc(c.icon)}" maxlength="4" aria-label="Ícone"><input class="ci grow" data-cn="${t}|${i}" value="${esc(c.name)}" aria-label="Nome"><span class="mut cat-use">${use}</span></div>${moreMenu([{label:'Excluir',attrs:`data-cd="${t}|${i}"`,danger:true}],'Mais ações de '+esc(c.name))}</div>`;
   // on phones the usage moves to this second line so the name keeps its width
   if(t!=='despesa')return line+`<div class="cat-sub"><span class="mut">${use}</span></div>`;
   return line+`<div class="cat-grp"><span>Grupo</span><input class="ci" list="groupList" data-cg="${i}" value="${esc(c.group||'')}" placeholder="Sem grupo (digite para criar)" aria-label="Grupo de ${esc(c.name)}"><span class="mut cat-use-sm">${use}</span></div>`;
@@ -25,11 +28,11 @@ function categoryRow(t,c,i){const u=catUse(t,c.name),use=`${u.n} lanç. · ${f0(
 function expenseSections(){
   const list=S.cats.despesa.map((c,i)=>({c,i})),groups=(S.groups||[]).filter(g=>list.some(x=>x.c.group===g.name));
   const head=(ic,name,items,budget)=>{const v=items.reduce((a,x)=>a+catUse('despesa',x.c.name).v,0);
-    return `<div class="cat-gh">${ic}<b>${esc(name)}</b><span class="mut">${items.length} categoria(s) · ${f0(v)}</span>${budget===undefined?'':`<label class="bud-in"><span>Orçamento/mês</span><input class="ci" data-money data-gb="${esc(name)}" value="${budget?m2(budget):''}" placeholder="sem limite" aria-label="Orçamento mensal de ${esc(name)}"></label>`}</div>`;};
+    return `<summary class="cat-gh">${ic}<b>${esc(name)}</b><span class="mut">${items.length} categoria(s) · ${f0(v)}</span>${budget===undefined?'':`<label class="bud-in"><span>Orçamento/mês</span><input class="ci" data-money data-gb="${esc(name)}" value="${budget?m2(budget):''}" placeholder="sem limite" aria-label="Orçamento mensal de ${esc(name)}"></label>`}</summary>`;};
   const sec=groups.map(g=>{const items=list.filter(x=>x.c.group===g.name);
-    return head(`<input class="ci icon-in sm" data-gi="${esc(g.name)}" value="${esc(g.icon)}" maxlength="4" aria-label="Ícone do grupo ${esc(g.name)}">`,g.name,items,budgetOf(g.name))+items.map(x=>categoryRow('despesa',x.c,x.i)).join('');});
+    return `<details class="cat-det" data-gd="${esc(g.name)}"${openGroups.has(g.name)?' open':''}>`+head(`<input class="ci icon-in sm" data-gi="${esc(g.name)}" value="${esc(g.icon)}" maxlength="4" aria-label="Ícone do grupo ${esc(g.name)}">`,g.name,items,budgetOf(g.name))+items.map(x=>categoryRow('despesa',x.c,x.i)).join('')+'</details>';});
   const lone=list.filter(x=>!x.c.group||!groups.some(g=>g.name===x.c.group));
-  if(lone.length)sec.push(head('','Sem grupo',lone)+lone.map(x=>categoryRow('despesa',x.c,x.i)).join(''));
+  if(lone.length)sec.push(`<details class="cat-det" data-gd=""${openGroups.has('')?' open':''}>`+head('','Sem grupo',lone)+lone.map(x=>categoryRow('despesa',x.c,x.i)).join('')+'</details>');
   return `<datalist id="groupList">${(S.groups||[]).map(g=>`<option value="${esc(g.name)}">`).join('')}</datalist>`+sec.join('');
 }
 export function renderCategories(){
@@ -39,6 +42,8 @@ export function renderCategories(){
     return `<div class="card"><div class="list-title">${TT[t]} <span class="mut title-note">· ${list.length} categorias</span></div>`+
       (t==='despesa'?'<div class="help mb4">Cada categoria fica num grupo (ex.: Luz, Água e Gás em Moradia; Academia em Saúde). O Resumo e a análise somam por grupo.</div>'+expenseSections():list.map((c,i)=>categoryRow(t,c,i)).join(''))+
       `<div class="row cat-new"><input class="ci icon-in" id="ne_${t}" placeholder="🏷️" maxlength="4" aria-label="Ícone da nova categoria"><input class="ci grow" id="nn_${t}" placeholder="Nova categoria (ex.: Uber)"><button class="btn sm pri" data-ca="${t}">Adicionar</button></div></div>`;}).join('');
+  bindMoreMenus($('catPage'));
+  document.querySelectorAll('[data-gd]').forEach(d=>d.ontoggle=()=>{if(d.open)openGroups.add(d.dataset.gd);else openGroups.delete(d.dataset.gd);});
   const at=v=>{const [t,i]=v.split('|');return [t,+i];};
   document.querySelectorAll('[data-co]').forEach(el=>el.onchange=()=>{const [t,i]=at(el.dataset.co),on=el.checked;
     runCommand(()=>setCategoryEnabled(t,i,on),{ok:r=>on?'✅ “'+r.name+'” ativada':'Categoria “'+r.name+'” desativada (não aparece mais nas listas)'});});

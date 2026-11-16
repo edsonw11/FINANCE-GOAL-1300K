@@ -152,7 +152,7 @@ table.tl tr.rowclick{cursor:pointer}
 .pbar>i{display:block;height:100%;border-radius:99px;background:var(--rec)}
 .pbar-near>i{background:var(--warn)}
 .pbar-over>i{background:var(--des)}
-.warn-t{color:var(--warn);font-weight:700}
+.warn-t{color:var(--warn-ink);font-weight:700}
 .link-btn{background:none;border:0;padding:0;font:inherit;color:var(--brand);font-weight:600;cursor:pointer;text-decoration:underline}
 
 /* summary: budget and bills cards side by side (stacked on phones) */
@@ -178,7 +178,7 @@ table.tl tr.rowclick{cursor:pointer}
 .bill-row .btn{flex:none;margin-left:8px}
 .tag.bill-paid{background:color-mix(in srgb,var(--rec) 16%,var(--card));color:var(--rec)}
 .tag.bill-scheduled{background:var(--soft);color:var(--ink2)}
-.tag.bill-missing{background:color-mix(in srgb,var(--warn) 20%,var(--card));color:var(--warn)}
+.tag.bill-missing{background:color-mix(in srgb,var(--warn) 20%,var(--card));color:var(--warn-ink)}
 .bill-hide{flex:none;width:32px;height:32px;margin-left:6px;border:0;border-radius:99px;background:none;color:var(--muted);font-size:14px;cursor:pointer}
 .bill-hide:hover{background:var(--soft);color:var(--ink)}
 @media (pointer:coarse){.bill-hide{width:44px;height:44px}}
@@ -187,3 +187,11 @@ table.tl tr.rowclick{cursor:pointer}
 .bill-v-sm{display:none}
 @media (max-width:480px){.bill-row .bill-v{display:none}.bill-v-sm{display:inline;font-weight:700;color:var(--ink)}}
 @media (max-width:480px){.bill-row .tag.bill-missing{display:none}}
+/* "⋯" menu for rare or risky actions */
+.more{position:relative;display:inline-block}.more>summary{list-style:none;cursor:pointer;font-weight:800}.more>summary::-webkit-details-marker{display:none}
+.more-pop{position:absolute;right:0;top:calc(100% + 4px);z-index:20;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;min-width:140px}
+.more-item{display:block;width:100%;text-align:left;border:0;background:none;font:inherit;font-weight:600;padding:10px 12px;min-height:44px;border-radius:8px;cursor:pointer;color:var(--ink)}
+.more-item:hover{background:var(--soft)}.more-item.dng{color:var(--des)}
+/* a group of categories is a closed section until opened */
+.cat-det>summary{list-style:none;cursor:pointer}.cat-det>summary::-webkit-details-marker{display:none}
+.cat-det>summary::before{content:'▸';color:var(--muted);margin-right:2px}.cat-det[open]>summary::before{content:'▾'}

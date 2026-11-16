@@ -202,3 +202,12 @@ Em Investimentos, a **Carteira** agrupa os ativos por tipo (ações, FIIs, ETFs,
 
 ## Auditoria dos cálculos e distribuição
 `tests/unit/calc-audit.test.js` gera os dados de teste (12 meses) e recalcula cada número **sem usar as funções do app**, só dos lançamentos: totais e percentuais do mês, categorias, patrimônio, rendimento e % no mês, anel da meta, projeção e data da meta, orçamentos, faturas do cartão, carteira e a tendência de gastos. Divergência = número errado na tela. Em Investimentos, o gráfico de anel mostra a parcela de cada conta no patrimônio (`investmentDistribution`, `ui/charts/donut-chart.js`).
+
+## Summary "health" block, reserve and next actions
+- `domain/savings.js`: savings rate of a month = (income − expenses) ÷ income, with a level (good ≥ 20%, ok ≥ 10%, low, negative).
+- `domain/emergency-fund.js`: accounts flagged `reserve:true` (button "🛟 Reserva" in the account list) ÷ average expenses of the last 3 closed months = months covered (goal 6). Command `setReserveAccount`.
+- `domain/todo-list.js`: `nextActions(day)` returns at most 3 items, most urgent first (late invoices grouped, invoices due in 7 days, budgets over the limit, monthly bills not entered, no contribution after day 10). Each item says where to go; `ui/views/summary-health.js` only writes the text.
+- UI: Investments merged into the "Patrimônio" tab (old `inv` tab id still works through `MOVED_TABS`); repeat / split moved into "Mais opções" in the form; card tab shows the current invoice first and the table of all invoices collapsed; VR/VA card appears only when used; projection table keeps 4 columns on phones.
+- `domain/allocation.js`: optional target (%) per investment type (`S.targets`, total ≤ 100%); `allocationStatus` gives the gap in points and in money. Shown under the ring in "Por tipo" (`distribution-view.js`).
+- The tower chart stacks by investment type (same colors as the ring), and labels are thinned out when bars are narrow.
+- Known limitation: a sale reduces the position in the portfolio, but the account balance stays at cost until the balance is updated.

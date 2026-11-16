@@ -19,7 +19,6 @@ import { setClosingOverride } from '../../domain/settings-commands.js';
 import { ui } from '../ui-state.js';
 import { datePicker } from '../components/date-input.js';
 import { runCommand } from '../components/command.js';
-import { deleteTxFlow } from './transaction-actions.js';
 import { openItem } from './item-dialog.js';
 let selectedCycle=null;
 export function renderCycles(){
@@ -32,12 +31,12 @@ export function renderCycles(){
   let rows='<tr><th>Fatura (vence em)</th><th>Compras de</th><th>Fecha em (ajustável)</th><th class="r">Lançado</th><th class="r">Pago</th><th>Situação</th></tr>';
   for(let i=-1;i<=3;i++){const fm=mKey(mIdx(fmNow)+i),p2=paid(fm),cdt=closeDateOf(fm);
     rows+=`<tr data-cyc="${fm}" class="cyc-row${fm===view?' on':''}" title="Clique para ver as compras desta fatura"><td><b>${formatDateBR(dueDateOf(fm))}</b>${fm===fmNow?' <span class="mut fs12">· atual</span>':''}</td><td>${formatDateBR(cycleStart(fm))}</td><td><input type="date" data-over="${fm}" value="${cdt}" class="ci w-150" title="Ajuste se o banco mostrar outra data"></td><td class="r">${f2(buy(fm))}</td><td class="r">${p2?f2(p2):'—'}</td><td>${stOf(fm)}</td></tr>`;}
-  const tableCard=`<div class="card mb-14"><div class="card-title">Faturas do cartão <span class="mut title-note">· melhor dia de compra: dia ${CARD().best} · vence dia ${CARD().due} · clique numa fatura para ver as compras</span></div><div class="scroll"><table class="tl stack">${rows}</table></div></div>`;
+  const tableCard=`<details class="card mb-14 inv-all"${ui.allInvoicesOpen?' open':''}><summary class="card-title">Todas as faturas e fechamento <span class="mut title-note">· melhor dia de compra: dia ${CARD().best} · vence dia ${CARD().due}</span></summary><div class="scroll"><table class="tl stack">${rows}</table></div></details>`;
   // details of the selected invoice
   const dd=dueDateOf(view),cd=closeDateOf(view),st=cycleStart(view),its=itemsOf(view),tot=buy(view),left=daysBetween(t0,cd),nextFm=mKey(mIdx(view)+1);
   const rel=view===fmNow?'Fatura atual':mIdx(view)>mIdx(fmNow)?'Próxima fatura':'Fatura anterior';
   const deadline=t0<=cd?`<div class="cc-deadline">⏳ <b>Último dia para comprar nesta fatura: ${formatDateBR(cd)}</b> · ${left>0?'faltam '+left+' dia(s)':'é hoje'}. A partir de ${formatDateBR(addDay(cd,1))} as compras vão para a fatura de ${formatDateBR(dueDateOf(nextFm))}.</div>`:`<div class="help mt-6">Fatura fechada em ${formatDateBR(cd)}.</div>`;
-  const body=its.length?`<tr><th>Data</th><th>Categoria</th><th>Descrição</th><th class="r">Valor</th><th></th></tr>`+its.map(t=>`<tr data-tx="${t.id}" class="rowclick" tabindex="0" role="button"><td>${formatDateBR(t.date)}</td><td>${icon('despesa',t.cat)} ${esc(t.cat)}</td><td class="mut">${esc(t.desc||'')}</td><td class="r">${f2(t.value)}</td><td class="r nw"><button class="btn sm" data-ie="${t.id}">Editar</button> <button class="btn sm dng" data-ix="${t.id}">Excluir</button></td></tr>`).join('')+`<tr class="tr-total"><td colspan="3"><b>Total da fatura</b></td><td class="r"><b>${f2(tot)}</b></td><td></td></tr>`:'<tr><td class="empty" colspan="5">Nenhuma compra de cartão lançada nesta fatura ainda.</td></tr>';
+  const body=its.length?`<tr><th>Data</th><th>Categoria</th><th>Descrição</th><th class="r">Valor</th><th></th></tr>`+its.map(t=>`<tr data-tx="${t.id}" class="rowclick" tabindex="0" role="button"><td>${formatDateBR(t.date)}</td><td>${icon('despesa',t.cat)} ${esc(t.cat)}</td><td class="mut">${esc(t.desc||'')}</td><td class="r">${f2(t.value)}</td><td class="r nw"><button class="btn sm" data-ie="${t.id}">Editar</button></td></tr>`).join('')+`<tr class="tr-total"><td colspan="3"><b>Total da fatura</b></td><td class="r"><b>${f2(tot)}</b></td><td></td></tr>`:'<tr><td class="empty" colspan="5">Nenhuma compra de cartão lançada nesta fatura ainda.</td></tr>';
   const detail=`<div class="card mb-14 cc-detail">
     <div class="cc-head"><div class="cc-label">${rel} · vence em ${formatDateBR(dd)}</div>${stOf(view)}</div>
     <div class="cc-amount">${f2(tot)}</div>
@@ -46,12 +45,12 @@ export function renderCycles(){
     <div class="scroll mt-12"><table class="tl stack">${body}</table></div>
     <div class="mt-12"><button class="btn pri" id="cycAdd">+ Adicionar compra nesta fatura</button></div>
   </div>`;
-  $('cycleBox').innerHTML=tableCard+detail;
+  $('cycleBox').innerHTML=detail+tableCard;
+  $('cycleBox').querySelector('.inv-all').ontoggle=e=>{ui.allInvoicesOpen=e.target.open;};
   document.querySelectorAll('tr[data-cyc]').forEach(tr=>tr.onclick=e=>{if(e.target.closest('input'))return;selectedCycle=tr.dataset.cyc;renderCycles();});
   document.querySelectorAll('[data-over]').forEach(el=>datePicker(el));
   document.querySelectorAll('[data-over]').forEach(el=>el.onchange=()=>runCommand(()=>setClosingOverride(el.dataset.over,el.value),{ok:'Fechamento ajustado'}));
   document.querySelectorAll('[data-ie]').forEach(el=>el.onclick=e=>{e.stopPropagation();openItem(+el.dataset.ie);});
-  document.querySelectorAll('[data-ix]').forEach(el=>el.onclick=e=>{e.stopPropagation();deleteTxFlow(+el.dataset.ix);});
   $('cycAdd').onclick=()=>openItem(null,t0>=st&&t0<=cd?t0:(t0<st?st:cd));
 }
 export function renderCardBox(){

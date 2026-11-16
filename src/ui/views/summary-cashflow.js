@@ -21,7 +21,7 @@ export function renderFlow(){
     kpi('apo','🏦','Aportes (investido)','→ '+f2(apo),rec?`${pc(apo/rec)} das receitas`:'Dinheiro enviado aos investimentos','','contrib')+
     kpi('','🧮','Sobrou no caixa',`<span class="${sob>=0?'pos':'neg'}">${sob<0?'−':''}${f2(Math.abs(sob))}</span>`,'Receitas − saídas da conta − faturas pagas − aportes','','cash')+
     kpi('des','💳','Fatura em aberto',f2(sm.openCard.total),`Compras no mês: ${f2(sm.cardBought)} · fatura paga: ${f2(sm.invoicesPaid)}`,'','opencard')+
-    kpi('','💰','Saldo VR/VA',f2(v.total),`Recebido ${f2(v.inMonth)} · gasto ${f2(v.outMonth)} no mês`,'','voucher');
+    (v.total||v.inMonth||v.outMonth?kpi('','💰','Saldo VR/VA',f2(v.total),`Recebido ${f2(v.inMonth)} · gasto ${f2(v.outMonth)} no mês`,'','voucher'):'');
   // 6 months
   const idx=mIdx(ui.cur),ms=[];for(let i=idx-5;i<=idx;i++)ms.push(mKey(i));
   const data=ms.map(m=>{const x=monthSummary(m);return [x.income.total,x.expenses.total,x.contributions.total];});

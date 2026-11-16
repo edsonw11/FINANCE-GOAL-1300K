@@ -44,7 +44,11 @@
   // cards: items add up to the total
   await step('expenses card lists records with the same total',()=>{openKpi('expenses');const card=money(q('#kFlow [data-kpi=expenses] .v').textContent);
     need(rows().length>0,'no rows');need(Math.abs(sheetTotal())===Math.abs(card),'sheet '+sheetTotal()+' card '+card);need(Math.abs(rowsSum()-Math.abs(card))<0.005,'rows '+rowsSum()+' card '+card);});
-  await step('every summary card opens its records',()=>{for(const k of ['income','contrib','cash','opencard','voucher']){openKpi(k);need(q('#shBody .bd-total'),'no total for '+k);}$('shClose').click();});
+  await step('summary shows savings rate and reserve; an account can be marked as reserve',()=>{
+    need(document.querySelectorAll('#healthRow .health').length===2,'savings/reserve cards missing');
+    need(/Taxa de poupança/.test($('healthRow').textContent),'no savings rate');
+    need(/Marque uma conta/.test($('healthRow').textContent),'reserve hint missing before marking');},)
+  await step('every summary card opens its records',()=>{for(const k of ['income','contrib','cash','opencard','voucher']){if(k==='voucher'){need(!q('[data-kpi=voucher]'),'VR/VA card shown with no VR/VA at all');continue;}openKpi(k);need(q('#shBody .bd-total'),'no total for '+k);}$('shClose').click();});
 
   await step('analysis tiles and trend cards open their lists',()=>{for(const k of ['avg','fixed','variable','top3','lastmonth','trend']){
       const el=q(`#t-resumo [data-kpi=${k}]`);need(el,'no card '+k);el.click();need($('sheet').open&&q('#shBody .bd-total'),'nothing opened for '+k);$('shClose').click();}
@@ -214,14 +218,14 @@
   await step('disable category',()=>{const c=q('[data-co]');need(c,'no toggle');c.checked=false;c.dispatchEvent(new Event('change'));c.checked=true;c.dispatchEvent(new Event('change'));});
   await step('tabs (top and bottom menu)',()=>{qa('#nav button').forEach(b=>b.click());q('#bnav [data-t=more]').click();need($('sheet').open,'more menu');q('[data-more=cfg]').click();need($('t-cfg').classList.contains('on'),'tab');});
   await step('investments: import starts in investment mode (money in = aporte) and needs the destination account',async()=>{
-    if($('sheet').open)$('shClose').click();document.querySelector('[data-t=inv]').click();$('impOpenInv').click();need(/investimentos/i.test($('shTitle').textContent),'title '+$('shTitle').textContent);
+    if($('sheet').open)$('shClose').click();document.querySelector('#nav [data-t=meta]').click();$('newAcc').value='Tesouro Selic 2028';$('addAcc').click();$('impOpenInv').click();need(/investimentos/i.test($('shTitle').textContent),'title '+$('shTitle').textContent);
     await chooseFile('aportes.csv','Data;Descrição;Valor\n03/11/2026;APORTE TESOURO SELIC 2028;2.000,00\n04/11/2026;RENDIMENTO;35,10');
     await waitFor(()=>q('#impList .imp-row'),'invest review');const rows=qa('#impList .imp-row');
     need(/Aporte/.test(rows[0].textContent)&&/Tesouro Selic 2028/.test(rows[0].textContent),'first row: '+rows[0].textContent.slice(0,200));
     need(rows[1].classList.contains('ign'),'yield should be ignored');$('shClose').click();});
   await step('investments: a brokerage note fills the portfolio, grouped by kind, and importing it again adds nothing',async()=>{
     const note='NOTA DE NEGOCIAÇÃO\nData pregão 05/11/2026\n1-BOVESPA C VISTA PETR4 PN N2 100 38,20 3.820,00 D\n1-BOVESPA C VISTA FII HGLG CI ER 40 158,00 6.320,00 D\nTotal custos / despesas 10,00 D';
-    if($('sheet').open)$('shClose').click();document.querySelector('[data-t=inv]').click();const n0=stored().tx.length;
+    if($('sheet').open)$('shClose').click();document.querySelector('#nav [data-t=meta]').click();const n0=stored().tx.length;
     $('impOpenInv').click();await chooseFile('nota.txt',note);await waitFor(()=>q('#ntList .imp-row'),'note review');
     need(qa('#ntList .imp-row').length===2&&/Nota de corretagem/.test($('shTitle').textContent),'note rows');
     need(stored().tx.length===n0,'saved before confirming');
@@ -243,7 +247,13 @@
     q('[data-dist-by=type]').click();const tl=qa('#distCard .donut-name').map(e=>e.textContent);
     need(/Renda fixa/.test(tl.join('|'))&&/Ações/.test(tl.join('|')),'by type: '+tl);
     qa('#distCard .donut-call')[0].dispatchEvent(new MouseEvent('click',{bubbles:true}));need($('distCard').querySelectorAll('.donut circle[opacity]').length>=1&&/R\$/.test($('distCard').querySelector('.donut-top').textContent),'selecting a label dims the others');
-    qa('#distCard .donut-call')[0].dispatchEvent(new MouseEvent('click',{bubbles:true}));need(!$('distCard').querySelector('.donut circle[opacity]'),'second click clears');q('[data-dist-by=account]').click();
+    qa('#distCard .donut-call')[0].dispatchEvent(new MouseEvent('click',{bubbles:true}));need(!$('distCard').querySelector('.donut circle[opacity]'),'second click clears');
+    // allocation target: type a target for fixed income, the card shows the gap in money; clearing removes it
+    q('[data-dist-by=type]').click();{const inp=q('[data-target=_fixed]');need(inp,'no target input');inp.value='50';inp.dispatchEvent(new Event('change',{bubbles:true}));await tick();await tick();
+      need(/no alvo|acima|abaixo/.test($('distCard').querySelector('.tg-row').textContent),'no gap text after setting a target');
+      need(stored().targets&&stored().targets._fixed===50,'target not saved');
+      q('[data-target-clear]').click();await tick();await tick();need(!stored().targets||!Object.keys(stored().targets).length,'targets not cleared');}
+    q('[data-dist-by=account]').click();
     $('reset').click();await confirmYes();await tick();await tick();
     need($('accList').children.length<=1,'accounts left: '+$('accList').textContent.slice(0,120));need(!/PETR4|HGLG11/.test($('portfolio').textContent),'portfolio left');
     need(stored().tx.length===0&&!(stored().trades||[]).length&&stored().snaps.length===0,'storage not empty');});

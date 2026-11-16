@@ -8,6 +8,7 @@ import { Sheet } from './components/sheet.js';
 import { stackTables } from './components/stack-table.js';
 import { renderMeta } from './views/goal.js';
 import { renderFlow } from './views/summary-cashflow.js';
+import { renderHealth } from './views/summary-health.js';
 import { renderBudgets } from './views/budget-card.js';
 import { renderBills } from './views/monthly-bills.js';
 import { renderTrend } from './views/summary-trend.js';
@@ -18,5 +19,5 @@ import { renderInvestments } from './views/investments.js';
 import { renderCategories } from './views/categories.js';
 import { renderSettings } from './views/settings.js';
 import { renderBackup } from './views/backup.js';
-export function render(){initCats();renderMeta();renderFlow();renderBudgets();renderBills();renderTrend();renderCycles();renderCardBox();renderTransactions();renderInvestments();renderSettings();renderBackup();renderCategories();
+export function render(){initCats();renderMeta();renderFlow();renderHealth();renderBudgets();renderBills();renderTrend();renderCycles();renderCardBox();renderTransactions();renderInvestments();renderSettings();renderBackup();renderCategories();
   fillInvoiceMonths();stackTables();prepareMoneyInputs();Sheet.refresh();}

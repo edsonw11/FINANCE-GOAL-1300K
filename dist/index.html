@@ -9,14 +9,14 @@
 <style>
 /* 01-tokens.css: Color variables, dark theme and shadows */
 :root{
-  --bg:#f3f5f9; --card:#ffffff; --ink:#18202f; --ink2:#566074; --muted:#8a94a8; --line:#e4e8f0; --soft:#f0f3f9;
-  --brand:#2f5fd0; --rec:#17956f; --des:#e0483f; --apo:#3b82f6; --warn:#d99a1c; --meta:#d6336c; --proj:#9db6e0;
+  --bg:#f3f5f9; --card:#ffffff; --ink:#18202f; --ink2:#566074; --muted:#5e697e; --line:#e4e8f0; --soft:#f0f3f9;
+  --brand:#2f5fd0; --rec:#0e7a58; --des:#c8372f; --apo:#2563eb; --warn:#d99a1c; --warn-ink:#8a5a00; --meta:#c2255c; --proj:#9db6e0;
   --shadow:0 1px 2px rgba(20,30,50,.05),0 4px 14px rgba(20,30,50,.05);
   --c0:#8a05be; --c1:#e8710a; --c2:#2f6fd0; --c3:#1f9d83; --c4:#7b869b; --c5:#c2410c; --c6:#0e7490; --c7:#a21caf; --c8:#b8860b; --c9:#4d7c0f; --c10:#be123c; --c11:#4338ca;
 }
 @media (prefers-color-scheme: dark){
-  :root{--bg:#0e121a; --card:#171c27; --ink:#eef1f7; --ink2:#b3bccd; --muted:#7a859a; --line:#262d3d; --soft:#1e2433;
-    --brand:#6b9bec; --rec:#3cc4a6; --des:#ff7a70; --apo:#6aa3ff; --warn:#f0b94a; --meta:#ff6b9a; --proj:#4a6aa5; --shadow:none;
+  :root{--bg:#0e121a; --card:#171c27; --ink:#eef1f7; --ink2:#b3bccd; --muted:#8b95aa; --line:#262d3d; --soft:#1e2433;
+    --brand:#6b9bec; --rec:#3cc4a6; --des:#ff7a70; --apo:#6aa3ff; --warn:#f0b94a; --warn-ink:#f0b94a; --meta:#ff6b9a; --proj:#4a6aa5; --shadow:none;
     --c0:#b65be0; --c1:#f29a4a; --c2:#6b9bec; --c3:#3cc4a6; --c4:#9aa5ba; --c5:#f08a5a; --c6:#4cc3dd; --c7:#d27be0; --c8:#e0b84a; --c9:#8fcf5a; --c10:#f27a95; --c11:#8c8cf0;}
 }
 </style>
@@ -35,6 +35,7 @@ nav button:hover{background:var(--soft)} nav button.on{background:color-mix(in s
 main{max-width:1080px;margin:0 auto;padding:22px 18px 70px}
 section.tab{display:none} section.tab.on{display:block}
 h2{font-size:13px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink2);margin:30px 0 10px;font-weight:700}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 </style>
 <style>
 /* 03-cards-charts.css: Grids, cards, KPIs, bars, month navigation, charts, legend and row selection */
@@ -130,18 +131,18 @@ table tr:first-child:hover td{background:transparent}
 .chip.on{background:var(--brand);color:#fff;border-color:var(--brand)}
 .chips input{max-width:230px;margin-left:auto;padding:7px 12px;border-radius:99px}
 button.btn{transition:filter .15s}button.btn:hover{filter:brightness(.96)}
-.seg input[value=fatura]:checked+span{color:var(--warn)}
+.seg input[value=fatura]:checked+span{color:var(--warn-ink)}
 .tag.pay-conta{background:var(--soft);color:var(--ink2)}
 .tag.pay-cartao{background:color-mix(in srgb,var(--c1) 18%,var(--card));color:var(--c1)}
 .tag.pay-vr{background:color-mix(in srgb,var(--rec) 16%,var(--card));color:var(--rec)}
-.tag.fatura{background:color-mix(in srgb,var(--warn) 20%,var(--card));color:var(--warn)}
+.tag.fatura{background:color-mix(in srgb,var(--warn) 20%,var(--card));color:var(--warn-ink)}
 .fitem:hover{text-decoration:underline}
 dialog{border:1px solid var(--line);border-radius:16px;padding:22px;background:var(--card);color:var(--ink);box-shadow:0 20px 60px rgba(10,15,25,.35);width:min(460px,92vw)}
 dialog::backdrop{background:rgba(10,15,25,.5)}
 .status{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;text-transform:none;letter-spacing:0;padding:2px 10px;border-radius:99px;margin-left:8px;vertical-align:1px}
 .status::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
 .status.ok{color:var(--rec);background:color-mix(in srgb,var(--rec) 14%,var(--card))}
-.status.warn{color:var(--warn);background:color-mix(in srgb,var(--warn) 18%,var(--card))}
+.status.warn{color:var(--warn-ink);background:color-mix(in srgb,var(--warn) 18%,var(--card))}
 .status.nd{color:var(--muted);background:var(--soft)}
 .banner{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:color-mix(in srgb,var(--brand) 9%,var(--card));border:1px solid color-mix(in srgb,var(--brand) 30%,var(--line));border-radius:12px;padding:10px 14px;margin:10px 0 0;font-size:14px}
 .banner span{flex:1}
@@ -302,7 +303,7 @@ table.tl tr.rowclick{cursor:pointer}
 .pbar>i{display:block;height:100%;border-radius:99px;background:var(--rec)}
 .pbar-near>i{background:var(--warn)}
 .pbar-over>i{background:var(--des)}
-.warn-t{color:var(--warn);font-weight:700}
+.warn-t{color:var(--warn-ink);font-weight:700}
 .link-btn{background:none;border:0;padding:0;font:inherit;color:var(--brand);font-weight:600;cursor:pointer;text-decoration:underline}
 
 /* summary: budget and bills cards side by side (stacked on phones) */
@@ -328,7 +329,7 @@ table.tl tr.rowclick{cursor:pointer}
 .bill-row .btn{flex:none;margin-left:8px}
 .tag.bill-paid{background:color-mix(in srgb,var(--rec) 16%,var(--card));color:var(--rec)}
 .tag.bill-scheduled{background:var(--soft);color:var(--ink2)}
-.tag.bill-missing{background:color-mix(in srgb,var(--warn) 20%,var(--card));color:var(--warn)}
+.tag.bill-missing{background:color-mix(in srgb,var(--warn) 20%,var(--card));color:var(--warn-ink)}
 .bill-hide{flex:none;width:32px;height:32px;margin-left:6px;border:0;border-radius:99px;background:none;color:var(--muted);font-size:14px;cursor:pointer}
 .bill-hide:hover{background:var(--soft);color:var(--ink)}
 @media (pointer:coarse){.bill-hide{width:44px;height:44px}}
@@ -337,6 +338,14 @@ table.tl tr.rowclick{cursor:pointer}
 .bill-v-sm{display:none}
 @media (max-width:480px){.bill-row .bill-v{display:none}.bill-v-sm{display:inline;font-weight:700;color:var(--ink)}}
 @media (max-width:480px){.bill-row .tag.bill-missing{display:none}}
+/* "⋯" menu for rare or risky actions */
+.more{position:relative;display:inline-block}.more>summary{list-style:none;cursor:pointer;font-weight:800}.more>summary::-webkit-details-marker{display:none}
+.more-pop{position:absolute;right:0;top:calc(100% + 4px);z-index:20;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;min-width:140px}
+.more-item{display:block;width:100%;text-align:left;border:0;background:none;font:inherit;font-weight:600;padding:10px 12px;min-height:44px;border-radius:8px;cursor:pointer;color:var(--ink)}
+.more-item:hover{background:var(--soft)}.more-item.dng{color:var(--des)}
+/* a group of categories is a closed section until opened */
+.cat-det>summary{list-style:none;cursor:pointer}.cat-det>summary::-webkit-details-marker{display:none}
+.cat-det>summary::before{content:'▸';color:var(--muted);margin-right:2px}.cat-det[open]>summary::before{content:'▾'}
 </style>
 <style>
 /* 08-screens.css: the look of the larger screens (static styles that used to be inline).
@@ -458,7 +467,7 @@ tr.warn-row{background:color-mix(in srgb,var(--warn) 16%,var(--card))}
 .fw5{font-weight:500}.fw7{font-weight:700}.fs125{font-size:12.5px}
 .f1{flex:1}
 .grow{flex:1;min-width:0}
-.warn-c{color:var(--warn)}
+.warn-c{color:var(--warn-ink)}
 .tone-des{color:var(--des)}
 .list-title{font-weight:700;margin-bottom:10px}
 input.icon-in{width:54px;text-align:center}
@@ -526,6 +535,18 @@ dialog.dlg-wide{width:min(580px,94vw)}
 .dlg-p{margin:0 0 12px;color:var(--ink2);font-size:13.5px}
 .dlg-p.lg{font-size:14px}
 .scroll-list{max-height:52vh;overflow:auto;padding-right:6px}
+
+.adv{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}.adv>summary{cursor:pointer;font-weight:700;color:var(--ink2);min-height:44px;display:flex;align-items:center}
+.adv-body{display:flex;flex-direction:column;gap:14px;padding-top:6px}.adv-item{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.adv-danger{border-top:1px dashed var(--line);padding-top:14px}
+/* Summary top: what to do now + savings rate + reserve */
+.todo{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.todo-item{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;min-height:44px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);font:inherit;cursor:pointer}
+.todo-item:hover{background:var(--bg)}
+.health.good .v{color:var(--rec)}.health.negative .v,.health.low .v{color:var(--des)}.health.ok .v{color:var(--warn-ink)}
+.more-opts>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--ink2);font-size:14px;font-weight:600}
+.inv-all>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.part-h{margin:28px 0 0;padding-top:14px;border-top:1px solid var(--line)}
 </style>
 <style>
 /* Import panel, quick entry and history suggestion (mobile first; the sheet is a bottom sheet on phones) */
@@ -551,11 +572,11 @@ dialog.dlg-wide{width:min(580px,94vw)}
 .imp-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
 .imp-tiles>div{border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .imp-tiles span{font-size:11.5px;color:var(--ink2)}.imp-tiles b{font-size:18px}.imp-tiles small{font-size:11px;color:var(--ink2);overflow-wrap:anywhere}
-.imp-tiles .warn{border-color:var(--warn)}
+.imp-tiles .warn{border-color:var(--warn-ink)}
 .imp-pick-sum{font-size:13.5px;margin:8px 0}
 .imp-note{font-size:12.5px;color:var(--ink2);margin-top:4px;line-height:1.35}
-.imp-note.warn-n{color:var(--warn)}.imp-note.bad-n{color:var(--des);font-weight:600}
-.imp-note.dup-c{color:var(--ink2);font-weight:600}.imp-note.dup-p{color:var(--warn)}
+.imp-note.warn-n{color:var(--warn-ink)}.imp-note.bad-n{color:var(--des);font-weight:600}
+.imp-note.dup-c{color:var(--ink2);font-weight:600}.imp-note.dup-p{color:var(--warn-ink)}
 .imp-opts-d{margin:8px 0;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13.5px}.imp-opts-d summary{cursor:pointer;color:var(--ink2)}
 .imp-opts input[type=checkbox],.imp-rest input[type=checkbox]{width:22px;height:22px;min-height:0;flex:none;margin:0}
 .imp-opts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:10px 0}
@@ -606,6 +627,16 @@ dialog.dlg-wide{width:min(580px,94vw)}
 .donut-top.sm{font-size:14px}.donut-top{font-size:22px;font-weight:800;fill:var(--ink)}.donut-bottom{font-size:11px;fill:var(--ink2)}
 .donut-name{font-size:12px;font-weight:700;fill:var(--ink)}.donut-pct{font-size:12px;font-weight:800}.donut-bottom{font-size:12px}
 .donut-call,.donut circle[data-key]{cursor:pointer}
+/* allocation targets */
+.tg{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
+.tg-opt{font-size:13px;font-weight:400}
+.tg-row{display:grid;grid-template-columns:minmax(0,1fr) 52px 84px;gap:4px 10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.tg-n{display:flex;align-items:center;gap:8px;min-width:0}.tg-n i{width:12px;height:12px;border-radius:3px;flex:none}
+.tg-now{text-align:right;font-weight:700}
+.tg-in input{width:100%;min-height:44px;text-align:right}
+.tg-gap{grid-column:1 / -1;font-size:13px;color:var(--ink2)}
+.tg-row.over .tg-gap{color:var(--warn-ink)}.tg-row.under .tg-gap{color:var(--brand)}.tg-row.on .tg-gap{color:var(--rec)}
+.tg-row.none .tg-gap{display:none}
 </style>
 <style>
 /* 09-mobile.css: phones and small tablets (mobile-first adjustments, 320 to 720 px) */
@@ -665,7 +696,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
   /* new record: big buttons instead of the inline form */
   .quick-add{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 4px}
   .quick-add .btn{min-height:52px;font-size:15px;padding:8px}
-  .quick-add .des{color:var(--des)}.quick-add .rec{color:var(--rec)}.quick-add .apo{color:var(--apo)}.quick-add .fat{color:var(--warn)}
+  .quick-add .des{color:var(--des)}.quick-add .rec{color:var(--rec)}.quick-add .apo{color:var(--apo)}.quick-add .fat{color:var(--warn-ink)}
   #txFormHome{display:none}
   .lst-card{padding:4px 10px}
   .li-act{display:none}
@@ -740,6 +771,20 @@ dialog.dlg-wide{width:min(580px,94vw)}
   table.stack td .dp{flex:1 1 140px}
 }
 @media (max-width:360px){#projTbl{font-size:12.5px}#projTbl td,#projTbl th{padding:8px 3px;letter-spacing:0}}
+/* touch targets: at least 44px in both directions on phones and touch screens (WCAG 2.5.5 / iOS guideline) */
+@media (max-width:720px),(pointer:coarse){
+  .btn.sm,.chip,.dist-tab,.bill-hide,.dist-row,.check-opt,summary{min-height:44px}
+  .btn.sm,.dist-tab,.bill-hide{min-width:44px}
+  .check-opt{display:flex;align-items:center;gap:10px}
+  .check-opt input[type=checkbox],input[type=checkbox].w-auto{width:24px;height:24px;flex:none}
+  .rowclick{min-height:44px}tr.rowclick>td{height:44px}
+}
+@media (max-width:720px){
+  .tab{padding-bottom:104px} /* room for the + button and the bottom bar over the last item */
+  .f.f-full{flex:1 1 100%}
+}
+/* projection table: on a phone keep month, interest, final balance and % of the goal */
+@media (max-width:720px){#projTbl th:nth-child(2),#projTbl td:nth-child(2),#projTbl th:nth-child(4),#projTbl td:nth-child(4),#projTbl th:nth-child(7),#projTbl td:nth-child(7),#projTbl th:nth-child(8),#projTbl td:nth-child(8){display:none}}
 </style>
 <style>
 /* 10-print.css: Print / PDF */
@@ -758,9 +803,8 @@ dialog.dlg-wide{width:min(580px,94vw)}
     <button data-t="resumo" class="on" data-i="chart">Resumo</button>
     <button data-t="lanc" data-i="receipt">Lançamentos</button>
     <button data-t="cartao" data-i="card">Cartão</button>
-    <button data-t="meta" data-i="target">Meta</button>
-    <button data-t="inv" data-i="brief">Investimentos</button>
-    <button data-t="cad" data-i="tag">Categorias</button>
+    <button data-t="meta" data-i="target">Patrimônio</button>
+        <button data-t="cad" data-i="tag">Categorias</button>
     <button data-t="cfg" data-i="sliders">Ajustes</button>
   </nav>
   <div class="today" id="todayLbl"></div>
@@ -774,6 +818,8 @@ dialog.dlg-wide{width:min(580px,94vw)}
   <div id="bkNote"></div>
 
   <div class="mnav"><button data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab1" aria-live="polite"></div><button data-mv="1" aria-label="Próximo mês">›</button><button class="btn sm mtoday" data-mtoday hidden>Hoje</button></div>
+  <div class="card mt-10" id="todoCard" hidden></div>
+  <div class="grid g2 mt-10" id="healthRow"></div>
   <div class="grid g4 mt-10" id="kFlow"></div>
   <div class="grid g2 sum-pair">
     <div class="card" id="budgetCard"></div>
@@ -806,7 +852,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
 
 <!-- META -->
 <section class="tab" id="t-meta">
-  <div class="ph"><h1>Minha meta</h1><p>Quanto você já tem, quanto falta, a evolução do patrimônio e a projeção até a meta.</p></div>
+  <div class="ph"><h1>Patrimônio e meta</h1><p>Quanto você já tem, quanto falta, a projeção até a meta e onde o dinheiro está investido.</p></div>
 
   <div class="grid g4" id="kMeta"></div>
   <div class="card mt-14">
@@ -822,6 +868,27 @@ dialog.dlg-wide{width:min(580px,94vw)}
     <div class="scroll"><table id="projTbl"></table></div>
     <div class="help" id="projHelp"></div>
   </div>
+  <!-- investments (was its own tab; now part of the net worth) -->
+  <div id="invStart" class="inv-part"><h2 class="part-h">Investimentos: onde está seu dinheiro</h2><p class="help">Saldo de cada conta, carteira e evolução mensal.</p></div>
+  <h2>🍩 Distribuição dos investimentos</h2>
+  <div class="card" id="distCard"></div>
+  <h2>💼 Onde está meu dinheiro</h2>
+  <div class="card"><div id="accList"></div>
+    <div class="row mt-12"><div class="f mw-260"><label for="newAcc">Adicionar conta/investimento</label><input id="newAcc" placeholder="Ex.: XP CDB"></div><button class="btn" id="addAcc">Adicionar</button></div></div>
+  <h2>📊 Carteira</h2>
+  <div class="card" id="portfolio"></div>
+  <h2>📥 Importar</h2>
+  <div class="card"><div class="help">Do extrato da corretora ou do banco. <b>Extrato de custódia (PDF)</b> atualiza o saldo. <b>Nota de corretagem</b> (PDF): compras viram aporte e entram na Carteira. <b>Extrato de movimentações</b> (CSV, OFX ou PDF): o que entrou vira <b>aporte</b>; resgate, rendimento e IR são ignorados.</div>
+    <button type="button" class="btn imp-open" id="impOpenInv">📥 Importar saldo ou aportes</button></div>
+  <h2>🔄 Atualizar saldos</h2>
+  <div class="card">
+    <div class="help mb12-only">Abra o app de cada banco e digite o <b>saldo líquido</b> de hoje (já sem IR). Os aportes que você lançou depois desta data entram sozinhos. Não digite aportes aqui.</div>
+    <div class="formgrid" id="snapForm"></div>
+    <div class="row mt-14"><div class="f mw-190"><label for="snapDate">Saldo válido em</label><input type="date" id="snapDate" required></div><button class="btn pri" id="snapSave">Salvar saldos</button></div>
+  </div>
+  <h2>📈 Histórico do patrimônio</h2>
+  <div class="card"><div class="scroll"><table id="histTbl" class="stack"></table></div>
+    <div class="help">“Rendimento” só aparece nos meses em que você atualizou os saldos. É a diferença do patrimônio, menos os aportes.</div></div>
 </section>
 
 <!-- LANÇAMENTOS -->
@@ -837,7 +904,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
       <div class="qe-row"><input id="qeText" placeholder="Ex.: gastei 85,90 no mercado hoje" enterkeyhint="go" aria-describedby="qeHelp"><button type="submit" class="btn pri" id="qeGo">Preencher</button></div>
       <div class="help" id="qeHelp">Escreva como falaria: “recebi 5.000 de salário dia 5”, “paguei 230 de internet no cartão”. Você confere antes de salvar.</div>
     </form>
-    <button type="button" class="btn imp-open" id="impOpen">📥 Importar extrato ou fatura (CSV, OFX)</button>
+    <button type="button" class="btn imp-open" id="impOpen">📥 Importar extrato ou fatura (CSV, OFX, PDF)</button>
     <input type="file" id="impFile" hidden>
   </div>
   <div id="txFormHome"><h2>➕ Novo lançamento</h2>
@@ -855,10 +922,13 @@ dialog.dlg-wide{width:min(580px,94vw)}
       <div id="wCat" class="f-wide"><label for="fCat">Categoria</label><input id="fCat" list="catList" placeholder="Escolha abaixo ou digite"><datalist id="catList"></datalist><div class="chips qchips" id="catChips"></div></div>
       <div id="wAcc" hidden><label for="fAcc">Investir em</label><select id="fAcc"></select></div>
       <div id="wFonte"><label for="fFonte" id="lFonte">Pago com</label><select id="fFonte"></select></div>
-      <div><label for="fDesc">Descrição <span class="opt">(opcional)</span></label><input id="fDesc" placeholder="Ex.: mercado, salário, aporte" enterkeyhint="done"><div class="chips qchips" id="descSug" aria-live="polite"></div></div>
+      <div><label for="fDesc">Descrição <span class="opt">(opcional)</span></label><input id="fDesc" placeholder="Ex.: mercado" enterkeyhint="done"><div class="chips qchips" id="descSug" aria-live="polite"></div></div>
+    </div>
+    <details class="more-opts mt-14" id="wMore"><summary>Mais opções: repetir todo mês, dividir em categorias</summary>
+    <div class="formgrid mt-10">
       <div><label for="fRep">Repetir</label><select id="fRep"><option value="1">Não repetir</option></select></div>
     </div>
-    <div class="mt-14" id="wSplit">
+    <div class="mt-10" id="wSplit">
       <button type="button" class="btn sm" id="splitBtn">✂️ Dividir em categorias</button>
       <span class="help ml-8" id="splitHint"></span>
       <div class="box-dashed mt-10" id="splitBox" hidden>
@@ -867,6 +937,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
         <div class="row mt-8 ai-c"><button type="button" class="btn sm" id="splitAdd">+ adicionar parte</button><span class="help m0" id="splitSum"></span></div>
       </div>
     </div>
+    </details>
     <label class="apply-opt" id="wApply" hidden><input class="w-auto mr-8" type="checkbox" id="fApply" checked>Aplicar também aos <b id="applyN">0</b> lançamentos futuros iguais (próximos meses)</label>
     <div class="box-dashed mt-14" id="fatBox" hidden>
       <div class="help mb10-only"><b>O que está nesta fatura?</b> Aparecem as compras do ciclo desta fatura (fechamento e vencimento ficam em Ajustes). O que sobrar entra como “Cartão (sem detalhe)”, para não ficar de fora dos seus gastos.</div>
@@ -890,29 +961,6 @@ dialog.dlg-wide{width:min(580px,94vw)}
   <div class="card lst-card"><div class="lst" id="txList"></div></div>
 </section>
 
-<!-- INVESTIMENTOS -->
-<section class="tab" id="t-inv">
-  <div class="ph"><h1>Investimentos</h1><p>Saldo de cada conta e evolução mensal do patrimônio.</p></div>
-  <h2>🍩 Distribuição dos investimentos</h2>
-  <div class="card" id="distCard"></div>
-  <h2>💼 Onde está meu dinheiro</h2>
-  <div class="card"><div id="accList"></div>
-    <div class="row mt-12"><div class="f mw-260"><label for="newAcc">Adicionar conta/investimento</label><input id="newAcc" placeholder="Ex.: XP CDB"></div><button class="btn" id="addAcc">Adicionar</button></div></div>
-  <h2>📊 Carteira</h2>
-  <div class="card" id="portfolio"></div>
-  <h2>📥 Importar</h2>
-  <div class="card"><div class="help">Do extrato da corretora ou do banco. <b>Extrato de custódia (PDF)</b> atualiza o saldo. <b>Nota de corretagem</b> (PDF): compras viram aporte e entram na Carteira. <b>Extrato de movimentações</b> (CSV, OFX ou PDF): o que entrou vira <b>aporte</b>; resgate, rendimento e IR são ignorados.</div>
-    <button type="button" class="btn imp-open" id="impOpenInv">📥 Importar saldo ou aportes</button></div>
-  <h2>🔄 Atualizar saldos</h2>
-  <div class="card">
-    <div class="help mb12-only">Abra o app de cada banco e digite o <b>saldo líquido</b> de hoje (já sem IR). Os aportes que você lançou depois desta data entram sozinhos. Não digite aportes aqui.</div>
-    <div class="formgrid" id="snapForm"></div>
-    <div class="row mt-14"><div class="f mw-190"><label for="snapDate">Saldo válido em</label><input type="date" id="snapDate" required></div><button class="btn pri" id="snapSave">Salvar saldos</button></div>
-  </div>
-  <h2>📈 Histórico do patrimônio</h2>
-  <div class="card"><div class="scroll"><table id="histTbl" class="stack"></table></div>
-    <div class="help">“Rendimento” só aparece nos meses em que você atualizou os saldos. É a diferença do patrimônio, menos os aportes.</div></div>
-</section>
 
 <!-- AJUSTES -->
 <section class="tab" id="t-cad">
@@ -926,7 +974,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
   <div class="ph"><h1>Ajustes</h1><p>Meta, premissas da projeção e backup dos dados.</p></div>
   <h2>🎯 Premissas</h2>
   <div class="card"><div class="row">
-    <div class="f"><label for="goal">Meta líquida</label><input id="goal" data-money></div>
+    <div class="f f-full"><label for="goal">Meta líquida</label><input id="goal" data-money></div>
     <div class="f"><label for="rate">Rendimento líquido (% ao ano)</label><input id="rate" inputmode="decimal"></div>
     <div class="f"><label for="planned">Aporte mensal planejado</label><input id="planned" data-money></div></div>
     <div class="row mt-14">
@@ -939,9 +987,14 @@ dialog.dlg-wide{width:min(580px,94vw)}
   <h2>🧰 Dados</h2>
   <div class="card"><div class="row">
     <button class="btn" id="exp">⬇️ Exportar backup</button><button class="btn" id="imp">⬆️ Importar backup</button>
-    <input type="file" id="file" accept="application/json" hidden><button class="btn dng" id="reset">🗑️ Apagar tudo</button></div>
-    <div class="row mt-12 ai-c"><button class="btn" id="demoOn">🧪 Gerar dados de teste (últimos 12 meses)</button><button class="btn" id="demoOff">Remover dados de teste</button><span class="help m0" id="demoN"></span></div>
-    <div class="help">Os dados ficam só neste navegador. Exporte um backup de vez em quando. Backups da versão anterior (acompanhamento) também podem ser importados.</div></div>
+    <input type="file" id="file" accept="application/json" hidden></div>
+    <div class="help">Os dados ficam só neste navegador. Exporte um backup de vez em quando. O app também guarda sozinho uma cópia do dia anterior. Backups da versão anterior (acompanhamento) também podem ser importados.</div>
+    <details class="adv"><summary>Avançado</summary>
+      <div class="adv-body">
+        <div class="adv-item"><button class="btn" id="restoreAuto" hidden>↩️ Restaurar cópia automática</button><span class="help m0" id="restoreAutoNote"></span></div>
+        <div class="adv-item"><button class="btn" id="demoOn">🧪 Gerar dados de teste (últimos 12 meses)</button><button class="btn" id="demoOff">Remover dados de teste</button><span class="help m0" id="demoN"></span></div>
+        <div class="adv-item adv-danger"><button class="btn dng" id="reset">🗑️ Apagar tudo</button><span class="help m0">Apaga lançamentos, investimentos, carteira e saldos deste navegador. Exporte um backup antes.</span></div>
+      </div></details></div>
   <div class="note" id="estNote"></div>
 </section>
 <p class="foot">Educacional, não é recomendação de investimento. Projeção: saldo<sub>n</sub> = saldo<sub>n−1</sub> × (1+taxa)<sup>1/12</sup> + aporte planejado.</p>
@@ -985,13 +1038,22 @@ dialog.dlg-wide{width:min(580px,94vw)}
 </dialog>
 <button type="button" id="fab" class="fab" aria-label="Novo lançamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 <nav id="bnav" class="bnav" aria-label="Menu principal">
-  <button data-t="resumo" data-i="chart" class="on">Resumo</button><button data-t="lanc" data-i="receipt">Lançamentos</button><button data-t="cartao" data-i="card">Cartão</button><button data-t="meta" data-i="target">Meta</button><button data-t="more" data-i="menu">Mais</button>
+  <button data-t="resumo" data-i="chart" class="on">Resumo</button><button data-t="lanc" data-i="receipt">Lançamentos</button><button data-t="cartao" data-i="card">Cartão</button><button data-t="meta" data-i="target">Patrimônio</button><button data-t="more" data-i="menu">Mais</button>
 </nav>
 <div id="toast" popover="manual" role="status" aria-live="polite"></div>
 
 <script>
 "use strict";
 (()=>{
+// ---- src/core/dom.js
+/**
+ * core/dom.js
+ * Responsibility: DOM access and safe-HTML helpers ($, css, esc).
+ */
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
 // ---- src/core/config.js
 /**
  * core/config.js
@@ -1218,6 +1280,34 @@ function payableInvoices(){
 }
 function payableItems(fm){return openCard(null,null).filter(t=>dueMonth(t.date)===fm).sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id);}
 
+// ---- src/domain/state-recovery.js
+/**
+ * domain/state-recovery.js
+ * Responsibility: keeps the user's data from being lost silently. Reads the saved state; when what is stored
+ * cannot be read, it is copied aside (never overwritten) and a blank state is used instead; and once a day it
+ * keeps the previous good copy, so yesterday's data can be restored. Pure functions over a storage adapter.
+ */
+const BACKUP_SUFFIX='.bak',BROKEN_SUFFIX='.broken';
+const parseState=raw=>{try{const r=JSON.parse(raw);return r&&r.v===2?r:null;}catch(e){return null;}};
+// -> {state, recovered}: recovered=true when something was stored but could not be read (a copy was kept aside)
+function readState(storage,key,blank){
+  const raw=storage.getItem(key);
+  if(raw==null)return {state:blank(),recovered:false};
+  const ok=parseState(raw);
+  if(ok)return {state:ok,recovered:false};
+  try{storage.setItem(key+BROKEN_SUFFIX,raw);}catch(e){/* storage full: nothing more to do */}
+  return {state:blank(),recovered:true};
+}
+// call before overwriting the saved state: keeps the last good copy, at most once a day
+function rollBackup(storage,key,day){
+  const cur=storage.getItem(key);if(!parseState(cur))return;
+  const b=readBackupRaw(storage,key);if(b&&b.day===day)return;
+  try{storage.setItem(key+BACKUP_SUFFIX,JSON.stringify({day,json:cur}));}catch(e){/* storage full: the main save still goes ahead */}
+}
+function readBackupRaw(storage,key){try{return JSON.parse(storage.getItem(key+BACKUP_SUFFIX));}catch(e){return null;}}
+// -> {day, state} of the automatic copy, or null
+function readBackup(storage,key){const b=readBackupRaw(storage,key),s=b&&parseState(b.json);return s?{day:b.day,state:s}:null;}
+
 // ---- src/domain/store.js
 /**
  * domain/store.js
@@ -1227,12 +1317,13 @@ function payableItems(fm){return openCard(null,null).filter(t=>dueMonth(t.date)=
 
 
 
+
 const seed=()=>({v:2,goal:1300000,rate:12.5,planned:0,nid:1,
   accounts:[{id:'nu',name:'Nubank'},{id:'in',name:'Inter'},{id:'s28',name:'Tesouro Selic 2028'},{id:'s31',name:'Tesouro Selic 2031'}],
   snaps:[['nu',157062.83,true,159830.14],['in',154796,true],['s28',395040,true],['s31',423375,true]].map(([acc,value,est,gross])=>gross?({date:'2026-11-06',acc,value,est,gross}):({date:'2026-11-06',acc,value,est})),
   tx:[]});
 // nothing at all: no accounts, balances or records (what "Apagar tudo" leaves; the goal and the rate are settings and are kept)
-const blankState=()=>({v:2,goal:S?S.goal:1300000,rate:S?S.rate:12.5,planned:0,nid:1,accounts:[],snaps:[],tx:[]});
+const blankState=prev=>({v:2,goal:prev?prev.goal:1300000,rate:prev?prev.rate:12.5,planned:0,nid:1,accounts:[],snaps:[],tx:[]});
 // Santander was emptied: moves the balance to Nubank and archives the account (once)
 function migrate(){
   const sa=S.accounts.find(a=>a.id==='sa'),nu=S.accounts.find(a=>a.id==='nu');
@@ -1246,8 +1337,12 @@ function migrate(){
 // storage is injected (DIP): the browser uses localStorage; tests pass an in-memory one
 let storage=typeof localStorage!=='undefined'?localStorage:{getItem:()=>null,setItem:()=>{}};
 function configureStorage(adapter){storage=adapter;}
-function load(){try{const r=JSON.parse(storage.getItem(STORAGE_KEY));if(r&&r.v===2)return r;}catch(e){}return seed();}
-function save(){invalidateAllocation();storage.setItem(STORAGE_KEY,JSON.stringify(S));}
+// what happened when the app opened: recovered=true when the saved data could not be read (a copy was kept aside)
+const bootNotice={recovered:false};
+// a first visit opens an empty app (the example data is on demand); unreadable data is kept aside, never overwritten
+function load(){const r=readState(storage,STORAGE_KEY,()=>blankState());bootNotice.recovered=r.recovered;return r.state;}
+const autoBackup=()=>readBackup(storage,STORAGE_KEY);
+function save(){invalidateAllocation();rollBackup(storage,STORAGE_KEY,today());storage.setItem(STORAGE_KEY,JSON.stringify(S));}
 // swaps the whole state (backup import, reset); the caller saves it through transact()
 function replaceState(next){S=next;invalidateAllocation();}
 /**
@@ -1268,243 +1363,84 @@ function transact(mutate){
 }
 let S=load();
 
-// ---- src/ui/components/money-input.js
+// ---- src/domain/settings-commands.js
 /**
- * ui/components/money-input.js
- * Responsibility: R$ amount fields. Only digits can be typed and the last two are the cents
- * ("123456" shows "R$ 1.234,56"); the numeric keypad opens on phones; pasted text is understood.
- * Fields opt in with the data-money attribute (older fields are listed in MONEY_SELECTOR).
+ * domain/settings-commands.js
+ * Responsibility: commands for the goal assumptions, the card settings and the backup
+ * (import converts old backups; it returns the new state and does not apply it).
  */
 
 
-const MONEY_SELECTOR='[data-money],#fVal,#dVal,#goal,#planned,#payVal,[id^="s_"],[id^="g_"],[data-sv],[data-clv]';
-const isMoneyField=el=>!!(el&&el.tagName==='INPUT'&&el.matches(MONEY_SELECTOR));
-function setMoneyText(el,text){
-  el.value=text;
-  if(document.activeElement===el){try{el.setSelectionRange(text.length,text.length);}catch(e){}}
+
+
+const DEFAULT_GOAL=1300000;
+function setGoalSettings({goal,rate,planned}){S.goal=goal>0?goal:DEFAULT_GOAL;S.rate=rate>0?rate:0;S.planned=planned>0?roundMoney(planned):0;}
+function setPlannedContribution(v){S.planned=Math.round(v);}
+const clampDay=(v,def)=>Math.min(Math.max(Math.round(v)||def,1),31);
+function setCardSettings({best,due,biz}){
+  S.card={best:clampDay(best,1),due:clampDay(due,7),biz:!!biz,over:CARD().over||{},v3:true};
+  return {best:S.card.best,due:S.card.due,biz:S.card.biz};
 }
-// sets the mobile keyboard and placeholder; called after every render because fields are re-created
-function prepareMoneyInputs(root){
-  (root||document).querySelectorAll(MONEY_SELECTOR).forEach(el=>{
-    if(el.tagName!=='INPUT'||el._money)return;el._money=true;
-    el.inputMode='numeric';el.autocomplete='off';el.setAttribute('enterkeyhint','done');
-    if(!el.placeholder||/0,00|^R\$/.test(el.placeholder))el.placeholder='R$ 0,00';
-  });
-}
-function bindMoneyInputs(){
-  // block letters and punctuation before they reach the field (the comma is not needed)
-  document.addEventListener('beforeinput',e=>{
-    if(!isMoneyField(e.target))return;
-    if(/^insert(Text|ReplacementText)$/.test(e.inputType)&&e.data&&/\D/.test(e.data))e.preventDefault();
-  },true);
-  // capture phase: runs before the field's own handlers, so they always read the formatted value
-  document.addEventListener('input',e=>{if(isMoneyField(e.target))setMoneyText(e.target,formatMoneyDigits(e.target.value));},true);
-  document.addEventListener('paste',e=>{
-    const el=e.target;if(!isMoneyField(el))return;
-    e.preventDefault();
-    const v=parseMoney((e.clipboardData||window.clipboardData).getData('text'));
-    setMoneyText(el,v>0?m2(v):'');
-    el.dispatchEvent(new Event('input',{bubbles:true}));
-  },true);
-  document.addEventListener('focusin',e=>{
-    const el=e.target;if(!isMoneyField(el))return;
-    requestAnimationFrame(()=>{try{const n=el.value.length;el.setSelectionRange(n,n);}catch(x){}});
-  },true);
-  prepareMoneyInputs();
+// a different closing date for one invoice; equal to the rule means "no override"
+function setClosingOverride(fm,date){const c=CARD();c.over=c.over||{};if(date&&date!==ruleClosing(fm))c.over[fm]=date;else delete c.over[fm];S.card=c;}
+function importBackup(d){
+  if(d&&d.v===2&&Array.isArray(d.tx))return {state:d,converted:false};
+  if(!d||!d.entries)return {error:'Arquivo inválido'};
+  // old format (goal tracker): month entries with balances and contributions per account
+  const n=seed();n.goal=d.goal||n.goal;n.rate=d.rate||n.rate;n.planned=d.planned||0;n.snaps=[];n.tx=[];
+  Object.keys(d.entries).sort().forEach(k=>{const e=d.entries[k];
+    e.bal.forEach((v,i)=>{if(n.accounts[i])n.snaps.push({date:monthEnd(k),acc:n.accounts[i].id,value:v,est:!!e.est});});
+    e.ap.forEach((v,i)=>{if(v>0&&n.accounts[i])n.tx.push({id:n.nid++,date:k+'-15',type:'aporte',acc:n.accounts[i].id,value:v,desc:'importado'});});});
+  return {state:n,converted:true};
 }
 
-// ---- src/core/dom.js
-/**
- * core/dom.js
- * Responsibility: DOM access and safe-HTML helpers ($, css, esc).
- */
-const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-const $=id=>document.getElementById(id);
-const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-
-// ---- src/ui/components/date-input.js
-/**
- * ui/components/date-input.js
- * Responsibility: date fields that open the calendar. The visible field shows dd/mm/aaaa and is
- * read-only; a transparent native <input type="date"> on top opens the system date picker
- * (wheel/calendar on phones, calendar pop-up on desktop). The field's .value stays ISO (yyyy-mm-dd),
- * so there is no timezone shift and the rest of the code does not change.
- */
-
-const _inputValue=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
-const isoDateToBR=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||'')?v.split('-').reverse().join('/'):'';
-function datePicker(el,opts){
-  if(!el||el._dp)return el;
-  opts=opts||{};el._dp=true;
-  const init=el.getAttribute('value')||_inputValue.get.call(el);
-  const wrap=document.createElement('span');wrap.className='dp';
-  el.parentNode.insertBefore(wrap,el);wrap.appendChild(el);
-  const nat=document.createElement('input');
-  nat.type='date';nat.className='dp-native';nat.min=opts.min||'2000-01-01';nat.max=opts.max||'2100-12-31';
-  const lab=el.id&&document.querySelector(`label[for="${el.id}"]`);
-  nat.setAttribute('aria-label',((lab&&lab.textContent.replace('*','').trim())||el.getAttribute('aria-label')||'Data')+': abrir calendário');
-  if(el.required)nat.required=true;
-  wrap.appendChild(nat);el._dpNative=nat;
-  el.type='text';el.readOnly=true;el.tabIndex=-1;el.classList.add('dp-text');el.placeholder='dd/mm/aaaa';el.setAttribute('aria-hidden','true');
-  let iso='';
-  const show=()=>{_inputValue.set.call(el,isoDateToBR(iso));wrap.classList.toggle('empty',!iso);};
-  Object.defineProperty(el,'value',{configurable:true,
-    get(){return iso;},
-    set(v){iso=/^\d{4}-\d{2}-\d{2}$/.test(v||'')?v:'';_inputValue.set.call(nat,iso);show();}});
-  el.value=init;
-  const sync=()=>{
-    const v=_inputValue.get.call(nat);
-    if(v===iso)return;
-    if(v&&(v<nat.min||v>nat.max)){_inputValue.set.call(nat,iso);return;}
-    iso=v;show();
-    el.dispatchEvent(new Event('input',{bubbles:true}));
-    el.dispatchEvent(new Event('change',{bubbles:true}));
-  };
-  nat.addEventListener('input',sync);nat.addEventListener('change',sync);
-  const open=()=>{try{nat.showPicker();}catch(e){nat.focus();}};
-  nat.addEventListener('click',open);
-  el.addEventListener('click',open);           // a click on the <label> also lands here
-  return el;
-}
-function bindDateFields(){
-  ['fDate','dDate','snapDate'].forEach(id=>datePicker($(id)));
+// puts back the automatic copy of the day before (kept by the store); {error} when there is none
+function restoreAutoBackup(){
+  const b=autoBackup();
+  if(!b)return {error:'Ainda não existe cópia automática'};
+  replaceState(b.state);return {day:b.day};
 }
 
-// ---- src/ui/components/sheet.js
+// ---- src/ui/components/confirm.js
 /**
- * ui/components/sheet.js
- * Responsibility: the single detail panel of the app. A modal dialog on desktop and a bottom sheet
- * on phones, with a stack of views (list -> item -> edit) and a back button.
- * A view is {render(body,foot) -> {title,sub}|null, leave(), static}. render() returning null means
- * "nothing left to show" (for example, the record was deleted) and the view is popped.
- * Static views (the transaction form) are drawn once and are not redrawn by refresh().
- */
-const Sheet=(()=>{
-  const stack=[];
-  const el=id=>document.getElementById(id);
-  function draw(){
-    const v=stack[stack.length-1];
-    if(!v)return close();
-    const body=el('shBody'),foot=el('shFoot');
-    if(!v.static||!v._drawn){
-      foot.innerHTML='';
-      const r=v.render(body,foot);
-      if(!r){stack.pop();if(v.leave)v.leave();return draw();}
-      v._head=r;v._drawn=true;
-    }
-    el('shTitle').innerHTML=v._head.title||'';
-    el('shSub').innerHTML=v._head.sub||'';el('shSub').hidden=!v._head.sub;
-    el('shBack').hidden=stack.length<2;
-    foot.hidden=!foot.childElementCount;
-  }
-  function leaveAll(){while(stack.length){const v=stack.pop();if(v.leave)v.leave();}}
-  function open(view){leaveAll();stack.push(view);const d=el('sheet');el('shBody').scrollTop=0;draw();if(!d.open)d.showModal();}
-  function push(view){if(!stack.length)return open(view);const v=stack[stack.length-1];if(v.static&&v.leave){v.leave();v._drawn=false;}
-    stack.push(view);el('shBody').scrollTop=0;draw();}
-  function pop(){const v=stack.pop();if(v&&v.leave)v.leave();if(!stack.length)return close();el('shBody').scrollTop=0;draw();}
-  function refresh(){if(!el('sheet').open||!stack.length)return;const v=stack[stack.length-1];if(v.static)return;
-    const top=el('shBody').scrollTop;draw();el('shBody').scrollTop=top;}
-  function close(){leaveAll();const d=el('sheet');if(d.open)d.close();}
-  const depth=()=>stack.length,top=()=>stack[stack.length-1];
-  function bind(){
-    const d=el('sheet');
-    el('shClose').onclick=close;el('shBack').onclick=pop;
-    // Esc, Android back gesture and backdrop tap close the sheet
-    // the close event arrives later (async): ignore it if the sheet was opened again meanwhile
-    d.addEventListener('close',()=>{if(!d.open)leaveAll();});
-    d.addEventListener('cancel',e=>{if(stack.length>1){e.preventDefault();pop();}});
-    d.addEventListener('click',e=>{if(e.target===d)close();});
-  }
-  return {open,push,pop,refresh,close,depth,top,bind};
-})();
-
-// ---- src/ui/ui-state.js
-/**
- * ui/ui-state.js
- * Responsibility: what the screen is showing right now (period, filters, form being edited).
- * It is not saved and it is not business data: the domain never reads it.
- * One shared object so every screen reads and changes the same values (ES modules cannot
- * reassign a variable owned by another module).
+ * ui/components/confirm.js
+ * Responsibility: confirmation dialog that replaces the browser confirm(). Clear title and text,
+ * "Cancelar" plus the action button, and an optional checkbox (for example "also the future ones").
+ * askConfirm({title,text,ok,danger,check}) -> Promise of false (cancelled) or {checked}.
  */
 
-const ui={
-  cur:mOf(today()),          // month shown (YYYY-MM)
-  type:'despesa',            // type selected in the transaction form
-  filt:'todos',              // transaction list filter chip
-  q:'',                      // transaction list search
-  group:'',                  // transaction list expense group ('' = all)
-  editId:null,               // transaction being edited (null = new)
-  splitRows:[],              // split parts in the form [{cat,val}]
-  invoiceSelection:new Set(),// purchases checked in the invoice form
-  payAdvanced:false,         // invoice payment entered manually
-  selectedInsightCategory:null // category highlighted in the analysis table
-};
-
-// ---- src/ui/components/detail-registry.js
-/**
- * ui/components/detail-registry.js
- * Responsibility: maps tappable elements to what they open (Open/Closed: a new card registers
- * itself; nothing here changes).
- *   data-kpi="key" [data-m="yyyy-mm"]  -> registerDetail(key, m => view|null)   opens the sheet
- *   data-go="kind" (+ data-* attributes) -> registerLink(kind, el => void)      navigation inside it
- */
-
-
-const DETAIL_VIEWS={},DETAIL_LINKS={};
-function registerDetail(key,factory){DETAIL_VIEWS[key]=factory;}
-function registerLink(kind,handler){DETAIL_LINKS[kind]=handler;}
-function openDetail(key,m){const f=DETAIL_VIEWS[key];if(!f)return false;const v=f(m||ui.cur);if(v)Sheet.open(v);return true;}
-function bindDetails(){
-  document.addEventListener('click',e=>{
-    const k=e.target.closest('[data-kpi]');if(k){openDetail(k.dataset.kpi,k.dataset.m);return;}
-    const g=e.target.closest('[data-go]');if(g&&DETAIL_LINKS[g.dataset.go])DETAIL_LINKS[g.dataset.go](g);
+function askConfirm(o){
+  const d=$('confirmDlg');
+  $('cfTitle').textContent=o.title||'Confirmar';
+  $('cfText').innerHTML=o.html||esc(o.text||'').replace(/\n/g,'<br>');
+  const ok=$('cfOk');ok.textContent=o.ok||'Confirmar';ok.className='btn '+(o.danger?'dngf':'pri');
+  $('cfCheckW').hidden=!o.check;$('cfCheckL').textContent=o.check||'';$('cfCheck').checked=!!o.checkDefault;
+  if(d.open)d.close();
+  return new Promise(res=>{
+    let done=false;
+    const end=v=>{if(done)return;done=true;ok.onclick=$('cfCancel').onclick=null;d.removeEventListener('close',onClose);if(d.open)d.close();res(v);};
+    const onClose=()=>{if(!d.open)end(false);}; // Esc or back gesture; a late close event of a previous dialog is ignored
+    ok.onclick=()=>end({checked:$('cfCheck').checked});
+    $('cfCancel').onclick=()=>end(false);
+    d.addEventListener('close',onClose);
+    d.showModal();$('cfCancel').focus();
   });
 }
 
-// ---- src/domain/month-summary.js
+// ---- src/ui/toast.js
 /**
- * domain/month-summary.js
- * Responsibility: the numbers of the month summary and the records behind each one.
- * The dashboard cards and their detail lists both read from here, so the sum of the listed
- * items is always the card total (same filters, same rule, summed in cents).
+ * ui/toast.js
+ * Responsibility: temporary message at the bottom of the page. It is a popover, so it shows
+ * above open dialogs (detail sheet, confirmation) too.
  */
 
-
-
-
-
-const isVoucher=t=>t.fonte==='beneficio';
-const isCard=t=>t.fonte==='cartao';
-const signedVoucher=t=>t.type==='receita'?t.value:t.type==='despesa'?-t.value:0;
-function monthSummary(m){
-  const end=monthEnd(m),start=m+'-01';
-  const income=txIn(m,'receita'),expenses=txIn(m,'despesa'),contributions=txIn(m,'aporte'),invoices=txIn(m,'fatura');
-  // part of a paid invoice with no purchase entered: it is still a cost of the month
-  const undetailed=invoices.map(t=>({invoice:t,value:invoiceUndetailed(t)})).filter(x=>x.value>0.004);
-  const cashIn=income.filter(t=>!isVoucher(t)),cashOut=expenses.filter(t=>!isVoucher(t)&&!isCard(t));
-  const openCardItems=openCard(end);
-  const voucherBefore=sumMoney(S.tx.filter(t=>isVoucher(t)&&t.date<start).map(signedVoucher));
-  const voucherItems=S.tx.filter(t=>isVoucher(t)&&mOf(t.date)===m&&(t.type==='receita'||t.type==='despesa'));
-  const val=a=>a.map(t=>t.value);
-  const r={
-    m,
-    income:{items:income,total:sumMoney(val(income))},
-    expenses:{items:expenses,undetailed,total:sumMoney(val(expenses).concat(undetailed.map(u=>u.value)))},
-    contributions:{items:contributions,total:sumMoney(val(contributions))},
-    cash:{cashIn,cashOut,invoices,contributions,
-      total:sumMoney(val(cashIn).concat(val(cashOut).map(v=>-v),val(invoices).map(v=>-v),val(contributions).map(v=>-v)))},
-    openCard:{items:openCardItems,total:sumMoney(val(openCardItems))},
-    cardBought:sumMoney(val(expenses.filter(isCard))),
-    invoicesPaid:sumMoney(val(invoices)),
-    voucher:{before:voucherBefore,items:voucherItems,
-      inMonth:sumMoney(val(voucherItems.filter(t=>t.type==='receita'))),
-      outMonth:sumMoney(val(voucherItems.filter(t=>t.type==='despesa'))),
-      total:sumMoney([voucherBefore].concat(voucherItems.map(signedVoucher)))}
-  };
-  return r;
+function toast(msg){
+  const t=$('toast');t.textContent=msg;
+  if(t.showPopover){try{if(t.matches(':popover-open'))t.hidePopover();t.showPopover();}catch(e){}}
+  requestAnimationFrame(()=>t.classList.add('on'));
+  clearTimeout(toast.h);clearTimeout(toast.h2);
+  toast.h=setTimeout(()=>{t.classList.remove('on');toast.h2=setTimeout(()=>{try{t.hidePopover&&t.hidePopover();}catch(e){}},300);},msg.startsWith('⚠️')?5200:3200);
 }
-// month spending total used by the trend chart, the insights and the category detail
-const monthSpending=m=>monthSummary(m).expenses.total;
 
 // ---- src/domain/category-groups.js
 /**
@@ -1595,226 +1531,98 @@ const icon=(t,c)=>((((S.cats||{})[t])||[]).find(x=>x.name===c)||{}).icon||(DEFAU
 function catMonth(m){const c={};txIn(m,'despesa').forEach(t=>catParts(t).forEach(p=>c[p.cat]=roundMoney((c[p.cat]||0)+p.value)));
   txIn(m,'fatura').forEach(t=>{const u=invoiceUndetailed(t);if(u>0)c['Cartão (sem detalhe)']=(c['Cartão (sem detalhe)']||0)+u;});return c;}
 
-// ---- src/domain/spending.js
+// ---- src/ui/components/money-input.js
 /**
- * domain/spending.js
- * Responsibility: spending window used by the trend chart, the analysis and the category detail:
- * 12 months ending at the selected month (or today), which ones are closed, and the
- * records behind a category or a group in a month (split parts and the undetailed part of paid invoices).
+ * ui/components/money-input.js
+ * Responsibility: R$ amount fields. Only digits can be typed and the last two are the cents
+ * ("123456" shows "R$ 1.234,56"); the numeric keypad opens on phones; pasted text is understood.
+ * Fields opt in with the data-money attribute (older fields are listed in MONEY_SELECTOR).
  */
 
 
-
-
-
-
-
-const UNDETAILED_CAT='Cartão (sem detalhe)';
-function spendingWindow(sel){
-  const nowM=mOf(today()),end=Math.max(mIdx(sel),mIdx(nowM)),ms=[];
-  for(let k=end-11;k<=end;k++)ms.push(mKey(k));
-  const vals=ms.map(monthSpending),part=ms.map(m=>m===nowM);
-  const ci=ms.map((m,k)=>k).filter(k=>!part[k]&&vals[k]>0&&mIdx(ms[k])<mIdx(nowM));
-  return {ms,vals,part,ci,nowM};
+const MONEY_SELECTOR='[data-money],#fVal,#dVal,#goal,#planned,#payVal,[id^="s_"],[id^="g_"],[data-sv],[data-clv]';
+const isMoneyField=el=>!!(el&&el.tagName==='INPUT'&&el.matches(MONEY_SELECTOR));
+function setMoneyText(el,text){
+  el.value=text;
+  if(document.activeElement===el){try{el.setSelectionRange(text.length,text.length);}catch(e){}}
 }
-// [{t, value}] whose values add up to catMonth(m)[cat]
-function categoryItems(m,cat){
-  const out=[];
-  if(cat===UNDETAILED_CAT){txIn(m,'fatura').forEach(t=>{const u=invoiceUndetailed(t);if(u>0)out.push({t,value:u});});return out;}
-  txIn(m,'despesa').forEach(t=>catParts(t).forEach(p=>{if(p.cat===cat)out.push({t,value:p.value});}));
-  return out.sort((a,b)=>b.t.date.localeCompare(a.t.date));
+// sets the mobile keyboard and placeholder; called after every render because fields are re-created
+function prepareMoneyInputs(root){
+  (root||document).querySelectorAll(MONEY_SELECTOR).forEach(el=>{
+    if(el.tagName!=='INPUT'||el._money)return;el._money=true;
+    el.inputMode='numeric';el.autocomplete='off';el.setAttribute('enterkeyhint','done');
+    if(!el.placeholder||/0,00|^R\$/.test(el.placeholder))el.placeholder='R$ 0,00';
+  });
 }
-// {group: value} of a month: catMonth added up by group (same grand total)
-function groupMonth(m){const g={};Object.entries(catMonth(m)).forEach(([c,v])=>{const k=groupOf(c);g[k]=roundMoney((g[k]||0)+v);});return g;}
-// [{t, value, cats}] whose values add up to groupMonth(m)[group]; one row per record
-// (a record split into Água + Gás + Moradia shows once in Moradia, with the sum of those parts)
-function groupItems(m,group){
-  const byTx=new Map();
-  if(group===UNDETAILED_CAT)return categoryItems(m,group).map(i=>({...i,cats:[group]}));
-  txIn(m,'despesa').forEach(t=>catParts(t).forEach(p=>{if(groupOf(p.cat)!==group)return;
-    const r=byTx.get(t.id)||{t,value:0,cats:[]};r.value=roundMoney(r.value+p.value);if(!r.cats.includes(p.cat))r.cats.push(p.cat);byTx.set(t.id,r);}));
-  return [...byTx.values()].sort((a,b)=>b.t.date.localeCompare(a.t.date));
+function bindMoneyInputs(){
+  // block letters and punctuation before they reach the field (the comma is not needed)
+  document.addEventListener('beforeinput',e=>{
+    if(!isMoneyField(e.target))return;
+    if(/^insert(Text|ReplacementText)$/.test(e.inputType)&&e.data&&/\D/.test(e.data))e.preventDefault();
+  },true);
+  // capture phase: runs before the field's own handlers, so they always read the formatted value
+  document.addEventListener('input',e=>{if(isMoneyField(e.target))setMoneyText(e.target,formatMoneyDigits(e.target.value));},true);
+  document.addEventListener('paste',e=>{
+    const el=e.target;if(!isMoneyField(el))return;
+    e.preventDefault();
+    const v=parseMoney((e.clipboardData||window.clipboardData).getData('text'));
+    setMoneyText(el,v>0?m2(v):'');
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+  },true);
+  document.addEventListener('focusin',e=>{
+    const el=e.target;if(!isMoneyField(el))return;
+    requestAnimationFrame(()=>{try{const n=el.value.length;el.setSelectionRange(n,n);}catch(x){}});
+  },true);
+  prepareMoneyInputs();
 }
 
-// ---- src/ui/components/breakdown.js
+// ---- src/ui/components/sheet.js
 /**
- * ui/components/breakdown.js
- * Responsibility: reusable list pieces. txRow() draws one record (icon, title, date and payment,
- * value with sign); listView() builds a sheet view with total, count and grouped rows.
- * Rows with data-tx open the record detail (see transaction-actions.js).
+ * ui/components/sheet.js
+ * Responsibility: the single detail panel of the app. A modal dialog on desktop and a bottom sheet
+ * on phones, with a stack of views (list -> item -> edit) and a back button.
+ * A view is {render(body,foot) -> {title,sub}|null, leave(), static}. render() returning null means
+ * "nothing left to show" (for example, the record was deleted) and the view is popped.
+ * Static views (the transaction form) are drawn once and are not redrawn by refresh().
  */
-
-
-
-
-
-
-
-const TX_SIGN={receita:'+',despesa:'−',fatura:'−',aporte:'→'};
-function paymentLabel(t){
-  if(t.type==='aporte')return 'Investimento';
-  if(t.type==='fatura')return 'Conta';
-  if(t.fonte==='cartao')return 'Cartão · fatura '+mShort(dueMonth(t.date));
-  if(t.fonte==='beneficio')return 'VR/VA';
-  return t.type==='receita'?'Conta':'Pix / conta';
-}
-function txTitle(t){
-  if(t.type==='fatura')return 'Pagamento da fatura de '+formatDateBR(dueDateOf(invoiceMonthOf(t)));
-  if(t.type==='aporte')return 'Aporte em '+accName(t.acc);
-  return t.desc||t.cat||'Sem descrição';
-}
-function txIcon(t){return t.type==='fatura'?'💳':t.type==='aporte'?'🏦':icon(t.type,t.cat);}
-// o: {value, sign, sub, title, actions, cls}
-function txRow(t,o){
-  o=o||{};
-  const v=o.value!==undefined?o.value:t.value,sign=o.sign!==undefined?o.sign:TX_SIGN[t.type];
-  const cat=t.type==='despesa'||t.type==='receita'?(t.splits&&t.splits.length?catParts(t).map(p=>p.cat).join(' + '):t.cat):'';
-  const sub=o.sub!==undefined?o.sub:[formatDateBR(t.date),t.desc&&cat?cat:'',paymentLabel(t)].filter(Boolean).join(' · ');
-  return `<div class="li ${o.cls||''}" data-tx="${t.id}" role="button" tabindex="0" aria-label="${esc(txTitle(t))}, ${esc(f2(v))}. Abrir detalhes">
-    <span class="li-ic" aria-hidden="true">${txIcon(t)}</span>
-    <span class="li-main"><span class="li-t">${esc(o.title||txTitle(t))}${t.serie?' <span class="li-badge" title="Repete todo mês">🔁</span>':''}</span><span class="li-s">${sub}</span></span>
-    <span class="li-v ${t.type}">${sign?sign+' ':''}${f2(v)}</span>${o.actions||''}</div>`;
-}
-// row that is not a single transaction (opening balance, undetailed amount, a month, a category)
-function infoRow(o){
-  const attrs=o.attrs||'';
-  return `<div class="li ${o.attrs?'':'li-static'} ${o.cls||''}" ${attrs} ${o.attrs?'role="button" tabindex="0"':''}>
-    <span class="li-ic" aria-hidden="true">${o.icon||'•'}</span>
-    <span class="li-main"><span class="li-t">${o.title}</span>${o.sub?`<span class="li-s">${o.sub}</span>`:''}</span>
-    <span class="li-v ${o.vcls||''}">${o.value}</span></div>`;
-}
-const signedMoney=v=>(v<0?'− ':'')+f2(Math.abs(v));
-/**
- * listView(build): build() is called on every draw, so the list follows edits and deletions.
- * build() -> {title, sub, total(text), totalLabel, count, groups:[{label, total, rows:[html]}], note, empty}
- */
-function listView(build){
-  return {render(body){
-    const s=build();
-    const n=s.count!==undefined?s.count:s.groups.reduce((a,g)=>a+g.rows.length,0);
-    const groups=s.groups.filter(g=>g.rows.length||g.always);
-    body.innerHTML=`<div class="bd-total"><div class="bd-k">${s.totalLabel||'Total'}</div><div class="bd-v">${s.total}</div><div class="bd-n">${n} ${n===1?(s.unit||'lançamento'):(s.units||'lançamentos')}${s.period?' · '+s.period:''}</div></div>`+
-      (s.note?`<div class="bd-note">${s.note}</div>`:'')+
-      (groups.length?groups.map(g=>`<div class="bd-g">${g.label?`<div class="bd-gh"><span>${g.label}</span>${g.total!==undefined?`<b>${g.total}</b>`:''}</div>`:''}<div class="lst">${g.rows.join('')||'<div class="empty sm">Nada aqui.</div>'}</div></div>`).join('')
-        :`<div class="empty">${s.empty||'Nenhum lançamento neste período.'}</div>`);
-    return {title:s.title,sub:s.sub};
-  }};
-}
-
-// ---- src/ui/views/month-details.js
-/**
- * ui/views/month-details.js
- * Responsibility: what each month summary card opens (Receitas, Despesas, Aportes, Sobrou no caixa,
- * Fatura em aberto, Saldo VR/VA). Every list comes from monthSummary(), the same source as the card.
- */
-
-
-
-
-
-
-
-
-
-const periodOf=m=>mLabel(m).replace(/^./,c=>c.toUpperCase());
-const byDateDesc=a=>a.slice().sort((x,y)=>y.date.localeCompare(x.date)||y.id-x.id);
-const txRows=a=>byDateDesc(a).map(t=>txRow(t));
-const MONTH_DETAILS={
-  income:(s,m,P)=>({title:'Receitas',sub:P,total:'+ '+f2(s.income.total),totalLabel:'Total recebido',period:P,
-        groups:[{rows:txRows(s.income.items)}],empty:'Nenhuma receita neste mês. Toque em “+” para adicionar.'}),
-  expenses:(s,m,P)=>({title:'Despesas',sub:P,total:'− '+f2(s.expenses.total),totalLabel:'Total gasto',period:P,
-        count:s.expenses.items.length+s.expenses.undetailed.length,
-        groups:[{label:'Lançadas',total:f2(sumMoney(s.expenses.items.map(t=>t.value))),rows:txRows(s.expenses.items)},
-          {label:'Faturas pagas sem detalhe',total:f2(sumMoney(s.expenses.undetailed.map(u=>u.value))),
-           rows:s.expenses.undetailed.map(u=>txRow(u.invoice,{value:u.value,sign:'−',title:'❓ '+UNDETAILED_CAT,sub:'Parte da fatura paga em '+formatDateBR(u.invoice.date)+' sem compras lançadas'}))}],
-        note:'Inclui compras no cartão e no VR/VA. O pagamento da fatura não entra de novo (as compras já contam).'}),
-  contrib:(s,m,P)=>({title:'Aportes',sub:P,total:'→ '+f2(s.contributions.total),totalLabel:'Total investido',period:P,
-        groups:[{rows:txRows(s.contributions.items)}],empty:'Nenhum aporte neste mês.'}),
-  cash:(s,m,P)=>{const c=s.cash,t=a=>f2(sumMoney(a.map(x=>x.value)));
-        return {title:'Sobrou no caixa',sub:P,total:`<span class="${c.total>=0?'pos':'neg'}">${signedMoney(c.total)}</span>`,totalLabel:'Resultado do mês',period:P,
-        count:c.cashIn.length+c.cashOut.length+c.invoices.length+c.contributions.length,
-        note:'Conta: <b>entradas na conta</b> − <b>saídas pela conta</b> − <b>faturas pagas</b> − <b>aportes</b>. Compras no cartão só saem do caixa quando a fatura é paga; VR/VA fica fora.',
-        groups:[{label:'➕ Entradas na conta',total:'+ '+t(c.cashIn),rows:txRows(c.cashIn),always:true},
-          {label:'➖ Saídas pela conta (Pix, débito)',total:'− '+t(c.cashOut),rows:txRows(c.cashOut),always:true},
-          {label:'💳 Faturas pagas',total:'− '+t(c.invoices),rows:txRows(c.invoices),always:true},
-          {label:'🏦 Aportes',total:'− '+t(c.contributions),rows:byDateDesc(c.contributions).map(t=>txRow(t,{sign:'−'})),always:true}]};},
-  opencard:(s,m,P)=>{const by={};s.openCard.items.forEach(t=>{const fm=dueMonth(t.date);(by[fm]=by[fm]||[]).push(t);});
-        return {title:'Fatura em aberto',sub:'Até '+formatDateBR(monthEnd(m)),total:f2(s.openCard.total),totalLabel:'Compras no cartão ainda não pagas',
-        groups:Object.keys(by).sort().map(fm=>({label:'Fatura que vence em '+formatDateBR(dueDateOf(fm)),total:f2(sumMoney(by[fm].map(t=>t.value))),rows:txRows(by[fm])})),
-        note:`Compras no cartão em ${mShort(m)}: <b>${f2(s.cardBought)}</b> · fatura paga no mês: <b>${f2(s.invoicesPaid)}</b>.`,
-        empty:'Nenhuma compra de cartão em aberto.'};},
-  voucher:(s,m,P)=>{const v=s.voucher;
-        return {title:'Saldo VR/VA',sub:'Até '+formatDateBR(monthEnd(m)),total:signedMoney(v.total),totalLabel:'Saldo no fim do mês',
-        count:v.items.length,
-        groups:[{label:'Saldo anterior',rows:[infoRow({icon:'💰',title:'Saldo até '+mLabel(mKey(mIdx(m)-1)),value:signedMoney(v.before)})]},
-          {label:'Movimentos do mês',total:`+ ${f2(v.inMonth)} · − ${f2(v.outMonth)}`,rows:txRows(v.items),always:true}]};},
-};
-const monthDetailView=(key,m)=>listView(()=>MONTH_DETAILS[key](monthSummary(m),m,periodOf(m)));
-function registerMonthDetails(){
-  Object.keys(MONTH_DETAILS).forEach(key=>registerDetail(key,m=>monthDetailView(key,m)));
-  // a month row (in the trend lists) opens the expenses of that month
-  registerLink('month',el=>Sheet.push(monthDetailView('expenses',el.dataset.m)));
-}
-
-// ---- src/domain/spending-stats.js
-/**
- * domain/spending-stats.js
- * Responsibility: statistics of the spending: least-squares trend line (used by the chart and by
- * the analysis) and the per-group/category profile (Fixo / Variável / Pontual, change vs. previous months).
- */
-
-
-function linearTrend(xs,ys){
-  const n=Math.min(xs.length,ys.length),avg=n?ys.slice(0,n).reduce((a,b)=>a+b,0)/n:0;
-  if(n<2)return {slope:0,intercept:avg,avg};
-  const mx=xs.slice(0,n).reduce((a,b)=>a+b,0)/n;let num=0,den=0;
-  for(let i=0;i<n;i++){num+=(xs[i]-mx)*(ys[i]-avg);den+=(xs[i]-mx)**2;}
-  const slope=den?num/den:0;
-  return {slope,intercept:avg-slope*mx,avg};
-}
-const CATEGORY_KIND={fixed:'Fixo',variable:'Variável',occasional:'Pontual'};
-// months: [{m, v (month total), c: {category: value}}], oldest first
-function categoryStats(months){
-  const N=months.length,total=sumMoney(months.map(x=>x.v)),average=N?total/N:0;
-  const names=[...new Set(months.flatMap(x=>Object.keys(x.c)))];
-  const list=names.map(c=>{
-    const a=months.map(x=>x.c[c]||0),t=sumMoney(a),mean=t/N,sd=Math.sqrt(a.reduce((s,z)=>s+(z-mean)**2,0)/N);
-    const freq=a.filter(z=>z>0).length/N,cv=mean?sd/mean:0;
-    const prev=a.slice(Math.max(0,N-4),N-1),base=prev.length?prev.reduce((x,y)=>x+y,0)/prev.length:null,cur=a[N-1];
-    const kind=freq<0.5?CATEGORY_KIND.occasional:cv<=0.15?CATEGORY_KIND.fixed:CATEGORY_KIND.variable;
-    return {c,a,t,mean,cv,freq,kind,base,cur,d:base===null?null:cur-base,p:base>0?(cur-base)/base:null,share:total?t/total:0};
-  }).sort((x,y)=>y.t-x.t);
-  const meanOf=k=>list.filter(z=>z.kind===k).reduce((s,z)=>s+z.mean,0);
-  return {list,total,average,
-    fixed:meanOf(CATEGORY_KIND.fixed),variable:meanOf(CATEGORY_KIND.variable),occasional:meanOf(CATEGORY_KIND.occasional),
-    top3Share:total?list.slice(0,3).reduce((s,z)=>s+z.t,0)/total:0};
-}
-// closed months of the spending window with their per-group totals (input of categoryStats:
-// the analysis compares groups, e.g. Moradia = condomínio + luz + água + gás)
-function closedMonthsByGroup(sel){const w=spendingWindow(sel);return w.ci.map(k=>({m:w.ms[k],v:w.vals[k],c:groupMonth(w.ms[k])}));}
-
-// ---- src/ui/icons.js
-/**
- * ui/icons.js
- * Responsibility: SVG stroke icons and the emoji-to-icon map.
- */
-// ---------- icons ----------
-const P={
- chart:'<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
- receipt:'<path d="M4 2v20l3-2 2 2 3-2 3 2 2-2 3 2V2z"/><path d="M8 8h8M8 12h8"/>',
- brief:'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>',
- sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
- wallet:'<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
- target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
- clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
- trend:'<path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
- plus:'<path d="M12 5v14M5 12h14"/>', menu:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>', minus:'<path d="M5 12h14"/>',
- bank:'<path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/>',
- scale:'<path d="M12 3v18M7 21h10M5 7h14"/><path d="M5 7l-3 8a4 4 0 0 0 6 0zM19 7l-3 8a4 4 0 0 0 6 0z"/>'};
-const svg=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[k]}</svg>`;
-P.tag='<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/>';
-P.card='<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>';
-const EM={'💳':'card','💰':'wallet','🎯':'target','⏱️':'clock','📈':'trend','➕':'plus','➖':'minus','🏦':'bank','🧮':'scale'};
+const Sheet=(()=>{
+  const stack=[];
+  const el=id=>document.getElementById(id);
+  function draw(){
+    const v=stack[stack.length-1];
+    if(!v)return close();
+    const body=el('shBody'),foot=el('shFoot');
+    if(!v.static||!v._drawn){
+      foot.innerHTML='';
+      const r=v.render(body,foot);
+      if(!r){stack.pop();if(v.leave)v.leave();return draw();}
+      v._head=r;v._drawn=true;
+    }
+    el('shTitle').innerHTML=v._head.title||'';
+    el('shSub').innerHTML=v._head.sub||'';el('shSub').hidden=!v._head.sub;
+    el('shBack').hidden=stack.length<2;
+    foot.hidden=!foot.childElementCount;
+  }
+  function leaveAll(){while(stack.length){const v=stack.pop();if(v.leave)v.leave();}}
+  function open(view){leaveAll();stack.push(view);const d=el('sheet');el('shBody').scrollTop=0;draw();if(!d.open)d.showModal();}
+  function push(view){if(!stack.length)return open(view);const v=stack[stack.length-1];if(v.static&&v.leave){v.leave();v._drawn=false;}
+    stack.push(view);el('shBody').scrollTop=0;draw();}
+  function pop(){const v=stack.pop();if(v&&v.leave)v.leave();if(!stack.length)return close();el('shBody').scrollTop=0;draw();}
+  function refresh(){if(!el('sheet').open||!stack.length)return;const v=stack[stack.length-1];if(v.static)return;
+    const top=el('shBody').scrollTop;draw();el('shBody').scrollTop=top;}
+  function close(){leaveAll();const d=el('sheet');if(d.open)d.close();}
+  const depth=()=>stack.length,top=()=>stack[stack.length-1];
+  function bind(){
+    const d=el('sheet');
+    el('shClose').onclick=close;el('shBack').onclick=pop;
+    // Esc, Android back gesture and backdrop tap close the sheet
+    // the close event arrives later (async): ignore it if the sheet was opened again meanwhile
+    d.addEventListener('close',()=>{if(!d.open)leaveAll();});
+    d.addEventListener('cancel',e=>{if(stack.length>1){e.preventDefault();pop();}});
+    d.addEventListener('click',e=>{if(e.target===d)close();});
+  }
+  return {open,push,pop,refresh,close,depth,top,bind};
+})();
 
 // ---- src/ui/components/stack-table.js
 /**
@@ -1875,13 +1683,19 @@ function monthsList(){const a=mIdx(firstMonth()),b=mIdx(mOf(today()));const r=[]
 // by 'account': one item per account with a balance; beyond MAX_SLICES the small ones become "Outras".
 // by 'type': accounts named like an asset class (Ações, FIIs, ETFs, BDRs) by class, everything else is "Renda fixa e outros".
 const DIST_MAX_SLICES=7,DIST_OTHER_ID='_other',DIST_FIXED_ID='_fixed';
+// the type of an account by its name: an asset class (Ações, FIIs...) or fixed income and others
+function typeOfAccount(name){
+  const cls=Object.keys(ASSET_LABEL).find(k=>ASSET_LABEL[k]===name);
+  return cls?{id:cls,name}:{id:DIST_FIXED_ID,name:'Renda fixa e outros'};
+}
+const TYPE_ORDER=[DIST_FIXED_ID,'acao','fii','etf','bdr'];
 function investmentDistribution(day=today(),by='account'){
   const rows=S.accounts.filter(a=>!a.archived).map(a=>({id:a.id,name:a.name,value:balance(a.id,day).v})).filter(r=>r.value>0.005);
   const tot=rows.reduce((x,r)=>x+r.value,0);
   let items=rows.map(r=>({...r,count:1}));
   if(by==='type'){
     const g={};
-    rows.forEach(r=>{const cls=Object.keys(ASSET_LABEL).find(k=>ASSET_LABEL[k]===r.name),id=cls||DIST_FIXED_ID,name=cls?r.name:'Renda fixa e outros';
+    rows.forEach(r=>{const {id,name}=typeOfAccount(r.name);
       const x=g[id]||(g[id]={id,name,value:0,count:0});x.value+=r.value;x.count++;});
     items=Object.values(g);
   }
@@ -1892,12 +1706,21 @@ function investmentDistribution(day=today(),by='account'){
   }
   return {total:tot,items:items.map(r=>({...r,share:tot?r.value/tot:0}))};
 }
+const firstSnapshot=acc=>S.snaps.filter(s=>s.acc===acc).reduce((m,s)=>!m||s.date<m?s.date:m,null);
+// accounts whose FIRST balance was entered in (from, to]: that balance is where they start, not yield
+const startedIn=(from,to)=>S.accounts.map(a=>a.id).filter(id=>{const f=firstSnapshot(id);return f&&f>from&&f<=to;});
+const contributionsTo=(acc,m,to)=>sum(S.tx.filter(t=>t.type==='aporte'&&t.acc===acc&&mOf(t.date)===m&&t.date<=to).map(t=>t.value));
 function realSeries(){
   const ms=monthsList();
   return ms.map((m,n)=>{
     const d=asOf(m),t=total(d),ap=contributionsInMonth(m);
     let y=null;
-    if(n>0){const pd=asOf(ms[n-1]);const upd=S.snaps.some(s=>s.date>pd&&s.date<=d);if(upd)y=t-total(pd)-ap;}
+    if(n>0){
+      const pd=asOf(ms[n-1]),fresh=startedIn(pd,d);
+      // a month only has a yield when a balance of an account that already existed was updated
+      const upd=S.snaps.some(s=>s.date>pd&&s.date<=d&&!fresh.includes(s.acc));
+      if(upd)y=t-total(pd)-ap-sum(fresh.map(a=>balance(a,d).v-balance(a,pd).v-contributionsTo(a,m,d)));
+    }
     return {m,d,t,ap,y,bal:S.accounts.map(a=>balance(a.id,d).v),prev:n>0?total(asOf(ms[n-1])):null};
   });
 }
@@ -1916,12 +1739,15 @@ function project(real){
 // ---- src/ui/account-colors.js
 /**
  * ui/account-colors.js
- * Responsibility: the color of each investment account (theme variable picked by account position).
+ * Responsibility: the color of each investment account (theme variable picked by account position) and of each investment type.
  */
 
 
 
 const accColor=id=>css(COLORS[S.accounts.findIndex(a=>a.id===id)%COLORS.length]);
+// investment types share the same color in the ring and in the tower chart
+const TYPE_COLOR={_fixed:'--c4',acao:'--c0',fii:'--c1',etf:'--c2',bdr:'--c3'};
+const typeColor=id=>css(TYPE_COLOR[id]||COLORS[0]);
 
 // ---- src/ui/charts/chart-utils.js
 /**
@@ -1953,6 +1779,14 @@ function chartWidth(el,design,min){
 
 
 
+
+// balances of the accounts added up by investment type, in the fixed stacking order (only types with money)
+const TYPE_NAME={};
+function byType(bal){
+  const sums={};
+  S.accounts.forEach((a,n)=>{if(!(bal[n]>0))return;const t=typeOfAccount(a.name);TYPE_NAME[t.id]=t.name;sums[t.id]=(sums[t.id]||0)+bal[n];});
+  return TYPE_ORDER.filter(id=>sums[id]>0).map(id=>[id,sums[id]]);
+}
 function drawTower(real,proj,hit){
   const goal=S.goal,all=real.concat(proj),N=all.length;
   const W=chartWidth($('chTower'),980,240),narrow=W<640,H=narrow?300:410,L=narrow?44:70,R=narrow?8:14,T=30,B=46,pw=W-L-R,ph=H-T-B;
@@ -1963,10 +1797,11 @@ function drawTower(real,proj,hit){
   const every=Math.ceil(N/(narrow?Math.max(3,Math.floor(W/70)):13));
   all.forEach((r,j)=>{
     const x=L+j*bw+(bw-w)/2,isReal=j<real.length;
-    if(isReal){let acc=0;const nz=r.bal.map((v,n)=>[v,n]).filter(z=>z[0]>0);
-      nz.forEach(([v,n],q)=>{const yt=y(acc+v),h=y(acc)-yt-(q>0?2:0);s+=`<path d="${rr(x,yt,w,Math.max(h,1),q===nz.length-1?4:0)}" fill="${accColor(S.accounts[n].id)}"/>`;acc+=v;});
-      if(r.ap>0&&!narrow)s+=`<text x="${x+w/2}" y="${y(r.t)-23}" text-anchor="middle" font-size="11" font-weight="700" fill="${css('--apo')}">+${(r.ap/1000).toFixed(r.ap<10000?1:0).replace('.',',')}k</text>`;
-      if(!narrow||j===real.length-1)s+=`<text x="${x+w/2}" y="${y(r.t)-9}" text-anchor="${narrow?'start':'middle'}" font-size="12" font-weight="700" fill="${css('--ink')}">${(r.t/1e6).toFixed(3).replace('.',',')}</text>`;
+    if(isReal){let acc=0;const nz=byType(r.bal);
+      nz.forEach(([id,v],q)=>{const yt=y(acc+v),h=y(acc)-yt-(q>0?2:0);s+=`<path d="${rr(x,yt,w,Math.max(h,1),q===nz.length-1?4:0)}" fill="${typeColor(id)}"/>`;acc+=v;});
+      const lab=!narrow&&(bw>=34||j%Math.ceil(34/bw)===0||j===real.length-1);
+      if(r.ap>0&&lab&&bw>=34)s+=`<text x="${x+w/2}" y="${y(r.t)-23}" text-anchor="middle" font-size="11" font-weight="700" fill="${css('--apo')}">+${(r.ap/1000).toFixed(r.ap<10000?1:0).replace('.',',')}k</text>`;
+      if(narrow?j===real.length-1:lab)s+=`<text x="${x+w/2}" y="${y(r.t)-9}" text-anchor="${narrow?'start':'middle'}" font-size="12" font-weight="700" fill="${css('--ink')}">${(r.t/1e6).toFixed(3).replace('.',',')}</text>`;
     } else {s+=`<path d="${rr(x,y(r.t),w,y(0)-y(r.t),4)}" fill="url(#hatch)" stroke="${css('--proj')}" stroke-width="1.5"/>`;
       if(hit>0&&j===real.length-1+hit)s+=`<text x="${x+w/2}" y="${y(r.t)-9}" text-anchor="middle" font-size="13" font-weight="700" fill="${css('--rec')}">✅ ${(r.t/1e6).toFixed(3).replace('.',',')}</text>`;}
     if(j%every===0||(hit>0&&j===real.length-1+hit))s+=`<text x="${x+w/2}" y="${H-B+18}" text-anchor="middle" font-size="12" fill="${css('--ink2')}">${mShort(r.m)}</text>`;
@@ -1977,13 +1812,37 @@ function drawTower(real,proj,hit){
   const tip=$('tip'),box=$('box');
   svg.querySelectorAll('.hit').forEach(el=>{
     el.onmousemove=e=>{const j=+el.dataset.j,r=all[j];let h;
-      if(j<real.length)h=`<b>${mLabel(r.m)}</b><br>Total: ${f2(r.t)}<br>`+S.accounts.map((a,n)=>r.bal[n]>0?`${esc(a.name)}: ${f0(r.bal[n])}`:'').filter(Boolean).join('<br>')+(r.ap?`<br>🏦 Aportes: ${f0(r.ap)}`:'')+`<br>Falta: ${f0(Math.max(goal-r.t,0))}`;
+      if(j<real.length)h=`<b>${mLabel(r.m)}</b><br>Total: ${f2(r.t)}<br>`+byType(r.bal).map(([id,v])=>`${esc(TYPE_NAME[id])}: ${f0(v)}`).join('<br>')+(r.ap?`<br>🏦 Aportes: ${f0(r.ap)}`:'')+`<br>Falta: ${f0(Math.max(goal-r.t,0))}`;
       else h=`<b>${mLabel(r.m)}</b> · projeção<br>Total: ${f0(r.t)}<br>${r.t>=goal?'✅ meta atingida':'Falta: '+f0(goal-r.t)}`;
       tip.innerHTML=h;const bb=box.getBoundingClientRect();tip.style.left=Math.max(0,Math.min(e.clientX-bb.left+14,bb.width-240))+'px';tip.style.top=(e.clientY-bb.top+14)+'px';tip.style.opacity=1;};
     el.onclick=el.onmousemove;el.onmouseleave=()=>tip.style.opacity=0;});
-  $('lgTower').innerHTML=S.accounts.map(a=>`<span><i style="background:${accColor(a.id)}"></i>${esc(a.name)}</span>`).join('')+
+  const used=TYPE_ORDER.filter(id=>real.some(r=>byType(r.bal).some(([t])=>t===id)));
+  $('lgTower').innerHTML=used.map(id=>`<span><i style="background:${typeColor(id)}"></i>${esc(TYPE_NAME[id])}</span>`).join('')+
     `<span><i class="lg-proj"></i>Projeção</span><span><i class="lg-line lg-goal"></i>Meta</span>`;
 }
+
+// ---- src/ui/icons.js
+/**
+ * ui/icons.js
+ * Responsibility: SVG stroke icons and the emoji-to-icon map.
+ */
+// ---------- icons ----------
+const P={
+ chart:'<path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/>',
+ receipt:'<path d="M4 2v20l3-2 2 2 3-2 3 2 2-2 3 2V2z"/><path d="M8 8h8M8 12h8"/>',
+ brief:'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>',
+ sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+ wallet:'<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+ target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+ clock:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+ trend:'<path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>', menu:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>', minus:'<path d="M5 12h14"/>',
+ bank:'<path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/>',
+ scale:'<path d="M12 3v18M7 21h10M5 7h14"/><path d="M5 7l-3 8a4 4 0 0 0 6 0zM19 7l-3 8a4 4 0 0 0 6 0z"/>'};
+const svg=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[k]}</svg>`;
+P.tag='<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/>';
+P.card='<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>';
+const EM={'💳':'card','💰':'wallet','🎯':'target','⏱️':'clock','📈':'trend','➕':'plus','➖':'minus','🏦':'bank','🧮':'scale'};
 
 // ---- src/ui/views/kpi.js
 /**
@@ -2088,6 +1947,8 @@ function renderProj(real,hit){
 
 
 
+// an annual rate above this is not shown: a single month does not say anything reliable about a year
+const MAX_SHOWN_ANNUAL=1;
 function renderMeta(){
   const real=realSeries(),last=real[real.length-1],{proj,hit,m}=project(real),goal=S.goal;
   const prog=Math.min(last.t/goal,1);
@@ -2101,7 +1962,7 @@ function renderMeta(){
   drawTower(real,proj,hit);renderProj(real,hit);
   const ylast=[...real].reverse().find(r=>r.y!==null);
   if(ylast){const mo=ylast.y/ylast.prev,ann=Math.pow(1+mo,12)-1;
-    $('paceMsg').innerHTML=`📊 Em ${mShort(ylast.m)} o rendimento real foi ${f0(ylast.y)} (${pc(mo)} no mês, ~${pc(ann)} ao ano), <b class="${ann>=S.rate/100?'pos':'neg'}">${ann>=S.rate/100?'acima':'abaixo'}</b> da premissa de ${String(S.rate).replace('.',',')}% a.a.`;
+    $('paceMsg').innerHTML=`📊 Em ${mShort(ylast.m)} o rendimento real foi ${f0(ylast.y)} (${pc(mo)} no mês${ann<=MAX_SHOWN_ANNUAL?', ~'+pc(ann)+' ao ano':''}), <b class="${ann>=S.rate/100?'pos':'neg'}">${ann>=S.rate/100?'acima':'abaixo'}</b> da premissa de ${String(S.rate).replace('.',',')}% a.a.`;
   } else $('paceMsg').textContent='ℹ️ Em Investimentos, atualize os saldos no fim do mês para comparar o rendimento real com a projeção.';
 }
 function paceChip(real){
@@ -2110,6 +1971,115 @@ function paceChip(real){
   const ann=Math.pow(1+y.y/y.prev,12)-1;
   return ann>=S.rate/100?'<span class="status ok">No ritmo ou acima</span>':'<span class="status warn">Abaixo do esperado</span>';
 }
+
+// ---- src/domain/month-summary.js
+/**
+ * domain/month-summary.js
+ * Responsibility: the numbers of the month summary and the records behind each one.
+ * The dashboard cards and their detail lists both read from here, so the sum of the listed
+ * items is always the card total (same filters, same rule, summed in cents).
+ */
+
+
+
+
+
+const isVoucher=t=>t.fonte==='beneficio';
+const isCard=t=>t.fonte==='cartao';
+const signedVoucher=t=>t.type==='receita'?t.value:t.type==='despesa'?-t.value:0;
+function monthSummary(m){
+  const end=monthEnd(m),start=m+'-01';
+  const income=txIn(m,'receita'),expenses=txIn(m,'despesa'),contributions=txIn(m,'aporte'),invoices=txIn(m,'fatura');
+  // part of a paid invoice with no purchase entered: it is still a cost of the month
+  const undetailed=invoices.map(t=>({invoice:t,value:invoiceUndetailed(t)})).filter(x=>x.value>0.004);
+  const cashIn=income.filter(t=>!isVoucher(t)),cashOut=expenses.filter(t=>!isVoucher(t)&&!isCard(t));
+  const openCardItems=openCard(end);
+  const voucherBefore=sumMoney(S.tx.filter(t=>isVoucher(t)&&t.date<start).map(signedVoucher));
+  const voucherItems=S.tx.filter(t=>isVoucher(t)&&mOf(t.date)===m&&(t.type==='receita'||t.type==='despesa'));
+  const val=a=>a.map(t=>t.value);
+  const r={
+    m,
+    income:{items:income,total:sumMoney(val(income))},
+    expenses:{items:expenses,undetailed,total:sumMoney(val(expenses).concat(undetailed.map(u=>u.value)))},
+    contributions:{items:contributions,total:sumMoney(val(contributions))},
+    cash:{cashIn,cashOut,invoices,contributions,
+      total:sumMoney(val(cashIn).concat(val(cashOut).map(v=>-v),val(invoices).map(v=>-v),val(contributions).map(v=>-v)))},
+    openCard:{items:openCardItems,total:sumMoney(val(openCardItems))},
+    cardBought:sumMoney(val(expenses.filter(isCard))),
+    invoicesPaid:sumMoney(val(invoices)),
+    voucher:{before:voucherBefore,items:voucherItems,
+      inMonth:sumMoney(val(voucherItems.filter(t=>t.type==='receita'))),
+      outMonth:sumMoney(val(voucherItems.filter(t=>t.type==='despesa'))),
+      total:sumMoney([voucherBefore].concat(voucherItems.map(signedVoucher)))}
+  };
+  return r;
+}
+// month spending total used by the trend chart, the insights and the category detail
+const monthSpending=m=>monthSummary(m).expenses.total;
+
+// ---- src/domain/spending.js
+/**
+ * domain/spending.js
+ * Responsibility: spending window used by the trend chart, the analysis and the category detail:
+ * 12 months ending at the selected month (or today), which ones are closed, and the
+ * records behind a category or a group in a month (split parts and the undetailed part of paid invoices).
+ */
+
+
+
+
+
+
+
+const UNDETAILED_CAT='Cartão (sem detalhe)';
+function spendingWindow(sel){
+  const nowM=mOf(today()),end=Math.max(mIdx(sel),mIdx(nowM)),ms=[];
+  for(let k=end-11;k<=end;k++)ms.push(mKey(k));
+  const vals=ms.map(monthSpending),part=ms.map(m=>m===nowM);
+  const ci=ms.map((m,k)=>k).filter(k=>!part[k]&&vals[k]>0&&mIdx(ms[k])<mIdx(nowM));
+  return {ms,vals,part,ci,nowM};
+}
+// [{t, value}] whose values add up to catMonth(m)[cat]
+function categoryItems(m,cat){
+  const out=[];
+  if(cat===UNDETAILED_CAT){txIn(m,'fatura').forEach(t=>{const u=invoiceUndetailed(t);if(u>0)out.push({t,value:u});});return out;}
+  txIn(m,'despesa').forEach(t=>catParts(t).forEach(p=>{if(p.cat===cat)out.push({t,value:p.value});}));
+  return out.sort((a,b)=>b.t.date.localeCompare(a.t.date));
+}
+// {group: value} of a month: catMonth added up by group (same grand total)
+function groupMonth(m){const g={};Object.entries(catMonth(m)).forEach(([c,v])=>{const k=groupOf(c);g[k]=roundMoney((g[k]||0)+v);});return g;}
+// [{t, value, cats}] whose values add up to groupMonth(m)[group]; one row per record
+// (a record split into Água + Gás + Moradia shows once in Moradia, with the sum of those parts)
+function groupItems(m,group){
+  const byTx=new Map();
+  if(group===UNDETAILED_CAT)return categoryItems(m,group).map(i=>({...i,cats:[group]}));
+  txIn(m,'despesa').forEach(t=>catParts(t).forEach(p=>{if(groupOf(p.cat)!==group)return;
+    const r=byTx.get(t.id)||{t,value:0,cats:[]};r.value=roundMoney(r.value+p.value);if(!r.cats.includes(p.cat))r.cats.push(p.cat);byTx.set(t.id,r);}));
+  return [...byTx.values()].sort((a,b)=>b.t.date.localeCompare(a.t.date));
+}
+
+// ---- src/ui/ui-state.js
+/**
+ * ui/ui-state.js
+ * Responsibility: what the screen is showing right now (period, filters, form being edited).
+ * It is not saved and it is not business data: the domain never reads it.
+ * One shared object so every screen reads and changes the same values (ES modules cannot
+ * reassign a variable owned by another module).
+ */
+
+const ui={
+  cur:mOf(today()),          // month shown (YYYY-MM)
+  type:'despesa',            // type selected in the transaction form
+  filt:'todos',              // transaction list filter chip
+  q:'',                      // transaction list search
+  group:'',                  // transaction list expense group ('' = all)
+  editId:null,               // transaction being edited (null = new)
+  splitRows:[],              // split parts in the form [{cat,val}]
+  invoiceSelection:new Set(),// purchases checked in the invoice form
+  payAdvanced:false,         // invoice payment entered manually
+  allInvoicesOpen:false,     // Card tab: the table with all invoices is expanded
+  selectedInsightCategory:null // category highlighted in the analysis table
+};
 
 // ---- src/ui/views/summary-cashflow.js
 /**
@@ -2135,7 +2105,7 @@ function renderFlow(){
     kpi('apo','🏦','Aportes (investido)','→ '+f2(apo),rec?`${pc(apo/rec)} das receitas`:'Dinheiro enviado aos investimentos','','contrib')+
     kpi('','🧮','Sobrou no caixa',`<span class="${sob>=0?'pos':'neg'}">${sob<0?'−':''}${f2(Math.abs(sob))}</span>`,'Receitas − saídas da conta − faturas pagas − aportes','','cash')+
     kpi('des','💳','Fatura em aberto',f2(sm.openCard.total),`Compras no mês: ${f2(sm.cardBought)} · fatura paga: ${f2(sm.invoicesPaid)}`,'','opencard')+
-    kpi('','💰','Saldo VR/VA',f2(v.total),`Recebido ${f2(v.inMonth)} · gasto ${f2(v.outMonth)} no mês`,'','voucher');
+    (v.total||v.inMonth||v.outMonth?kpi('','💰','Saldo VR/VA',f2(v.total),`Recebido ${f2(v.inMonth)} · gasto ${f2(v.outMonth)} no mês`,'','voucher'):'');
   // 6 months
   const idx=mIdx(ui.cur),ms=[];for(let i=idx-5;i<=idx;i++)ms.push(mKey(i));
   const data=ms.map(m=>{const x=monthSummary(m);return [x.income.total,x.expenses.total,x.contributions.total];});
@@ -2156,6 +2126,84 @@ function renderFlow(){
       if(p){const dl=(v-p)/p;d=`<span class="${dl>0?'neg':'pos'}">${dl>0?'▲':'▼'} ${Math.abs(Math.round(dl*100))}%</span>`;}
       return `<div class="catrow tap" data-go="cat" data-c="${esc(c)}" data-m="${ui.cur}" role="button" tabindex="0" aria-label="${esc(c)}: ${f2(v)}. Ver lançamentos"><div class="cr-n">${groupIcon(c)} ${esc(c)}</div><div class="catbar"><div style="width:${v/arr[0][1]*100}%"></div></div><div class="r fw7">${f2(v)}</div><div class="r fs125" title="vs mês anterior">${d}</div></div>`;}).join('')
     :'<div class="empty">Nenhuma despesa neste mês.<br>Toque em “+” para adicionar.</div>';
+}
+
+// ---- src/domain/savings.js
+/**
+ * domain/savings.js
+ * Responsibility: the savings rate of a month: how much of the income was NOT spent, and a plain
+ * level (good / ok / low / negative) so the screen can say it in one sentence. Pure read.
+ */
+
+
+const SAVINGS_LEVEL={none:'none',negative:'negative',low:'low',ok:'ok',good:'good'};
+const SAVINGS_OK=0.1,SAVINGS_GOOD=0.2;
+function savingsLevel(rate){
+  if(rate===null)return SAVINGS_LEVEL.none;
+  if(rate<0)return SAVINGS_LEVEL.negative;
+  if(rate>=SAVINGS_GOOD)return SAVINGS_LEVEL.good;
+  if(rate>=SAVINGS_OK)return SAVINGS_LEVEL.ok;
+  return SAVINGS_LEVEL.low;
+}
+// {income, expenses, saved, rate (null when there is no income), level}
+function savingsRate(m){
+  const sm=monthSummary(m),income=sm.income.total,expenses=sm.expenses.total,saved=roundMoney(income-expenses);
+  const rate=income>0?saved/income:null;
+  return {income,expenses,saved,rate,level:savingsLevel(rate)};
+}
+
+// ---- src/domain/emergency-fund.js
+/**
+ * domain/emergency-fund.js
+ * Responsibility: the emergency reserve: how many months of expenses the accounts the user marked
+ * as "reserve" can pay. Also the command that marks / unmarks an account.
+ */
+
+
+
+
+
+const RESERVE_TARGET_MONTHS=6,RESERVE_MIN_MONTHS=3,AVERAGE_MONTHS=3;
+const reserveAccounts=()=>S.accounts.filter(a=>a.reserve&&!a.archived);
+function setReserveAccount(id,flag){
+  const a=S.accounts.find(x=>x.id===id);if(!a)return {error:'Conta não encontrada'};
+  if(flag)a.reserve=true;else delete a.reserve;
+  return {name:a.name};
+}
+// average expenses of the last closed months that have any expense (the month in progress is not complete)
+function monthlyExpenseAverage(day=today()){
+  const cur=mOf(day),vals=[];
+  for(let k=1;k<=AVERAGE_MONTHS;k++){const v=monthSummary(mKey(mIdx(cur)-k)).expenses.total;if(v>0)vals.push(v);}
+  return vals.length?roundMoney(vals.reduce((s,v)=>s+v,0)/vals.length):0;
+}
+// {accounts, balance, monthlyExpense, months (null when it cannot be told), target, level}
+function emergencyFund(day=today()){
+  const accs=reserveAccounts(),bal=roundMoney(accs.reduce((s,a)=>s+balance(a.id,day).v,0)),avg=monthlyExpenseAverage(day);
+  const months=accs.length&&avg>0?bal/avg:null;
+  const level=months===null?'none':months>=RESERVE_TARGET_MONTHS?'good':months>=RESERVE_MIN_MONTHS?'ok':'low';
+  return {accounts:accs.map(a=>a.id),balance:bal,monthlyExpense:avg,months,target:RESERVE_TARGET_MONTHS,level};
+}
+
+// ---- src/domain/card-status.js
+/**
+ * domain/card-status.js
+ * Responsibility: facts about one card invoice (identified by its due month): purchases of the
+ * cycle, amount bought and paid, and its status on a given day.
+ */
+
+
+
+
+const cycleItems=fm=>S.tx.filter(t=>t.type==='despesa'&&t.fonte==='cartao'&&dueMonth(t.date)===fm).sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id);
+const invoicePayments=fm=>S.tx.filter(t=>t.type==='fatura'&&invoiceMonthOf(t)===fm);
+const cycleTotals=fm=>({bought:sumMoney(cycleItems(fm).map(t=>t.value)),paid:sumMoney(invoicePayments(fm).map(t=>t.value))});
+// paid | open (still buying: days until closing) | closed (days until due) | late (due, no payment)
+function invoiceStatus(fm,day){
+  if(cycleTotals(fm).paid>0)return {code:'paid',days:0};
+  const close=closeDateOf(fm),due=dueDateOf(fm);
+  if(day<=close)return {code:'open',days:daysBetween(day,close)};
+  if(day<=due)return {code:'closed',days:daysBetween(day,due)};
+  return {code:'late',days:0};
 }
 
 // ---- src/domain/budgets.js
@@ -2211,57 +2259,6 @@ function budgetStatus(m,day=today()){
 function budgetAlerts(m,cats,groupOfCat,day=today()){
   const groups=new Set(cats.map(groupOfCat));
   return budgetStatus(m,day).rows.filter(r=>groups.has(r.group)&&r.level!==BUDGET_LEVEL.ok);
-}
-
-// ---- src/ui/components/progress-bar.js
-/**
- * ui/components/progress-bar.js
- * Responsibility: horizontal progress bar (budget used, bills paid). The fill is capped at 100%;
- * the tone (ok / near / over) only changes the color.
- */
-const PROGRESS_TONE={ok:'ok',near:'near',over:'over'};
-function progressBar(share,tone=PROGRESS_TONE.ok,label=''){
-  const pct=Math.max(0,Math.min(1,share||0))*100;
-  return `<div class="pbar pbar-${tone}" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round((share||0)*100)}"${label?` aria-label="${label}"`:''}><i style="width:${pct.toFixed(1)}%"></i></div>`;
-}
-
-// ---- src/ui/views/budget-card.js
-/**
- * ui/views/budget-card.js
- * Responsibility: Summary tab card "Orçamento do mês": each group with a budget, how much was
- * spent, what is left and a warning near/over the limit (rules in domain/budgets.js).
- * Tap a group to open its detail; budgets are set in the Categorias tab.
- */
-
-
-
-
-
-
-
-const percent=x=>Math.round(x*100)+'%';
-// the short line under each group
-function budgetLine(r,inProgress){
-  if(r.level===BUDGET_LEVEL.over)return `<span class="neg">Estourou ${f2(-r.remaining)}</span> · ${percent(r.share)} do orçamento`;
-  const left=`Faltam ${f2(r.remaining)} · ${percent(r.share)} usado`;
-  if(inProgress&&r.onPaceToExceed)return `${left} · <span class="warn-t">no ritmo atual fecha em ${f0(r.projected)}</span>`;
-  if(r.level===BUDGET_LEVEL.near)return `<span class="warn-t">Perto do limite</span> · ${left}`;
-  return left;
-}
-function renderBudgets(){
-  const box=$('budgetCard'),st=budgetStatus(ui.cur),inProgress=ui.cur===mOf(today());
-  if(!st.rows.length){
-    box.innerHTML=`<div class="card-h"><h2 class="card-t">Orçamento do mês</h2></div>
-      <div class="help flush">Defina quanto quer gastar por mês em cada grupo (ex.: Moradia até R$ 1.100) e acompanhe aqui, com aviso perto do limite.</div>
-      <button type="button" class="btn sm bud-set" data-go="tab" data-t="cad">Definir orçamentos</button>`;
-    return;}
-  const alerts=st.rows.filter(r=>r.level!==BUDGET_LEVEL.ok).length;
-  box.innerHTML=`<div class="card-h"><h2 class="card-t">Orçamento do mês</h2><div class="help flush">${f2(st.spent)} de ${f2(st.budget)}${alerts?` · <span class="warn-t">${alerts} grupo(s) no limite</span>`:''}</div></div>
-    <div class="bud-list">${st.rows.map(r=>`<div class="bud-row tap" data-go="cat" data-c="${esc(r.group)}" data-m="${ui.cur}" role="button" tabindex="0" aria-label="${esc(r.group)}: ${f2(r.spent)} de ${f2(r.budget)}">
-      <div class="bud-top"><span class="bud-n">${groupIcon(r.group)} ${esc(r.group)}</span><span class="bud-v"><b>${f2(r.spent)}</b> <span class="mut">/ ${f0(r.budget)}</span></span></div>
-      ${progressBar(r.share,r.level,esc(r.group))}
-      <div class="bud-s">${budgetLine(r,inProgress)}</div></div>`).join('')}</div>
-    <div class="help flush bud-foot">Toque num grupo para ver os lançamentos. Ajuste os valores na aba <button type="button" class="link-btn" data-go="tab" data-t="cad">Categorias</button>.</div>`;
 }
 
 // ---- src/domain/monthly-bills.js
@@ -2322,40 +2319,133 @@ function ignoreBill(key){
 }
 function restoreIgnoredBills(){const n=(S.billsIgnored||[]).length;S.billsIgnored=[];return {restored:n};}
 
-// ---- src/ui/toast.js
+// ---- src/domain/todo-list.js
 /**
- * ui/toast.js
- * Responsibility: temporary message at the bottom of the page. It is a popover, so it shows
- * above open dialogs (detail sheet, confirmation) too.
+ * domain/todo-list.js
+ * Responsibility: "what to do now": the few things worth the user's attention today (late or due
+ * invoices, budgets over the limit, monthly bills not yet entered, no contribution this month),
+ * most urgent first. Pure read; each item says what to open (go) so the screen can link to it.
  */
 
-function toast(msg){
-  const t=$('toast');t.textContent=msg;
-  if(t.showPopover){try{if(t.matches(':popover-open'))t.hidePopover();t.showPopover();}catch(e){}}
-  requestAnimationFrame(()=>t.classList.add('on'));
-  clearTimeout(toast.h);clearTimeout(toast.h2);
-  toast.h=setTimeout(()=>{t.classList.remove('on');toast.h2=setTimeout(()=>{try{t.hidePopover&&t.hidePopover();}catch(e){}},300);},msg.startsWith('⚠️')?5200:3200);
+
+
+
+
+
+
+const MAX_ACTIONS=3;
+const ACTION={late:'invoice-late',due:'invoice-due',budget:'budget-over',bills:'bills-missing',contribute:'no-contribution'};
+const DUE_SOON_DAYS=7;
+// item: {code, urgency (lower = first), go:'card'|'budget'|'bills'|'invest', data}
+function nextActions(day=today()){
+  const m=mOf(day),items=[];
+  const late=[];
+  payableInvoices().forEach(f=>{const st=invoiceStatus(f.fm,day);
+    if(st.code==='late')late.push(f);
+    else if(st.code==='closed'&&st.days<=DUE_SOON_DAYS)items.push({code:ACTION.due,urgency:1,go:'card',data:{fm:f.fm,rest:f.rest,days:st.days}});});
+  // several late invoices are one problem: say it once, with the count and the total
+  if(late.length)items.push({code:ACTION.late,urgency:0,go:'card',data:{count:late.length,fm:late[0].fm,rest:roundMoney(late.reduce((t,f)=>t+f.rest,0))}});
+  const over=budgetStatus(m,day).rows.filter(r=>r.level===BUDGET_LEVEL.over);
+  if(over.length)items.push({code:ACTION.budget,urgency:2,go:'budget',data:{groups:over.map(r=>r.group)}});
+  const missing=monthlyBills(m,day).items.filter(i=>i.status===BILL_STATUS.missing&&i.date<=day);
+  if(missing.length)items.push({code:ACTION.bills,urgency:3,go:'bills',data:{count:missing.length}});
+  // only worth saying when the user already invests (some account) and nothing went in this month
+  const invests=S.accounts.some(a=>!a.archived),contributed=S.tx.some(t=>t.type==='aporte'&&mOf(t.date)===m);
+  if(invests&&!contributed&&day.slice(8)>='10')items.push({code:ACTION.contribute,urgency:4,go:'invest',data:{}});
+  return items.sort((a,b)=>a.urgency-b.urgency).slice(0,MAX_ACTIONS);
 }
 
-// ---- src/ui/components/command.js
+// ---- src/ui/views/summary-health.js
 /**
- * ui/components/command.js
- * Responsibility: the one way a screen changes data. Runs a domain command inside transact(),
- * shows the refusal ({error}) or the save failure, re-renders and shows the success message.
- * runCommand(fn, {ok, onError}) -> the command result, or null when nothing changed.
+ * ui/views/summary-health.js
+ * Responsibility: the top of the Summary tab: "O que fazer agora" (few urgent things, each one
+ * opens the right place), the savings rate of the month and the emergency reserve in months.
+ * Only builds text from domain results; the domain decides the levels.
  */
 
 
 
-const SAVE_FAILED='⚠️ Não foi possível salvar: o navegador não gravou os dados (memória cheia ou modo anônimo). Nada foi alterado.';
-function runCommand(fn,o){
-  o=o||{};
-  const r=transact(fn);
-  if(r===false){toast(SAVE_FAILED);if(o.onError)o.onError(null);return null;}
-  if(r&&r.error){toast('⚠️ '+r.error);if(o.onError)o.onError(r.error);return null;}
-  if(o.render!==false)render();
-  const msg=typeof o.ok==='function'?o.ok(r):o.ok;if(msg)toast(msg);
-  return r;
+
+
+
+
+const ACTION_TEXT={
+  'invoice-late':a=>a.count>1?`🔴 ${a.count} faturas vencidas sem pagamento lançado (${f2(a.rest)})`:`🔴 Fatura de ${mShort(a.fm)} venceu e não foi paga (${f2(a.rest)})`,
+  'invoice-due':a=>`🟡 Fatura de ${mShort(a.fm)} vence em ${a.days} dia${a.days===1?'':'s'} (${f2(a.rest)})`,
+  'budget-over':a=>`🟠 Passou do limite: ${a.groups.map(esc).join(', ')}`,
+  'bills-missing':a=>`🧾 ${a.count} conta${a.count===1?'':'s'} do mês ainda não lançada${a.count===1?'':'s'}`,
+  'no-contribution':()=>'📈 Nenhum aporte neste mês ainda'};
+const ACTION_TAB={card:'card',budget:'resumo',bills:'resumo',invest:'inv'};
+const SAVINGS_TEXT={
+  good:'Excelente: você guardou boa parte do que ganhou.',ok:'Bom: dá para chegar a 20% se cortar um pouco.',
+  low:'Pouco: sobrou menos de 10% da renda.',negative:'Você gastou mais do que ganhou neste mês.',none:'Sem receitas neste mês para calcular.'};
+const RESERVE_TEXT={
+  good:'Reserva confortável.',ok:'Reserva razoável: a meta é 6 meses.',low:'Reserva curta: a meta é 6 meses.',none:''};
+function renderHealth(){
+  const items=nextActions(today());
+  $('todoCard').hidden=!items.length;
+  $('todoCard').innerHTML=items.length?`<h3 class="m0">O que fazer agora</h3><div class="todo">${items.map(a=>
+    `<button type="button" class="todo-item" data-todo="${ACTION_TAB[a.go]}">${ACTION_TEXT[a.code](a.data)}<span aria-hidden="true">›</span></button>`).join('')}</div>`:'';
+  const s=savingsRate(ui.cur),r=emergencyFund(today());
+  const sv=s.rate===null?'—':pc(s.rate);
+  const reserve=!r.accounts.length
+    ?`<div class="v">—</div><div class="n">Marque uma conta como “🛟 Reserva” na aba Patrimônio para ver quantos meses ela cobre.</div>`
+    :r.months===null?`<div class="v">${f2(r.balance)}</div><div class="n">Falta histórico de despesas para calcular os meses.</div>`
+    :`<div class="v">${r.months.toFixed(1).replace('.',',')} meses</div><div class="n">${f2(r.balance)} cobrem ${r.months.toFixed(1).replace('.',',')} meses de gastos (média ${f2(r.monthlyExpense)}/mês). ${RESERVE_TEXT[r.level]}</div>`;
+  $('healthRow').innerHTML=
+    `<div class="card kpi health ${s.level}"><div class="k">💚 Taxa de poupança</div><div class="v">${sv}</div><div class="n">${s.rate===null?'':`Sobrou ${f2(s.saved)} de ${f2(s.income)}. `}${SAVINGS_TEXT[s.level]}</div></div>
+     <div class="card kpi health ${r.level}"><div class="k">🛟 Reserva de emergência</div>${reserve}</div>`;
+}
+
+// ---- src/ui/components/progress-bar.js
+/**
+ * ui/components/progress-bar.js
+ * Responsibility: horizontal progress bar (budget used, bills paid). The fill is capped at 100%;
+ * the tone (ok / near / over) only changes the color.
+ */
+const PROGRESS_TONE={ok:'ok',near:'near',over:'over'};
+function progressBar(share,tone=PROGRESS_TONE.ok,label=''){
+  const pct=Math.max(0,Math.min(1,share||0))*100;
+  return `<div class="pbar pbar-${tone}" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round((share||0)*100)}"${label?` aria-label="${label}"`:''}><i style="width:${pct.toFixed(1)}%"></i></div>`;
+}
+
+// ---- src/ui/views/budget-card.js
+/**
+ * ui/views/budget-card.js
+ * Responsibility: Summary tab card "Orçamento do mês": each group with a budget, how much was
+ * spent, what is left and a warning near/over the limit (rules in domain/budgets.js).
+ * Tap a group to open its detail; budgets are set in the Categorias tab.
+ */
+
+
+
+
+
+
+
+const percent=x=>Math.round(x*100)+'%';
+// the short line under each group
+function budgetLine(r,inProgress){
+  if(r.level===BUDGET_LEVEL.over)return `<span class="neg">Estourou ${f2(-r.remaining)}</span> · ${percent(r.share)} do orçamento`;
+  const left=`Faltam ${f2(r.remaining)} · ${percent(r.share)} usado`;
+  if(inProgress&&r.onPaceToExceed)return `${left} · <span class="warn-t">no ritmo atual fecha em ${f0(r.projected)}</span>`;
+  if(r.level===BUDGET_LEVEL.near)return `<span class="warn-t">Perto do limite</span> · ${left}`;
+  return left;
+}
+function renderBudgets(){
+  const box=$('budgetCard'),st=budgetStatus(ui.cur),inProgress=ui.cur===mOf(today());
+  if(!st.rows.length){
+    box.innerHTML=`<div class="card-h"><h2 class="card-t">Orçamento do mês</h2></div>
+      <div class="help flush">Defina quanto quer gastar por mês em cada grupo (ex.: Moradia até R$ 1.100) e acompanhe aqui, com aviso perto do limite.</div>
+      <button type="button" class="btn sm bud-set" data-go="tab" data-t="cad">Definir orçamentos</button>`;
+    return;}
+  const alerts=st.rows.filter(r=>r.level!==BUDGET_LEVEL.ok).length;
+  box.innerHTML=`<div class="card-h"><h2 class="card-t">Orçamento do mês</h2><div class="help flush">${f2(st.spent)} de ${f2(st.budget)}${alerts?` · <span class="warn-t">${alerts} grupo(s) no limite</span>`:''}</div></div>
+    <div class="bud-list">${st.rows.map(r=>`<div class="bud-row tap" data-go="cat" data-c="${esc(r.group)}" data-m="${ui.cur}" role="button" tabindex="0" aria-label="${esc(r.group)}: ${f2(r.spent)} de ${f2(r.budget)}">
+      <div class="bud-top"><span class="bud-n">${groupIcon(r.group)} ${esc(r.group)}</span><span class="bud-v"><b>${f2(r.spent)}</b> <span class="mut">/ ${f0(r.budget)}</span></span></div>
+      ${progressBar(r.share,r.level,esc(r.group))}
+      <div class="bud-s">${budgetLine(r,inProgress)}</div></div>`).join('')}</div>
+    <div class="help flush bud-foot">Toque num grupo para ver os lançamentos. Ajuste os valores na aba <button type="button" class="link-btn" data-go="tab" data-t="cad">Categorias</button>.</div>`;
 }
 
 // ---- src/ui/components/field-error.js
@@ -2457,30 +2547,69 @@ function saveTransaction(d){
   return {ids,siblings:0};
 }
 
-// ---- src/ui/components/confirm.js
+// ---- src/ui/components/breakdown.js
 /**
- * ui/components/confirm.js
- * Responsibility: confirmation dialog that replaces the browser confirm(). Clear title and text,
- * "Cancelar" plus the action button, and an optional checkbox (for example "also the future ones").
- * askConfirm({title,text,ok,danger,check}) -> Promise of false (cancelled) or {checked}.
+ * ui/components/breakdown.js
+ * Responsibility: reusable list pieces. txRow() draws one record (icon, title, date and payment,
+ * value with sign); listView() builds a sheet view with total, count and grouped rows.
+ * Rows with data-tx open the record detail (see transaction-actions.js).
  */
 
-function askConfirm(o){
-  const d=$('confirmDlg');
-  $('cfTitle').textContent=o.title||'Confirmar';
-  $('cfText').innerHTML=o.html||esc(o.text||'').replace(/\n/g,'<br>');
-  const ok=$('cfOk');ok.textContent=o.ok||'Confirmar';ok.className='btn '+(o.danger?'dngf':'pri');
-  $('cfCheckW').hidden=!o.check;$('cfCheckL').textContent=o.check||'';$('cfCheck').checked=!!o.checkDefault;
-  if(d.open)d.close();
-  return new Promise(res=>{
-    let done=false;
-    const end=v=>{if(done)return;done=true;ok.onclick=$('cfCancel').onclick=null;d.removeEventListener('close',onClose);if(d.open)d.close();res(v);};
-    const onClose=()=>{if(!d.open)end(false);}; // Esc or back gesture; a late close event of a previous dialog is ignored
-    ok.onclick=()=>end({checked:$('cfCheck').checked});
-    $('cfCancel').onclick=()=>end(false);
-    d.addEventListener('close',onClose);
-    d.showModal();$('cfCancel').focus();
-  });
+
+
+
+
+
+
+const TX_SIGN={receita:'+',despesa:'−',fatura:'−',aporte:'→'};
+function paymentLabel(t){
+  if(t.type==='aporte')return 'Investimento';
+  if(t.type==='fatura')return 'Conta';
+  if(t.fonte==='cartao')return 'Cartão · fatura '+mShort(dueMonth(t.date));
+  if(t.fonte==='beneficio')return 'VR/VA';
+  return t.type==='receita'?'Conta':'Pix / conta';
+}
+function txTitle(t){
+  if(t.type==='fatura')return 'Pagamento da fatura de '+formatDateBR(dueDateOf(invoiceMonthOf(t)));
+  if(t.type==='aporte')return 'Aporte em '+accName(t.acc);
+  return t.desc||t.cat||'Sem descrição';
+}
+function txIcon(t){return t.type==='fatura'?'💳':t.type==='aporte'?'🏦':icon(t.type,t.cat);}
+// o: {value, sign, sub, title, actions, cls}
+function txRow(t,o){
+  o=o||{};
+  const v=o.value!==undefined?o.value:t.value,sign=o.sign!==undefined?o.sign:TX_SIGN[t.type];
+  const cat=t.type==='despesa'||t.type==='receita'?(t.splits&&t.splits.length?catParts(t).map(p=>p.cat).join(' + '):t.cat):'';
+  const sub=o.sub!==undefined?o.sub:[formatDateBR(t.date),t.desc&&cat?cat:'',paymentLabel(t)].filter(Boolean).join(' · ');
+  return `<div class="li ${o.cls||''}" data-tx="${t.id}" role="button" tabindex="0" aria-label="${esc(txTitle(t))}, ${esc(f2(v))}. Abrir detalhes">
+    <span class="li-ic" aria-hidden="true">${txIcon(t)}</span>
+    <span class="li-main"><span class="li-t">${esc(o.title||txTitle(t))}${t.serie?' <span class="li-badge" title="Repete todo mês">🔁</span>':''}</span><span class="li-s">${sub}</span></span>
+    <span class="li-v ${t.type}">${sign?sign+' ':''}${f2(v)}</span>${o.actions||''}</div>`;
+}
+// row that is not a single transaction (opening balance, undetailed amount, a month, a category)
+function infoRow(o){
+  const attrs=o.attrs||'';
+  return `<div class="li ${o.attrs?'':'li-static'} ${o.cls||''}" ${attrs} ${o.attrs?'role="button" tabindex="0"':''}>
+    <span class="li-ic" aria-hidden="true">${o.icon||'•'}</span>
+    <span class="li-main"><span class="li-t">${o.title}</span>${o.sub?`<span class="li-s">${o.sub}</span>`:''}</span>
+    <span class="li-v ${o.vcls||''}">${o.value}</span></div>`;
+}
+const signedMoney=v=>(v<0?'− ':'')+f2(Math.abs(v));
+/**
+ * listView(build): build() is called on every draw, so the list follows edits and deletions.
+ * build() -> {title, sub, total(text), totalLabel, count, groups:[{label, total, rows:[html]}], note, empty}
+ */
+function listView(build){
+  return {render(body){
+    const s=build();
+    const n=s.count!==undefined?s.count:s.groups.reduce((a,g)=>a+g.rows.length,0);
+    const groups=s.groups.filter(g=>g.rows.length||g.always);
+    body.innerHTML=`<div class="bd-total"><div class="bd-k">${s.totalLabel||'Total'}</div><div class="bd-v">${s.total}</div><div class="bd-n">${n} ${n===1?(s.unit||'lançamento'):(s.units||'lançamentos')}${s.period?' · '+s.period:''}</div></div>`+
+      (s.note?`<div class="bd-note">${s.note}</div>`:'')+
+      (groups.length?groups.map(g=>`<div class="bd-g">${g.label?`<div class="bd-gh"><span>${g.label}</span>${g.total!==undefined?`<b>${g.total}</b>`:''}</div>`:''}<div class="lst">${g.rows.join('')||'<div class="empty sm">Nada aqui.</div>'}</div></div>`).join('')
+        :`<div class="empty">${s.empty||'Nenhum lançamento neste período.'}</div>`);
+    return {title:s.title,sub:s.sub};
+  }};
 }
 
 // ---- src/domain/invoice-payment.js
@@ -2828,7 +2957,7 @@ function startEdit(id){
   if(t.type==='aporte')$('fAcc').value=t.acc;else $('fCat').value=t.cat||'';
   $('fFonte').value=t.fonte||'caixa';
   if(t.type==='fatura'){$('fFm').value=invoiceMonthOf(t);ui.invoiceSelection=new Set(alloc().map[t.id]||[]);drawInvoiceForm(id);}
-  ui.splitRows=(t.splits||[]).map(s=>({cat:s.cat,val:s.value}));$('splitBox').hidden=!(ui.splitRows.length);drawSplit();
+  ui.splitRows=(t.splits||[]).map(s=>({cat:s.cat,val:s.value}));$('splitBox').hidden=!(ui.splitRows.length);$('wMore').open=ui.splitRows.length>0;drawSplit();
   const sib=futureSiblings(t);$('wApply').hidden=!(sib.length);$('fApply').checked=true;$('applyN').textContent=sib.length;
   ui.editId=id;$('fCancel').hidden=false;$('fRep').disabled=true;fillCategoryOptions();
 }
@@ -2988,6 +3117,119 @@ function bindBills(){
     if(e.target.closest('[data-bill-restore]')){runCommand(()=>restoreIgnoredBills(),{ok:r=>r.restored+' conta(s) de volta'});return;}
     const b=e.target.closest('[data-bill]');if(!b)return;const x=shown[+b.dataset.bill];if(!x)return;
     openTxForm({type:'despesa',prefill:{cat:x.cat,desc:x.desc,value:x.value,date:x.date}});});
+}
+
+// ---- src/domain/spending-stats.js
+/**
+ * domain/spending-stats.js
+ * Responsibility: statistics of the spending: least-squares trend line (used by the chart and by
+ * the analysis) and the per-group/category profile (Fixo / Variável / Pontual, change vs. previous months).
+ */
+
+
+function linearTrend(xs,ys){
+  const n=Math.min(xs.length,ys.length),avg=n?ys.slice(0,n).reduce((a,b)=>a+b,0)/n:0;
+  if(n<2)return {slope:0,intercept:avg,avg};
+  const mx=xs.slice(0,n).reduce((a,b)=>a+b,0)/n;let num=0,den=0;
+  for(let i=0;i<n;i++){num+=(xs[i]-mx)*(ys[i]-avg);den+=(xs[i]-mx)**2;}
+  const slope=den?num/den:0;
+  return {slope,intercept:avg-slope*mx,avg};
+}
+const CATEGORY_KIND={fixed:'Fixo',variable:'Variável',occasional:'Pontual'};
+// months: [{m, v (month total), c: {category: value}}], oldest first
+function categoryStats(months){
+  const N=months.length,total=sumMoney(months.map(x=>x.v)),average=N?total/N:0;
+  const names=[...new Set(months.flatMap(x=>Object.keys(x.c)))];
+  const list=names.map(c=>{
+    const a=months.map(x=>x.c[c]||0),t=sumMoney(a),mean=t/N,sd=Math.sqrt(a.reduce((s,z)=>s+(z-mean)**2,0)/N);
+    const freq=a.filter(z=>z>0).length/N,cv=mean?sd/mean:0;
+    const prev=a.slice(Math.max(0,N-4),N-1),base=prev.length?prev.reduce((x,y)=>x+y,0)/prev.length:null,cur=a[N-1];
+    const kind=freq<0.5?CATEGORY_KIND.occasional:cv<=0.15?CATEGORY_KIND.fixed:CATEGORY_KIND.variable;
+    return {c,a,t,mean,cv,freq,kind,base,cur,d:base===null?null:cur-base,p:base>0?(cur-base)/base:null,share:total?t/total:0};
+  }).sort((x,y)=>y.t-x.t);
+  const meanOf=k=>list.filter(z=>z.kind===k).reduce((s,z)=>s+z.mean,0);
+  return {list,total,average,
+    fixed:meanOf(CATEGORY_KIND.fixed),variable:meanOf(CATEGORY_KIND.variable),occasional:meanOf(CATEGORY_KIND.occasional),
+    top3Share:total?list.slice(0,3).reduce((s,z)=>s+z.t,0)/total:0};
+}
+// closed months of the spending window with their per-group totals (input of categoryStats:
+// the analysis compares groups, e.g. Moradia = condomínio + luz + água + gás)
+function closedMonthsByGroup(sel){const w=spendingWindow(sel);return w.ci.map(k=>({m:w.ms[k],v:w.vals[k],c:groupMonth(w.ms[k])}));}
+
+// ---- src/ui/components/detail-registry.js
+/**
+ * ui/components/detail-registry.js
+ * Responsibility: maps tappable elements to what they open (Open/Closed: a new card registers
+ * itself; nothing here changes).
+ *   data-kpi="key" [data-m="yyyy-mm"]  -> registerDetail(key, m => view|null)   opens the sheet
+ *   data-go="kind" (+ data-* attributes) -> registerLink(kind, el => void)      navigation inside it
+ */
+
+
+const DETAIL_VIEWS={},DETAIL_LINKS={};
+function registerDetail(key,factory){DETAIL_VIEWS[key]=factory;}
+function registerLink(kind,handler){DETAIL_LINKS[kind]=handler;}
+function openDetail(key,m){const f=DETAIL_VIEWS[key];if(!f)return false;const v=f(m||ui.cur);if(v)Sheet.open(v);return true;}
+function bindDetails(){
+  document.addEventListener('click',e=>{
+    const k=e.target.closest('[data-kpi]');if(k){openDetail(k.dataset.kpi,k.dataset.m);return;}
+    const g=e.target.closest('[data-go]');if(g&&DETAIL_LINKS[g.dataset.go])DETAIL_LINKS[g.dataset.go](g);
+  });
+}
+
+// ---- src/ui/views/month-details.js
+/**
+ * ui/views/month-details.js
+ * Responsibility: what each month summary card opens (Receitas, Despesas, Aportes, Sobrou no caixa,
+ * Fatura em aberto, Saldo VR/VA). Every list comes from monthSummary(), the same source as the card.
+ */
+
+
+
+
+
+
+
+
+
+const periodOf=m=>mLabel(m).replace(/^./,c=>c.toUpperCase());
+const byDateDesc=a=>a.slice().sort((x,y)=>y.date.localeCompare(x.date)||y.id-x.id);
+const txRows=a=>byDateDesc(a).map(t=>txRow(t));
+const MONTH_DETAILS={
+  income:(s,m,P)=>({title:'Receitas',sub:P,total:'+ '+f2(s.income.total),totalLabel:'Total recebido',period:P,
+        groups:[{rows:txRows(s.income.items)}],empty:'Nenhuma receita neste mês. Toque em “+” para adicionar.'}),
+  expenses:(s,m,P)=>({title:'Despesas',sub:P,total:'− '+f2(s.expenses.total),totalLabel:'Total gasto',period:P,
+        count:s.expenses.items.length+s.expenses.undetailed.length,
+        groups:[{label:'Lançadas',total:f2(sumMoney(s.expenses.items.map(t=>t.value))),rows:txRows(s.expenses.items)},
+          {label:'Faturas pagas sem detalhe',total:f2(sumMoney(s.expenses.undetailed.map(u=>u.value))),
+           rows:s.expenses.undetailed.map(u=>txRow(u.invoice,{value:u.value,sign:'−',title:'❓ '+UNDETAILED_CAT,sub:'Parte da fatura paga em '+formatDateBR(u.invoice.date)+' sem compras lançadas'}))}],
+        note:'Inclui compras no cartão e no VR/VA. O pagamento da fatura não entra de novo (as compras já contam).'}),
+  contrib:(s,m,P)=>({title:'Aportes',sub:P,total:'→ '+f2(s.contributions.total),totalLabel:'Total investido',period:P,
+        groups:[{rows:txRows(s.contributions.items)}],empty:'Nenhum aporte neste mês.'}),
+  cash:(s,m,P)=>{const c=s.cash,t=a=>f2(sumMoney(a.map(x=>x.value)));
+        return {title:'Sobrou no caixa',sub:P,total:`<span class="${c.total>=0?'pos':'neg'}">${signedMoney(c.total)}</span>`,totalLabel:'Resultado do mês',period:P,
+        count:c.cashIn.length+c.cashOut.length+c.invoices.length+c.contributions.length,
+        note:'Conta: <b>entradas na conta</b> − <b>saídas pela conta</b> − <b>faturas pagas</b> − <b>aportes</b>. Compras no cartão só saem do caixa quando a fatura é paga; VR/VA fica fora.',
+        groups:[{label:'➕ Entradas na conta',total:'+ '+t(c.cashIn),rows:txRows(c.cashIn),always:true},
+          {label:'➖ Saídas pela conta (Pix, débito)',total:'− '+t(c.cashOut),rows:txRows(c.cashOut),always:true},
+          {label:'💳 Faturas pagas',total:'− '+t(c.invoices),rows:txRows(c.invoices),always:true},
+          {label:'🏦 Aportes',total:'− '+t(c.contributions),rows:byDateDesc(c.contributions).map(t=>txRow(t,{sign:'−'})),always:true}]};},
+  opencard:(s,m,P)=>{const by={};s.openCard.items.forEach(t=>{const fm=dueMonth(t.date);(by[fm]=by[fm]||[]).push(t);});
+        return {title:'Fatura em aberto',sub:'Até '+formatDateBR(monthEnd(m)),total:f2(s.openCard.total),totalLabel:'Compras no cartão ainda não pagas',
+        groups:Object.keys(by).sort().map(fm=>({label:'Fatura que vence em '+formatDateBR(dueDateOf(fm)),total:f2(sumMoney(by[fm].map(t=>t.value))),rows:txRows(by[fm])})),
+        note:`Compras no cartão em ${mShort(m)}: <b>${f2(s.cardBought)}</b> · fatura paga no mês: <b>${f2(s.invoicesPaid)}</b>.`,
+        empty:'Nenhuma compra de cartão em aberto.'};},
+  voucher:(s,m,P)=>{const v=s.voucher;
+        return {title:'Saldo VR/VA',sub:'Até '+formatDateBR(monthEnd(m)),total:signedMoney(v.total),totalLabel:'Saldo no fim do mês',
+        count:v.items.length,
+        groups:[{label:'Saldo anterior',rows:[infoRow({icon:'💰',title:'Saldo até '+mLabel(mKey(mIdx(m)-1)),value:signedMoney(v.before)})]},
+          {label:'Movimentos do mês',total:`+ ${f2(v.inMonth)} · − ${f2(v.outMonth)}`,rows:txRows(v.items),always:true}]};},
+};
+const monthDetailView=(key,m)=>listView(()=>MONTH_DETAILS[key](monthSummary(m),m,periodOf(m)));
+function registerMonthDetails(){
+  Object.keys(MONTH_DETAILS).forEach(key=>registerDetail(key,m=>monthDetailView(key,m)));
+  // a month row (in the trend lists) opens the expenses of that month
+  registerLink('month',el=>Sheet.push(monthDetailView('expenses',el.dataset.m)));
 }
 
 // ---- src/ui/views/category-sheet.js
@@ -3332,57 +3574,52 @@ function renderTrend(){
     el.onmouseleave=()=>tip.style.opacity=0;});
 }
 
-// ---- src/domain/card-status.js
+// ---- src/ui/components/date-input.js
 /**
- * domain/card-status.js
- * Responsibility: facts about one card invoice (identified by its due month): purchases of the
- * cycle, amount bought and paid, and its status on a given day.
+ * ui/components/date-input.js
+ * Responsibility: date fields that open the calendar. The visible field shows dd/mm/aaaa and is
+ * read-only; a transparent native <input type="date"> on top opens the system date picker
+ * (wheel/calendar on phones, calendar pop-up on desktop). The field's .value stays ISO (yyyy-mm-dd),
+ * so there is no timezone shift and the rest of the code does not change.
  */
 
-
-
-
-const cycleItems=fm=>S.tx.filter(t=>t.type==='despesa'&&t.fonte==='cartao'&&dueMonth(t.date)===fm).sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id);
-const invoicePayments=fm=>S.tx.filter(t=>t.type==='fatura'&&invoiceMonthOf(t)===fm);
-const cycleTotals=fm=>({bought:sumMoney(cycleItems(fm).map(t=>t.value)),paid:sumMoney(invoicePayments(fm).map(t=>t.value))});
-// paid | open (still buying: days until closing) | closed (days until due) | late (due, no payment)
-function invoiceStatus(fm,day){
-  if(cycleTotals(fm).paid>0)return {code:'paid',days:0};
-  const close=closeDateOf(fm),due=dueDateOf(fm);
-  if(day<=close)return {code:'open',days:daysBetween(day,close)};
-  if(day<=due)return {code:'closed',days:daysBetween(day,due)};
-  return {code:'late',days:0};
+const _inputValue=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
+const isoDateToBR=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||'')?v.split('-').reverse().join('/'):'';
+function datePicker(el,opts){
+  if(!el||el._dp)return el;
+  opts=opts||{};el._dp=true;
+  const init=el.getAttribute('value')||_inputValue.get.call(el);
+  const wrap=document.createElement('span');wrap.className='dp';
+  el.parentNode.insertBefore(wrap,el);wrap.appendChild(el);
+  const nat=document.createElement('input');
+  nat.type='date';nat.className='dp-native';nat.min=opts.min||'2000-01-01';nat.max=opts.max||'2100-12-31';
+  const lab=el.id&&document.querySelector(`label[for="${el.id}"]`);
+  nat.setAttribute('aria-label',((lab&&lab.textContent.replace('*','').trim())||el.getAttribute('aria-label')||'Data')+': abrir calendário');
+  if(el.required)nat.required=true;
+  wrap.appendChild(nat);el._dpNative=nat;
+  el.type='text';el.readOnly=true;el.tabIndex=-1;el.classList.add('dp-text');el.placeholder='dd/mm/aaaa';el.setAttribute('aria-hidden','true');
+  let iso='';
+  const show=()=>{_inputValue.set.call(el,isoDateToBR(iso));wrap.classList.toggle('empty',!iso);};
+  Object.defineProperty(el,'value',{configurable:true,
+    get(){return iso;},
+    set(v){iso=/^\d{4}-\d{2}-\d{2}$/.test(v||'')?v:'';_inputValue.set.call(nat,iso);show();}});
+  el.value=init;
+  const sync=()=>{
+    const v=_inputValue.get.call(nat);
+    if(v===iso)return;
+    if(v&&(v<nat.min||v>nat.max)){_inputValue.set.call(nat,iso);return;}
+    iso=v;show();
+    el.dispatchEvent(new Event('input',{bubbles:true}));
+    el.dispatchEvent(new Event('change',{bubbles:true}));
+  };
+  nat.addEventListener('input',sync);nat.addEventListener('change',sync);
+  const open=()=>{try{nat.showPicker();}catch(e){nat.focus();}};
+  nat.addEventListener('click',open);
+  el.addEventListener('click',open);           // a click on the <label> also lands here
+  return el;
 }
-
-// ---- src/domain/settings-commands.js
-/**
- * domain/settings-commands.js
- * Responsibility: commands for the goal assumptions, the card settings and the backup
- * (import converts old backups; it returns the new state and does not apply it).
- */
-
-
-
-
-const DEFAULT_GOAL=1300000;
-function setGoalSettings({goal,rate,planned}){S.goal=goal>0?goal:DEFAULT_GOAL;S.rate=rate>0?rate:0;S.planned=planned>0?roundMoney(planned):0;}
-function setPlannedContribution(v){S.planned=Math.round(v);}
-const clampDay=(v,def)=>Math.min(Math.max(Math.round(v)||def,1),31);
-function setCardSettings({best,due,biz}){
-  S.card={best:clampDay(best,1),due:clampDay(due,7),biz:!!biz,over:CARD().over||{},v3:true};
-  return {best:S.card.best,due:S.card.due,biz:S.card.biz};
-}
-// a different closing date for one invoice; equal to the rule means "no override"
-function setClosingOverride(fm,date){const c=CARD();c.over=c.over||{};if(date&&date!==ruleClosing(fm))c.over[fm]=date;else delete c.over[fm];S.card=c;}
-function importBackup(d){
-  if(d&&d.v===2&&Array.isArray(d.tx))return {state:d,converted:false};
-  if(!d||!d.entries)return {error:'Arquivo inválido'};
-  // old format (goal tracker): month entries with balances and contributions per account
-  const n=seed();n.goal=d.goal||n.goal;n.rate=d.rate||n.rate;n.planned=d.planned||0;n.snaps=[];n.tx=[];
-  Object.keys(d.entries).sort().forEach(k=>{const e=d.entries[k];
-    e.bal.forEach((v,i)=>{if(n.accounts[i])n.snaps.push({date:monthEnd(k),acc:n.accounts[i].id,value:v,est:!!e.est});});
-    e.ap.forEach((v,i)=>{if(v>0&&n.accounts[i])n.tx.push({id:n.nid++,date:k+'-15',type:'aporte',acc:n.accounts[i].id,value:v,desc:'importado'});});});
-  return {state:n,converted:true};
+function bindDateFields(){
+  ['fDate','dDate','snapDate'].forEach(id=>datePicker($(id)));
 }
 
 // ---- src/ui/views/credit-card.js
@@ -3392,7 +3629,6 @@ function importBackup(d){
  * the facts come from domain/card-status.js and the changes from domain commands).
  * The look is in styles/08-screens.css.
  */
-
 
 
 
@@ -3420,12 +3656,12 @@ function renderCycles(){
   let rows='<tr><th>Fatura (vence em)</th><th>Compras de</th><th>Fecha em (ajustável)</th><th class="r">Lançado</th><th class="r">Pago</th><th>Situação</th></tr>';
   for(let i=-1;i<=3;i++){const fm=mKey(mIdx(fmNow)+i),p2=paid(fm),cdt=closeDateOf(fm);
     rows+=`<tr data-cyc="${fm}" class="cyc-row${fm===view?' on':''}" title="Clique para ver as compras desta fatura"><td><b>${formatDateBR(dueDateOf(fm))}</b>${fm===fmNow?' <span class="mut fs12">· atual</span>':''}</td><td>${formatDateBR(cycleStart(fm))}</td><td><input type="date" data-over="${fm}" value="${cdt}" class="ci w-150" title="Ajuste se o banco mostrar outra data"></td><td class="r">${f2(buy(fm))}</td><td class="r">${p2?f2(p2):'—'}</td><td>${stOf(fm)}</td></tr>`;}
-  const tableCard=`<div class="card mb-14"><div class="card-title">Faturas do cartão <span class="mut title-note">· melhor dia de compra: dia ${CARD().best} · vence dia ${CARD().due} · clique numa fatura para ver as compras</span></div><div class="scroll"><table class="tl stack">${rows}</table></div></div>`;
+  const tableCard=`<details class="card mb-14 inv-all"${ui.allInvoicesOpen?' open':''}><summary class="card-title">Todas as faturas e fechamento <span class="mut title-note">· melhor dia de compra: dia ${CARD().best} · vence dia ${CARD().due}</span></summary><div class="scroll"><table class="tl stack">${rows}</table></div></details>`;
   // details of the selected invoice
   const dd=dueDateOf(view),cd=closeDateOf(view),st=cycleStart(view),its=itemsOf(view),tot=buy(view),left=daysBetween(t0,cd),nextFm=mKey(mIdx(view)+1);
   const rel=view===fmNow?'Fatura atual':mIdx(view)>mIdx(fmNow)?'Próxima fatura':'Fatura anterior';
   const deadline=t0<=cd?`<div class="cc-deadline">⏳ <b>Último dia para comprar nesta fatura: ${formatDateBR(cd)}</b> · ${left>0?'faltam '+left+' dia(s)':'é hoje'}. A partir de ${formatDateBR(addDay(cd,1))} as compras vão para a fatura de ${formatDateBR(dueDateOf(nextFm))}.</div>`:`<div class="help mt-6">Fatura fechada em ${formatDateBR(cd)}.</div>`;
-  const body=its.length?`<tr><th>Data</th><th>Categoria</th><th>Descrição</th><th class="r">Valor</th><th></th></tr>`+its.map(t=>`<tr data-tx="${t.id}" class="rowclick" tabindex="0" role="button"><td>${formatDateBR(t.date)}</td><td>${icon('despesa',t.cat)} ${esc(t.cat)}</td><td class="mut">${esc(t.desc||'')}</td><td class="r">${f2(t.value)}</td><td class="r nw"><button class="btn sm" data-ie="${t.id}">Editar</button> <button class="btn sm dng" data-ix="${t.id}">Excluir</button></td></tr>`).join('')+`<tr class="tr-total"><td colspan="3"><b>Total da fatura</b></td><td class="r"><b>${f2(tot)}</b></td><td></td></tr>`:'<tr><td class="empty" colspan="5">Nenhuma compra de cartão lançada nesta fatura ainda.</td></tr>';
+  const body=its.length?`<tr><th>Data</th><th>Categoria</th><th>Descrição</th><th class="r">Valor</th><th></th></tr>`+its.map(t=>`<tr data-tx="${t.id}" class="rowclick" tabindex="0" role="button"><td>${formatDateBR(t.date)}</td><td>${icon('despesa',t.cat)} ${esc(t.cat)}</td><td class="mut">${esc(t.desc||'')}</td><td class="r">${f2(t.value)}</td><td class="r nw"><button class="btn sm" data-ie="${t.id}">Editar</button></td></tr>`).join('')+`<tr class="tr-total"><td colspan="3"><b>Total da fatura</b></td><td class="r"><b>${f2(tot)}</b></td><td></td></tr>`:'<tr><td class="empty" colspan="5">Nenhuma compra de cartão lançada nesta fatura ainda.</td></tr>';
   const detail=`<div class="card mb-14 cc-detail">
     <div class="cc-head"><div class="cc-label">${rel} · vence em ${formatDateBR(dd)}</div>${stOf(view)}</div>
     <div class="cc-amount">${f2(tot)}</div>
@@ -3434,12 +3670,12 @@ function renderCycles(){
     <div class="scroll mt-12"><table class="tl stack">${body}</table></div>
     <div class="mt-12"><button class="btn pri" id="cycAdd">+ Adicionar compra nesta fatura</button></div>
   </div>`;
-  $('cycleBox').innerHTML=tableCard+detail;
+  $('cycleBox').innerHTML=detail+tableCard;
+  $('cycleBox').querySelector('.inv-all').ontoggle=e=>{ui.allInvoicesOpen=e.target.open;};
   document.querySelectorAll('tr[data-cyc]').forEach(tr=>tr.onclick=e=>{if(e.target.closest('input'))return;selectedCycle=tr.dataset.cyc;renderCycles();});
   document.querySelectorAll('[data-over]').forEach(el=>datePicker(el));
   document.querySelectorAll('[data-over]').forEach(el=>el.onchange=()=>runCommand(()=>setClosingOverride(el.dataset.over,el.value),{ok:'Fechamento ajustado'}));
   document.querySelectorAll('[data-ie]').forEach(el=>el.onclick=e=>{e.stopPropagation();openItem(+el.dataset.ie);});
-  document.querySelectorAll('[data-ix]').forEach(el=>el.onclick=e=>{e.stopPropagation();deleteTxFlow(+el.dataset.ix);});
   $('cycAdd').onclick=()=>openItem(null,t0>=st&&t0<=cd?t0:(t0<st?st:cd));
 }
 function renderCardBox(){
@@ -3631,6 +3867,43 @@ function donutSvg(slices,o){
     (o.centerBottom?`<text x="${cx}" y="${cy+15}" text-anchor="middle" class="donut-bottom">${o.centerBottom}</text>`:'')+`</svg>`;
 }
 
+// ---- src/domain/allocation.js
+/**
+ * domain/allocation.js
+ * Responsibility: the optional allocation target: the share (%) the user wants in each type of
+ * investment (fixed income, stocks, FIIs...), and how far the portfolio is from it today.
+ * Command: setTarget. Read: allocationStatus. Never moves money; it only says the difference.
+ */
+
+
+
+
+const TARGET_TOLERANCE=0.02; // within 2 points of the target counts as on target
+const targetOf=id=>((S.targets||{})[id])||0;
+// pct: 0 to 100; 0 or empty removes the target. All targets together cannot pass 100%.
+function setTarget(id,pct){
+  if(!TYPE_ORDER.includes(id))return {error:'Tipo de investimento desconhecido'};
+  const v=Math.round((+pct||0)*10)/10;
+  if(v<0||v>100)return {error:'A meta de cada tipo fica entre 0% e 100%'};
+  const others=Object.entries(S.targets||{}).filter(([k])=>k!==id).reduce((t,[,x])=>t+x,0);
+  if(others+v>100.0001)return {error:'As metas somam '+Math.round((others+v)*10)/10+'%: o total não pode passar de 100%'};
+  S.targets=S.targets||{};
+  if(v===0)delete S.targets[id];else S.targets[id]=v;
+  return {id,value:v};
+}
+const clearTargets=()=>{S.targets={};return {};};
+// {rows:[{id,name,value,share,target,gap,money,level}], total, targeted}
+// gap = share - target (points, as a fraction); money = what to add (+) or reduce (-) to reach the target at today's total
+function allocationStatus(day){
+  const d=investmentDistribution(day,'type'),byId={};d.items.forEach(i=>{byId[i.id]=i;});
+  const targeted=Object.keys(S.targets||{}).length>0;
+  const rows=TYPE_ORDER.filter(id=>byId[id]||targetOf(id)>0).map(id=>{
+    const it=byId[id]||{name:id===DIST_FIXED_ID?'Renda fixa e outros':ASSET_LABEL[id],value:0,share:0},t=targetOf(id)/100,gap=it.share-t;
+    return {id,name:it.name,value:it.value,share:it.share,target:t,gap,
+      money:roundMoney(t*d.total-it.value),level:!t?'none':Math.abs(gap)<=TARGET_TOLERANCE?'on':gap>0?'over':'under'};});
+  return {rows,total:d.total,targeted};
+}
+
 // ---- src/ui/views/distribution-view.js
 /**
  * ui/views/distribution-view.js
@@ -3645,12 +3918,18 @@ function donutSvg(slices,o){
 
 
 
+
 // compactMoney money for the middle of a small ring: R$ 1,25 mi, R$ 124 mil
 const compactMoney=v=>v>=1e6?'R$ '+(v/1e6).toFixed(2).replace('.',',')+' mi':v>=1e4?'R$ '+Math.round(v/1e3)+' mil':f0(v);
 const view={by:'account',sel:null};
-const TYPE_COLOR={_fixed:'--c4',acao:'--c0',fii:'--c1',etf:'--c2',bdr:'--c3'};
-const colorOf=i=>i.id===DIST_OTHER_ID?css('--mut')||'#9aa5ba':view.by==='type'?css(TYPE_COLOR[i.id]||COLORS[0]):accColor(i.id);
+const colorOf=i=>i.id===DIST_OTHER_ID?css('--mut')||'#9aa5ba':view.by==='type'?typeColor(i.id):accColor(i.id);
 const tabs=()=>`<div class="dist-tabs" role="tablist">${[['account','Por conta'],['type','Por tipo']].map(([k,l])=>`<button type="button" role="tab" aria-selected="${view.by===k}" class="dist-tab${view.by===k?' on':''}" data-dist-by="${k}">${l}</button>`).join('')}</div>`;
+const GAP_TEXT={on:()=>'✅ no alvo',over:r=>'acima: tirar '+f0(-r.money),under:r=>'abaixo: faltam '+f0(r.money),none:()=>''};
+// optional target per type: where I am, where I want to be, and the difference in money
+function targetsHtml(){
+  const st=allocationStatus(),rows=st.rows.map(r=>`<div class="tg-row ${r.level}"><span class="tg-n"><i style="background:${typeColor(r.id)}"></i>${esc(r.name)}</span><span class="tg-now">${pc(r.share)}</span><label class="tg-in"><span class="sr-only">Meta de ${esc(r.name)} (%)</span><input inputmode="decimal" data-target="${r.id}" value="${r.target?String(Math.round(r.target*1000)/10).replace('.',','):''}" placeholder="meta %"></label><span class="tg-gap">${GAP_TEXT[r.level](r)}</span></div>`).join('');
+  return `<div class="tg"><h3 class="m0">Minha alocação ideal <span class="mut tg-opt">(opcional)</span></h3><div class="help">Diga quanto de cada tipo você quer ter. O app mostra a diferença em reais, sem mexer em nada.</div>${rows}${st.targeted?'<button type="button" class="btn sm" data-target-clear>Limpar metas</button>':''}</div>`;
+}
 function renderDistribution(){
   const el=$('distCard');if(!el)return;
   const d=investmentDistribution(undefined,view.by);
@@ -3660,14 +3939,16 @@ function renderDistribution(){
   const slices=d.items.map(i=>({value:i.value,color:colorOf(i),key:i.id,dim:!!pick&&pick.id!==i.id,name:i.name+(i.count>1&&view.by==='type'?' ('+i.count+')':''),text:pc(i.share)}));
   const narrow=window.innerWidth<=640;
   el.innerHTML=`${tabs()}${donutSvg(slices,{compact:narrow,width:Math.min(window.innerWidth-56,600),
-      centerTop:(narrow?compactMoney:f0)(pick?pick.value:d.total),centerBottom:pick?esc(pick.name):'total',ariaLabel:'Distribuição dos investimentos: '+d.items.map(i=>i.name+' '+pc(i.share)).join(', ')})}`;
+      centerTop:(narrow?compactMoney:f0)(pick?pick.value:d.total),centerBottom:pick?esc(pick.name):'total',ariaLabel:'Distribuição dos investimentos: '+d.items.map(i=>i.name+' '+pc(i.share)).join(', ')})}${view.by==='type'?targetsHtml():''}`;
 }
 function bindDistribution(){
   const el=$('distCard');if(!el)return;
   const choose=key=>{view.sel=view.sel===key?null:key;renderDistribution();};
   el.onclick=e=>{
     const t=e.target.closest('[data-dist-by]');if(t){view.by=t.dataset.distBy;view.sel=null;renderDistribution();return;}
+    if(e.target.closest('[data-target-clear]'))return runCommand(()=>clearTargets(),{ok:'Metas removidas'});
     const k=e.target.closest('[data-key]');if(k)choose(k.dataset.key);};
+  el.onchange=e=>{const i=e.target.closest('[data-target]');if(i)runCommand(()=>setTarget(i.dataset.target,parseFloat(String(i.value).replace(',','.'))||0),{ok:'Meta salva'});};
 }
 
 // ---- src/domain/portfolio.js
@@ -3751,11 +4032,12 @@ function renderPortfolio(){
 
 
 
+
 function renderInvestments(){
   const d=today();renderDistribution();renderPortfolio();
   $('accList').innerHTML=active().map(a=>{const b=balance(a.id,d);const sn=b.snap;
     const sub=sn?`Saldo informado em ${formatDateBR(sn.date)}${sn.est?' (estimado 🟠)':''}${b.v!==sn.value?' + aportes depois':''}`:'Sem saldo informado';
-    return `<div class="acc"><i style="background:${accColor(a.id)}"></i><div class="nm">${esc(a.name)}<span class="sb">${sub}</span></div><button class="btn sm" data-arq="${a.id}" title="Remover da lista (o histórico é mantido)">arquivar</button><div class="vl r">${f2(b.v)}<span class="sb fw5">${b.g!==null?'bruto '+f2(b.g)+' · IR '+f2(b.g-b.v):'bruto não informado'}</span></div></div>`;}).join('')+
+    return `<div class="acc"><i style="background:${accColor(a.id)}"></i><div class="nm">${esc(a.name)}<span class="sb">${sub}</span></div><button class="btn sm${a.reserve?' pri':''}" data-reserve="${a.id}" aria-pressed="${!!a.reserve}" title="Conta que cobre imprevistos (reserva de emergência)">🛟 ${a.reserve?'É reserva':'Reserva'}</button><button class="btn sm" data-arq="${a.id}" title="Remover da lista (o histórico é mantido)">arquivar</button><div class="vl r">${f2(b.v)}<span class="sb fw5">${b.g!==null?'bruto '+f2(b.g)+' · IR '+f2(b.g-b.v):'bruto não informado'}</span></div></div>`;}).join('')+
     (()=>{const tg=totalGross(d);return `<div class="acc"><i class="swatch-total"></i><div class="nm">Total<span class="sb">líquido (o que você recebe ao resgatar)</span></div><div class="vl r">${f2(total(d))}<span class="sb fw5">${tg.ok?'':'≈ '}bruto ${f2(tg.g)} · IR embutido ${f2(tg.g-total(d))}</span></div></div>`;})();
   $('snapForm').innerHTML=`<div class="snap-grid help"><span></span><b>Saldo líquido (R$)</b><b>Saldo bruto (R$, opcional)</b></div>`+
     active().map(a=>{const b=balance(a.id,d);return `<div class="snap-grid c"><label for="s_${a.id}" class="m0"><i class="swatch" style="background:${accColor(a.id)}"></i>${esc(a.name)}</label><input id="s_${a.id}" inputmode="decimal" value="${m2(b.v)}"><input id="g_${a.id}" inputmode="decimal" placeholder="igual ao do app" value="${b.g!==null?m2(b.g):''}"></div>`;}).join('');
@@ -3771,7 +4053,8 @@ bindDistribution();
 $('snapSave').onclick=()=>{const d=$('snapDate').value;if(!d)return fieldError($('snapDate'),'Escolha a data dos saldos');
   const rows=active().map(a=>({acc:a.id,value:parseMoney($('s_'+a.id).value),gross:parseMoney($('g_'+a.id).value)}));
   runCommand(()=>saveSnapshots(d,rows),{ok:'✅ Saldos salvos em '+formatDateBR(d)});};
-$('accList').onclick=e=>{const b=e.target.closest('[data-arq]');if(!b)return;const a=S.accounts.find(x=>x.id===b.dataset.arq);
+$('accList').onclick=e=>{const r=e.target.closest('[data-reserve]');if(r){const a=S.accounts.find(x=>x.id===r.dataset.reserve);return runCommand(()=>setReserveAccount(a.id,!a.reserve));}
+  const b=e.target.closest('[data-arq]');if(!b)return;const a=S.accounts.find(x=>x.id===b.dataset.arq);
   if(Math.abs(balance(a.id,today()).v)>0.005)return runCommand(()=>archiveAccount(a.id)); // shows why it cannot be archived
   askConfirm({title:'Arquivar conta',text:'Arquivar '+a.name+'? Ela sai das listas, mas o histórico dos meses anteriores é mantido.',ok:'Arquivar'})
     .then(r=>{if(r)runCommand(()=>archiveAccount(a.id),{ok:a.name+' arquivada'});});};
@@ -3825,6 +4108,23 @@ function setCategoryGroup(i,name){
 // group icon (the group must exist)
 function setGroupIcon(name,ic){const g=(S.groups||[]).find(x=>x.name===name);if(!g)return {error:'Grupo não encontrado'};g.icon=(ic||'').trim()||'🏷️';return {name};}
 
+// ---- src/ui/components/more-menu.js
+/**
+ * ui/components/more-menu.js
+ * Responsibility: the "⋯" menu for rare or risky actions (like delete), so they are not one tap away from the common
+ * button. moreMenu(items, label) builds the markup; bindMoreMenus(root) closes a menu when another one opens or the
+ * user taps elsewhere. items: [{label, attrs (extra attributes, e.g. a data-* action), danger}]
+ */
+function moreMenu(items,label){
+  return `<details class="more"><summary class="btn sm more-btn" aria-label="${label||'Mais ações'}">⋯</summary><div class="more-pop">${items.map(i=>`<button type="button" class="more-item${i.danger?' dng':''}" ${i.attrs||''}>${i.label}</button>`).join('')}</div></details>`;
+}
+function bindMoreMenus(root){
+  const menus=[...root.querySelectorAll('details.more')];
+  menus.forEach(d=>d.addEventListener('toggle',()=>{if(d.open)menus.forEach(o=>{if(o!==d)o.open=false;});}));
+  if(!bindMoreMenus.bound){bindMoreMenus.bound=true;
+    document.addEventListener('click',e=>{if(!e.target.closest('details.more'))document.querySelectorAll('details.more[open]').forEach(d=>{d.open=false;});});}
+}
+
 // ---- src/ui/views/categories.js
 /**
  * ui/views/categories.js
@@ -3842,9 +4142,12 @@ function setGroupIcon(name,ic){const g=(S.groups||[]).find(x=>x.name===name);if(
 
 
 
+
+// groups the user opened stay open when the page is drawn again (every change redraws it)
+const openGroups=new Set();
 // one category line: switch, icon, name, usage and delete (+ the group field for expenses)
 function categoryRow(t,c,i){const u=catUse(t,c.name),use=`${u.n} lanç. · ${f0(u.v)}`;
-  const line=`<div class="row cat-line${t==='despesa'?' exp':''}"><label class="sw" title="${c.off?'Desativada: não aparece nas listas de lançamento':'Ativa: aparece nas listas de lançamento'}"><input type="checkbox" data-co="${t}|${i}" ${c.off?'':'checked'}><span></span></label><div class="row cat-fields${c.off?' off':''}"><input class="ci icon-in" data-ci="${t}|${i}" value="${esc(c.icon)}" maxlength="4" aria-label="Ícone"><input class="ci grow" data-cn="${t}|${i}" value="${esc(c.name)}" aria-label="Nome"><span class="mut cat-use">${use}</span></div><button class="btn sm dng" data-cd="${t}|${i}" aria-label="Excluir ${esc(c.name)}">Excluir</button></div>`;
+  const line=`<div class="row cat-line${t==='despesa'?' exp':''}"><label class="sw" title="${c.off?'Desativada: não aparece nas listas de lançamento':'Ativa: aparece nas listas de lançamento'}"><input type="checkbox" data-co="${t}|${i}" ${c.off?'':'checked'}><span></span></label><div class="row cat-fields${c.off?' off':''}"><input class="ci icon-in" data-ci="${t}|${i}" value="${esc(c.icon)}" maxlength="4" aria-label="Ícone"><input class="ci grow" data-cn="${t}|${i}" value="${esc(c.name)}" aria-label="Nome"><span class="mut cat-use">${use}</span></div>${moreMenu([{label:'Excluir',attrs:`data-cd="${t}|${i}"`,danger:true}],'Mais ações de '+esc(c.name))}</div>`;
   // on phones the usage moves to this second line so the name keeps its width
   if(t!=='despesa')return line+`<div class="cat-sub"><span class="mut">${use}</span></div>`;
   return line+`<div class="cat-grp"><span>Grupo</span><input class="ci" list="groupList" data-cg="${i}" value="${esc(c.group||'')}" placeholder="Sem grupo (digite para criar)" aria-label="Grupo de ${esc(c.name)}"><span class="mut cat-use-sm">${use}</span></div>`;
@@ -3853,11 +4156,11 @@ function categoryRow(t,c,i){const u=catUse(t,c.name),use=`${u.n} lanç. · ${f0(
 function expenseSections(){
   const list=S.cats.despesa.map((c,i)=>({c,i})),groups=(S.groups||[]).filter(g=>list.some(x=>x.c.group===g.name));
   const head=(ic,name,items,budget)=>{const v=items.reduce((a,x)=>a+catUse('despesa',x.c.name).v,0);
-    return `<div class="cat-gh">${ic}<b>${esc(name)}</b><span class="mut">${items.length} categoria(s) · ${f0(v)}</span>${budget===undefined?'':`<label class="bud-in"><span>Orçamento/mês</span><input class="ci" data-money data-gb="${esc(name)}" value="${budget?m2(budget):''}" placeholder="sem limite" aria-label="Orçamento mensal de ${esc(name)}"></label>`}</div>`;};
+    return `<summary class="cat-gh">${ic}<b>${esc(name)}</b><span class="mut">${items.length} categoria(s) · ${f0(v)}</span>${budget===undefined?'':`<label class="bud-in"><span>Orçamento/mês</span><input class="ci" data-money data-gb="${esc(name)}" value="${budget?m2(budget):''}" placeholder="sem limite" aria-label="Orçamento mensal de ${esc(name)}"></label>`}</summary>`;};
   const sec=groups.map(g=>{const items=list.filter(x=>x.c.group===g.name);
-    return head(`<input class="ci icon-in sm" data-gi="${esc(g.name)}" value="${esc(g.icon)}" maxlength="4" aria-label="Ícone do grupo ${esc(g.name)}">`,g.name,items,budgetOf(g.name))+items.map(x=>categoryRow('despesa',x.c,x.i)).join('');});
+    return `<details class="cat-det" data-gd="${esc(g.name)}"${openGroups.has(g.name)?' open':''}>`+head(`<input class="ci icon-in sm" data-gi="${esc(g.name)}" value="${esc(g.icon)}" maxlength="4" aria-label="Ícone do grupo ${esc(g.name)}">`,g.name,items,budgetOf(g.name))+items.map(x=>categoryRow('despesa',x.c,x.i)).join('')+'</details>';});
   const lone=list.filter(x=>!x.c.group||!groups.some(g=>g.name===x.c.group));
-  if(lone.length)sec.push(head('','Sem grupo',lone)+lone.map(x=>categoryRow('despesa',x.c,x.i)).join(''));
+  if(lone.length)sec.push(`<details class="cat-det" data-gd=""${openGroups.has('')?' open':''}>`+head('','Sem grupo',lone)+lone.map(x=>categoryRow('despesa',x.c,x.i)).join('')+'</details>');
   return `<datalist id="groupList">${(S.groups||[]).map(g=>`<option value="${esc(g.name)}">`).join('')}</datalist>`+sec.join('');
 }
 function renderCategories(){
@@ -3867,6 +4170,8 @@ function renderCategories(){
     return `<div class="card"><div class="list-title">${TT[t]} <span class="mut title-note">· ${list.length} categorias</span></div>`+
       (t==='despesa'?'<div class="help mb4">Cada categoria fica num grupo (ex.: Luz, Água e Gás em Moradia; Academia em Saúde). O Resumo e a análise somam por grupo.</div>'+expenseSections():list.map((c,i)=>categoryRow(t,c,i)).join(''))+
       `<div class="row cat-new"><input class="ci icon-in" id="ne_${t}" placeholder="🏷️" maxlength="4" aria-label="Ícone da nova categoria"><input class="ci grow" id="nn_${t}" placeholder="Nova categoria (ex.: Uber)"><button class="btn sm pri" data-ca="${t}">Adicionar</button></div></div>`;}).join('');
+  bindMoreMenus($('catPage'));
+  document.querySelectorAll('[data-gd]').forEach(d=>d.ontoggle=()=>{if(d.open)openGroups.add(d.dataset.gd);else openGroups.delete(d.dataset.gd);});
   const at=v=>{const [t,i]=v.split('|');return [t,+i];};
   document.querySelectorAll('[data-co]').forEach(el=>el.onchange=()=>{const [t,i]=at(el.dataset.co),on=el.checked;
     runCommand(()=>setCategoryEnabled(t,i,on),{ok:r=>on?'✅ “'+r.name+'” ativada':'Categoria “'+r.name+'” desativada (não aparece mais nas listas)'});});
@@ -3944,7 +4249,7 @@ $('printBtn').onclick=()=>window.print();
 /**
  * ui/views/backup.js
  * Responsibility: Settings → Data: backup reminder, export, import (old backups are converted
- * by the domain) and "erase everything".
+ * by the domain). Dangerous actions live in advanced-data.js.
  */
 
 
@@ -3954,7 +4259,7 @@ $('printBtn').onclick=()=>window.print();
 
 
 const LAST_BACKUP_KEY='metaapp.lastBackup';
-function renderBackup(){renderDemo();
+function renderBackup(){renderDemo();renderAdvanced();
   const t=+localStorage.getItem(LAST_BACKUP_KEY)||0,days=(Date.now()-t)/864e5;
   $('bkNote').innerHTML=days>14?`<div class="banner"><span>${t?'Seu último backup foi há '+Math.floor(days)+' dias.':'Você ainda não fez backup.'} Os dados ficam só neste navegador.</span><button class="btn sm pri" id="bkNow">Fazer backup agora</button></div>`:'';
   const b=$('bkNow');if(b)b.onclick=()=>$('exp').click();
@@ -3966,10 +4271,8 @@ $('imp').onclick=()=>$('file').click();
 $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();
   rd.onload=()=>{let d;try{d=JSON.parse(rd.result);}catch(x){return toast('⚠️ Arquivo inválido');}
     const r=importBackup(d);if(r.error)return toast('⚠️ '+r.error);
-    runCommand(()=>replaceState(r.state),{ok:r.converted?'Backup antigo convertido. Confira os saldos em Investimentos.':'✅ Backup importado'});};
+    runCommand(()=>replaceState(r.state),{ok:r.converted?'Backup antigo convertido. Confira os saldos na aba Patrimônio.':'✅ Backup importado'});};
   rd.readAsText(f);e.target.value='';};
-$('reset').onclick=async()=>{if(await askConfirm({title:'Apagar tudo',html:'Apagar <b>todos</b> os lançamentos, contas de investimento, carteira, saldos e importações? Fica só a meta e a taxa.<div class="bd-note mt-10">Não dá para desfazer. Exporte um backup antes, se quiser guardar.</div>',ok:'Apagar tudo',danger:true}))
-  runCommand(()=>replaceState(blankState()),{ok:'Tudo apagado: lançamentos, investimentos, carteira e saldos'});};
 }
 
 // ---- src/ui/render.js
@@ -3993,8 +4296,72 @@ $('reset').onclick=async()=>{if(await askConfirm({title:'Apagar tudo',html:'Apag
 
 
 
-function render(){initCats();renderMeta();renderFlow();renderBudgets();renderBills();renderTrend();renderCycles();renderCardBox();renderTransactions();renderInvestments();renderSettings();renderBackup();renderCategories();
+
+function render(){initCats();renderMeta();renderFlow();renderHealth();renderBudgets();renderBills();renderTrend();renderCycles();renderCardBox();renderTransactions();renderInvestments();renderSettings();renderBackup();renderCategories();
   fillInvoiceMonths();stackTables();prepareMoneyInputs();Sheet.refresh();}
+
+// ---- src/ui/components/command.js
+/**
+ * ui/components/command.js
+ * Responsibility: the one way a screen changes data. Runs a domain command inside transact(),
+ * shows the refusal ({error}) or the save failure, re-renders and shows the success message.
+ * runCommand(fn, {ok, onError}) -> the command result, or null when nothing changed.
+ */
+
+
+
+const SAVE_FAILED='⚠️ Não foi possível salvar: o navegador não gravou os dados (memória cheia ou modo anônimo). Nada foi alterado.';
+function runCommand(fn,o){
+  o=o||{};
+  const r=transact(fn);
+  if(r===false){toast(SAVE_FAILED);if(o.onError)o.onError(null);return null;}
+  if(r&&r.error){toast('⚠️ '+r.error);if(o.onError)o.onError(r.error);return null;}
+  if(o.render!==false)render();
+  const msg=typeof o.ok==='function'?o.ok(r):o.ok;if(msg)toast(msg);
+  return r;
+}
+
+// ---- src/ui/views/advanced-data.js
+/**
+ * ui/views/advanced-data.js
+ * Responsibility: Settings → Data → Advanced: the actions that can lose data. Restore the automatic copy of the day
+ * before, and erase everything. Both ask for confirmation and say exactly what will happen.
+ */
+
+
+
+
+
+function renderAdvanced(){
+  const b=autoBackup(),btn=$('restoreAuto');if(!btn)return;
+  btn.hidden=!b;$('restoreAutoNote').textContent=b?'Cópia de '+b.day.split('-').reverse().join('/')+' (o estado de antes das mudanças desse dia).':'';
+}
+function bindAdvanced(){
+  $('restoreAuto').onclick=async()=>{
+    const b=autoBackup();if(!b)return;
+    if(!await askConfirm({title:'Restaurar cópia automática?',html:`Seus dados voltam ao que eram em <b>${b.day.split('-').reverse().join('/')}</b>. O que você lançou depois disso será perdido.<div class="bd-note mt-10">Se quiser, exporte um backup antes.</div>`,ok:'Restaurar',danger:true}))return;
+    runCommand(restoreAutoBackup,{ok:'Cópia restaurada'});
+  };
+  $('reset').onclick=async()=>{
+    if(!await askConfirm({title:'Apagar tudo',html:'Apagar <b>todos</b> os lançamentos, contas de investimento, carteira, saldos e importações? Fica só a meta e a taxa.<div class="bd-note mt-10">Não dá para desfazer. Exporte um backup antes, se quiser guardar.</div>',ok:'Apagar tudo',danger:true}))return;
+    runCommand(()=>replaceState(blankState(S)),{ok:'Tudo apagado: lançamentos, investimentos, carteira e saldos'});
+  };
+}
+
+// ---- src/ui/views/recovery-notice.js
+/**
+ * ui/views/recovery-notice.js
+ * Responsibility: tells the user, once, when the saved data could not be read at start and a copy was kept aside,
+ * so an empty screen is never a silent surprise. Offers the way out (the automatic copy of the day before).
+ */
+
+
+function announceRecovery(){
+  if(!bootNotice.recovered)return;
+  const b=autoBackup();
+  askConfirm({title:'Não consegui ler seus dados',ok:'Entendi',
+    html:`<div>Os dados salvos neste navegador estão ilegíveis. <b>Nada foi apagado</b>: guardei uma cópia deles à parte e o app abriu vazio.</div>${b?`<div class="mut mt-10">Existe uma cópia automática de ${b.day.split('-').reverse().join('/')}. Em Ajustes → Avançado você pode restaurá-la.</div>`:'<div class="mut mt-10">Se você tem um backup exportado, use Ajustes → Importar backup.</div>'}`});
+}
 
 // ---- src/ui/navigation.js
 /**
@@ -4008,9 +4375,9 @@ function render(){initCats();renderMeta();renderFlow();renderBudgets();renderBil
 
 
 
-const MORE_TABS=['inv','cad','cfg'];
+const MORE_TABS=['cad','cfg'];
 // old tab ids that now live inside another tab: [tab, element to scroll to]
-const MOVED_TABS={proj:['meta','projCard']};
+const MOVED_TABS={proj:['meta','projCard'],inv:['meta','invStart']};
 function goTab(t){
   const moved=MOVED_TABS[t];if(moved)t=moved[0];
   document.querySelectorAll('#nav button').forEach(x=>{x.classList.toggle('on',x.dataset.t===t);x.setAttribute('aria-current',x.dataset.t===t?'page':'false');});
@@ -4022,8 +4389,7 @@ function goTab(t){
 const isNarrow=()=>window.matchMedia('(max-width:720px)').matches;
 function moreView(){
   return {render(body){
-    const items=[['inv','brief','Investimentos','Saldos e histórico do patrimônio'],
-      ['cad','tag','Categorias','Criar, renomear, ativar ou excluir'],['cfg','sliders','Ajustes','Meta, cartão, backup e dados de teste']];
+    const items=[['cad','tag','Categorias','Criar, renomear, ativar ou excluir'],['cfg','sliders','Ajustes','Meta, cartão, backup e dados de teste']];
     body.innerHTML='<div class="lst">'+items.map(([t,i,n,d])=>`<div class="li" data-more="${t}" role="button" tabindex="0"><span class="li-ic">${svg(i)}</span><span class="li-main"><span class="li-t">${n}</span><span class="li-s">${d}</span></span><span class="li-v">›</span></div>`).join('')+
       `<div class="li" data-more="print" role="button" tabindex="0"><span class="li-ic">🖨️</span><span class="li-main"><span class="li-t">Imprimir / salvar PDF</span></span><span class="li-v">›</span></div></div>`;
     body.querySelectorAll('[data-more]').forEach(el=>el.onclick=()=>{Sheet.close();if(el.dataset.more==='print')return window.print();goTab(el.dataset.more);});
@@ -4031,6 +4397,7 @@ function moreView(){
   }};
 }
 function bindNavigation(){
+$('todoCard').onclick=e=>{const b=e.target.closest('[data-todo]');if(b)goTab(b.dataset.todo);}; // "O que fazer agora"
 $('nav').onclick=e=>{const b=e.target.closest('button');if(b)goTab(b.dataset.t);};
 $('bnav').onclick=e=>{const b=e.target.closest('button');if(!b)return;b.dataset.t==='more'?Sheet.open(moreView()):goTab(b.dataset.t);};
 document.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{ui.cur=mKey(mIdx(ui.cur)+ +b.dataset.mv);render();});
@@ -4522,7 +4889,7 @@ const REASON_TEXT={
   pagamento_fatura:'Pagamento de fatura: já está nas compras do cartão. Registre em “Pagar fatura” para não contar duas vezes.',
   transferencia:'Parece movimentação entre suas contas ou investimento, não é receita nem despesa.',
   estorno:'Estorno ou crédito no cartão: o app não tem lançamento negativo. Registre como receita só se quiser.',
-  resgate:'Resgate ou saída do investimento: não é gasto nem receita. O saldo se atualiza em Investimentos.',
+  resgate:'Resgate ou saída do investimento: não é gasto nem receita. O saldo se atualiza na aba Patrimônio.',
   rendimento:'Rendimento, imposto ou taxa do investimento: já está no saldo, não é um lançamento.'};
 const FLAG_TEXT={
   'maybe-transfer':'Pix/TED/transferência: confirme se é gasto ou renda de verdade e não uma transferência sua.',
@@ -5819,6 +6186,8 @@ function bindDescriptionSuggestions(){
 
 
 
+
+
 bindMoneyInputs();
 bindDateFields();
 bindInvoiceMonthField();
@@ -5841,12 +6210,14 @@ bindCategories();
 bindDemo();
 bindSettings();
 bindBackup();
+bindAdvanced();
 bindInvestments();
 bindBills();
 bindImport();
 bindQuickEntry();
 bindDescriptionSuggestions();
 render();
+announceRecovery();
 
 })();
 </script>

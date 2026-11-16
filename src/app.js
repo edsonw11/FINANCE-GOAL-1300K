@@ -3,6 +3,8 @@
  * Responsibility: bootstrap. Wires the pieces in the right order and renders the first time.
  * Contains no business rules and no HTML.
  */
+import { bindAdvanced } from './ui/views/advanced-data.js';
+import { announceRecovery } from './ui/views/recovery-notice.js';
 import { migrate } from './domain/store.js';
 import { bindMoneyInputs } from './ui/components/money-input.js';
 import { bindDateFields } from './ui/components/date-input.js';
@@ -53,9 +55,11 @@ bindCategories();
 bindDemo();
 bindSettings();
 bindBackup();
+bindAdvanced();
 bindInvestments();
 bindBills();
 bindImport();
 bindQuickEntry();
 bindDescriptionSuggestions();
 render();
+announceRecovery();

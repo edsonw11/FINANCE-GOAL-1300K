@@ -10,7 +10,7 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('calc-audit');
   const cents=x=>Math.round(x*100);
   const sumC=a=>a.reduce((s,v)=>s+cents(v),0)/100;
   run("S=blankState();initCats();addDemoData();S.budgets={Moradia:900,Mercado:1500};");
-  const D=run("({tx:S.tx,snaps:S.snaps,accounts:S.accounts,trades:S.trades,goal:S.goal,rate:S.rate,planned:S.planned,today:today()})");
+  const D=JSON.parse(JSON.stringify(run("({tx:S.tx,snaps:S.snaps,accounts:S.accounts,trades:S.trades,goal:S.goal,rate:S.rate,planned:S.planned,today:today()})")));
   const months=[...new Set(D.tx.map(t=>t.date.slice(0,7)))].sort();
   const monthEnd=m=>{const [y,k]=m.split('-').map(Number);const e=m+'-'+String(new Date(y,k,0).getDate()).padStart(2,'0');return e<D.today?e:D.today;};
   // ---- 1. month totals and shares
@@ -49,6 +49,12 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('calc-audit');
   // the demo data was built so the yield is real growth, not a missing aporte: every account that grows by an aporte has its records
   const yields=real.filter(r=>r.y!==null).map(r=>r.y/r.prev);
   ok('demo monthly yield is the growth built into the demo (0,5% to 1,1% a month: no aporte is counted as yield)',yields.length>=10&&yields.every(y=>y>0.005&&y<0.011));
+  // a new account entered with a balance it already had is a starting point, not yield
+  const yBefore=run("realSeries().map(r=>r.y)"),lastM=real[real.length-1].m;
+  run("S.accounts.push({id:'newacc',name:'Conta nova'});S.snaps.push({date:today(),acc:'newacc',value:90000,est:false})");
+  const yAfter=run("realSeries().map(r=>r.y)");
+  ok('adding an account with an existing balance does not change any month yield',yBefore.every((y,i)=>y===null?yAfter[i]===null:near(y,yAfter[i],0.02)));
+  run("S.accounts=S.accounts.filter(a=>a.id!=='newacc');S.snaps=S.snaps.filter(x=>x.acc!=='newacc')");
   // ---- 3. goal progress and projection
   const last=real[real.length-1];
   eq('goal ring = min(worth / goal, 1)',run("Math.min(realSeries().slice(-1)[0].t/S.goal,1)"),Math.min(last.t/D.goal,1));

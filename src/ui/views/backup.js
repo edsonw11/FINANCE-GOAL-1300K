@@ -1,17 +1,17 @@
 /**
  * ui/views/backup.js
  * Responsibility: Settings → Data: backup reminder, export, import (old backups are converted
- * by the domain) and "erase everything".
+ * by the domain). Dangerous actions live in advanced-data.js.
  */
 import { $ } from '../../core/dom.js';
-import { S, replaceState, blankState } from '../../domain/store.js';
+import { S, replaceState } from '../../domain/store.js';
 import { importBackup } from '../../domain/settings-commands.js';
 import { toast } from '../toast.js';
-import { askConfirm } from '../components/confirm.js';
 import { runCommand } from '../components/command.js';
 import { renderDemo } from './settings-demo.js';
+import { renderAdvanced } from './advanced-data.js';
 const LAST_BACKUP_KEY='metaapp.lastBackup';
-export function renderBackup(){renderDemo();
+export function renderBackup(){renderDemo();renderAdvanced();
   const t=+localStorage.getItem(LAST_BACKUP_KEY)||0,days=(Date.now()-t)/864e5;
   $('bkNote').innerHTML=days>14?`<div class="banner"><span>${t?'Seu último backup foi há '+Math.floor(days)+' dias.':'Você ainda não fez backup.'} Os dados ficam só neste navegador.</span><button class="btn sm pri" id="bkNow">Fazer backup agora</button></div>`:'';
   const b=$('bkNow');if(b)b.onclick=()=>$('exp').click();
@@ -23,8 +23,6 @@ $('imp').onclick=()=>$('file').click();
 $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();
   rd.onload=()=>{let d;try{d=JSON.parse(rd.result);}catch(x){return toast('⚠️ Arquivo inválido');}
     const r=importBackup(d);if(r.error)return toast('⚠️ '+r.error);
-    runCommand(()=>replaceState(r.state),{ok:r.converted?'Backup antigo convertido. Confira os saldos em Investimentos.':'✅ Backup importado'});};
+    runCommand(()=>replaceState(r.state),{ok:r.converted?'Backup antigo convertido. Confira os saldos na aba Patrimônio.':'✅ Backup importado'});};
   rd.readAsText(f);e.target.value='';};
-$('reset').onclick=async()=>{if(await askConfirm({title:'Apagar tudo',html:'Apagar <b>todos</b> os lançamentos, contas de investimento, carteira, saldos e importações? Fica só a meta e a taxa.<div class="bd-note mt-10">Não dá para desfazer. Exporte um backup antes, se quiser guardar.</div>',ok:'Apagar tudo',danger:true}))
-  runCommand(()=>replaceState(blankState()),{ok:'Tudo apagado: lançamentos, investimentos, carteira e saldos'});};
 }

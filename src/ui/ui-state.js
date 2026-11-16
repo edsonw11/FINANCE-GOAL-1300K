@@ -16,5 +16,6 @@ export const ui={
   splitRows:[],              // split parts in the form [{cat,val}]
   invoiceSelection:new Set(),// purchases checked in the invoice form
   payAdvanced:false,         // invoice payment entered manually
+  allInvoicesOpen:false,     // Card tab: the table with all invoices is expanded
   selectedInsightCategory:null // category highlighted in the analysis table
 };

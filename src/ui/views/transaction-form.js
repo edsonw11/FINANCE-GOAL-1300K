@@ -24,7 +24,7 @@ export function startEdit(id){
   if(t.type==='aporte')$('fAcc').value=t.acc;else $('fCat').value=t.cat||'';
   $('fFonte').value=t.fonte||'caixa';
   if(t.type==='fatura'){$('fFm').value=invoiceMonthOf(t);ui.invoiceSelection=new Set(alloc().map[t.id]||[]);drawInvoiceForm(id);}
-  ui.splitRows=(t.splits||[]).map(s=>({cat:s.cat,val:s.value}));$('splitBox').hidden=!(ui.splitRows.length);drawSplit();
+  ui.splitRows=(t.splits||[]).map(s=>({cat:s.cat,val:s.value}));$('splitBox').hidden=!(ui.splitRows.length);$('wMore').open=ui.splitRows.length>0;drawSplit();
   const sib=futureSiblings(t);$('wApply').hidden=!(sib.length);$('fApply').checked=true;$('applyN').textContent=sib.length;
   ui.editId=id;$('fCancel').hidden=false;$('fRep').disabled=true;fillCategoryOptions();
 }
