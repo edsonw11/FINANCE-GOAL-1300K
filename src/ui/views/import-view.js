@@ -10,6 +10,7 @@ import { SUPPORTED_TEXT } from '../../domain/import-reader.js';
 import { Sheet } from '../components/sheet.js';
 import { goTab } from '../navigation.js';
 import { askConfirm } from '../components/confirm.js';
+import { bindNote, noteHtml } from './import-note-view.js';
 import { bindCustody, custodyHtml } from './import-custody-view.js';
 import { esc } from '../../core/dom.js';
 import { importState, endSession, trace } from './import-session.js';
@@ -54,6 +55,7 @@ function importView(ctx){
       const s=importState.session;body.onclick=body.onchange=body.onkeydown=null;foot.innerHTML='';
       if(!s){body.innerHTML=pickHtml(pickError,picked);bindPick(body,choose);
         if(picked){foot.innerHTML='<button type="button" class="btn pri" id="impSend">Enviar e ler o arquivo</button>';$('impSend').onclick=()=>{$('impSend').disabled=true;takeFile(picked,redraw,opts);};}return {title:ctx==='invest'?'Importar investimentos':'Importar lançamentos',sub:SUPPORTED_TEXT+' · revisão antes de gravar'};}
+      if(s.phase==='note'){body.innerHTML=noteHtml(s);bindNote(s,body,foot);return {title:'Nota de corretagem',sub:'Revisão antes de gravar'};}
       if(s.phase==='custody'){body.innerHTML=custodyHtml(s);bindCustody(s,body,foot);return {title:'Atualizar saldo',sub:'Extrato de custódia · revisão antes de gravar'};}
       if(s.phase==='mapping'){
         body.innerHTML=mappingHtml(s.read);

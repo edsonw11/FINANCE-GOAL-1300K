@@ -8,6 +8,8 @@ export const normalizeText=s=>String(s==null?'':s).normalize('NFD').replace(/[\u
 // words that say how the money moved, not who received it
 const NOISE=new Set(['compra','compras','debito','credito','pix','enviado','recebido','pagamento','pagto','pgto','transferencia','transf','cartao','no','na','em','de','da','do','das','dos','ltda','sa','me','epp','com','br','a','o','e','via','pag','parcela','parc','ted','doc']);
 // "COMPRA NO DEBITO - MERCADO EXTRA 1234" -> ['mercado','extra']
+// removes accents only: digits and punctuation stay (dates and amounts are matched on it)
+export const stripAccents=t=>String(t==null?'':t).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 export const significantWords=s=>normalizeText(s).split(' ').filter(w=>w.length>=3&&!/^\d+$/.test(w)&&!NOISE.has(w));
 export const descriptionKey=s=>significantWords(s).slice(0,3).join(' ');
 // FNV-1a, two seeds -> 16 hex chars (not for security: only to compare)

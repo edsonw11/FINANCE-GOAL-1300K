@@ -219,6 +219,17 @@
     await waitFor(()=>q('#impList .imp-row'),'invest review');const rows=qa('#impList .imp-row');
     need(/Aporte/.test(rows[0].textContent)&&/Tesouro Selic 2028/.test(rows[0].textContent),'first row: '+rows[0].textContent.slice(0,200));
     need(rows[1].classList.contains('ign'),'yield should be ignored');$('shClose').click();});
+  await step('investments: a brokerage note fills the portfolio, grouped by kind, and importing it again adds nothing',async()=>{
+    const note='NOTA DE NEGOCIAÇÃO\nData pregão 05/11/2026\n1-BOVESPA C VISTA PETR4 PN N2 100 38,20 3.820,00 D\n1-BOVESPA C VISTA FII HGLG CI ER 40 158,00 6.320,00 D\nTotal custos / despesas 10,00 D';
+    if($('sheet').open)$('shClose').click();document.querySelector('[data-t=inv]').click();const n0=stored().tx.length;
+    $('impOpenInv').click();await chooseFile('nota.txt',note);await waitFor(()=>q('#ntList .imp-row'),'note review');
+    need(qa('#ntList .imp-row').length===2&&/Nota de corretagem/.test($('shTitle').textContent),'note rows');
+    need(stored().tx.length===n0,'saved before confirming');
+    $('ntGo').click();await tick();$('cfOk').click();await waitFor(()=>!$('sheet').open,'note saved');
+    need(stored().tx.length===n0+2,'aportes '+(stored().tx.length-n0));
+    const pf=$('portfolio').textContent;need(/Ações/.test(pf)&&/FIIs/.test(pf)&&/PETR4/.test(pf)&&/HGLG11/.test(pf),'portfolio: '+pf.slice(0,200));
+    $('impOpenInv').click();await chooseFile('nota.txt',note);await waitFor(()=>q('#ntList .imp-row'),'note review 2');$('ntGo').click();await tick();$('cfOk').click();await waitFor(()=>!$('sheet').open,'note again');
+    need(stored().tx.length===n0+2,'duplicated aportes');});
   await step('remove test data',async()=>{$('demoOff').click();await confirmYes();need(!/lançamentos de teste/.test($('demoN').textContent),'still there');});
   document.documentElement.setAttribute('data-smoke',out.concat(errs).join(' | '));
 })();

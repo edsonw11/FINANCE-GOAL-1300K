@@ -27,6 +27,12 @@ export function beginCustody(custody,acc,file){
   importState.session={phase:'custody',custody,acc,file,drafts:[],read:{ok:true,drafts:[]},openId:null,busy:false,result:null};
   return importState.session;
 }
+// a brokerage note: trades to review (kept here, saved only after the user confirms)
+export function beginNote(note,file){
+  importState.token++;
+  importState.session={phase:'note',note,file,drafts:[],read:{ok:true,drafts:[]},openId:null,busy:false,result:null};
+  return importState.session;
+}
 export function endSession(){trace('sessão encerrada');importState.token++;importState.session=null;}
 export const draftById=id=>importState.session&&importState.session.drafts.find(d=>d.id===id)||null;
 const NUMBER_FIELDS=['value'];

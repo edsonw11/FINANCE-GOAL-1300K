@@ -10,12 +10,13 @@ import { S } from '../../domain/store.js';
 import { active, balance, total, totalGross } from '../../domain/accounts.js';
 import { realSeries } from '../../domain/investments.js';
 import { addAccount, archiveAccount, saveSnapshots } from '../../domain/account-commands.js';
+import { renderPortfolio } from './portfolio-view.js';
 import { accColor } from '../account-colors.js';
 import { askConfirm } from '../components/confirm.js';
 import { fieldError } from '../components/field-error.js';
 import { runCommand } from '../components/command.js';
 export function renderInvestments(){
-  const d=today();
+  const d=today();renderPortfolio();
   $('accList').innerHTML=active().map(a=>{const b=balance(a.id,d);const sn=b.snap;
     const sub=sn?`Saldo informado em ${formatDateBR(sn.date)}${sn.est?' (estimado 🟠)':''}${b.v!==sn.value?' + aportes depois':''}`:'Sem saldo informado';
     return `<div class="acc"><i style="background:${accColor(a.id)}"></i><div class="nm">${esc(a.name)}<span class="sb">${sub}</span></div><button class="btn sm" data-arq="${a.id}" title="Remover da lista (o histórico é mantido)">arquivar</button><div class="vl r">${f2(b.v)}<span class="sb fw5">${b.g!==null?'bruto '+f2(b.g)+' · IR '+f2(b.g-b.v):'bruto não informado'}</span></div></div>`;}).join('')+

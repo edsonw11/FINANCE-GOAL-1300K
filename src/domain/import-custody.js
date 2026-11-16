@@ -6,7 +6,7 @@
  * (nothing is duplicated). It never creates contributions, income or expenses.
  */
 import { parseAmount, parseBrDate } from '../core/import-values.js';
-import { normalizeText } from '../core/text-normalize.js';
+import { normalizeText, stripAccents } from '../core/text-normalize.js';
 import { roundMoney } from '../core/money.js';
 import { S } from './store.js';
 import { balance } from './accounts.js';
@@ -14,12 +14,11 @@ import { saveSnapshots } from './account-commands.js';
 const MONEY_RE='(\\d{1,3}(?:\\.\\d{3})*,\\d{2})';
 const CUSTODY_TOTAL_ROW=new RegExp('total geral\\s+'+MONEY_RE+'\\s+'+MONEY_RE+'\\s+'+MONEY_RE+'\\s+'+MONEY_RE);
 const CUSTODY_DATE_ROW=/custodia em:?\s*(\d{2}\/\d{2}\/\d{4})/;
-const plain=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 export const looksLikeCustody=text=>/extrato de custodia/.test(normalizeText(text));
 // -> null (not a custody statement) | {date, gross, ir, iof, net} | {error}
 export function parseCustody(text){
   if(!looksLikeCustody(text))return null;
-  const n=plain(text).replace(/\s+/g,' '); // keeps digits and punctuation: amounts and dates are matched on it
+  const n=stripAccents(text).toLowerCase().replace(/\s+/g,' '); // keeps digits and punctuation: amounts and dates are matched on it
   const d=n.match(CUSTODY_DATE_ROW),t=n.match(CUSTODY_TOTAL_ROW);
   const date=d?parseBrDate(d[1]):null;
   if(!date)return {error:'Reconheci um extrato de custódia, mas não achei a data (“Custódia em”).'};

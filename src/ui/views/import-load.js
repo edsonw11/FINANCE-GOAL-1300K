@@ -9,7 +9,8 @@ import { today } from '../../core/dates.js';
 import { IMPORT_LIMITS, readImportFile } from '../../domain/import-reader.js';
 import { parseCustody } from '../../domain/import-custody.js';
 import { suggestAccount } from '../../domain/import-account.js';
-import { beginCustody, beginSession, importState } from './import-session.js';
+import { parseBrokerageNote } from '../../domain/brokerage-note.js';
+import { beginCustody, beginNote, beginSession, importState } from './import-session.js';
 import { pdfText } from './pdf-text.js';
 const PDF_TIMEOUT_MS=45000,SAMPLE_LINES=30; // first lines of the PDF text, shown when it cannot be read, to help adjust the reader
 // a reader that never answers (old phone browser) must not leave the screen waiting forever
@@ -28,6 +29,9 @@ export async function loadImportFile(file,opts){
   try{text=tooBig?'':isPdf?await withTimeout(pdfText(file),PDF_TIMEOUT_MS):await fileText(file);}
   catch(e){return {error:isPdf&&e.message?e.message:'Não consegui ler o arquivo. Tente de novo ou exporte outro.'};}
   if(token!==importState.token)return {cancelled:true};
+  const note=parseBrokerageNote(text);
+  if(note&&note.error)return {error:note.error,sample:text.split('\n').slice(0,SAMPLE_LINES).join('\n')};
+  if(note)return {session:beginNote(note,{name:file.name,size:file.size})};
   const custody=isPdf?parseCustody(text):null;
   if(custody&&custody.error)return {error:custody.error};
   if(custody)return {session:beginCustody(custody,suggestAccount('nubank'),{name:file.name,size:file.size})};

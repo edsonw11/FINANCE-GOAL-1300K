@@ -196,3 +196,6 @@ Na revisão, cada linha pode ser **Aporte** (escolhe-se o investimento de destin
 
 ## Extrato de custódia (corretora)
 Um PDF “Extrato de Custódia” é o saldo em uma data, não movimentações. O app o reconhece, mostra data, saldo bruto, IR, IOF e líquido, você escolhe a conta e ele grava um snapshot de saldo (`domain/import-custody.js`). Reimportar substitui o mesmo dia; nenhum aporte ou gasto é criado.
+
+## Carteira e nota de corretagem
+Em Investimentos, a **Carteira** agrupa os ativos por tipo (ações, FIIs, ETFs, BDRs), com quantidade, preço médio (custos incluídos) e total investido por ticker. Ela vem das notas de corretagem importadas (PDF ou texto): cada compra vira um negócio em `S.trades` e um aporte na conta do tipo (criada se faltar); cada venda só reduz a posição (preço médio) e aparece no resultado. Módulos: `ticker-class`, `brokerage-note`, `portfolio`, `trade-commit` (domain) e `portfolio-view`, `import-note-view` (ui). Sem cotação: o valor de mercado vem do saldo da conta em “Atualizar saldos”.

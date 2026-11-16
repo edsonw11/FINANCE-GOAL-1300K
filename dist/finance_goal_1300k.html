@@ -591,6 +591,11 @@ dialog.dlg-wide{width:min(580px,94vw)}
 @media(max-width:380px){.imp-tiles{grid-template-columns:repeat(2,1fr)}.imp-fields{grid-template-columns:1fr}.imp-fields .span-all{grid-column:auto}}
 
 .imp-sample{max-height:40vh;overflow:auto;white-space:pre-wrap;word-break:break-word;font-size:11px;background:var(--bg,#f3f4f6);padding:8px;border-radius:8px;user-select:all}
+
+.nt-ticker{width:9em;text-transform:uppercase}
+.pf-total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}.pf-total b{font-size:1.3em}
+.pf-group{margin-bottom:12px}.pf-head{display:flex;justify-content:space-between;border-bottom:1px solid var(--line,#e5e7eb);padding-bottom:4px;margin-bottom:4px}
+.pf-row{display:grid;grid-template-columns:5.5em 1fr auto;gap:8px;padding:3px 0;font-size:.95em}
 </style>
 <style>
 /* 09-mobile.css: phones and small tablets (mobile-first adjustments, 320 to 720 px) */
@@ -881,8 +886,10 @@ dialog.dlg-wide{width:min(580px,94vw)}
   <h2>💼 Onde está meu dinheiro</h2>
   <div class="card"><div id="accList"></div>
     <div class="row mt-12"><div class="f mw-260"><label for="newAcc">Adicionar conta/investimento</label><input id="newAcc" placeholder="Ex.: XP CDB"></div><button class="btn" id="addAcc">Adicionar</button></div></div>
+  <h2>📊 Carteira</h2>
+  <div class="card" id="portfolio"></div>
   <h2>📥 Importar</h2>
-  <div class="card"><div class="help">Do extrato da corretora ou do banco. <b>Extrato de custódia (PDF)</b> atualiza o saldo. <b>Extrato de movimentações</b> (CSV, OFX ou PDF): o que entrou vira <b>aporte</b>; resgate, rendimento e IR são ignorados.</div>
+  <div class="card"><div class="help">Do extrato da corretora ou do banco. <b>Extrato de custódia (PDF)</b> atualiza o saldo. <b>Nota de corretagem</b> (PDF): compras viram aporte e entram na Carteira. <b>Extrato de movimentações</b> (CSV, OFX ou PDF): o que entrou vira <b>aporte</b>; resgate, rendimento e IR são ignorados.</div>
     <button type="button" class="btn imp-open" id="impOpenInv">📥 Importar saldo ou aportes</button></div>
   <h2>🔄 Atualizar saldos</h2>
   <div class="card">
@@ -3431,6 +3438,93 @@ function saveSnapshots(date,rows){
   });
 }
 
+// ---- src/domain/ticker-class.js
+/**
+ * domain/ticker-class.js
+ * Responsibility: tells which kind of asset a B3 ticker is (stock, FII, ETF, BDR) so the portfolio is
+ * grouped in a way a person understands. A guess from the ticker and the name on the note; the user can
+ * correct it in the review. Pure rules, no data.
+ */
+const ASSET_CLASS={stock:'acao',fii:'fii',etf:'etf',bdr:'bdr'};
+const ASSET_LABEL={acao:'Ações',fii:'FIIs',etf:'ETFs',bdr:'BDRs'};
+const ASSET_ICON={acao:'📈',fii:'🏢',etf:'🧺',bdr:'🌎'};
+const ASSET_ORDER=['acao','fii','etf','bdr'];
+// ETFs that end in 11 (the ones that are common in Brazil); a name with ETF/ISHARES/INDEX also counts
+const KNOWN_ETF=new Set(['IVVB11','BOVA11','SMAL11','HASH11','GOLD11','DIVO11','FIND11','MATB11','NASD11','SPXI11','XINA11','BOVV11','QBTC11','ETHE11','B5P211','IMAB11','IRFM11','LFTS11','LFTB11']);
+// units that end in 11 but are stocks
+const KNOWN_UNIT=new Set(['SANB11','TAEE11','KLBN11','BPAC11','ALUP11','SAPR11','ENGI11','CPLE11','BRBI11','SULA11','ITUB11','IGTI11','AZUL11']);
+function classOfTicker(ticker,name){
+  const t=String(ticker||'').toUpperCase(),n=String(name||'').toUpperCase();
+  if(/^[A-Z]{4}(34|35|39)$/.test(t))return ASSET_CLASS.bdr;
+  if(KNOWN_ETF.has(t)||/\b(ETF|ISHARES|INDEX|INDICE)\b/.test(n))return ASSET_CLASS.etf;
+  if(KNOWN_UNIT.has(t))return ASSET_CLASS.stock;
+  if(/^[A-Z]{4}11$/.test(t))return ASSET_CLASS.fii;
+  if(/\bFII\b/.test(n))return ASSET_CLASS.fii;
+  return ASSET_CLASS.stock;
+}
+
+// ---- src/domain/portfolio.js
+/**
+ * domain/portfolio.js
+ * Responsibility: the portfolio as a person reads it. From the list of trades (S.trades) it computes, per
+ * ticker, the quantity, the average cost (costs included) and the amount invested, plus the result of
+ * what was sold; and groups the tickers by kind of asset. Average-cost method. Pure calculation.
+ */
+
+
+
+const tradesOf=()=>S.trades||[];
+const sortTrades=ts=>ts.slice().sort((a,b)=>a.date<b.date?-1:a.date>b.date?1:a.id<b.id?-1:1);
+// -> [{ticker, cls, name, qty, avg, cost, realized, oversold}] (everything ever traded, open or closed)
+function positions(trades){
+  const by={};
+  sortTrades(trades||tradesOf()).forEach(t=>{
+    const p=by[t.ticker]||(by[t.ticker]={ticker:t.ticker,cls:t.cls,name:t.name||'',qty:0,cost:0,realized:0,oversold:false});
+    p.cls=t.cls;
+    if(t.side==='C'){p.qty+=t.qty;p.cost+=t.qty*t.price+t.fees;}
+    else{
+      const avg=p.qty>0?p.cost/p.qty:0,sold=Math.min(t.qty,p.qty);
+      if(t.qty>p.qty)p.oversold=true; // sold more than the notes imported so far show: an older note is missing
+      p.realized+=(t.qty*t.price-t.fees)-avg*sold;p.cost-=avg*sold;p.qty-=sold;
+      if(p.qty<=1e-9){p.qty=0;p.cost=0;}
+    }
+  });
+  return Object.values(by).map(p=>({...p,cost:roundMoney(p.cost),realized:roundMoney(p.realized),avg:p.qty>0?roundMoney(p.cost/p.qty):0}));
+}
+// open positions grouped by class, with the share of each group: [{cls, items, cost, share}]
+function portfolioGroups(trades){
+  const open=positions(trades).filter(p=>p.qty>0),total=sumMoney(open.map(p=>p.cost));
+  return ASSET_ORDER.map(cls=>{
+    const items=open.filter(p=>p.cls===cls).sort((a,b)=>b.cost-a.cost),cost=sumMoney(items.map(p=>p.cost));
+    return {cls,items,cost,share:total?cost/total:0};
+  }).filter(g=>g.items.length);
+}
+const realizedTotal=trades=>sumMoney(positions(trades).map(p=>p.realized));
+
+// ---- src/ui/views/portfolio-view.js
+/**
+ * ui/views/portfolio-view.js
+ * Responsibility: the "Carteira" card in Investimentos: assets grouped by kind (stocks, FIIs, ETFs, BDRs),
+ * each ticker with quantity, average cost and amount invested, and the share of each group. Read only.
+ */
+
+
+
+
+const pctRound=x=>Math.round(x*100)+'%';
+function renderPortfolio(){
+  const el=$('portfolio');if(!el)return;
+  const trades=tradesOf(),groups=portfolioGroups(trades);
+  if(!trades.length){el.innerHTML='<div class="help">Ainda sem ativos. Importe uma <b>nota de corretagem</b> (botão acima) e a carteira aparece aqui, separada em ações, FIIs e ETFs.</div>';return;}
+  const total=groups.reduce((s,g)=>s+g.cost,0),realized=realizedTotal(trades),over=positions(trades).some(p=>p.oversold);
+  el.innerHTML=`<div class="pf-total"><span>Total investido (com custos)</span><b>${f2(total)}</b></div>`+
+    groups.map(g=>`<div class="pf-group"><div class="pf-head"><b>${ASSET_ICON[g.cls]} ${ASSET_LABEL[g.cls]}</b><span>${pctRound(g.share)} · ${f2(g.cost)}</span></div>
+      ${g.items.map(p=>`<div class="pf-row"><b>${esc(p.ticker)}</b><span class="mut">${p.qty} un · preço médio ${f2(p.avg)}</span><span>${f2(p.cost)}</span></div>`).join('')}</div>`).join('')+
+    (realized?`<div class="help">Resultado das vendas: <b class="${realized>=0?'pos':'neg'}">${f2(realized)}</b> (preço médio, já descontados os custos).</div>`:'')+
+    (over?'<div class="bd-note">⚠️ Alguma venda é maior que as compras importadas: falta importar uma nota mais antiga.</div>':'')+
+    '<div class="help">Mostra o que você investiu e o preço médio. O valor de mercado de hoje não aparece aqui: atualize o saldo da conta em “Atualizar saldos”.</div>';
+}
+
 // ---- src/ui/views/investments.js
 /**
  * ui/views/investments.js
@@ -3448,8 +3542,9 @@ function saveSnapshots(date,rows){
 
 
 
+
 function renderInvestments(){
-  const d=today();
+  const d=today();renderPortfolio();
   $('accList').innerHTML=active().map(a=>{const b=balance(a.id,d);const sn=b.snap;
     const sub=sn?`Saldo informado em ${formatDateBR(sn.date)}${sn.est?' (estimado 🟠)':''}${b.v!==sn.value?' + aportes depois':''}`:'Sem saldo informado';
     return `<div class="acc"><i style="background:${accColor(a.id)}"></i><div class="nm">${esc(a.name)}<span class="sb">${sub}</span></div><button class="btn sm" data-arq="${a.id}" title="Remover da lista (o histórico é mantido)">arquivar</button><div class="vl r">${f2(b.v)}<span class="sb fw5">${b.g!==null?'bruto '+f2(b.g)+' · IR '+f2(b.g-b.v):'bruto não informado'}</span></div></div>`;}).join('')+
@@ -3945,6 +4040,8 @@ const normalizeText=s=>String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u
 // words that say how the money moved, not who received it
 const NOISE=new Set(['compra','compras','debito','credito','pix','enviado','recebido','pagamento','pagto','pgto','transferencia','transf','cartao','no','na','em','de','da','do','das','dos','ltda','sa','me','epp','com','br','a','o','e','via','pag','parcela','parc','ted','doc']);
 // "COMPRA NO DEBITO - MERCADO EXTRA 1234" -> ['mercado','extra']
+// removes accents only: digits and punctuation stay (dates and amounts are matched on it)
+const stripAccents=t=>String(t==null?'':t).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const significantWords=s=>normalizeText(s).split(' ').filter(w=>w.length>=3&&!/^\d+$/.test(w)&&!NOISE.has(w));
 const descriptionKey=s=>significantWords(s).slice(0,3).join(' ');
 // FNV-1a, two seeds -> 16 hex chars (not for security: only to compare)
@@ -4518,6 +4615,121 @@ function readImportFile(file,opts){
   return {ok:true,format,kind,fileName:file.name||'arquivo',fileHash,rows,mapping,drafts,dropped,skipped,unreadable,alreadyImported:before};
 }
 
+// ---- src/domain/trade-commit.js
+/**
+ * domain/trade-commit.js
+ * Responsibility: the only place where reviewed trades of a brokerage note are saved. Each trade goes to
+ * S.trades with a key (the same note imported twice saves nothing twice). Each BUY also becomes an "aporte"
+ * in the account of its kind of asset (created when missing), so the monthly summary and the goal keep
+ * working; a SELL is only recorded (the balance is corrected by the custody statement).
+ * commitTrades(trades, {date}) -> {saved, skipped, bought}
+ */
+
+
+
+
+
+
+const fmt=n=>String(n).replace('.',',');
+function accountForClass(cls){
+  const name=ASSET_LABEL[cls]||'Ações';
+  const found=S.accounts.find(a=>!a.archived&&accName(a.id)===name);
+  if(found)return found.id;
+  const id='a'+(S.nid++);S.accounts.push({id,name});return id;
+}
+const tradeKey=(date,t,n)=>'trade:'+textHash([date,t.side,t.ticker,t.qty,t.price].join('|'))+'#'+n;
+// what is wrong with a trade that makes it impossible to save; [] = ok
+function tradeProblems(t){
+  const p=[];
+  if(!/^[A-Z]{4}\d{1,2}$/.test(String(t.ticker||'').toUpperCase()))p.push('Código do ativo (ex.: PETR4)');
+  if(!(t.qty>0)||!(t.price>0))p.push('Quantidade ou preço inválido');
+  return p;
+}
+function commitTrades(trades,meta){
+  const date=meta.date;
+  if(!date)return {error:'Data da nota inválida'};
+  const bad=trades.find(t=>tradeProblems(t).length);
+  if(bad)return {error:'Corrija: '+tradeProblems(bad)[0]};
+  S.trades=S.trades||[];
+  const taken=new Set(S.trades.map(t=>t.key)),seen={};let saved=0,skipped=0,bought=0;
+  trades.forEach(t=>{
+    const base=tradeKey(date,t,0).split('#')[0];seen[base]=(seen[base]||0)+1;
+    const key=base+'#'+seen[base];
+    if(taken.has(key)){skipped++;return;}
+    const ticker=t.ticker.toUpperCase();
+    S.trades.push({id:'t'+(S.nid++),key,date,ticker,cls:t.cls,name:t.name||'',side:t.side,qty:t.qty,price:t.price,fees:roundMoney(t.fees||0)});
+    if(t.side==='C'){
+      const r=saveTransaction({editId:null,type:'aporte',value:roundMoney(t.qty*t.price+(t.fees||0)),date,cat:'',fonte:'caixa',acc:accountForClass(t.cls),
+        desc:'Compra '+ticker+' '+fmt(t.qty)+' × '+String(t.price).replace('.',','),splits:[],repeat:1});
+      if(r&&r.error)throw new Error(r.error);
+      r.ids.forEach(id=>{const x=S.tx.find(y=>y.id===id);if(x)x.imp=key;});bought++;
+    }
+    taken.add(key);saved++;
+  });
+  return {saved,skipped,bought};
+}
+
+// ---- src/ui/views/import-note-view.js
+/**
+ * ui/views/import-note-view.js
+ * Responsibility: the review screen of a brokerage note: the trading day, each buy and sell with its
+ * ticker and kind of asset (editable), the costs, and what will happen when confirmed. Edits only change the
+ * trades held in the session; the domain command saves them after the user confirms.
+ */
+
+
+
+
+
+
+
+
+
+const tradeTotal=t=>t.gross+(t.side==='C'?t.fees:-t.fees);
+const classOptions=t=>ASSET_ORDER.map(c=>`<option value="${c}"${t.cls===c?' selected':''}>${ASSET_LABEL[c]}</option>`).join('');
+function rowHtml(t,i){
+  const bad=tradeProblems(t);
+  return `<div class="imp-row sel${bad.length?' rev':''}" data-nt="${i}">
+    <div class="imp-main"><div class="imp-top"><span class="tag ${t.side==='C'?'despesa':'receita'}">${t.side==='C'?'Compra':'Venda'}</span>
+      <span class="imp-desc">${esc(t.ticker||'?')} · ${t.qty} × ${f2(t.price)}</span><b class="imp-val ${t.side==='C'?'apo':'rec'}">${f2(tradeTotal(t))}</b></div>
+      <div class="imp-meta"><input data-nt-f="ticker" value="${esc(t.ticker)}" placeholder="Código (PETR4)" aria-label="Código do ativo" class="nt-ticker">
+        <select data-nt-f="cls" aria-label="Tipo de ativo">${classOptions(t)}</select>
+        ${t.fees?`<span class="mut">custos ${f2(t.fees)}</span>`:''}</div>
+      ${bad.length?`<div class="imp-note bad-n">⛔ ${esc(bad[0])}: corrija para importar</div>`:''}</div></div>`;
+}
+function noteHtml(s){
+  const n=s.note,buys=n.trades.filter(t=>t.side==='C'),sells=n.trades.filter(t=>t.side==='V');
+  return `<div class="imp-banner">🔎 <b>Nota de corretagem de ${formatDateBR(n.date)}.</b> Nada foi gravado ainda.</div>
+    <div class="imp-file"><b>${esc(s.file.name)}</b></div>
+    <div class="imp-tiles"><div><span>Compras</span><b class="apo">${buys.length}</b><small>${f2(sumMoney(buys.map(tradeTotal)))}</small></div>
+      <div><span>Vendas</span><b class="rec">${sells.length}</b><small>${f2(sumMoney(sells.map(tradeTotal)))}</small></div>
+      <div><span>Custos da nota</span><b>${f2(n.costs)}</b><small>já somados no preço médio</small></div></div>
+    <div id="ntList">${n.trades.map(rowHtml).join('')}</div>
+    <div class="help">Cada <b>compra</b> vira um aporte na conta do tipo do ativo e entra na sua Carteira. Cada <b>venda</b> só reduz a posição: ela não vira receita. Confira o código e o tipo (ação, FII, ETF, BDR).</div>`;
+}
+function bindNote(s,body,foot){
+  const n=s.note;
+  const ready=()=>n.trades.length>0&&n.trades.every(t=>!tradeProblems(t).length);
+  foot.innerHTML='<button type="button" class="btn" id="ntCancel">Cancelar</button><button type="button" class="btn pri" id="ntGo">Importar nota</button>';
+  $('ntGo').disabled=!ready();
+  $('ntCancel').onclick=()=>Sheet.close();
+  body.onchange=e=>{
+    const el=e.target.closest('[data-nt-f]'),row=e.target.closest('[data-nt]');if(!el||!row)return;
+    const t=n.trades[+row.dataset.nt];
+    if(el.dataset.ntF==='ticker'){t.ticker=el.value.trim().toUpperCase();t.cls=classOfTicker(t.ticker,t.name);}
+    else t.cls=el.value;
+    Sheet.refresh();
+  };
+  $('ntGo').onclick=async()=>{
+    const buys=n.trades.filter(t=>t.side==='C');
+    const yes=await askConfirm({title:'Importar a nota?',ok:'Importar',
+      html:`<div>Data: <b>${formatDateBR(n.date)}</b><br>${buys.length} compra(s) viram aporte (<b>${f2(sumMoney(buys.map(tradeTotal)))}</b>)<br>${n.trades.length-buys.length} venda(s) só reduzem a posição</div><div class="mut mt-10">A mesma nota importada de novo não duplica nada.</div>`});
+    if(!yes)return;
+    const r=runCommand(()=>commitTrades(n.trades,{date:n.date}),{ok:r=>r.saved?`Nota importada: ${r.saved} negócio(s) ✅`:'Esta nota já tinha sido importada'});
+    if(r)Sheet.close();
+  };
+}
+
 // ---- src/domain/import-custody.js
 /**
  * domain/import-custody.js
@@ -4535,12 +4747,11 @@ function readImportFile(file,opts){
 const MONEY_RE='(\\d{1,3}(?:\\.\\d{3})*,\\d{2})';
 const CUSTODY_TOTAL_ROW=new RegExp('total geral\\s+'+MONEY_RE+'\\s+'+MONEY_RE+'\\s+'+MONEY_RE+'\\s+'+MONEY_RE);
 const CUSTODY_DATE_ROW=/custodia em:?\s*(\d{2}\/\d{2}\/\d{4})/;
-const plain=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const looksLikeCustody=text=>/extrato de custodia/.test(normalizeText(text));
 // -> null (not a custody statement) | {date, gross, ir, iof, net} | {error}
 function parseCustody(text){
   if(!looksLikeCustody(text))return null;
-  const n=plain(text).replace(/\s+/g,' '); // keeps digits and punctuation: amounts and dates are matched on it
+  const n=stripAccents(text).toLowerCase().replace(/\s+/g,' '); // keeps digits and punctuation: amounts and dates are matched on it
   const d=n.match(CUSTODY_DATE_ROW),t=n.match(CUSTODY_TOTAL_ROW);
   const date=d?parseBrDate(d[1]):null;
   if(!date)return {error:'Reconheci um extrato de custódia, mas não achei a data (“Custódia em”).'};
@@ -4632,6 +4843,12 @@ function beginCustody(custody,acc,file){
   importState.session={phase:'custody',custody,acc,file,drafts:[],read:{ok:true,drafts:[]},openId:null,busy:false,result:null};
   return importState.session;
 }
+// a brokerage note: trades to review (kept here, saved only after the user confirms)
+function beginNote(note,file){
+  importState.token++;
+  importState.session={phase:'note',note,file,drafts:[],read:{ok:true,drafts:[]},openId:null,busy:false,result:null};
+  return importState.session;
+}
 function endSession(){trace('sessão encerrada');importState.token++;importState.session=null;}
 const draftById=id=>importState.session&&importState.session.drafts.find(d=>d.id===id)||null;
 const NUMBER_FIELDS=['value'];
@@ -4669,6 +4886,68 @@ function keepUnsaved(items){
 }
 
 
+// ---- src/domain/brokerage-note.js
+/**
+ * domain/brokerage-note.js
+ * Responsibility: reads the text of a B3 brokerage note ("nota de negociação / corretagem") into trades:
+ * the trading day, each buy or sell (ticker, quantity, price), and the costs, which are shared among the
+ * trades in proportion to their value. Approximate on purpose: a line that does not look like a trade is
+ * ignored, and anything missing (like a ticker) is left empty for the user to fill in the review.
+ */
+
+
+
+
+const NUM='(\\d{1,3}(?:\\.\\d{3})*|\\d+)',PRICE='(\\d{1,3}(?:\\.\\d{3})*,\\d{2,4})',TOTAL='(\\d{1,3}(?:\\.\\d{3})*,\\d{2})';
+// "1-BOVESPA C VISTA PETR4 PN N2 100 38,20 3.820,00 D"
+const TRADE_ROW=new RegExp('(?:^|\\s)(?:1-)?BOVESPA\\s+([CV])\\s+(\\S+)\\s+(.+?)\\s+'+NUM+'\\s+'+PRICE+'\\s+'+TOTAL+'\\s*[DC]?\\s*$','i');
+const TICKER=/\b([A-Z]{4}\d{1,2})\b/;
+const FII_NAME=/\bFII\s+([A-Z]{4})\b/;
+const COST_LABELS=/(taxa de liquidacao|taxa de registro|emolumentos|taxa a\.?n\.?a|taxa de termo|corretagem|iss)\D{0,40}?(\d{1,3}(?:\.\d{3})*,\d{2})/gi;
+const COST_TOTAL=/total (?:custos|despesas)[^\d\n]{0,25}(\d{1,3}(?:\.\d{3})*,\d{2})/i;
+const looksLikeBrokerageNote=text=>{
+  const n=stripAccents(text).toLowerCase();
+  return /nota de (negociacao|corretagem)/.test(n)||(/bovespa/.test(n)&&/corretagem/.test(n)&&/liquidacao/.test(n));
+};
+function tickerOf(spec){
+  const m=spec.match(TICKER);if(m)return m[1];
+  const f=spec.match(FII_NAME);return f?f[1]+'11':'';
+}
+function costsOf(text){
+  const t=stripAccents(text),total=t.match(COST_TOTAL);
+  if(total)return parseAmount(total[1]);
+  return sumMoney([...t.matchAll(COST_LABELS)].map(m=>parseAmount(m[2])));
+}
+// shares the costs by value; the last trade takes the rounding rest so the sum is exact
+function shareCosts(trades,costs){
+  const base=sumMoney(trades.map(t=>t.gross));let left=costs;
+  trades.forEach((t,i)=>{const f=i===trades.length-1?left:roundMoney(base?costs*t.gross/base:0);t.fees=roundMoney(f);left=roundMoney(left-t.fees);});
+}
+// the label "Data pregão" is often followed by other header cells (note number, page) before the date:
+// look for the date after the label, then any date right after the title, then the first date of the text
+function noteDate(text){
+  const t=stripAccents(text),found=[/data\s+(?:do\s+)?(?:pregao|negociacao)\D{0,40}?(\d{2}\/\d{2}\/\d{4})/i,
+    /data\s+(?:do\s+)?(?:pregao|negociacao)[^\n]*\n[^\n]*?(\d{2}\/\d{2}\/\d{4})/i,/data\s+(?:do\s+)?(?:pregao|negociacao)[\s\S]{0,120}?(\d{2}\/\d{2}\/\d{4})/i,/(\d{2}\/\d{2}\/\d{4})/]
+    .map(r=>t.match(r)).find(Boolean);
+  return found?parseBrDate(found[1]):null;
+}
+// -> null (not a note) | {error} | {date, trades:[{side:'C'|'V', ticker, name, cls, qty, price, gross, fees}], costs}
+function parseBrokerageNote(text){
+  if(!looksLikeBrokerageNote(text))return null;
+  const date=noteDate(text);
+  if(!date)return {error:'Reconheci uma nota de corretagem, mas não achei a data do pregão.'};
+  const trades=[];
+  stripAccents(text).split('\n').forEach(line=>{
+    const m=line.trim().replace(/\s+/g,' ').match(TRADE_ROW);if(!m)return;
+    const spec=m[3].toUpperCase(),ticker=tickerOf(spec),qty=parseAmount(m[4].replace(/\./g,'')),price=parseAmount(m[5]),gross=parseAmount(m[6]);
+    if(!(qty>0)||!(price>0)||!(gross>0))return;
+    trades.push({side:m[1].toUpperCase(),ticker,name:spec,cls:classOfTicker(ticker,spec),qty,price,gross,fees:0});
+  });
+  if(!trades.length)return {error:'Reconheci uma nota de corretagem, mas não achei nenhuma linha de compra ou venda.'};
+  const costs=costsOf(text);shareCosts(trades,costs);
+  return {date,trades,costs};
+}
+
 // ---- src/ui/views/pdf-text.js
 /**
  * ui/views/pdf-text.js
@@ -4699,7 +4978,8 @@ async function loadPdfjs(){
 async function pdfText(file){
   let lib;
   try{lib=await loadPdfjs();}catch(e){throw new Error('Não consegui carregar o leitor de PDF. Use CSV ou OFX por enquanto.');}
-  const data=new Uint8Array(await file.arrayBuffer());
+  // pdf.js takes ownership of the bytes it is given: always hand it a copy, so the same file can be read again
+  const data=new Uint8Array((await file.arrayBuffer()).slice(0));
   let doc;
   try{doc=await lib.getDocument({data,isEvalSupported:false}).promise;}
   catch(e){throw new Error(e&&e.name==='PasswordException'?'Este PDF tem senha. Baixe uma versão sem senha ou exporte CSV/OFX.':'Não consegui abrir este PDF (arquivo corrompido ou protegido).');}
@@ -4727,6 +5007,7 @@ async function pdfText(file){
 
 
 
+
 const PDF_TIMEOUT_MS=45000,SAMPLE_LINES=30; // first lines of the PDF text, shown when it cannot be read, to help adjust the reader
 // a reader that never answers (old phone browser) must not leave the screen waiting forever
 const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('O leitor de PDF não respondeu neste aparelho. Use o CSV/OFX do banco ou abra o app no computador.')),ms))]);
@@ -4744,6 +5025,9 @@ async function loadImportFile(file,opts){
   try{text=tooBig?'':isPdf?await withTimeout(pdfText(file),PDF_TIMEOUT_MS):await fileText(file);}
   catch(e){return {error:isPdf&&e.message?e.message:'Não consegui ler o arquivo. Tente de novo ou exporte outro.'};}
   if(token!==importState.token)return {cancelled:true};
+  const note=parseBrokerageNote(text);
+  if(note&&note.error)return {error:note.error,sample:text.split('\n').slice(0,SAMPLE_LINES).join('\n')};
+  if(note)return {session:beginNote(note,{name:file.name,size:file.size})};
   const custody=isPdf?parseCustody(text):null;
   if(custody&&custody.error)return {error:custody.error};
   if(custody)return {session:beginCustody(custody,suggestAccount('nubank'),{name:file.name,size:file.size})};
@@ -5063,6 +5347,7 @@ function resultHtml(session){
 
 
 
+
 const pickHtml=(err,file)=>`<div class="imp-pick">
   <p class="help">Envie o extrato do banco ou a fatura do cartão. O app lê o arquivo, mostra o que encontrou e <b>só grava depois que você confirmar</b>.</p>
   <label class="imp-drop" id="impDrop" for="impFile">${file?`<b>📄 ${esc(file.name)}</b><span class="mut">${Math.max(1,Math.round(file.size/1024))} KB · toque em “Enviar” para ler, ou escolha outro arquivo</span>`:'<b>📥 Escolher arquivo</b><span class="mut">ou arraste o arquivo para cá (computador)</span>'}</label>
@@ -5099,6 +5384,7 @@ function importView(ctx){
       const s=importState.session;body.onclick=body.onchange=body.onkeydown=null;foot.innerHTML='';
       if(!s){body.innerHTML=pickHtml(pickError,picked);bindPick(body,choose);
         if(picked){foot.innerHTML='<button type="button" class="btn pri" id="impSend">Enviar e ler o arquivo</button>';$('impSend').onclick=()=>{$('impSend').disabled=true;takeFile(picked,redraw,opts);};}return {title:ctx==='invest'?'Importar investimentos':'Importar lançamentos',sub:SUPPORTED_TEXT+' · revisão antes de gravar'};}
+      if(s.phase==='note'){body.innerHTML=noteHtml(s);bindNote(s,body,foot);return {title:'Nota de corretagem',sub:'Revisão antes de gravar'};}
       if(s.phase==='custody'){body.innerHTML=custodyHtml(s);bindCustody(s,body,foot);return {title:'Atualizar saldo',sub:'Extrato de custódia · revisão antes de gravar'};}
       if(s.phase==='mapping'){
         body.innerHTML=mappingHtml(s.read);
