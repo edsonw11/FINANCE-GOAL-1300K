@@ -3,7 +3,8 @@
  * Responsibility: shows the transaction form inside the sheet, for a new record (button "+",
  * quick buttons on phones) or to edit one. The same form node is moved into the sheet and back,
  * so creating and editing use exactly the same fields, masks and validation. A new record can
- * come filled (prefill: cat, desc, value, date).
+ * come filled (prefill: cat, desc, value, date, fonte, acc) with a note saying where it came from
+ * (quick entry sentence, repeated record): the user still reviews and saves.
  */
 import { $ } from '../../core/dom.js';
 import { today } from '../../core/dates.js';
@@ -11,7 +12,7 @@ import { m2 } from '../../core/format.js';
 import { ui } from '../ui-state.js';
 import { Sheet } from '../components/sheet.js';
 import { clearFieldErrors } from '../components/field-error.js';
-import { endEdit, startEdit, updateSaveLabel } from './transaction-form.js';
+import { endEdit, startEdit, updateFormHelp, updateSaveLabel } from './transaction-form.js';
 export let formInSheet=false;
 function formView(o){
   return {static:true,
@@ -25,22 +26,27 @@ function formView(o){
         if(!$('fDate').value)$('fDate').value=today();
         if(o.prefill)applyPrefill(o.prefill);
         if(ui.type!=='fatura')setTimeout(()=>{if(formInSheet)$('fVal').focus();},250);}
+      showNote(o.note);
       updateSaveLabel();
       return {title:o.id!=null?'Editar lançamento':NEW_TITLE[ui.type]||'Novo lançamento',sub:o.id!=null?'':'Leva poucos segundos'};
     },
     leave(){
-      $('txForm').classList.remove('in-sheet');$('txFormHome').appendChild($('txForm'));formInSheet=false;
+      showNote('');$('txForm').classList.remove('in-sheet');$('txFormHome').appendChild($('txForm'));formInSheet=false;
       if(ui.editId!==null){endEdit();$('fVal').value='';$('fDesc').value='';}
       clearFieldErrors($('txForm'));
     }};
 }
-// fills a new record (e.g. "Lançar" a missing bill); the user still reviews and saves
+// fills a new record (e.g. "Lançar" a missing bill); only the fields that were given, the user still reviews and saves
 function applyPrefill(p){
-  if(p.cat!==undefined)$('fCat').value=p.cat;
+  if(p.cat)$('fCat').value=p.cat;
   if(p.desc!==undefined)$('fDesc').value=p.desc;
-  if(p.value!==undefined)$('fVal').value=m2(p.value);
+  if(p.value)$('fVal').value=m2(p.value);
   if(p.date)$('fDate').value=p.date;
+  if(p.fonte&&[...$('fFonte').options].some(o=>o.value===p.fonte))$('fFonte').value=p.fonte;
+  if(p.acc&&[...$('fAcc').options].some(o=>o.value===p.acc))$('fAcc').value=p.acc;
+  updateFormHelp();
 }
+function showNote(text){const n=$('fNote');n.hidden=!text;n.textContent=text||'';}
 export const NEW_TITLE={despesa:'Nova despesa',receita:'Nova receita',aporte:'Novo aporte',fatura:'Pagar fatura'};
 export function openTxForm(o){o=o||{};Sheet.depth()?Sheet.push(formView(o)):Sheet.open(formView(o));}
 // called after a successful save: back to where the user came from

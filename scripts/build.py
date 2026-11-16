@@ -18,6 +18,12 @@ assert r == 1, 'file-redirect block not found in index.html'
 html = re.sub(r'<link rel="stylesheet" href="([^"]+)">', inline_css, html)
 html, n = re.subn(r'<script type="module" src="([^"]+)"></script>', inline_module, html)
 assert n == 1, 'expected exactly one module entry in index.html'
+# pdf.js travels inside the page as inert text and is started from a blob (works from file:// too)
+def embed(id, name):
+    js = (root / 'vendor' / 'pdfjs' / name).read_text(encoding='utf-8')
+    assert '</script' not in js
+    return '<script type="text/plain" id="%s">\n%s</script>\n' % (id, js)
+html = html.replace('</body>', embed('pdfjsLib', 'pdf.min.mjs') + embed('pdfjsWorker', 'pdf.worker.min.mjs') + '</body>', 1)
 out = root / 'dist' / 'finance_goal_1300k.html'
 out.parent.mkdir(exist_ok=True)
 out.write_text(html, encoding='utf-8')

@@ -22,6 +22,11 @@
   const rows=()=>qa('#shBody .lst [data-tx]');
   const sheetTotal=()=>money(q('#shBody .bd-v').textContent);
   const rowsSum=()=>Math.round(rows().reduce((a,r)=>a+Math.abs(money(r.querySelector('.li-v').textContent)),0)*100)/100;
+  // headless Chrome runs with virtual time: timers alone can fire before a Worker (pdf.js) answers, so every poll also waits for a real (failing) image load
+  const realTick=()=>new Promise(r=>{const i=new Image();i.onload=i.onerror=()=>r();i.src='tick-'+Math.random()+'.png';});
+  const waitFor=async(f,what,max)=>{for(let i=0;i<(max||600);i++){if(f())return;await Promise.all([realTick(),new Promise(r=>setTimeout(r,5))]);}throw new Error('timeout: '+what);};
+  const stored=()=>JSON.parse(localStorage.getItem('metaapp.v2'));
+  const chooseFile=async(name,text)=>{const dt=new DataTransfer();dt.items.add(new File([text],name,{type:'text/plain'}));const i=$('impFile');i.files=dt.files;i.dispatchEvent(new Event('change'));if($('confirmDlg').open)$('cfOk').click();await waitFor(()=>$('impSend')&&$('impDrop').textContent.includes(name),'send button for '+name);need(/Enviar/.test($('impSend').textContent),'send label');$('impSend').click();};
   const openKpi=k=>{$('sheet').open&&$('shClose').click();q(`#kFlow [data-kpi=${k}]`).click();need($('sheet').open,'sheet closed');};
 
   await step('generate test data',()=>$('demoOn').click());
@@ -121,6 +126,75 @@
     need([...sel.options].some(o=>o.value==='Moradia'),'no Moradia option');sel.value='Moradia';sel.dispatchEvent(new Event('change'));
     const rows=qa('#txList [data-tx]');need(rows.length>0,'empty: month '+$('mLab2').textContent+' sel='+sel.value+' q='+$('qBox').value+' list='+$('txList').textContent.slice(0,200));need(/em Moradia/.test(q('#txList .li-sum').textContent),'summary');
     need(!rows.some(r=>/Mercado/.test(r.textContent)),'Mercado listed under Moradia');sel.value='';sel.dispatchEvent(new Event('change'));q('#t-lanc [data-mv="1"]').click();});
+  // quick entry by sentence: fills the normal form, saves only when the user taps save
+  await step('quick entry: sentence fills the form, nothing saved until Salvar',()=>{const n0=stored().tx.length;
+    $('qeText').value='gastei 12,34 na feira do bairro dia 3';$('qeForm').dispatchEvent(new Event('submit',{cancelable:true}));
+    need($('txForm').closest('#shBody'),'form not opened');need($('fVal').value==='R$ 12,34','value '+$('fVal').value);
+    need(/^Feira do bairro$/.test($('fDesc').value),'desc '+$('fDesc').value);need($('fDate').value.endsWith('-03'),'date '+$('fDate').value);
+    need(!$('fNote').hidden&&/Entendi: despesa/.test($('fNote').textContent)&&/categoria/.test($('fNote').textContent),'note: '+$('fNote').textContent);
+    need(stored().tx.length===n0,'saved before confirming');
+    $('fCat').value='Mercado';$('fSave').click();need(stored().tx.length===n0+1,'not saved after Salvar');need(!$('sheet').open,'sheet still open');});
+  await step('history suggestion: same description offers its category (never applied alone)',()=>{$('fab').click();$('fCat').value='';$('fDesc').value='Feira do bairro';$('fDesc').dispatchEvent(new Event('input',{bubbles:true}));
+    const b=q('#descSug [data-sug]');need(b&&/Mercado/.test(b.textContent),'no suggestion');need($('fCat').value==='','category applied without a tap');
+    b.click();need($('fCat').value==='Mercado','tap did not apply');need(!q('#descSug [data-sug]'),'suggestion still shown');$('shClose').click();});
+  await step('repeat a record: copy opens filled, original untouched',()=>{q('#bnav [data-t=lanc]').click();const m=stored().tx.find(t=>t.desc==='Feira do bairro');need(m,'record');
+    const open=()=>{$('qBox').value='Feira do bairro';$('qBox').dispatchEvent(new Event('input'));qa('#txList [data-tx]')[0].click();};open();
+    q('#shFoot [data-act=dup]').click();need($('txForm').closest('#shBody'),'form');need($('fVal').value==='R$ 12,34','value '+$('fVal').value);need(/Cópia de/.test($('fNote').textContent),'note');
+    need($('fDate').value===new Date().toLocaleDateString('sv'),'date should be today');$('fSave').click();
+    need(stored().tx.filter(t=>t.desc==='Feira do bairro').length===2,'copy not saved');need(stored().tx.find(t=>t.id===m.id).date===m.date,'original changed');
+    if($('sheet').open)$('shClose').click();$('qBox').value='';$('qBox').dispatchEvent(new Event('input'));});
+  // import: only CSV/OFX, preview first, edit, confirm, result, same file again does not duplicate
+  const csv=['Data;Descrição;Valor','02/09/2026;SALDO ANTERIOR;1.000,00','03/09/2026;PADARIA TESTE UM;-13,37','04/09/2026;EMPRESA TESTE SA SALARIO;4.321,09','05/09/2026;PAGAMENTO FATURA CARTAO;-900,00','06/09/2026;LOJA TESTE PARC 02/03;-77,77','07/09/2026;PADARIA TESTE UM;-13,37'].join('\n');
+  let n0=0;
+  await step('import: panel states the formats honestly and refuses PDF/photo',async()=>{q('#bnav [data-t=lanc]').click();$('impOpen').click();need($('sheet').open&&$('impDrop'),'panel');
+    need(/CSV/.test(q('.imp-formats').textContent)&&/OFX/.test(q('.imp-formats').textContent)&&/PDF digital/.test(q('.imp-formats').textContent)&&/Foto, PDF escaneado e Excel: ainda não/.test(q('.imp-formats').textContent),'formats');
+    await chooseFile('extrato.pdf','this is not a pdf');await waitFor(()=>!$('impErr').hidden,'pdf error',6000);need(/Não consegui abrir este PDF/.test($('impErr').textContent),'pdf msg: '+$('impErr').textContent);need($('confirmDlg').open&&/Não consegui importar/.test($('cfTitle').textContent)&&/extrato\.pdf/.test($('cfText').textContent),'error pop-up');
+    await chooseFile('foto.jpg','x');await waitFor(()=>/Ainda não leio foto/.test($('impErr').textContent),'photo error');});
+  await step('import: preview shows what was read and saves nothing',async()=>{n0=stored().tx.length;await chooseFile('extrato.csv',csv);await waitFor(()=>q('#impList .imp-row'),'review');
+    need(/nada foi gravado/i.test($('impSum').textContent),'no preview warning');need(qa('#impList .imp-row').length===5,'rows '+qa('#impList .imp-row').length);
+    need(!qa('#impList .imp-desc').some(e=>/SALDO/.test(e.textContent)),'balance listed as entry');
+    need(qa('#impList .imp-row.ign').length===1&&!q('#impList .imp-row.ign input').checked,'invoice payment should be unselected');
+    need(/Lidos/.test($('impSum').textContent)&&/R\$ 4\.321,09/.test($('impSum').textContent),'totals '+$('impSum').textContent.slice(0,200));
+    need(stored().tx.length===n0,'saved before confirming');});
+  await step('import: edit a row, remove one, select/deselect',()=>{const row=qa('#impList .imp-item')[0];row.querySelector('[data-imp-open]').click();
+    const ed=q('#impList .imp-edit');need(ed,'editor not opened');const f=ed.querySelector('[data-f=cat]');f.value='Restaurantes';f.dispatchEvent(new Event('change',{bubbles:true}));
+    need(/Restaurantes/.test(q('#impList .imp-row').textContent),'card not updated');q('#impList [data-imp-close]').click();need(!q('#impList .imp-edit'),'editor still open');
+    const dupRow=qa('#impList .imp-item')[4];dupRow.querySelector('[data-imp-open]').click();q('#impList [data-imp-del]').click();need(qa('#impList .imp-row').length===4,'row not removed from the import');
+    need(stored().tx.length===n0,'delete in review touched saved data');
+    q('[data-imp-all="0"]').click();need(/Selecionados: 0/.test($('impSum').textContent)&&$('impGo').disabled,'deselect all');q('[data-imp-all="1"]').click();
+    need(!q('#impList .imp-row.ign input').checked,'select all must not select non-importable rows');});
+  await step('import: confirm shows the totals, then the result per item',async()=>{need(!$('impGo').disabled,'button disabled');$('impGo').click();await tick();need($('confirmDlg').open,'no confirmation');
+    need(/R\$ 4\.321,09/.test($('cfText').textContent),'totals in confirmation: '+$('cfText').textContent);$('cfOk').click();await waitFor(()=>q('.imp-ok'),'result');
+    need(/3 lançamento/.test(q('.imp-ok').textContent),'result '+q('.imp-ok').textContent);const t=stored().tx;need(t.length===n0+3,'saved '+(t.length-n0));
+    need(t.some(x=>x.date==='2026-09-04'&&x.type==='receita'&&x.value===4321.09&&x.imp),'income with exact date/value/key');
+    need(!$('impFix'),'nothing failed, so no "fix" button');need(t.filter(x=>x.desc==='PADARIA TESTE UM').length===1,'padaria count');need(!t.some(x=>/FATURA|SALDO/.test(x.desc||'')),'ignored rows saved');});
+  await step('import: the same file again does not duplicate',async()=>{$('impDone').click();need(!$('sheet').open,'sheet open');n0=stored().tx.length;$('impOpen').click();await chooseFile('extrato.csv',csv);
+    await waitFor(()=>q('#impList .imp-row'),'review 2');need(/já foi importado/.test($('impSum').textContent),'file recognised? '+$('impSum').textContent.slice(0,300));
+    need(qa('#impList .imp-row.dup').length===3,'duplicates flagged: '+qa('#impList .imp-row.dup').length);need(qa('#impList .imp-row.dup input:checked').length===0,'duplicates should start unselected');
+    need(qa('#impList .imp-row input:checked').length===1&&/Importar 1 lançamento/.test($('impGo').textContent),'only the row the user dropped before is new: '+$('impGo').textContent);$('impCancel').click();need(!$('sheet').open,'cancel did not close');need(stored().tx.length===n0,'cancel changed data');});
+  await step('import: an old statement keeps its historical months',()=>{const t=stored().tx.filter(x=>x.imp);need(t.length===3&&t.every(x=>x.date.startsWith('2026-09')),'dates moved: '+t.map(x=>x.date));});
+  const b64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
+  const choosePdf=async(name,b64text)=>{const dt=new DataTransfer();dt.items.add(new File([b64(b64text)],name,{type:'application/pdf'}));const i=$('impFile');i.files=dt.files;i.dispatchEvent(new Event('change'));if($('confirmDlg').open)$('cfOk').click();await waitFor(()=>$('impSend')&&$('impDrop').textContent.includes(name),'send button for '+name);need(/Enviar/.test($('impSend').textContent),'send label');$('impSend').click();};
+  await step('import PDF: a digital statement spanning two months is split by date',async()=>{n0=stored().tx.length;$('impOpen').click();await choosePdf('extrato-teste.pdf',window.PDF_FIXTURE.bank);
+    await waitFor(()=>q('#impList .imp-row')||!$('impErr').hidden,'pdf review',6000);if(!q('#impList .imp-row'))throw new Error('pdf not read: '+$('impErr').textContent);
+    need(/PDF/.test($('impSum').textContent)&&/aproximada/.test($('impSum').textContent),'no approximate-reading notice');
+    need(qa('#impList .imp-row').length===4,'rows '+qa('#impList .imp-row').length+': '+qa('#impList .imp-desc').map(e=>e.textContent));
+    need(/set\/26, out\/26/.test($('impSum').textContent),'months '+$('impSum').textContent.slice(0,400));
+    need(stored().tx.length===n0,'saved before confirming');$('impGo').click();await tick();$('cfOk').click();await waitFor(()=>q('.imp-ok'),'pdf result');
+    const t=stored().tx.filter(x=>/MERCADO TESTE|SALARIO EMPRESA TESTE|LUZ TESTE|AMIGO TESTE/.test(x.desc||'')&&x.imp);
+    need(t.length===4,'saved '+t.length);
+    const by=d=>t.find(x=>x.desc.startsWith(d));
+    need(by('COMPRA MERCADO').date==='2026-09-03'&&by('COMPRA MERCADO').type==='despesa'&&by('COMPRA MERCADO').value===45.67,'mercado');
+    need(by('SALARIO').date==='2026-09-15'&&by('SALARIO').type==='receita'&&by('SALARIO').value===3210.98,'salario');
+    need(by('PAGAMENTO LUZ').date==='2026-10-05'&&by('PAGAMENTO LUZ').type==='despesa','luz in october');
+    need(by('PIX RECEBIDO').date==='2026-10-20'&&by('PIX RECEBIDO').type==='receita'&&by('PIX RECEBIDO').value===100,'pix in october');
+    $('impDone').click();});
+  await step('import PDF: card invoice (month names) becomes card expenses; payment is not imported',async()=>{n0=stored().tx.length;$('impOpen').click();await choosePdf('fatura-teste.pdf',window.PDF_FIXTURE.card);
+    await waitFor(()=>q('#impList .imp-row')||!$('impErr').hidden,'card pdf review',6000);if(!q('#impList .imp-row'))throw new Error('pdf not read: '+$('impErr').textContent);
+    need(/fatura do cartão/.test($('impSum').textContent),'kind');need(qa('#impList .imp-row').length===3&&qa('#impList .imp-row.ign').length===1,'rows');
+    $('impGo').click();await tick();$('cfOk').click();await waitFor(()=>q('.imp-ok'),'card result');
+    const t=stored().tx.slice(n0);need(t.length===2&&t.every(x=>x.fonte==='cartao'&&x.type==='despesa'),'card expenses: '+JSON.stringify(t.map(x=>[x.desc,x.fonte])));
+    need(t.some(x=>x.date==='2026-09-28'&&x.value===100)&&t.some(x=>x.date==='2026-10-05'&&x.value===50.5),'dates/values');$('impDone').click();});
   // goal + projection in one tab
   await step('goal tab includes the projection (no separate tab)',()=>{need(!q('#nav [data-t=proj]'),'proj tab still there');q('#nav [data-t=meta]').click();
     need($('projCard')&&$('t-meta').contains($('projCard')),'projection not in goal tab');need($('chProj').innerHTML.length>100,'projection chart empty');});
@@ -139,6 +213,12 @@
 
   await step('disable category',()=>{const c=q('[data-co]');need(c,'no toggle');c.checked=false;c.dispatchEvent(new Event('change'));c.checked=true;c.dispatchEvent(new Event('change'));});
   await step('tabs (top and bottom menu)',()=>{qa('#nav button').forEach(b=>b.click());q('#bnav [data-t=more]').click();need($('sheet').open,'more menu');q('[data-more=cfg]').click();need($('t-cfg').classList.contains('on'),'tab');});
+  await step('investments: import starts in investment mode (money in = aporte) and needs the destination account',async()=>{
+    if($('sheet').open)$('shClose').click();document.querySelector('[data-t=inv]').click();$('impOpenInv').click();need(/investimentos/i.test($('shTitle').textContent),'title '+$('shTitle').textContent);
+    await chooseFile('aportes.csv','Data;Descrição;Valor\n03/11/2026;APORTE TESOURO SELIC 2028;2.000,00\n04/11/2026;RENDIMENTO;35,10');
+    await waitFor(()=>q('#impList .imp-row'),'invest review');const rows=qa('#impList .imp-row');
+    need(/Aporte/.test(rows[0].textContent)&&/Tesouro Selic 2028/.test(rows[0].textContent),'first row: '+rows[0].textContent.slice(0,200));
+    need(rows[1].classList.contains('ign'),'yield should be ignored');$('shClose').click();});
   await step('remove test data',async()=>{$('demoOff').click();await confirmYes();need(!/lançamentos de teste/.test($('demoN').textContent),'still there');});
   document.documentElement.setAttribute('data-smoke',out.concat(errs).join(' | '));
 })();

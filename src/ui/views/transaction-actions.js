@@ -6,7 +6,7 @@
  */
 import { esc } from '../../core/dom.js';
 import { f2 } from '../../core/format.js';
-import { formatDateBR, mLabel, mOf } from '../../core/dates.js';
+import { formatDateBR, mLabel, mOf, today } from '../../core/dates.js';
 import { sumMoney } from '../../core/money.js';
 import { S } from '../../domain/store.js';
 import { accName } from '../../domain/accounts.js';
@@ -44,8 +44,10 @@ function txDetailView(id){
       <div class="dt-v li-v ${t.type}">${TX_SIGN[t.type]} ${f2(t.value)}</div><div class="dt-t">${esc(txTitle(t))}</div></div>
       <dl class="dl">${row('Data',formatDateBR(t.date)+' <span class="mut">('+new Date(t.date+'T12:00').toLocaleDateString('pt-BR',{weekday:'long'})+')</span>')}${extra}${row('Descrição',t.desc?esc(t.desc):'<span class="mut">sem descrição</span>')}
       ${sib.length?row('Repetição','🔁 Mais '+sib.length+' lançamento(s) igual(is) nos próximos meses'):''}${t.demo?row('Origem','🧪 Dado de teste'):''}</dl>`;
-    foot.innerHTML=`<button type="button" class="btn dng" data-act="del">${t.type==='fatura'?'Cancelar pagamento':'Excluir'}</button><button type="button" class="btn pri" data-act="edit">Editar</button>`;
+    foot.innerHTML=`<button type="button" class="btn dng" data-act="del">${t.type==='fatura'?'Cancelar pagamento':'Excluir'}</button>${t.type==='fatura'?'':'<button type="button" class="btn" data-act="dup">Repetir</button>'}<button type="button" class="btn pri" data-act="edit">Editar</button>`;
     foot.querySelector('[data-act=del]').onclick=()=>deleteTxFlow(t.id);
+    const dup=foot.querySelector('[data-act=dup]');
+    if(dup)dup.onclick=()=>openTxForm({type:t.type,prefill:{cat:t.cat,desc:t.desc,value:t.value,fonte:t.fonte,acc:t.acc,date:today()},note:'Cópia de “'+txTitle(t)+'”: ajuste a data e o valor e salve. O original não muda.'});
     foot.querySelector('[data-act=edit]').onclick=()=>openTxForm({id:t.id});
     return {title:t.type==='fatura'?'Pagamento de fatura':'Detalhes do lançamento',sub:mLabel(mOf(t.date))};
   }};

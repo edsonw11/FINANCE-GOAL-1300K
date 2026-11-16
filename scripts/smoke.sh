@@ -11,9 +11,9 @@ python3 -I - "$DIR" "$TMP" <<'PY'
 import sys
 d,t=sys.argv[1],sys.argv[2]
 h=open(d+'/index.html').read().replace('href="src/','href="../src/').replace('src="src/','src="../src/')
-open(d+'/tests/.smoke.html','w').write(h.replace('</body>','<script type="module" src="smoke.js"></script>\n</body>'))
+open(d+'/tests/.smoke.html','w').write(h.replace('</body>','<script src="fixtures/statement-pdf.js"></script><script type="module" src="smoke.js"></script>\n</body>'))
 b=open(d+'/dist/finance_goal_1300k.html').read()
-open(t+'/dist-smoke.html','w').write(b.replace('</body>','<script>\n'+open(d+'/tests/smoke.js').read()+'</script>\n</body>'))
+open(t+'/dist-smoke.html','w').write(b.replace('</body>','<script>\n'+open(d+'/tests/fixtures/statement-pdf.js').read()+'</script><script>\n'+open(d+'/tests/smoke.js').read()+'</script>\n</body>'))
 PY
 python3 -m http.server 8767 --bind 127.0.0.1 --directory "$DIR" >/dev/null 2>&1 & SRV=$!
 trap 'kill $SRV 2>/dev/null; rm -rf "$TMP" "$DIR/tests/.smoke.html"' EXIT
@@ -21,7 +21,7 @@ sleep 0.6
 FAILED=0
 run(){ # $1 label, $2 url, $3 profile dir
   local RES
-  RES="$("${CHROME:-google-chrome}" --headless=new --no-sandbox --disable-gpu --user-data-dir="$3" --window-size=1280,900 --virtual-time-budget=10000 \
+  RES="$("${CHROME:-google-chrome}" --headless=new --no-sandbox --disable-gpu --user-data-dir="$3" --window-size=1280,900 --virtual-time-budget=400000 \
     --dump-dom "$2" 2>/dev/null | python3 -I -c 'import sys,re,html;m=re.search(r"data-smoke=\"([^\"]*)\"",sys.stdin.read());print("data-smoke=\""+html.unescape(m.group(1)).replace("\n"," ")+"\"" if m else "")' || true)"
   echo "== $1"
   echo "$RES" | sed 's/ | /\n/g;s/data-smoke="//;s/"$//'

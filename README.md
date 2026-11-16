@@ -49,6 +49,16 @@ src/
     budgets.js        monthly budget per group: spent, remaining, ok / near (80%) / over, pace projection, alerts
     monthly-bills.js  recurring bills (once a month, stable value) and their status this month: paid / scheduled / missing
     transaction-filter.js transaction list filter (type, group, search) and its signed total
+    import-reader.js  file text -> drafts (picks CSV / OFX by content, size and format limits, duplicates marked)
+    import-csv.js     CSV cells, delimiter, column detection and mapping (date, description, value or in/out columns)
+    import-ofx.js     OFX (SGML and XML): transactions only, bank or card, calendar day as written
+    import-pdf.js     text of a digital PDF -> entries (date + amount lines), rebuilds lines from pdf.js pieces
+    import-classify.js balance lines, card bill payment, transfers, refunds, installments ("PARC 03/10"), fees, salary
+    import-draft.js   the draft model (not a transaction yet), sign conventions, keys, review totals
+    import-duplicates.js confirmed (same key / bank id) and possible (same value and day) duplicates
+    import-history.js category suggestion from what the user already entered
+    import-commit.js  the only place drafts become transactions (after confirmation); idempotent per row key
+    quick-entry.js    "gastei 85,90 no mercado hoje" -> fields (fixed rules, no AI)
     card-status.js    purchases, totals and status of one invoice
     invoice-payment.js payment plan (full / checked / partial), pay, classify the undetailed part
     transaction-builder.js validate and save a transaction (new, series, edit + future ones)
@@ -66,6 +76,7 @@ src/
 tests/                run-unit.js + unit/*.test.js (Node), smoke.js (end-to-end, DOM only), mobile-check.js, shot.js
 scripts/              build.py, serve.sh, serve-phone.sh, smoke.sh, mobile-check.sh, shot.sh
 tools/                module-graph.cjs (import graph, bundle for dist/)
+vendor/pdfjs/         pdf.js build used only to read PDF text (see its README.txt)
 dist/                 generated single file
 ```
 
@@ -117,6 +128,31 @@ values computed at runtime (bar widths, account colors), visibility uses the `hi
 `[hidden]{display:none!important}`) and CSS never selects on `[style*=...]`. `tests/unit/no-inline-styles.test.js`
 enforces it.
 
+**Import** (Lançamentos → "Importar extrato ou fatura"): reads **CSV, OFX and digital PDF** (text you can select; approximate, the review warns about it). Flow: choose or drop the file →
+(CSV: confirm the columns when they were not recognised) → **review** (preview totals, editable cards, select / remove /
+add, duplicates, items to double check) → explicit confirmation with totals → result per item. Nothing is saved before
+the confirmation. Rules worth knowing:
+- Balances and totals of a statement are dropped; card bill payment, transfers between own accounts and card refunds
+  are listed but **unselected** (the bill payment is already covered by the card purchases; record it in "Pagar fatura").
+- Pix/TED/transfer lines are flagged ("could be a transfer"); installments are flagged and the remaining ones are
+  created only if the user ticks it (as one series, like "Repetir").
+- A card file turns purchases into card expenses (`fonte: cartao`); they count in the month of the purchase date
+  and belong to the invoice computed by the existing card cycle, so an invoice already paid does not count twice.
+- Idempotent: every saved row keeps its key in `tx.imp` (bank id, or date + value + text + order) and the file hash is
+  logged in `S.imports`; importing the same or an overlapping file marks the rows as duplicates.
+- **PDF** (digital only): `ui/views/pdf-text.js` extracts the text with pdf.js (`vendor/pdfjs`, Apache-2.0, loaded only
+  when a PDF is chosen; in `dist/` it is embedded by `build.py` and started from a blob, so it works from `file://`);
+  `domain/import-pdf.js` turns lines that start with a date (`05/09/2026` or `05 NOV`) and contain an amount into entries.
+  Generic, no per-bank layout: unsigned values are deduced from words and flagged, a second amount on a line (balance)
+  is ignored and flagged. If a bank's PDF comes out wrong, prefer its CSV/OFX or send the layout to tune the parser.
+- **Not supported yet**: photos (camera/OCR), scanned PDFs (no text to read) and Excel. The screen says so. They need
+  an OCR/vision service, which this offline single-file app does not have.
+- No users or server exist here, so there is no per-user isolation to test: data stays in this browser.
+
+**Quick entry** (Lançamentos): a sentence fills the normal form with a note of what was understood and what is still
+missing (never invents a category, account or date). **Repetir** in a record's detail copies it into a new form,
+and typing a description offers the category used before (one tap, never applied alone).
+
 Every summary card has `data-kpi` and opens its records from `monthSummary()`, the same function that computes the card, so the items always add up to the total.
 
 ## SOLID: what is applied and what is missing
@@ -150,5 +186,13 @@ one unit test file per module + architecture rules as tests.
 ES modules (Nov 2026): classic scripts → `import/export` with the shared UI state in `ui/ui-state.js`; `dist/` is a
 bundle built from the import graph. Expense groups (Moradia, Saúde...) with drill-down into categories.
 
+Import of CSV/OFX with review, quick entry, repeat and history suggestions (Nov 2026).
+
 Budgets per group, monthly bills, group filter, Meta + Projeção in one tab, and every fixed inline style moved to CSS
 classes (Nov 2026; screenshots before/after identical at 1280 and 485 px).
+
+## Aporte na importação
+Na revisão, cada linha pode ser **Aporte** (escolhe-se o investimento de destino). Linhas de aplicação/RDB/CDB/Tesouro saindo do banco já vêm sugeridas como aporte; o investimento só é preenchido sozinho se o nome bater com uma única conta. Resgates, rendimentos, IR e IOF ficam como “Não importar”. O resumo de posição consolidada da corretora é um saldo (não tem aportes datados): atualize-o em Investimentos.
+
+## Extrato de custódia (corretora)
+Um PDF “Extrato de Custódia” é o saldo em uma data, não movimentações. O app o reconhece, mostra data, saldo bruto, IR, IOF e líquido, você escolhe a conta e ele grava um snapshot de saldo (`domain/import-custody.js`). Reimportar substitui o mesmo dia; nenhum aporte ou gasto é criado.

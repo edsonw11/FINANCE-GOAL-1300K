@@ -34,6 +34,15 @@
       D.querySelector('#shBody [data-tx]').click();await wait(20);check('tx detail');
       D.querySelector('#shFoot [data-act=edit]').click();await wait(30);check('tx edit form');D.getElementById('shClose').click();
       D.getElementById('fab').click();await wait(30);check('new form');D.getElementById('shClose').click();
+      // import: pick step, review with an open editor, result; quick entry field
+      D.getElementById('impOpen').click();await wait(30);check('import pick');
+      const dt=new W.DataTransfer();dt.items.add(new W.File(['Data;Descrição;Valor\n03/09/2026;PADARIA COM UM NOME BEM LONGO PARA TESTAR A QUEBRA DE LINHA NO CELULAR;-13,37\n04/09/2026;SALARIO;4.321,09\n05/09/2026;PAGAMENTO FATURA CARTAO;-900,00\n06/09/2026;LOJA PARC 02/03;-77,77\n'],'x.csv'));
+      const inp=D.getElementById('impFile');inp.files=dt.files;inp.dispatchEvent(new W.Event('change'));
+      for(let i=0;i<60&&!D.getElementById('impSend');i++)await wait(30);check('import file chosen');D.getElementById('impSend').click();
+      for(let i=0;i<60&&!D.querySelector('#impList .imp-row');i++)await wait(30);
+      check('import review');D.querySelector('#impList [data-imp-open]').click();await wait(30);check('import editor');
+      D.getElementById('shClose').click();await wait(20);
+      D.getElementById('qeText').value='gastei 85,90 no mercado hoje';D.getElementById('qeForm').dispatchEvent(new W.Event('submit',{cancelable:true}));await wait(30);check('quick entry form');D.getElementById('shClose').click();
       const touch=[...D.querySelectorAll('#bnav button,#fab,.mnav button')].filter(b=>b.offsetParent!==null||b.id==='fab').filter(b=>{const r=b.getBoundingClientRect();return r.width&&(r.width<43.5||r.height<43.5);});
       if(w<=430&&touch.length)bad.push('small targets: '+touch.map(b=>b.textContent.trim()||b.id).join(','));
     }catch(e){bad.push('ERR '+e.message);}

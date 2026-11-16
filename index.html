@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="src/styles/07-polish.css">
 <link rel="stylesheet" href="src/styles/08-components.css">
 <link rel="stylesheet" href="src/styles/08-screens.css">
+<link rel="stylesheet" href="src/styles/08-import.css">
 <link rel="stylesheet" href="src/styles/09-mobile.css">
 <link rel="stylesheet" href="src/styles/10-print.css">
 </head>
@@ -102,6 +103,15 @@
     <button type="button" class="btn qa des" data-new="despesa">➖ Nova despesa</button><button type="button" class="btn qa rec" data-new="receita">➕ Nova receita</button>
     <button type="button" class="btn qa fat" data-new="fatura">💳 Pagar fatura</button><button type="button" class="btn qa apo" data-new="aporte">🏦 Aporte</button>
   </div>
+  <div class="card smart-add" id="smartAdd">
+    <form class="qe" id="qeForm" autocomplete="off">
+      <label for="qeText">⚡ Lançamento rápido</label>
+      <div class="qe-row"><input id="qeText" placeholder="Ex.: gastei 85,90 no mercado hoje" enterkeyhint="go" aria-describedby="qeHelp"><button type="submit" class="btn pri" id="qeGo">Preencher</button></div>
+      <div class="help" id="qeHelp">Escreva como falaria: “recebi 5.000 de salário dia 5”, “paguei 230 de internet no cartão”. Você confere antes de salvar.</div>
+    </form>
+    <button type="button" class="btn imp-open" id="impOpen">📥 Importar extrato ou fatura (CSV, OFX)</button>
+    <input type="file" id="impFile" hidden>
+  </div>
   <div id="txFormHome"><h2>➕ Novo lançamento</h2>
   <div class="card" id="txForm">
     <div class="seg" id="typeSeg" role="radiogroup" aria-label="Tipo de lançamento">
@@ -110,13 +120,14 @@
       <label><input type="radio" name="tp" value="fatura"><span>💳 Pagar fatura</span></label>
       <label><input type="radio" name="tp" value="aporte"><span>🏦 Aporte (investir)</span></label>
     </div>
+    <div class="bd-note mt-14" id="fNote" hidden></div>
     <div class="formgrid mt-14" id="fGrid">
       <div class="f-val"><label for="fVal">Valor <span class="req" aria-hidden="true">*</span></label><input id="fVal" data-money placeholder="R$ 0,00" required aria-required="true"></div>
       <div><label for="fDate">Data <span class="req" aria-hidden="true">*</span></label><input type="date" id="fDate" required></div>
       <div id="wCat" class="f-wide"><label for="fCat">Categoria</label><input id="fCat" list="catList" placeholder="Escolha abaixo ou digite"><datalist id="catList"></datalist><div class="chips qchips" id="catChips"></div></div>
       <div id="wAcc" hidden><label for="fAcc">Investir em</label><select id="fAcc"></select></div>
       <div id="wFonte"><label for="fFonte" id="lFonte">Pago com</label><select id="fFonte"></select></div>
-      <div><label for="fDesc">Descrição <span class="opt">(opcional)</span></label><input id="fDesc" placeholder="Ex.: mercado, salário, aporte" enterkeyhint="done"></div>
+      <div><label for="fDesc">Descrição <span class="opt">(opcional)</span></label><input id="fDesc" placeholder="Ex.: mercado, salário, aporte" enterkeyhint="done"><div class="chips qchips" id="descSug" aria-live="polite"></div></div>
       <div><label for="fRep">Repetir</label><select id="fRep"><option value="1">Não repetir</option></select></div>
     </div>
     <div class="mt-14" id="wSplit">
@@ -157,6 +168,9 @@
   <h2>💼 Onde está meu dinheiro</h2>
   <div class="card"><div id="accList"></div>
     <div class="row mt-12"><div class="f mw-260"><label for="newAcc">Adicionar conta/investimento</label><input id="newAcc" placeholder="Ex.: XP CDB"></div><button class="btn" id="addAcc">Adicionar</button></div></div>
+  <h2>📥 Importar</h2>
+  <div class="card"><div class="help">Do extrato da corretora ou do banco. <b>Extrato de custódia (PDF)</b> atualiza o saldo. <b>Extrato de movimentações</b> (CSV, OFX ou PDF): o que entrou vira <b>aporte</b>; resgate, rendimento e IR são ignorados.</div>
+    <button type="button" class="btn imp-open" id="impOpenInv">📥 Importar saldo ou aportes</button></div>
   <h2>🔄 Atualizar saldos</h2>
   <div class="card">
     <div class="help mb12-only">Abra o app de cada banco e digite o <b>saldo líquido</b> de hoje (já sem IR). Os aportes que você lançou depois desta data entram sozinhos. Não digite aportes aqui.</div>

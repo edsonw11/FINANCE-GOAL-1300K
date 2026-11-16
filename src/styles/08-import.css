@@ -1,0 +1,63 @@
+/* Import panel, quick entry and history suggestion (mobile first; the sheet is a bottom sheet on phones) */
+.smart-add{margin:12px 0 14px;display:grid;gap:10px}
+.qe label{display:block;margin-bottom:6px;font-weight:700;color:var(--ink)}
+.qe-row{display:flex;gap:8px}.qe-row input{flex:1;min-width:0}.qe-row .btn{flex:none}
+.qe .help{margin:6px 0 0}
+.imp-open{width:100%;justify-content:center}
+#descSug{margin-top:6px}
+.chip.sug{border-style:dashed}
+/* step 1: choose the file */
+.imp-drop{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:26px 14px;margin:12px 0;border:2px dashed var(--line);border-radius:14px;cursor:pointer;color:var(--ink);font-size:16px}
+.imp-drop.over{border-color:var(--brand);background:var(--card)}
+.imp-drop.busy{opacity:.6;pointer-events:none}
+.imp-formats{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tag.ok{background:rgba(31,157,85,.12);color:var(--rec)}
+.tag.soon{background:rgba(120,120,120,.14);color:var(--ink2)}
+.imp-err{margin:10px 0}
+.imp-how{margin-top:10px;font-size:13.5px}.imp-how summary{cursor:pointer;color:var(--ink2)}
+/* step 2: review */
+.imp-banner{padding:10px 12px;border-radius:12px;background:rgba(240,160,40,.14);color:var(--ink);font-size:13.5px;margin-bottom:8px}
+.imp-file{margin:6px 0 10px;color:var(--ink2);font-size:13.5px;word-break:break-all}
+.imp-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.imp-tiles>div{border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.imp-tiles span{font-size:11.5px;color:var(--ink2)}.imp-tiles b{font-size:18px}.imp-tiles small{font-size:11px;color:var(--ink2);overflow-wrap:anywhere}
+.imp-tiles .warn{border-color:var(--warn)}
+.imp-pick-sum{font-size:13.5px;margin:8px 0}
+.imp-note{font-size:12.5px;color:var(--ink2);margin-top:4px;line-height:1.35}
+.imp-note.warn-n{color:var(--warn)}.imp-note.bad-n{color:var(--des);font-weight:600}
+.imp-note.dup-c{color:var(--ink2);font-weight:600}.imp-note.dup-p{color:var(--warn)}
+.imp-opts-d{margin:8px 0;border:1px solid var(--line);border-radius:12px;padding:8px 12px;font-size:13.5px}.imp-opts-d summary{cursor:pointer;color:var(--ink2)}
+.imp-opts input[type=checkbox],.imp-rest input[type=checkbox]{width:22px;height:22px;min-height:0;flex:none;margin:0}
+.imp-opts{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:10px 0}
+.imp-opts label{margin:0}.imp-opts select{width:auto;margin-left:6px}
+.imp-tools{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.imp-list{display:grid;gap:8px}
+.imp-item{border:1px solid var(--line);border-radius:14px;background:var(--card);overflow:hidden}
+.imp-row{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:start;padding:10px}
+.imp-row.ign{opacity:.7}.imp-row.dup{background:rgba(120,120,120,.07)}.imp-row.rev{box-shadow:inset 3px 0 0 var(--warn)}
+.imp-chk{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;margin:-6px 0 0 -6px;cursor:pointer}
+.imp-chk input{width:22px;height:22px;margin:0}
+.imp-main{min-width:0;cursor:pointer}
+.imp-top{display:flex;gap:8px;align-items:baseline}
+.imp-date{font-size:12.5px;color:var(--ink2);flex:none}
+.imp-desc{flex:1;min-width:0;font-weight:600;overflow-wrap:anywhere}
+.imp-val{flex:none;white-space:nowrap}
+.imp-meta{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px;font-size:12.5px;color:var(--ink2)}
+.imp-edit{border-top:1px solid var(--line);padding:12px;background:rgba(120,120,120,.05)}
+.imp-fields{grid-template-columns:1fr 1fr;gap:10px}
+.imp-rest{margin:10px 0 0;font-size:13px}
+.imp-raw{margin-top:10px;font-size:12px;color:var(--ink2);overflow-wrap:anywhere}.imp-raw code{font-size:11.5px}
+.imp-edit-foot{display:flex;justify-content:space-between;gap:8px;margin-top:12px}
+/* column mapping */
+.imp-prev{overflow:auto;border:1px solid var(--line);border-radius:10px;margin:8px 0}.imp-prev table{font-size:12px;width:100%}.imp-prev td{padding:4px 8px;white-space:nowrap}
+/* step 3: result */
+.imp-ok{font-size:18px;font-weight:700;margin:4px 0 6px}
+@media(min-width:721px){
+  .smart-add{grid-template-columns:2fr 1fr;align-items:end}
+  .imp-tiles{grid-template-columns:repeat(6,1fr)}
+  .imp-fields{grid-template-columns:repeat(3,1fr)}
+  .imp-fields .span-all{grid-column:span 2}
+}
+@media(max-width:380px){.imp-tiles{grid-template-columns:repeat(2,1fr)}.imp-fields{grid-template-columns:1fr}.imp-fields .span-all{grid-column:auto}}
+
+.imp-sample{max-height:40vh;overflow:auto;white-space:pre-wrap;word-break:break-word;font-size:11px;background:var(--bg,#f3f4f6);padding:8px;border-radius:8px;user-select:all}
