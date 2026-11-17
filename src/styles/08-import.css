@@ -92,3 +92,7 @@
 .tg-row.none .tg-gap{display:none}
 .imp-note.pair-n{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
 .imp-note.pair-n .btn{min-height:40px}
+
+.imp-own-hint{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--brand) 9%,var(--card));border:1px solid color-mix(in srgb,var(--brand) 35%,var(--line));font-size:14px}.imp-own-hint>div{flex:1 1 220px}
+.own-fix{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--warn) 12%,var(--card));font-size:14px}.own-fix>div{flex:1 1 220px}
+.own-fix-list{margin:8px 0 0;padding-left:18px;font-size:13.5px;max-height:220px;overflow:auto}

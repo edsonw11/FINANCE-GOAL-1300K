@@ -71,5 +71,17 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('import-pdf');
     [['2026-10-03','TED SALARIO EMPRESA X FULANO DE TAL',8000],['2026-10-06','DEBITO AUT. CONTA DE LUZ LUZ SA',-150.25],
      ['2026-10-06','DEBITO AUT. FATURA CARTAO',-700],['2026-10-06','REMUNERACAO APLICACAO AUTOMATICA',0.05]]);
   eq('value and balance in separate columns: no "two amounts" warning',st.entries.map(e=>e.flags),[[],[],[],[]]);
+  // ---- "Extrato de conta" layout (invented values): day heading with the weekday, description above the date
+  // line, the other party below it, the newest day first
+  const ec=pe(['EXTRATO DE CONTA','Período: 18/10/2026 a 16/11/2026','DETALHE DOS MOVIMENTOS','Data | Descrição | Valor | Saldo',
+    'Quarta, 11 de novembro','Debito aut. cta energia eletrica','11/11/2026 | -R$ 266,39 | R$ 2.553,73','Eletropaulo Metropoli',
+    'Sexta, 6 de novembro','06/11/2026 Remuneracao aplicacao automatica | R$ 2,67 | R$ 3.162,20','Pix enviado','06/11/2026 | -R$ 300,00 R$ 3.159,53','Fulano De Tal',
+    'Terça, 3 de novembro','Ted conta salario','03/11/2026 | R$ 1.000,00 R$ 3.459,53','Fulano de tal']);
+  eq('description above the date line, other party below, own text kept as is',ec.entries.map(e=>[e.date,e.desc,e.amount]),
+    [['2026-11-11','Debito aut. cta energia eletrica Eletropaulo Metropoli',-266.39],['2026-11-06','Remuneracao aplicacao automatica',2.67],
+     ['2026-11-06','Pix enviado Fulano De Tal',-300],['2026-11-03','Ted conta salario Fulano de tal',1000]]);
+  // ---- a page footer between two entries is not part of a description
+  const pf=pe(['Movimentação','05/10 PIX RECEBIDO | - | 10,00 | 20,00','Extrato_P F_A4_Inteligente - 27/11/2024','BALP_UY_M3SM.PIM -','Pagina: 2/4','06/10 PIX ENVIADO | - | 5,00- | 15,00']);
+  eq('page footer ignored',pf.entries.map(e=>e.desc),['PIX RECEBIDO','PIX ENVIADO']);
   eq('without width/size every piece is still a word (old behavior)',run(`linesFromItems(${J([{str:'A',x:1,y:1},{str:'B',x:2,y:1}])})`),['A B']);
   return res;};

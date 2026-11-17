@@ -19,6 +19,8 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('transfers');
   const m=d=>run(`mentionsOwnName(${J(d)},ownNames())`);
   eq('matches the name as banks print it',[m('PIX ENVIADO Maria Souza Lima'),m('PIX RECEBIDO MARIA S LIMA'),m('TED MARIA DE SOUZA LIMA'),m('Transferência para maria lima')],[true,true,true,true]);
   eq('does not match other people',[m('PIX ENVIADO Maria Oliveira'),m('PIX ENVIADO Joao Lima'),m('LIMA MARIA')],[false,false,false]);
+  eq('a last name cut by the bank still matches, only at the end and with 3+ letters',
+    [m('Pix enviado Maria Souza Lim'),m('Pix enviado Maria Souza Li'),m('Pix enviado Maria Souza Lim Comercio')],[true,false,false]);
   // ---- Santander: salary 30.000 in, then 3 Pix of 10.000 to my other banks
   read('santander.csv',['05/11/2026;TED CONTA SALARIO MARIA SOUZA LIMA;30.000,00',
     '06/11/2026;PIX ENVIADO Maria Souza Lima;-10.000,00','06/11/2026;PIX ENVIADO MARIA S LIMA;-10.000,00','06/11/2026;PIX ENVIADO Maria Lima;-10.000,00',
@@ -63,4 +65,26 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('transfers');
   eq('card: a shop with my name is still a purchase',run("R.drafts[0].type"),'despesa');
   eq('removing a name',[run("removeOwnName('Maria Souza Lima').name"),run('ownNames().length')],['Maria Souza Lima',0]);
   eq('"Apagar tudo" keeps the names (a preference, like the goal)',run("blankState({goal:1,rate:1,ownNames:['A B']}).ownNames"),['A B']);
+  // ---- the holder's name suggested from the salary line (domain/own-name-hint.js)
+  run("S.ownNames=[];");
+  const statement=['03/11/2026;TED CONTA SALARIO JOAO PEDRO ALVES;12.000,00','06/11/2026;PIX ENVIADO Joao Pedro Alves;-10.000,00',
+    '07/11/2026;Pix enviado Joao Pedro Alv;-500,00','08/11/2026;PIX ENVIADO Padaria;-20,00'];
+  read('s.csv',statement);
+  eq('salary name + Pix to that name: suggested with what would stop counting',run('ownNameHint(R.drafts)'),{name:'Joao Pedro Alves',count:2,total:10500});
+  eq('no salary line: nothing to suggest',(read('t.csv',statement.slice(1)),run('ownNameHint(R.drafts)')),null);
+  eq('salary but no other line with the name: nothing to suggest',(read('u.csv',[statement[0],statement[3]]),run('ownNameHint(R.drafts)')),null);
+  run("addOwnName('Joao Alves')");read('s.csv',statement);
+  eq('name already saved: no suggestion, and the Pix are transfers',[run('ownNameHint(R.drafts)'),run("R.drafts.map(d=>d.type)")],[null,['receita','transferencia','transferencia','despesa']]);
+  // ---- records saved before the name was known (domain/saved-transfers.js)
+  run(`S.ownNames=[];S.transfers=[];S.tx=[{id:901,type:'despesa',date:'2026-08-12',value:750,desc:'PIX ENVIADO Edson Batista da Silva',cat:'Outros',imp:'k1'},
+    {id:902,type:'receita',date:'2026-05-22',value:10000,desc:'TED RECEBIDA EDSON BATISTA DA SILVA',cat:'Outros',imp:'k2'},
+    {id:903,type:'receita',date:'2026-08-03',value:12377,desc:'TED CONTA SALARIO EDSON BATISTA DA SILVA',cat:'Salário',imp:'k3'},
+    {id:904,type:'despesa',date:'2026-08-13',value:50,desc:'PIX ENVIADO Edson Batista da Silva',cat:'Outros'},
+    {id:905,type:'despesa',date:'2026-08-14',value:80,desc:'PIX ENVIADO Padaria',cat:'Outros',imp:'k5'}]`);
+  eq('no name saved: nothing to fix',run('savedOwnTransfers().length'),0);
+  run("addOwnName('Edson Batista da Silva')");
+  eq('imported Pix/TED with my name, salary and hand-typed records left alone',run('savedOwnTransfers().map(t=>t.id)'),[901,902]);
+  eq('fix: moved to transfers with their direction',[run('convertSavedTransfers()'),run('S.tx.map(t=>t.id)'),run("S.transfers.map(t=>[t.dir,t.value])")],
+    [{count:2,total:10750},[903,904,905],[['out',750],['in',10000]]]);
+  ok('nothing left to fix',!!run('convertSavedTransfers()').error);
   return res;};

@@ -673,6 +673,10 @@ dialog.dlg-wide{width:min(580px,94vw)}
 .tg-row.none .tg-gap{display:none}
 .imp-note.pair-n{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
 .imp-note.pair-n .btn{min-height:40px}
+
+.imp-own-hint{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--brand) 9%,var(--card));border:1px solid color-mix(in srgb,var(--brand) 35%,var(--line));font-size:14px}.imp-own-hint>div{flex:1 1 220px}
+.own-fix{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--warn) 12%,var(--card));font-size:14px}.own-fix>div{flex:1 1 220px}
+.own-fix-list{margin:8px 0 0;padding-left:18px;font-size:13.5px;max-height:220px;overflow:auto}
 </style>
 <style>
 /* 09-mobile.css: phones and small tablets (mobile-first adjustments, 320 to 720 px) */
@@ -3293,6 +3297,10 @@ const OUT_WORDS=/\b(aplicacao|pagamento|compra|debito|enviad[oa]|saque|tarifa|bo
 // (summaries, automatic debits table, indexes) repeats or is not an entry: only the block is read.
 const BLOCK_START=/^(movimentacao|movimentacoes|lancamentos|extrato de movimentacao|movimentacao da conta)$/;
 const MAX_DESC_LINE=60,PROSE_LINE=70;
+// page footers and print codes that sit between entries ("Extrato_P F_A4_Inteligente", "...PIM -", "Pagina: 2/4")
+const PAGE_NOISE=/_|\.pim\b|^p\s?agina\b/i;
+// "Quarta, 11 de novembro": a day heading without numbers in the date position (the entries below carry their own date)
+const WEEKDAY_HEADING=/^(segunda|terca|quarta|quinta|sexta|sabado|domingo)(-feira)?\b/;
 const CARD_DOC=/fatura|fechamento|limite (total|disponivel)/;
 // only an invoice prints these; a bank statement may mention "fatura" (an automatic debit of the card bill)
 const CARD_STRONG=/\b(pagamento minimo|total (da|desta) fatura|valor (total )?da fatura|fechamento da fatura|limite (total|disponivel))\b/;
@@ -3343,17 +3351,29 @@ function pdfEntries(text,opts){
     const sd=splitDate(line,ref);
     if(sd){lastDate=sd.date;lastEntry=sd.rest&&add(sd.date,sd.rest,line,i)?found[found.length-1]:null;return;}
     if(lastDate&&hasAmount(line)){lastEntry=add(lastDate,line,line,i)?found[found.length-1]:null;return;}
-    if(lastEntry&&line.length<=MAX_DESC_LINE&&!/^(total|saldo)\b/.test(plainLine(line))){lastEntry.desc=(lastEntry.desc+' '+line.split(COLUMN_MARK).join(' ')).trim();lastEntry.raw+=' / '+line;}
+    if(lastEntry&&line.length<=MAX_DESC_LINE&&!PAGE_NOISE.test(line)&&!/^(total|saldo)\b/.test(plainLine(line))){lastEntry.desc=(lastEntry.desc+' '+line.split(COLUMN_MARK).join(' ')).trim();lastEntry.raw+=' / '+line;}
   };
+  // Some layouts print the description on the line above the date line and the other party on the line
+  // below ("Pix enviado" / "06/11/2026 | -R$ 30.000,00" / "Fulano"): a dated entry without its own text takes
+  // the lines kept since the last entry, and the next short line completes it.
+  let pending=[],completes=null;
+  const descLine=line=>!hasAmount(line)&&line.length<=MAX_DESC_LINE&&!line.includes(COLUMN_MARK.trim())&&!PAGE_NOISE.test(line);
   const readAll=(line,i)=>{
     const sd=splitDate(line,ref);
     if(sd){
       const heading=!sd.rest||/^(total|saldo)\b/i.test(normalizeText(sd.rest));
-      section=heading?sd.date:null;
-      if(sd.rest)add(sd.date,sd.rest,line,i);
+      section=heading?sd.date:null;completes=null;
+      if(sd.rest&&add(sd.date,sd.rest,line,i)){const e=found[found.length-1];
+        if(!e.desc&&pending.length){e.desc=pending.join(' ');e.raw=pending.join(' / ')+' / '+e.raw;}
+        if(!sd.rest.slice(0,sd.rest.search(/\d/)).replace(/[\s|R$-]/g,''))completes=e;}
+      pending=[];
       return;
     }
-    if(section&&!/^(total|saldo)\b/i.test(normalizeText(line)))add(section,line,line,i);
+    if(WEEKDAY_HEADING.test(plainLine(line))){pending=[];completes=null;return;}
+    if(completes&&descLine(line)){completes.desc=(completes.desc+' '+line).trim();completes.raw+=' / '+line;completes=null;return;}
+    completes=null;
+    if(section&&!/^(total|saldo)\b/i.test(normalizeText(line))){if(add(section,line,line,i))return;}
+    if(descLine(line))pending=pending.slice(-1).concat(line);
   };
   if(blocks)lines.forEach(readBlock);
   if(!found.length)lines.forEach(readAll); // no block, or a block this reader did not understand: read every line
@@ -3400,13 +3420,16 @@ function removeOwnName(name){
   S.ownNames=ownNames().filter(x=>x!==name);
   return before===S.ownNames.length?{error:'Nome não encontrado'}:{name};
 }
-// the first and the last word of one of the names appear in this order, at most a few words apart
+const MIN_CUT=3; // banks cut long names ("Edson Batista Da Silv"): a cut last name keeps at least this many letters
+// the first and the last word of one of the names appear in this order, at most a few words apart; the last
+// name may be cut when it is the last word of the text
 function mentionsOwnName(desc,names){
-  const words=normalizeText(desc).split(' ');
+  const words=normalizeText(desc).split(' '),end=words.length-1;
+  const isLast=(x,j,last)=>x===last||(j===end&&x.length>=MIN_CUT&&x.length<last.length&&last.startsWith(x));
   return (names||[]).some(name=>{
     const w=nameWords(name);if(w.length<2)return false;
     const first=w[0],last=w[w.length-1];
-    return words.some((x,i)=>x===first&&words.slice(i+1,i+2+MAX_WORDS_BETWEEN).includes(last));
+    return words.some((x,i)=>x===first&&words.slice(i+1,i+2+MAX_WORDS_BETWEEN).some((y,k)=>isLast(y,i+1+k,last)));
   });
 }
 
@@ -3447,7 +3470,7 @@ const MAYBE_TRANSFER=/\b(pix|ted|doc|transferencia|transf)\b/;
 const looksLikeTransfer=desc=>MAYBE_TRANSFER.test(normalizeText(desc));
 const REFUND=/\b(estorno|reembolso|devolucao|cancelamento)\b/;
 const FEES=/\b(tarifa|juros|iof|anuidade|multa|encargos|mora)\b/;
-const SALARY=/\b(salario|folha de pagamento|folha pgto|proventos|vencimentos|pagto salario)\b/;
+const SALARY_WORDS=/\b(salario|folha de pagamento|folha pgto|proventos|vencimentos|pagto salario)\b/;
 const isBalanceLine=desc=>BALANCE.test(normalizeText(desc));
 // "PARC 03/10", "parcela 3 de 10" (sure) or a bare "03/10" at the end (unsure). Returns {n, of, sure} or null
 function parseInstallment(desc){
@@ -3476,13 +3499,13 @@ function classifyEntry(entry,flow,kind,ctx){
   if(OWN_TRANSFER.test(n)||(flow==='in'&&(REDEMPTION.test(n)||(INVEST_WORDS.test(n)&&kind==='bank')))){r.type=IMPORT_TYPE.ignore;r.reason=IGNORE_REASON.transfer;return r;}
   if(flow==='out'&&kind==='bank'&&INVEST_WORDS.test(n)){r.type=IMPORT_TYPE.contribution;r.flags.push('check-aporte');return r;}
   // a salary credited in the user's name is still income ("TED CONTA SALARIO MARIA SOUZA")
-  if(kind==='bank'&&!SALARY.test(n)&&mentionsOwnName(entry.desc,(ctx||{}).ownNames)){r.type=IMPORT_TYPE.ownTransfer;return r;}
+  if(kind==='bank'&&!SALARY_WORDS.test(n)&&mentionsOwnName(entry.desc,(ctx||{}).ownNames)){r.type=IMPORT_TYPE.ownTransfer;return r;}
   if(kind==='card'&&flow==='in'){r.type=IMPORT_TYPE.ignore;r.reason=IGNORE_REASON.refund;return r;}
   if(REFUND.test(n)&&flow==='in'){r.type=IMPORT_TYPE.ignore;r.reason=IGNORE_REASON.refund;return r;}
   if(MAYBE_TRANSFER.test(n)&&kind==='bank')r.flags.push('maybe-transfer');
   if(r.installment&&!r.installment.sure)r.flags.push('installment-unsure');
   if(r.type===IMPORT_TYPE.expense&&FEES.test(n))r.cat='Tarifas bancárias e juros';
-  if(r.type===IMPORT_TYPE.income&&SALARY.test(n))r.cat='Salário';
+  if(r.type===IMPORT_TYPE.income&&SALARY_WORDS.test(n))r.cat='Salário';
   return r;
 }
 
@@ -4017,17 +4040,31 @@ function saveSnapshots(date,rows){
 const MONEY_RE='(\\d{1,3}(?:\\.\\d{3})*,\\d{2})';
 const CUSTODY_TOTAL_ROW=new RegExp('total geral\\s+'+MONEY_RE+'\\s+'+MONEY_RE+'\\s+'+MONEY_RE+'\\s+'+MONEY_RE);
 const CUSTODY_DATE_ROW=/custodia em:?\s*(\d{2}\/\d{2}\/\d{4})/;
+// who issued the statement (by the names printed on it) and the first kind of investment of the summary,
+// to suggest the account name ("Nubank Caixinhas") when the user has no account for it yet
+const BROKERS=[[/\bnu investimentos\b|\bnubank\b|\bnu pagamentos\b/,'Nubank'],[/\bxp investimentos\b/,'XP'],[/\bbanco inter\b|\binter dtvm\b/,'Inter'],
+  [/\bbtg pactual\b/,'BTG'],[/\brico\b/,'Rico'],[/\bclear corretora\b/,'Clear'],[/\bitau\b/,'Itaú'],[/\bbradesco\b/,'Bradesco'],[/\bsantander\b/,'Santander']];
+const FIRST_KIND=/saldo liquido \(r\$\)\s+([a-z][a-z ]{2,30}?)\s+\d/;
+const DEFAULT_NAME='Investimentos';
+const capital=w=>w.charAt(0).toUpperCase()+w.slice(1);
+function custodyAccountName(n){
+  const b=BROKERS.find(([re])=>re.test(n)),k=n.match(FIRST_KIND);
+  const kind=k&&!/^total\b/.test(k[1])?k[1].trim().split(' ').map(capital).join(' '):'';
+  return [b?b[1]:'',kind].filter(Boolean).join(' ')||DEFAULT_NAME;
+}
 const looksLikeCustody=text=>/extrato de custodia/.test(normalizeText(text));
-// -> null (not a custody statement) | {date, gross, ir, iof, net} | {error}
+// -> null (not a custody statement) | {date, gross, ir, iof, net, name (suggested account)} | {error}
 function parseCustody(text){
   if(!looksLikeCustody(text))return null;
-  const n=stripAccents(text).toLowerCase().replace(/\s+/g,' '); // keeps digits and punctuation: amounts and dates are matched on it
+  // keeps digits and punctuation (amounts and dates are matched on it); the column marks of the PDF reader
+  // (" | ") are only spacing here
+  const n=stripAccents(text).toLowerCase().replace(/\s*\|\s*/g,' ').replace(/\s+/g,' ');
   const d=n.match(CUSTODY_DATE_ROW),t=n.match(CUSTODY_TOTAL_ROW);
   const date=d?parseBrDate(d[1]):null;
   if(!date)return {error:'Reconheci um extrato de custódia, mas não achei a data (“Custódia em”).'};
   if(!t)return {error:'Reconheci um extrato de custódia, mas não achei a linha “Total geral” do resumo da posição.'};
   const [gross,ir,iof,net]=t.slice(1,5).map(parseAmount);
-  return {date,gross,ir,iof,net};
+  return {date,gross,ir,iof,net,name:custodyAccountName(n)};
 }
 // c: parsed custody, acc: account id -> {error} | {acc, date}
 function applyCustody(c,acc){
@@ -4037,6 +4074,11 @@ function applyCustody(c,acc){
   saveSnapshots(c.date,[{acc,value:roundMoney(c.net),gross:roundMoney(c.gross)}]);
   return {acc,date:c.date};
 }
+// command: creates the investment account (the user had none for it) and applies the statement to it
+function applyCustodyToNewAccount(c,name){
+  const a=addAccount(name);if(a.error)return a;
+  return applyCustody(c,a.id);
+}
 // what the app shows today for that account on that day, to compare before saving
 const currentBalance=(acc,date)=>balance(acc,date).v;
 
@@ -4044,8 +4086,9 @@ const currentBalance=(acc,date)=>balance(acc,date).v;
 /**
  * ui/views/import-custody-view.js
  * Responsibility: the screen shown when the file is a broker custody statement: the balance it reports,
- * the account to update and the comparison with what the app has today. Confirms, then applies it as a
- * balance snapshot through the domain command. No transaction is created.
+ * the account to update (or a new one, with the name suggested from the statement) and the comparison with
+ * what the app has today. Confirms, then applies it as a balance snapshot through the domain command.
+ * No transaction is created.
  */
 
 
@@ -4055,8 +4098,16 @@ const currentBalance=(acc,date)=>balance(acc,date).v;
 
 
 
+const NEW_ACCOUNT='__new';
+// no account picked yet: a new one is the natural choice when there is none that matches
+function startChoice(s){
+  if(s.acc===undefined||s.acc===null||s.acc==='')s.acc=active().length?'':NEW_ACCOUNT;
+  if(s.newName===undefined)s.newName=s.custody.name||'';
+}
+const isNew=s=>s.acc===NEW_ACCOUNT;
 function custodyHtml(s){
-  const c=s.custody,now=s.acc?currentBalance(s.acc,c.date):null;
+  startChoice(s);
+  const c=s.custody,now=s.acc&&!isNew(s)?currentBalance(s.acc,c.date):null;
   return `<div class="imp-banner">🔎 <b>Extrato de custódia:</b> é o saldo em ${formatDateBR(c.date)}, não uma lista de movimentações. Nenhum aporte ou gasto será criado.</div>
     <div class="imp-file"><b>${esc(s.file.name)}</b></div>
     <div class="imp-tiles">
@@ -4066,19 +4117,23 @@ function custodyHtml(s){
       <div><span>Saldo líquido</span><b class="rec">${f2(c.net)}</b></div>
     </div>
     <div class="formgrid"><div class="span-all"><label>Atualizar o saldo de</label>
-      <select id="cuAcc"><option value="">Escolha a conta…</option>${active().map(a=>`<option value="${a.id}"${s.acc===a.id?' selected':''}>${esc(a.name)}</option>`).join('')}</select></div></div>
+      <select id="cuAcc"><option value=""${!s.acc?' selected':''}>Escolha a conta…</option>${active().map(a=>`<option value="${a.id}"${s.acc===a.id?' selected':''}>${esc(a.name)}</option>`).join('')}<option value="${NEW_ACCOUNT}"${isNew(s)?' selected':''}>➕ Criar conta nova</option></select></div>
+      ${isNew(s)?`<div class="span-all"><label for="cuNew">Nome da conta nova</label><input id="cuNew" value="${esc(s.newName)}" placeholder="Ex.: Nubank Caixinhas"></div>`:''}</div>
+    ${!active().length?'<div class="help">Você ainda não tem conta de investimento: crie uma aqui e o saldo já entra nela.</div>':''}
     ${now!==null?`<div class="help">Hoje o app mostra <b>${f2(now)}</b> para ${esc(accName(s.acc))} nessa data. Depois: <b>${f2(c.net)}</b> (líquido).</div>`:''}`;
 }
 function bindCustody(s,body,foot){
   foot.innerHTML='<button type="button" class="btn" id="cuCancel">Cancelar</button><button type="button" class="btn pri" id="cuGo">Atualizar saldo</button>';
-  const go=$('cuGo');go.disabled=!s.acc;
+  const go=$('cuGo'),ready=()=>isNew(s)?!!s.newName.trim():!!s.acc;go.disabled=!ready();
   $('cuCancel').onclick=()=>Sheet.close();
   $('cuAcc').onchange=e=>{s.acc=e.target.value;Sheet.refresh();};
+  const nm=$('cuNew');if(nm)nm.oninput=()=>{s.newName=nm.value;go.disabled=!ready();};
   go.onclick=async()=>{
     const c=s.custody,yes=await askConfirm({title:'Atualizar saldo?',ok:'Atualizar',
-      html:`<div>${esc(accName(s.acc))} em <b>${formatDateBR(c.date)}</b><br>Saldo líquido: <b>${f2(c.net)}</b><br>Saldo bruto: <b>${f2(c.gross)}</b></div><div class="mut mt-10">Se já existir um saldo dessa conta nesse dia, ele é substituído. Lançamentos não são alterados.</div>`});
+      html:`<div>${isNew(s)?'Conta nova <b>'+esc(s.newName.trim())+'</b>':esc(accName(s.acc))} em <b>${formatDateBR(c.date)}</b><br>Saldo líquido: <b>${f2(c.net)}</b><br>Saldo bruto: <b>${f2(c.gross)}</b></div><div class="mut mt-10">Se já existir um saldo dessa conta nesse dia, ele é substituído. Lançamentos não são alterados.</div>`});
     if(!yes)return;
-    const r=runCommand(()=>applyCustody(c,s.acc),{ok:'Saldo atualizado ✅'});
+    const r=isNew(s)?runCommand(()=>applyCustodyToNewAccount(c,s.newName),{ok:'Conta criada e saldo atualizado ✅'})
+      :runCommand(()=>applyCustody(c,s.acc),{ok:'Saldo atualizado ✅'});
     if(r)Sheet.close();
   };
 }
@@ -4101,6 +4156,8 @@ const saved=()=>{try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e
 const importState={session:null,token:0,trace:saved()};
 // short log of the steps, shown under "Detalhes técnicos" so a problem on a phone can be reported precisely
 const trace=msg=>{importState.trace.push(new Date().toTimeString().slice(0,8)+' '+msg);importState.trace=importState.trace.slice(-12);try{sessionStorage.setItem(KEY,JSON.stringify(importState.trace));}catch(e){/* private mode */}};
+// "Apagar tudo" also forgets the log (it names the files that were read)
+function clearTrace(){importState.trace=[];try{sessionStorage.removeItem(KEY);}catch(e){/* private mode */}}
 // read: result of readImportFile (ok or needsMapping). opts: the options used to read it
 function beginSession(read,opts){
   importState.token++;
@@ -4301,7 +4358,7 @@ async function loadImportFile(file,opts){
   if(note)return {session:beginNote(note,{name:file.name,size:file.size})};
   const custody=isPdf?parseCustody(text):null;
   if(custody&&custody.error)return {error:custody.error};
-  if(custody)return {session:beginCustody(custody,suggestAccount('nubank'),{name:file.name,size:file.size})};
+  if(custody)return {session:beginCustody(custody,suggestAccount(custody.name||''),{name:file.name,size:file.size})};
   const info={name:file.name,size:file.size,text};
   const kind=opts&&opts.kind||'auto';
   const read=readImportFile(info,{today:today(),kind});
@@ -4444,6 +4501,31 @@ function rowEditor(d,catNames){
   </div>`;
 }
 
+// ---- src/domain/own-name-hint.js
+/**
+ * domain/own-name-hint.js
+ * Responsibility: while reviewing a bank statement, finds the account holder's name when the user did
+ * not tell it yet: a salary is paid to the holder ("TED CONTA SALARIO MARIA SOUZA LIMA"). If that name
+ * also appears in other lines (Pix to yourself), the review can offer to save it, so those lines become
+ * transfers between your own accounts instead of expenses and income.
+ */
+
+
+
+const SALARY_TO=/\bconta salario\s+([a-z ]+)$/;
+const MIN_WORDS=2;
+const titleCase=s=>s.split(' ').map(w=>w.length<=3&&/^(da|de|do|das|dos|e)$/.test(w)?w:w[0].toUpperCase()+w.slice(1)).join(' ');
+const HINT_TYPES=new Set(['despesa','receita']);
+// drafts of one statement -> null | {name, count, total} (lines that would stop counting as income/expense)
+function ownNameHint(drafts){
+  let name=null,salaryDesc='';
+  drafts.some(d=>{const m=normalizeText(d.desc).match(SALARY_TO);
+    if(m&&m[1].trim().split(' ').length>=MIN_WORDS){name=titleCase(m[1].trim());salaryDesc=d.desc;return true;}return false;});
+  if(!name||mentionsOwnName(salaryDesc,ownNames()))return null;
+  const hits=drafts.filter(d=>HINT_TYPES.has(d.type)&&d.desc!==salaryDesc&&!SALARY_TO.test(normalizeText(d.desc))&&mentionsOwnName(d.desc,[name]));
+  return hits.length?{name,count:hits.length,total:roundMoney(hits.reduce((a,d)=>a+d.value,0))}:null;
+}
+
 // ---- src/ui/views/import-review.js
 /**
  * ui/views/import-review.js
@@ -4451,6 +4533,9 @@ function rowEditor(d,catNames){
  * options of the file, the list of draft cards with their inline editor, and the events that edit,
  * select, remove or add drafts. Updates only the parts that changed so what the user typed stays.
  */
+
+
+
 
 
 
@@ -4485,7 +4570,14 @@ function summaryHtml(s){
       <div class="${dup?'warn':''}"><span>Duplicados</span><b>${dup}</b>${dup?`<small>${ov.confirmedDup} certos · ${ov.possibleDup} possíveis</small>`:''}</div>
     </div>
     <div class="imp-pick-sum">Selecionados: <b>${sel.count}</b>${sel.count?` · receitas ${f2(sel.income)} · despesas ${f2(sel.expense)} · ${sel.months.map(m=>esc(mShort(m))).join(', ')}`:''}</div>
-    ${notes.map(n=>`<div class="imp-note">ℹ️ ${esc(n)}</div>`).join('')}`;
+    ${ownHintHtml(s)}${notes.map(n=>`<div class="imp-note">ℹ️ ${esc(n)}</div>`).join('')}`;
+}
+// "is this you?": the name that receives the salary also sends/receives Pix in this statement
+function ownHintHtml(s){
+  if(s.read.kind!=='bank')return '';
+  const h=ownNameHint(s.drafts);if(!h)return '';
+  return `<div class="imp-own-hint"><div>💡 <b>${esc(h.name)}</b> recebe o salário e aparece em mais <b>${h.count}</b> linha(s) (${f2(h.total)}). Se é você, isso é dinheiro mudando de banco: não é gasto nem receita.</div>
+    <button type="button" class="btn sm pri" data-imp-own="${esc(h.name)}">Sim, sou eu</button></div>`;
 }
 const optionsHtml=s=>`<details class="imp-opts-d"><summary>Opções do arquivo: extrato ou fatura, sinais, colunas</summary><div class="imp-opts">
   <label>Este arquivo é<select id="impKind"><option value="bank"${s.opts.kind!=='card'?' selected':''}>Extrato da conta</option><option value="card"${s.opts.kind==='card'?' selected':''}>Fatura do cartão</option></select></label>
@@ -4526,7 +4618,10 @@ function bindReview(body,ctx){
     const all=t.closest('[data-imp-all]');
     if(all){setAllSelected(all.dataset.impAll==='1');s.drafts.forEach(d=>redrawCard(d.id));refreshSummary();return;}
     if(t.closest('[data-imp-add]')){const d=addManualDraft();$('impList').insertAdjacentHTML('afterbegin',itemHtml(s,d));openEditorTools(item(d.id));refreshSummary();return;}
-    if(t.closest('[data-imp-cols]')){s.phase='mapping';ctx.redraw();}
+    if(t.closest('[data-imp-cols]')){s.phase='mapping';ctx.redraw();return;}
+    // saves the holder's name (also in Ajustes) and reads the file again, so those lines become transfers
+    const own=t.closest('[data-imp-own]');
+    if(own&&runCommand(()=>addOwnName(own.dataset.impOwn),{ok:'✅ Nome salvo em Ajustes: Pix para você não conta como gasto',render:false})){rereadSession({});ctx.redraw();}
   };
   body.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.imp-main')){e.preventDefault();e.target.click();}};
   body.onchange=e=>{
@@ -6125,12 +6220,43 @@ function bindSettings(){
 $('printBtn').onclick=()=>window.print();
 }
 
+// ---- src/domain/saved-transfers.js
+/**
+ * domain/saved-transfers.js
+ * Responsibility: imported records saved before the user told their name: a Pix/TED to or from
+ * yourself that was saved as an expense or income. Finds them (salary excluded) and moves them to
+ * the transfers, so they stop counting in the month totals. Only imported records are touched.
+ */
+
+
+
+
+
+
+const FIXABLE_TYPES=new Set(['despesa','receita']);
+function savedOwnTransfers(){
+  const names=ownNames();if(!names.length)return [];
+  return S.tx.filter(t=>t.imp&&FIXABLE_TYPES.has(t.type)&&!SALARY_WORDS.test(normalizeText(t.desc))&&mentionsOwnName(t.desc,names));
+}
+// command -> {count, total} | {error}
+function convertSavedTransfers(){
+  const list=savedOwnTransfers();if(!list.length)return {error:'Nenhum lançamento para corrigir'};
+  const total=roundMoney(list.reduce((a,t)=>a+t.value,0));
+  list.forEach(t=>recordToTransfer(t.id));
+  return {count:list.length,total};
+}
+
 // ---- src/ui/views/own-names-view.js
 /**
  * ui/views/own-names-view.js
  * Responsibility: the "Transferências entre suas contas" card in Settings: the user's names as banks
- * print them (add / remove) and how many transfers were kept. Changes go through domain commands.
+ * print them (add / remove), how many transfers were kept, and the records saved before the name was
+ * known that are really transfers ("Corrigir"). Changes go through domain commands.
  */
+
+
+
+
 
 
 
@@ -6141,14 +6267,29 @@ function renderOwnNames(){
   const names=ownNames(),n=transfers().length;
   el.innerHTML=(names.length?`<div class="chips own-chips">${names.map(x=>`<span class="chip own-chip">${esc(x)}<button type="button" class="chip-x" data-own-del="${esc(x)}" aria-label="Remover ${esc(x)}">×</button></span>`).join('')}</div>`
     :'<div class="help m0">Nenhum nome ainda: Pix e TED para você mesmo vêm como despesa e você precisa trocar na mão.</div>')+
-    (n?`<div class="help">🔁 ${n} transferência(s) entre suas contas guardada(s) pela importação (não contam como receita nem despesa).</div>`:'');
+    (n?`<div class="help">🔁 ${n} transferência(s) entre suas contas guardada(s) pela importação (não contam como receita nem despesa).</div>`:'')+
+    fixHtml(savedOwnTransfers());
+}
+// records imported before the name was saved: one line and one button to move them out of the totals
+function fixHtml(list){
+  if(!list.length)return '';
+  const out=list.filter(t=>t.type==='despesa'),inn=list.filter(t=>t.type==='receita'),sum=a=>f2(a.reduce((x,t)=>x+t.value,0));
+  return `<div class="own-fix"><div>⚠️ <b>${list.length}</b> lançamento(s) importado(s) antes parecem transferências suas: ${out.length?out.length+' despesa(s) de '+sum(out):''}${out.length&&inn.length?' e ':''}${inn.length?inn.length+' receita(s) de '+sum(inn):''}. Hoje eles contam nos totais do mês.</div>
+    <button type="button" class="btn sm pri" id="ownFix">Corrigir</button></div>`;
+}
+function askFix(){
+  const list=savedOwnTransfers();if(!list.length)return;
+  const lines=list.slice(0,8).map(t=>`<li>${formatDateBR(t.date)} · ${esc(t.desc)} · ${f2(t.value)}</li>`).join('')+(list.length>8?`<li>e mais ${list.length-8}…</li>`:'');
+  askConfirm({title:'Corrigir transferências',html:`Estes lançamentos viram <b>transferências entre suas contas</b> e deixam de contar como despesa ou receita:<ul class="own-fix-list">${lines}</ul>`,ok:'Corrigir '+list.length})
+    .then(r=>{if(r)runCommand(()=>convertSavedTransfers(),{ok:x=>`🔁 ${x.count} lançamento(s) viraram transferência (${f2(x.total)})`});});
 }
 function bindOwnNames(){
   const add=()=>{const i=$('ownNameIn');
     if(runCommand(()=>addOwnName(i.value),{ok:'✅ Nome salvo: Pix/TED com ele viram transferência na importação',onError:msg=>{if(msg)fieldError(i,msg);}}))i.value='';};
   $('ownNameAdd').onclick=add;
   $('ownNameIn').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();add();}};
-  $('ownNames').onclick=e=>{const b=e.target.closest('[data-own-del]');if(b)runCommand(()=>removeOwnName(b.dataset.ownDel),{ok:'Nome removido'});};
+  $('ownNames').onclick=e=>{if(e.target.closest('#ownFix'))return askFix();
+    const b=e.target.closest('[data-own-del]');if(b)runCommand(()=>removeOwnName(b.dataset.ownDel),{ok:'Nome removido'});};
 }
 
 // ---- src/domain/backup-reminder.js
@@ -6252,8 +6393,9 @@ function runCommand(fn,o){
 /**
  * ui/views/advanced-data.js
  * Responsibility: Settings → Data → Advanced: the actions that can lose data. Restore the automatic copy of the day
- * before, and erase everything. Both ask for confirmation and say exactly what will happen.
+ * before, and erase everything (also the import log of this session). Both ask for confirmation and say exactly what will happen.
  */
+
 
 
 
@@ -6271,7 +6413,7 @@ function bindAdvanced(){
   };
   $('reset').onclick=async()=>{
     if(!await askConfirm({title:'Apagar tudo',html:'Apagar <b>todos</b> os lançamentos, contas de investimento, carteira, saldos e importações? Fica só a meta e a taxa.<div class="bd-note mt-10">Não dá para desfazer. Exporte um backup antes, se quiser guardar.</div>',ok:'Apagar tudo',danger:true}))return;
-    runCommand(()=>replaceState(blankState(S)),{ok:'Tudo apagado: lançamentos, investimentos, carteira e saldos'});
+    if(runCommand(()=>{replaceState(blankState(S));return {erased:true};},{ok:'Tudo apagado: lançamentos, investimentos, carteira e saldos'}))clearTrace();
   };
 }
 

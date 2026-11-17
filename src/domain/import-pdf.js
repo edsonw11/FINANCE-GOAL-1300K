@@ -51,6 +51,10 @@ const OUT_WORDS=/\b(aplicacao|pagamento|compra|debito|enviad[oa]|saque|tarifa|bo
 // (summaries, automatic debits table, indexes) repeats or is not an entry: only the block is read.
 const BLOCK_START=/^(movimentacao|movimentacoes|lancamentos|extrato de movimentacao|movimentacao da conta)$/;
 const MAX_DESC_LINE=60,PROSE_LINE=70;
+// page footers and print codes that sit between entries ("Extrato_P F_A4_Inteligente", "...PIM -", "Pagina: 2/4")
+const PAGE_NOISE=/_|\.pim\b|^p\s?agina\b/i;
+// "Quarta, 11 de novembro": a day heading without numbers in the date position (the entries below carry their own date)
+const WEEKDAY_HEADING=/^(segunda|terca|quarta|quinta|sexta|sabado|domingo)(-feira)?\b/;
 const CARD_DOC=/fatura|fechamento|limite (total|disponivel)/;
 // only an invoice prints these; a bank statement may mention "fatura" (an automatic debit of the card bill)
 const CARD_STRONG=/\b(pagamento minimo|total (da|desta) fatura|valor (total )?da fatura|fechamento da fatura|limite (total|disponivel))\b/;
@@ -101,17 +105,29 @@ export function pdfEntries(text,opts){
     const sd=splitDate(line,ref);
     if(sd){lastDate=sd.date;lastEntry=sd.rest&&add(sd.date,sd.rest,line,i)?found[found.length-1]:null;return;}
     if(lastDate&&hasAmount(line)){lastEntry=add(lastDate,line,line,i)?found[found.length-1]:null;return;}
-    if(lastEntry&&line.length<=MAX_DESC_LINE&&!/^(total|saldo)\b/.test(plainLine(line))){lastEntry.desc=(lastEntry.desc+' '+line.split(COLUMN_MARK).join(' ')).trim();lastEntry.raw+=' / '+line;}
+    if(lastEntry&&line.length<=MAX_DESC_LINE&&!PAGE_NOISE.test(line)&&!/^(total|saldo)\b/.test(plainLine(line))){lastEntry.desc=(lastEntry.desc+' '+line.split(COLUMN_MARK).join(' ')).trim();lastEntry.raw+=' / '+line;}
   };
+  // Some layouts print the description on the line above the date line and the other party on the line
+  // below ("Pix enviado" / "06/11/2026 | -R$ 30.000,00" / "Fulano"): a dated entry without its own text takes
+  // the lines kept since the last entry, and the next short line completes it.
+  let pending=[],completes=null;
+  const descLine=line=>!hasAmount(line)&&line.length<=MAX_DESC_LINE&&!line.includes(COLUMN_MARK.trim())&&!PAGE_NOISE.test(line);
   const readAll=(line,i)=>{
     const sd=splitDate(line,ref);
     if(sd){
       const heading=!sd.rest||/^(total|saldo)\b/i.test(normalizeText(sd.rest));
-      section=heading?sd.date:null;
-      if(sd.rest)add(sd.date,sd.rest,line,i);
+      section=heading?sd.date:null;completes=null;
+      if(sd.rest&&add(sd.date,sd.rest,line,i)){const e=found[found.length-1];
+        if(!e.desc&&pending.length){e.desc=pending.join(' ');e.raw=pending.join(' / ')+' / '+e.raw;}
+        if(!sd.rest.slice(0,sd.rest.search(/\d/)).replace(/[\s|R$-]/g,''))completes=e;}
+      pending=[];
       return;
     }
-    if(section&&!/^(total|saldo)\b/i.test(normalizeText(line)))add(section,line,line,i);
+    if(WEEKDAY_HEADING.test(plainLine(line))){pending=[];completes=null;return;}
+    if(completes&&descLine(line)){completes.desc=(completes.desc+' '+line).trim();completes.raw+=' / '+line;completes=null;return;}
+    completes=null;
+    if(section&&!/^(total|saldo)\b/i.test(normalizeText(line))){if(add(section,line,line,i))return;}
+    if(descLine(line))pending=pending.slice(-1).concat(line);
   };
   if(blocks)lines.forEach(readBlock);
   if(!found.length)lines.forEach(readAll); // no block, or a block this reader did not understand: read every line

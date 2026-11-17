@@ -14,6 +14,9 @@ import { datePicker } from '../components/date-input.js';
 import { rereadSession } from './import-load.js';
 import { addManualDraft, draftById, importState, patchDraft, removeDraft, setAllSelected } from './import-session.js';
 import { rowCard, rowEditor } from './import-rows.js';
+import { ownNameHint } from '../../domain/own-name-hint.js';
+import { addOwnName } from '../../domain/own-names.js';
+import { runCommand } from '../components/command.js';
 const catNames=type=>((S.cats||{})[type]||[]).filter(c=>!c.off).map(c=>c.name);
 const catsFor=d=>catNames(d.type==='receita'?'receita':'despesa');
 export function summaryHtml(s){
@@ -38,7 +41,14 @@ export function summaryHtml(s){
       <div class="${dup?'warn':''}"><span>Duplicados</span><b>${dup}</b>${dup?`<small>${ov.confirmedDup} certos · ${ov.possibleDup} possíveis</small>`:''}</div>
     </div>
     <div class="imp-pick-sum">Selecionados: <b>${sel.count}</b>${sel.count?` · receitas ${f2(sel.income)} · despesas ${f2(sel.expense)} · ${sel.months.map(m=>esc(mShort(m))).join(', ')}`:''}</div>
-    ${notes.map(n=>`<div class="imp-note">ℹ️ ${esc(n)}</div>`).join('')}`;
+    ${ownHintHtml(s)}${notes.map(n=>`<div class="imp-note">ℹ️ ${esc(n)}</div>`).join('')}`;
+}
+// "is this you?": the name that receives the salary also sends/receives Pix in this statement
+function ownHintHtml(s){
+  if(s.read.kind!=='bank')return '';
+  const h=ownNameHint(s.drafts);if(!h)return '';
+  return `<div class="imp-own-hint"><div>💡 <b>${esc(h.name)}</b> recebe o salário e aparece em mais <b>${h.count}</b> linha(s) (${f2(h.total)}). Se é você, isso é dinheiro mudando de banco: não é gasto nem receita.</div>
+    <button type="button" class="btn sm pri" data-imp-own="${esc(h.name)}">Sim, sou eu</button></div>`;
 }
 const optionsHtml=s=>`<details class="imp-opts-d"><summary>Opções do arquivo: extrato ou fatura, sinais, colunas</summary><div class="imp-opts">
   <label>Este arquivo é<select id="impKind"><option value="bank"${s.opts.kind!=='card'?' selected':''}>Extrato da conta</option><option value="card"${s.opts.kind==='card'?' selected':''}>Fatura do cartão</option></select></label>
@@ -79,7 +89,10 @@ export function bindReview(body,ctx){
     const all=t.closest('[data-imp-all]');
     if(all){setAllSelected(all.dataset.impAll==='1');s.drafts.forEach(d=>redrawCard(d.id));refreshSummary();return;}
     if(t.closest('[data-imp-add]')){const d=addManualDraft();$('impList').insertAdjacentHTML('afterbegin',itemHtml(s,d));openEditorTools(item(d.id));refreshSummary();return;}
-    if(t.closest('[data-imp-cols]')){s.phase='mapping';ctx.redraw();}
+    if(t.closest('[data-imp-cols]')){s.phase='mapping';ctx.redraw();return;}
+    // saves the holder's name (also in Ajustes) and reads the file again, so those lines become transfers
+    const own=t.closest('[data-imp-own]');
+    if(own&&runCommand(()=>addOwnName(own.dataset.impOwn),{ok:'✅ Nome salvo em Ajustes: Pix para você não conta como gasto',render:false})){rereadSession({});ctx.redraw();}
   };
   body.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.imp-main')){e.preventDefault();e.target.click();}};
   body.onchange=e=>{

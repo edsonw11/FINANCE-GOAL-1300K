@@ -15,6 +15,8 @@ const saved=()=>{try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e
 export const importState={session:null,token:0,trace:saved()};
 // short log of the steps, shown under "Detalhes técnicos" so a problem on a phone can be reported precisely
 export const trace=msg=>{importState.trace.push(new Date().toTimeString().slice(0,8)+' '+msg);importState.trace=importState.trace.slice(-12);try{sessionStorage.setItem(KEY,JSON.stringify(importState.trace));}catch(e){/* private mode */}};
+// "Apagar tudo" also forgets the log (it names the files that were read)
+export function clearTrace(){importState.trace=[];try{sessionStorage.removeItem(KEY);}catch(e){/* private mode */}}
 // read: result of readImportFile (ok or needsMapping). opts: the options used to read it
 export function beginSession(read,opts){
   importState.token++;

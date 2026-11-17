@@ -22,12 +22,15 @@ export function removeOwnName(name){
   S.ownNames=ownNames().filter(x=>x!==name);
   return before===S.ownNames.length?{error:'Nome não encontrado'}:{name};
 }
-// the first and the last word of one of the names appear in this order, at most a few words apart
+const MIN_CUT=3; // banks cut long names ("Edson Batista Da Silv"): a cut last name keeps at least this many letters
+// the first and the last word of one of the names appear in this order, at most a few words apart; the last
+// name may be cut when it is the last word of the text
 export function mentionsOwnName(desc,names){
-  const words=normalizeText(desc).split(' ');
+  const words=normalizeText(desc).split(' '),end=words.length-1;
+  const isLast=(x,j,last)=>x===last||(j===end&&x.length>=MIN_CUT&&x.length<last.length&&last.startsWith(x));
   return (names||[]).some(name=>{
     const w=nameWords(name);if(w.length<2)return false;
     const first=w[0],last=w[w.length-1];
-    return words.some((x,i)=>x===first&&words.slice(i+1,i+2+MAX_WORDS_BETWEEN).includes(last));
+    return words.some((x,i)=>x===first&&words.slice(i+1,i+2+MAX_WORDS_BETWEEN).some((y,k)=>isLast(y,i+1+k,last)));
   });
 }

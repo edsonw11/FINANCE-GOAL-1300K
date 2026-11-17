@@ -34,7 +34,7 @@ const MAYBE_TRANSFER=/\b(pix|ted|doc|transferencia|transf)\b/;
 export const looksLikeTransfer=desc=>MAYBE_TRANSFER.test(normalizeText(desc));
 const REFUND=/\b(estorno|reembolso|devolucao|cancelamento)\b/;
 const FEES=/\b(tarifa|juros|iof|anuidade|multa|encargos|mora)\b/;
-const SALARY=/\b(salario|folha de pagamento|folha pgto|proventos|vencimentos|pagto salario)\b/;
+export const SALARY_WORDS=/\b(salario|folha de pagamento|folha pgto|proventos|vencimentos|pagto salario)\b/;
 export const isBalanceLine=desc=>BALANCE.test(normalizeText(desc));
 // "PARC 03/10", "parcela 3 de 10" (sure) or a bare "03/10" at the end (unsure). Returns {n, of, sure} or null
 export function parseInstallment(desc){
@@ -63,12 +63,12 @@ export function classifyEntry(entry,flow,kind,ctx){
   if(OWN_TRANSFER.test(n)||(flow==='in'&&(REDEMPTION.test(n)||(INVEST_WORDS.test(n)&&kind==='bank')))){r.type=IMPORT_TYPE.ignore;r.reason=IGNORE_REASON.transfer;return r;}
   if(flow==='out'&&kind==='bank'&&INVEST_WORDS.test(n)){r.type=IMPORT_TYPE.contribution;r.flags.push('check-aporte');return r;}
   // a salary credited in the user's name is still income ("TED CONTA SALARIO MARIA SOUZA")
-  if(kind==='bank'&&!SALARY.test(n)&&mentionsOwnName(entry.desc,(ctx||{}).ownNames)){r.type=IMPORT_TYPE.ownTransfer;return r;}
+  if(kind==='bank'&&!SALARY_WORDS.test(n)&&mentionsOwnName(entry.desc,(ctx||{}).ownNames)){r.type=IMPORT_TYPE.ownTransfer;return r;}
   if(kind==='card'&&flow==='in'){r.type=IMPORT_TYPE.ignore;r.reason=IGNORE_REASON.refund;return r;}
   if(REFUND.test(n)&&flow==='in'){r.type=IMPORT_TYPE.ignore;r.reason=IGNORE_REASON.refund;return r;}
   if(MAYBE_TRANSFER.test(n)&&kind==='bank')r.flags.push('maybe-transfer');
   if(r.installment&&!r.installment.sure)r.flags.push('installment-unsure');
   if(r.type===IMPORT_TYPE.expense&&FEES.test(n))r.cat='Tarifas bancárias e juros';
-  if(r.type===IMPORT_TYPE.income&&SALARY.test(n))r.cat='Salário';
+  if(r.type===IMPORT_TYPE.income&&SALARY_WORDS.test(n))r.cat='Salário';
   return r;
 }

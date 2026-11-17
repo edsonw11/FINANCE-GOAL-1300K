@@ -214,6 +214,23 @@
     $('impDone').click();
     q('#nav [data-t=cfg]').click();need(/4 transferência/.test($('ownNames').textContent),'settings count');
     q('[data-own-del]').click();await tick();need(!(stored().ownNames||[]).length,'remove name');});
+  await step('holder name: suggested from the salary line, "Sim, sou eu" saves it; records saved before are fixed in Ajustes',async()=>{
+    q('#bnav [data-t=lanc]').click();$('impOpen').click();
+    await chooseFile('antes.csv','Data;Descrição;Valor\n02/09/2026;PIX ENVIADO Joana Prado Leite;-4.000,00\n03/09/2026;PIX ENVIADO Padaria;-12,00');
+    await waitFor(()=>q('#impList .imp-row'),'review 1');need(!q('[data-imp-own]'),'hint without a salary line');
+    $('impGo').click();await tick();if($('confirmDlg').open)$('cfOk').click();await waitFor(()=>q('.imp-done'),'result 1');$('impDone').click();
+    need(stored().tx.some(t=>t.value===4000&&t.type==='despesa'),'first Pix not saved as expense');
+    $('impOpen').click();
+    await chooseFile('depois.csv','Data;Descrição;Valor\n01/10/2026;TED CONTA SALARIO JOANA PRADO LEITE;9.000,00\n02/10/2026;PIX ENVIADO Joana Prado Leite;-3.000,00');
+    await waitFor(()=>q('#impList .imp-row'),'review 2');
+    const hint=q('[data-imp-own]');need(hint&&/Joana Prado Leite/.test(q('.imp-own-hint').textContent),'no hint');
+    hint.click();await tick();need(!q('[data-imp-own]')&&/Transferências suas/.test($('impSum').textContent),'Pix not a transfer after "Sim, sou eu"');
+    need((stored().ownNames||[]).includes('Joana Prado Leite'),'name not saved');
+    $('impGo').click();await tick();if($('confirmDlg').open)$('cfOk').click();await waitFor(()=>q('.imp-done'),'result 2');$('impDone').click();
+    q('#nav [data-t=cfg]').click();need(q('#ownFix')&&/1<\/b> lançamento/.test($('ownNames').innerHTML),'no fix offer in Ajustes');
+    $('ownFix').click();await tick();need(/Joana Prado Leite/.test($('cfText').textContent),'confirm lists the record');$('cfOk').click();await tick();
+    need(!stored().tx.some(t=>t.value===4000)&&stored().transfers.some(t=>t.value===4000&&t.dir==='out'),'not moved to transfers');need(!q('#ownFix'),'fix offer still shown');
+    q('[data-own-del]').click();await tick();});
   const b64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
   const choosePdf=async(name,b64text)=>{const dt=new DataTransfer();dt.items.add(new File([b64(b64text)],name,{type:'application/pdf'}));const i=$('impFile');i.files=dt.files;i.dispatchEvent(new Event('change'));if($('confirmDlg').open)$('cfOk').click();await waitFor(()=>$('impSend')&&$('impDrop').textContent.includes(name),'send button for '+name);need(/Enviar/.test($('impSend').textContent),'send label');$('impSend').click();};
   await step('import PDF: a digital statement spanning two months is split by date',async()=>{n0=stored().tx.length;$('impOpen').click();await choosePdf('extrato-teste.pdf',window.PDF_FIXTURE.bank);
@@ -230,6 +247,20 @@
     need(by('PAGAMENTO LUZ').date==='2026-10-05'&&by('PAGAMENTO LUZ').type==='despesa','luz in october');
     need(by('PIX RECEBIDO').date==='2026-10-20'&&by('PIX RECEBIDO').type==='receita'&&by('PIX RECEBIDO').value===100,'pix in october');
     $('impDone').click();});
+  await step('custody PDF with no investment account: create the account right there (name from the statement)',async()=>{
+    const accs0=stored().accounts.filter(a=>!a.archived).map(a=>a.id),arch=stored().accounts.length,tx0=stored().tx.length;
+    $('impOpen').click();await choosePdf('custodia-teste.pdf',window.PDF_FIXTURE.custody);
+    if($('impSend')&&!$('impSend').disabled)$('impSend').click();
+    await waitFor(()=>$('cuAcc'),'custody screen');
+    need([...$('cuAcc').options].some(o=>/Criar conta nova/.test(o.textContent)),'no "create account" option');
+    $('cuAcc').value='__new';$('cuAcc').dispatchEvent(new Event('change'));await tick();
+    need($('cuNew')&&$('cuNew').value==='Nubank Caixinhas','suggested name: '+($('cuNew')&&$('cuNew').value));
+    $('cuNew').value='';$('cuNew').dispatchEvent(new Event('input'));need($('cuGo').disabled,'empty name accepted');
+    $('cuNew').value='Nubank Caixinhas';$('cuNew').dispatchEvent(new Event('input'));need(!$('cuGo').disabled,'button disabled with a name');
+    $('cuGo').click();await confirmYes();await waitFor(()=>!$('sheet').open,'sheet closed');
+    const a=stored().accounts.find(x=>x.name==='Nubank Caixinhas'&&!accs0.includes(x.id));need(a&&stored().accounts.length===arch+1,'account not created');
+    need(stored().snaps.some(s=>s.acc===a.id&&s.date==='2026-11-10'&&s.value===4900&&s.gross===5000),'balance not saved in the new account');
+    need(stored().tx.length===tx0,'a transaction was created');});
   await step('import PDF: card invoice (month names) becomes card expenses; payment is not imported',async()=>{n0=stored().tx.length;$('impOpen').click();await choosePdf('fatura-teste.pdf',window.PDF_FIXTURE.card);
     await waitFor(()=>q('#impList .imp-row')||!$('impErr').hidden,'card pdf review',6000);if(!q('#impList .imp-row'))throw new Error('pdf not read: '+$('impErr').textContent);
     need(/fatura do cartão/.test($('impSum').textContent),'kind');need(qa('#impList .imp-row').length===3&&qa('#impList .imp-row.ign').length===1,'rows');
@@ -323,7 +354,9 @@
     q('[data-dist-by=account]').click();
     $('reset').click();await confirmYes();await tick();await tick();
     need($('accList').children.length<=1,'accounts left: '+$('accList').textContent.slice(0,120));need(!/PETR4|HGLG11/.test($('portfolio').textContent),'portfolio left');
-    need(stored().tx.length===0&&!(stored().trades||[]).length&&stored().snaps.length===0,'storage not empty');});
+    need(stored().tx.length===0&&!(stored().trades||[]).length&&stored().snaps.length===0,'storage not empty');
+    need(!sessionStorage.getItem('metaapp.trace'),'import log kept');q('#bnav [data-t=lanc]').click();$('impOpen').click();await tick();
+    need(!/Detalhes técnicos/.test($('shBody').textContent),'import log still shown after "Apagar tudo"');$('shClose').click();});
   await step('first visit: welcome steps, no backup warning; a step opens the form',async()=>{
     q('#nav [data-t=resumo]').click();need(!$('startCard').hidden&&/Bem-vindo/.test($('startCard').textContent),'no welcome card');
     need(!$('bkNote').textContent.trim(),'backup warning on an empty app');

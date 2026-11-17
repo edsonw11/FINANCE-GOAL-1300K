@@ -34,7 +34,7 @@ export async function loadImportFile(file,opts){
   if(note)return {session:beginNote(note,{name:file.name,size:file.size})};
   const custody=isPdf?parseCustody(text):null;
   if(custody&&custody.error)return {error:custody.error};
-  if(custody)return {session:beginCustody(custody,suggestAccount('nubank'),{name:file.name,size:file.size})};
+  if(custody)return {session:beginCustody(custody,suggestAccount(custody.name||''),{name:file.name,size:file.size})};
   const info={name:file.name,size:file.size,text};
   const kind=opts&&opts.kind||'auto';
   const read=readImportFile(info,{today:today(),kind});
