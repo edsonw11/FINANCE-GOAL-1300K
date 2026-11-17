@@ -32,23 +32,23 @@ function keyFor(entry,seen,o){
 let draftSeq=0;
 export const newDraftId=()=>'d'+(++draftSeq);
 export function blankDraft(over){
-  return {id:newDraftId(),key:'',date:'',desc:'',value:0,type:IMPORT_TYPE.expense,reason:null,cat:'',acc:'',fonte:'caixa',installment:null,createRest:false,
+  return {id:newDraftId(),key:'',date:'',desc:'',value:0,type:IMPORT_TYPE.expense,reason:null,cat:'',acc:'',fonte:'caixa',installment:null,createRest:false,flow:'',pair:null,fixPair:false,
     selected:true,flags:[],dup:null,raw:'',line:0,manual:true,...over};
 }
-// entries: raw entries from a reader. o: {format:'csv'|'ofx', kind:'bank'|'card', invert, accountId}
+// entries: raw entries from a reader. o: {format:'csv'|'ofx', kind:'bank'|'card', invert, accountId, ownNames}
 // -> {drafts, dropped} (dropped = balance lines that were left out)
 export function buildDrafts(entries,o){
   const seen={},drafts=[];let dropped=0;
   entries.forEach(e=>{
-    const cls=classifyEntry(e,flowOf(e.amount,o),o.kind);
+    const flow=flowOf(e.amount,o),cls=classifyEntry(e,flow,o.kind,{ownNames:o.ownNames||[]});
     if(cls.drop){dropped++;return;}
     const value=roundMoney(Math.abs(e.amount));
-    const noCat=cls.type===IMPORT_TYPE.ignore||cls.type===IMPORT_TYPE.contribution;
+    const noCat=!SAVEABLE.includes(cls.type)||cls.type===IMPORT_TYPE.contribution;
     const cat=cls.cat||(noCat?'':(suggestFromHistory(e.desc,cls.type)||{}).cat||'');
     drafts.push(blankDraft({key:keyFor(e,seen,o),date:e.date,desc:e.desc,value,type:cls.type,reason:cls.reason,cat,
       acc:cls.type===IMPORT_TYPE.contribution?suggestAccount(e.desc):'',
       fonte:o.kind==='card'&&cls.type===IMPORT_TYPE.expense?'cartao':'caixa',installment:cls.installment,flags:cls.flags.concat(e.flags||[]),
-      selected:cls.type!==IMPORT_TYPE.ignore,raw:e.raw,line:e.line,manual:false}));
+      selected:SAVEABLE.includes(cls.type),flow,raw:e.raw,line:e.line,manual:false}));
   });
   return {drafts,dropped};
 }
@@ -76,13 +76,18 @@ export function selectionSummary(drafts){
     contribution:sumMoney(sel.filter(d=>d.type===IMPORT_TYPE.contribution).map(d=>d.value)),
     months:[...new Set(sel.map(targetMonth))].sort()};
 }
+// transfers between own accounts that confirming will keep (not the ones already kept by an earlier import)
+export const keptTransfers=drafts=>drafts.filter(d=>d.type===IMPORT_TYPE.ownTransfer&&!(d.dup&&d.dup.level==='confirmed')&&d.date&&d.value>0);
 // what the review screen shows on top (a preview: nothing here is saved)
 export function importOverview(drafts){
   const sel=selectionSummary(drafts),saveable=drafts.filter(isSaveable);
   return {total:drafts.length,
     incomes:saveable.filter(d=>d.type===IMPORT_TYPE.income).length,
     expenses:saveable.filter(d=>d.type===IMPORT_TYPE.expense).length,
-    others:drafts.length-saveable.length,
+    others:drafts.length-saveable.length-drafts.filter(d=>d.type===IMPORT_TYPE.ownTransfer).length,
+    transfers:keptTransfers(drafts).length,
+    transferTotal:sumMoney(keptTransfers(drafts).map(d=>d.value)),
+    pairFixes:keptTransfers(drafts).filter(d=>d.fixPair&&d.pair).length,
     incomeTotal:sumMoney(saveable.filter(d=>d.type===IMPORT_TYPE.income).map(d=>d.value)),
     contributions:saveable.filter(d=>d.type===IMPORT_TYPE.contribution).length,
     contributionTotal:sumMoney(saveable.filter(d=>d.type===IMPORT_TYPE.contribution).map(d=>d.value)),

@@ -1,6 +1,6 @@
 /* 10-print.css: Print / PDF */
 @media print{
-  header,.chips,#toast,.banner,button,.mnav,#tip,#tip2,.seg,#t-lanc form,#bnav,#fab,.quick-add,dialog{display:none!important}
+  header,.chips,#toast,.banner,button,.mnav,#tip,.seg,#t-lanc form,#bnav,#fab,dialog{display:none!important}
   body{background:#fff;color:#000}.card{box-shadow:none;break-inside:avoid}
   section.tab{display:block!important}#txFormHome,#t-cfg{display:none!important}
   main{max-width:none;padding:0}

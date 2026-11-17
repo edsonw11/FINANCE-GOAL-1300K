@@ -46,4 +46,30 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('import-pdf');
   const sec=run(`pdfEntries(${JSON.stringify(sectioned)},{today:'2026-11-10'})`).entries.filter(e=>!/^total/i.test(e.desc));
   eq('entries under a date heading take that date and a direction by words',sec.map(e=>[e.date,e.desc.slice(0,12),e.amount]),
     [['2026-11-06','Transferênci',1000],['2026-11-06','Compra no dé',-40],['2026-11-07','Aplicação RD',-300],['2026-11-07','Resgate RDB',50]]);
+  // ---- Santander-like layout (invented values): words cut in pieces, measured columns, the date only on the
+  // first entry of the day, the line below completes the description, and a table after the block repeats debits
+  const piece=(str,x,y,w)=>({str,x,y,w,size:8});
+  const word=(text,x,y)=>{const out=[];let cx=x;text.split(/(\s)/).forEach(t=>{if(t===' '){out.push(piece(' ',cx,y,1.8));cx+=2;return;}
+    for(let i=0;i<t.length;i+=3){const p=t.slice(i,i+3);out.push(piece(p,cx,y,p.length*4));cx+=p.length*4;}});return out;};
+  const pages=[].concat(word('EXTRATO CONSOLIDADO',400,800),word('Depósitos / Transferências',60,700),word('9.000,00',480,700),
+    word('Movimentação',30,600),
+    word('03/10',30,580),word('TED SALARIO EMPRESA X',65,580),word('-',320,580),word('8.000,00',424,580),word('9.100,00',509,580),
+    word('FULANO DE TAL',65,571),
+    word('06/10',30,560),word('DEBITO AUT. CONTA DE LUZ',65,560),word('-',320,560),word('150,25-',424,560),
+    word('LUZ SA',65,551),
+    word('DEBITO AUT. FATURA CARTAO',65,540),word('-',320,540),word('700,00-',424,540),word('8.249,75',509,540),
+    word('REMUNERACAO APLICACAO AUTOMATICA',65,530),word('-',320,530),word('0,05',424,530),
+    word('Se você não tem Limite da Conta e a sua conta ficou com saldo devedor, terá sido prestado o serviço de adiantamento',30,500),
+    word('06/10',30,400),word('LUZ SA',65,400),word('123456789',300,400),word('150,25',424,400),word('Sim',480,400));
+  const sl=run(`linesFromItems(${J(pages)})`);
+  eq('pieces of a word are joined, spaces kept, far apart pieces are columns',sl.slice(0,4),
+    ['EXTRATO CONSOLIDADO','Depósitos / Transferências | 9.000,00','Movimentação','03/10 TED SALARIO EMPRESA X | - | 8.000,00 | 9.100,00']);
+  const st=run(`pdfEntries(${J(sl.join('\n'))},{today:'2026-11-10'})`);
+  eq('a statement that mentions "fatura" is still a bank statement',st.kind,'bank');
+  eq('only the movement block: dates carried, descriptions completed, debits by "-", plain value is a credit',
+    st.entries.map(e=>[e.date,e.desc,e.amount]),
+    [['2026-10-03','TED SALARIO EMPRESA X FULANO DE TAL',8000],['2026-10-06','DEBITO AUT. CONTA DE LUZ LUZ SA',-150.25],
+     ['2026-10-06','DEBITO AUT. FATURA CARTAO',-700],['2026-10-06','REMUNERACAO APLICACAO AUTOMATICA',0.05]]);
+  eq('value and balance in separate columns: no "two amounts" warning',st.entries.map(e=>e.flags),[[],[],[],[]]);
+  eq('without width/size every piece is still a word (old behavior)',run(`linesFromItems(${J([{str:'A',x:1,y:1},{str:'B',x:2,y:1}])})`),['A B']);
   return res;};

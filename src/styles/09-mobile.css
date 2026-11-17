@@ -53,9 +53,6 @@
   .seg span{text-align:center;padding:10px 6px;font-size:14px}
   .f-actions{flex-direction:row}.f-actions .btn{flex:1;min-width:0}
   /* new record: big buttons instead of the inline form */
-  .quick-add{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0 4px}
-  .quick-add .btn{min-height:52px;font-size:15px;padding:8px}
-  .quick-add .des{color:var(--des)}.quick-add .rec{color:var(--rec)}.quick-add .apo{color:var(--apo)}.quick-add .fat{color:var(--warn-ink)}
   #txFormHome{display:none}
   .lst-card{padding:4px 10px}
   .li-act{display:none}
@@ -118,10 +115,13 @@
 @keyframes sheetUp{from{transform:translateY(30px);opacity:.4}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){dialog[open]{animation:none}}
 @media (max-width:720px){
-  .acc{display:grid;grid-template-columns:12px minmax(0,1fr) auto;align-items:center;gap:6px 12px}
-  .acc i{grid-row:span 2}
-  .acc .vl{grid-column:2/-1;text-align:left!important;margin:0}
-  #tip,#tip2{white-space:normal;max-width:240px}
+  .acc{display:grid;grid-template-columns:12px minmax(0,1fr) auto auto;align-items:center;gap:4px 10px;padding:10px 0}
+  .acc .vl{grid-column:3;grid-row:1;margin:0;font-size:15px}
+  .acc .vl .sb{font-size:11.5px;white-space:normal}
+  .acc .vl{max-width:150px}
+  .acc .more{grid-column:4;grid-row:1}
+  .acc .nm{min-width:0}
+  #tip{white-space:normal;max-width:240px}
 }
 @media (max-width:720px){
   #trendIns td,#trendIns th{white-space:normal!important;padding:8px 5px!important}
@@ -129,7 +129,7 @@
   table.stack td{flex-wrap:wrap}
   table.stack td .dp{flex:1 1 140px}
 }
-@media (max-width:360px){#projTbl{font-size:12.5px}#projTbl td,#projTbl th{padding:8px 3px;letter-spacing:0}}
+@media (max-width:360px){.acc{grid-template-columns:12px minmax(0,1fr) auto}.acc .vl{grid-column:2/-1;grid-row:2;text-align:left!important}.acc .more{grid-column:3}#projTbl{font-size:12.5px}#projTbl td,#projTbl th{padding:8px 3px;letter-spacing:0}}
 /* touch targets: at least 44px in both directions on phones and touch screens (WCAG 2.5.5 / iOS guideline) */
 @media (max-width:720px),(pointer:coarse){
   .btn.sm,.chip,.dist-tab,.bill-hide,.dist-row,.check-opt,summary{min-height:44px}
@@ -144,3 +144,4 @@
 }
 /* projection table: on a phone keep month, interest, final balance and % of the goal */
 @media (max-width:720px){#projTbl th:nth-child(2),#projTbl td:nth-child(2),#projTbl th:nth-child(4),#projTbl td:nth-child(4),#projTbl th:nth-child(7),#projTbl td:nth-child(7),#projTbl th:nth-child(8),#projTbl td:nth-child(8){display:none}}
+@media (max-width:720px){.g3{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.g3 .kpi{padding:10px}.g3 .kpi .v{font-size:15px}.g3 .kpi .n{display:none}.g3 .kpi .k{font-size:12px}.hero-v{font-size:30px}}

@@ -10,7 +10,7 @@ import { formatDateBR, mLabel, mOf, today } from '../../core/dates.js';
 import { sumMoney } from '../../core/money.js';
 import { S } from '../../domain/store.js';
 import { accName } from '../../domain/accounts.js';
-import { catParts, deleteTransactions, futureSiblings, invoiceOfPurchase } from '../../domain/transactions.js';
+import { catParts, deleteTransactions, futureSiblings, invoiceOfPurchase, restoreTransactions } from '../../domain/transactions.js';
 import { icon } from '../../domain/categories.js';
 import { dueDateOf, dueMonth, invoiceMonthOf } from '../../domain/card-cycle.js';
 import { invoiceItems, invoiceUndetailed } from '../../domain/card-invoices.js';
@@ -60,12 +60,15 @@ export async function deleteTxFlow(id){
   let html=`Deseja excluir ${t.type==='receita'?'a receita':t.type==='aporte'?'o aporte em':'a despesa'} <b>“${esc(name)}”</b>, no valor de <b>${f2(t.value)}</b>, de ${formatDateBR(t.date)}?`;
   if(inv)html+=`<div class="bd-note mt-10">Esta compra está na fatura paga em ${formatDateBR(inv.date)}. O valor dela passa a aparecer como “Cartão (sem detalhe)”, então o total de despesas do mês não muda.</div>`;
   if(t.type==='aporte')html+=`<div class="bd-note mt-10">O saldo de ${esc(accName(t.acc))} diminui ${f2(t.value)}.</div>`;
-  const r=await askConfirm({title:t.type==='aporte'?'Excluir aporte':'Excluir lançamento',html,ok:'Excluir',danger:true,
-    check:sib.length?`Excluir também os ${sib.length} lançamento(s) futuro(s) iguais`:''});
+  // a plain record is deleted at once (Desfazer brings it back); a choice or a side effect still asks first
+  const ask=sib.length||inv||t.type==='aporte';
+  const r=ask?await askConfirm({title:t.type==='aporte'?'Excluir aporte':'Excluir lançamento',html,ok:'Excluir',danger:true,
+    check:sib.length?`Excluir também os ${sib.length} lançamento(s) futuro(s) iguais`:''}):{checked:false};
   if(!r)return false;
   const ids=[t.id].concat(r.checked?sib.map(x=>x.id):[]);
-  if(!runCommand(()=>deleteTransactions(ids)))return false;
-  toast('🗑️ '+(ids.length>1?ids.length+' lançamentos excluídos':'Lançamento excluído')+': '+name);
+  const undo=runCommand(()=>deleteTransactions(ids));if(!undo)return false;
+  toast('🗑️ '+(ids.length>1?ids.length+' lançamentos excluídos':'Lançamento excluído')+': '+name,
+    {action:{label:'Desfazer',run:()=>runCommand(()=>restoreTransactions(undo),{ok:'↩️ Lançamento de volta'})}});
   return true;
 }
 function openTxDetail(id){Sheet.depth()?Sheet.push(txDetailView(id)):Sheet.open(txDetailView(id));}

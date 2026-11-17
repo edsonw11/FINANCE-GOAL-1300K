@@ -9,7 +9,7 @@ import { ui } from './ui-state.js';
 import { svg } from './icons.js';
 import { Sheet } from './components/sheet.js';
 import { render } from './render.js';
-const MORE_TABS=['cad','cfg'];
+const MORE_TABS=['analise','cad','cfg'];
 // old tab ids that now live inside another tab: [tab, element to scroll to]
 const MOVED_TABS={proj:['meta','projCard'],inv:['meta','invStart']};
 export function goTab(t){
@@ -23,7 +23,7 @@ export function goTab(t){
 const isNarrow=()=>window.matchMedia('(max-width:720px)').matches;
 function moreView(){
   return {render(body){
-    const items=[['cad','tag','Categorias','Criar, renomear, ativar ou excluir'],['cfg','sliders','Ajustes','Meta, cartão, backup e dados de teste']];
+    const items=[['analise','chart','Análise dos gastos','Média, gastos fixos e o que mudou'],['cad','tag','Categorias','Criar, renomear, ativar ou excluir'],['cfg','sliders','Ajustes','Meta, cartão, backup e dados de teste']];
     body.innerHTML='<div class="lst">'+items.map(([t,i,n,d])=>`<div class="li" data-more="${t}" role="button" tabindex="0"><span class="li-ic">${svg(i)}</span><span class="li-main"><span class="li-t">${n}</span><span class="li-s">${d}</span></span><span class="li-v">›</span></div>`).join('')+
       `<div class="li" data-more="print" role="button" tabindex="0"><span class="li-ic">🖨️</span><span class="li-main"><span class="li-t">Imprimir / salvar PDF</span></span><span class="li-v">›</span></div></div>`;
     body.querySelectorAll('[data-more]').forEach(el=>el.onclick=()=>{Sheet.close();if(el.dataset.more==='print')return window.print();goTab(el.dataset.more);});
@@ -32,6 +32,7 @@ function moreView(){
 }
 export function bindNavigation(){
 $('todoCard').onclick=e=>{const b=e.target.closest('[data-todo]');if(b)goTab(b.dataset.todo);}; // "O que fazer agora"
+document.querySelectorAll('[data-go-tab]').forEach(b=>b.onclick=()=>goTab(b.dataset.goTab));
 $('nav').onclick=e=>{const b=e.target.closest('button');if(b)goTab(b.dataset.t);};
 $('bnav').onclick=e=>{const b=e.target.closest('button');if(!b)return;b.dataset.t==='more'?Sheet.open(moreView()):goTab(b.dataset.t);};
 document.querySelectorAll('[data-mv]').forEach(b=>b.onclick=()=>{ui.cur=mKey(mIdx(ui.cur)+ +b.dataset.mv);render();});

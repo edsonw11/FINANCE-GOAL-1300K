@@ -17,6 +17,7 @@
   const money=t=>{const neg=/[−-]/.test(t);const v=+String(t).replace(/[^\d,]/g,'').replace(',','.');return neg?-v:v;};
   const type=(el,text)=>{el.focus();el.value='';for(const ch of text){const be=new InputEvent('beforeinput',{data:ch,inputType:'insertText',bubbles:true,cancelable:true});
     if(el.dispatchEvent(be)){el.value+=ch;el.dispatchEvent(new Event('input',{bubbles:true}));}}};
+  const detailOpen=()=>!!q('#shFoot [data-act=del]');
   const confirmYes=async()=>{await tick();need($('confirmDlg').open,'confirmation not shown');$('cfOk').click();await tick();};
   const confirmNo=async()=>{await tick();need($('confirmDlg').open,'confirmation not shown');$('cfCancel').click();await tick();};
   const rows=()=>qa('#shBody .lst [data-tx]');
@@ -44,29 +45,33 @@
   // cards: items add up to the total
   await step('expenses card lists records with the same total',()=>{openKpi('expenses');const card=money(q('#kFlow [data-kpi=expenses] .v').textContent);
     need(rows().length>0,'no rows');need(Math.abs(sheetTotal())===Math.abs(card),'sheet '+sheetTotal()+' card '+card);need(Math.abs(rowsSum()-Math.abs(card))<0.005,'rows '+rowsSum()+' card '+card);});
-  await step('summary shows savings rate and reserve; an account can be marked as reserve',()=>{
-    need(document.querySelectorAll('#healthRow .health').length===2,'savings/reserve cards missing');
-    need(/Taxa de poupança/.test($('healthRow').textContent),'no savings rate');
-    need(/Marque uma conta/.test($('healthRow').textContent),'reserve hint missing before marking');},)
-  await step('every summary card opens its records',()=>{for(const k of ['income','contrib','cash','opencard','voucher']){if(k==='voucher'){need(!q('[data-kpi=voucher]'),'VR/VA card shown with no VR/VA at all');continue;}openKpi(k);need(q('#shBody .bd-total'),'no total for '+k);}$('shClose').click();});
+  await step('summary: one "left" number with its split, no contradicting card, no 6-month flow chart, reserve hidden until marked',()=>{
+    const h=$('monthHero');need(h&&/Sobrou em/.test(h.textContent),'no hero');need(/Investiu/.test(h.textContent)&&/(na|da) conta/.test(h.textContent),'no split: '+h.textContent.slice(0,200));
+    need(!/Sobrou no caixa/.test($('t-resumo').textContent),'"Sobrou no caixa" still on the Summary');need(!$('chFlow'),'6-month flow chart still there');
+    need(!q('#healthRow'),'old savings card');need($('reserveCard').hidden,'empty reserve card shown');
+    const order=['monthHero','kFlow','cats','budgetCard','chTrend'].map(id=>$(id).getBoundingClientRect().top);need(order.every((y,i)=>i===0||y>order[i-1]),'order: '+order);
+    need(!$('t-resumo').contains($('trendIns')),'analysis still inside the Summary');});
+  await step('every summary card opens its records',()=>{for(const k of ['income','contrib','voucher']){if(k==='voucher'){need(!q('[data-kpi=voucher]'),'VR/VA card shown with no VR/VA at all');continue;}openKpi(k);need(q('#shBody .bd-total'),'no total for '+k);}$('shClose').click();});
 
-  await step('analysis tiles and trend cards open their lists',()=>{for(const k of ['avg','fixed','variable','top3','lastmonth','trend']){
-      const el=q(`#t-resumo [data-kpi=${k}]`);need(el,'no card '+k);el.click();need($('sheet').open&&q('#shBody .bd-total'),'nothing opened for '+k);$('shClose').click();}
+  await step('analysis tiles and trend cards open their lists',()=>{need(!q('#t-analise [data-kpi=avg]'),'"Média mensal" repeated in Análise');for(const k of ['avg','fixed','variable','top3','lastmonth','trend']){
+      const el=q(`#t-resumo [data-kpi=${k}]`)||q(`#t-analise [data-kpi=${k}]`);need(el,'no card '+k);el.click();need($('sheet').open&&q('#shBody .bd-total'),'nothing opened for '+k);$('shClose').click();}
     q('#t-resumo [data-kpi=avg]').click();const mrow=q('#shBody [data-go=month]');need(mrow,'no month row');mrow.click();need(/Despesas/.test($('shTitle').textContent),'month row did not open expenses');$('shClose').click();});
   await step('goal cards open their lists',()=>{q('#bnav [data-t=meta]').click();q('[data-kpi=networth]').click();need(rows().length===0&&qa('#shBody .li').length>0,'no accounts');$('shClose').click();q('[data-kpi=yield]').click();need($('sheet').open,'yield');$('shClose').click();q('#bnav [data-t=resumo]').click();});
   // detail, delete cancel, edit, delete
   let before=0,firstTitle='';
   await step('tap a record opens the detail',()=>{openKpi('expenses');before=rows().length;firstTitle=rows()[0].querySelector('.li-t').textContent;rows()[0].click();
     need(q('#shFoot [data-act=edit]')&&q('#shFoot [data-act=del]'),'no actions');need(!$('shBack').hidden,'no back button');});
-  await step('delete asks for confirmation, cancel keeps it',async()=>{q('#shFoot [data-act=del]').click();await tick();
-    need(/Deseja excluir/.test($('cfText').textContent)&&/R\$/.test($('cfText').textContent),'text: '+$('cfText').textContent);await confirmNo();
-    need(q('#shFoot [data-act=del]'),'detail closed');$('shBack').click();need(rows().length===before,'removed after cancel: '+rows().length+' vs '+before+' title '+$('shTitle').textContent);});
+  await step('delete is immediate, Desfazer brings it back',async()=>{q('#shFoot [data-act=del]').click();await tick();
+    need(!$('confirmDlg').open,'plain record still asks');need(/Lançamento excluído/.test($('toast').textContent),'toast: '+$('toast').textContent);
+    const undoBtn=q('#toast .toast-act');need(undoBtn&&/Desfazer/.test(undoBtn.textContent),'no Desfazer');
+    if(detailOpen())$('shBack').click();need(rows().length===before-1,'not removed: '+rows().length);
+    undoBtn.click();need(rows().length===before,'not restored: '+rows().length+' vs '+before);});
   await step('edit saves without duplicating',()=>{rows()[0].click();q('#shFoot [data-act=edit]').click();need($('txForm').closest('#shBody'),'form not in sheet');
     need($('fVal').value.startsWith('R$'),'value not loaded');type($('fVal'),'77700');$('fSave').click();
     need(q('#shFoot [data-act=edit]'),'did not return to detail');need(/777,00/.test(q('#shBody .dt-v').textContent),'value not updated');
     $('shBack').click();need(rows().length===before,'duplicated: '+rows().length+' vs '+before);need(Math.abs(rowsSum()-Math.abs(sheetTotal()))<0.005,'total not refreshed');});
-  await step('delete with confirmation removes it everywhere',async()=>{const card0=money(q('#kFlow [data-kpi=expenses] .v').textContent);
-    rows()[0].click();q('#shFoot [data-act=del]').click();await confirmYes();
+  await step('delete removes it everywhere',async()=>{const card0=money(q('#kFlow [data-kpi=expenses] .v').textContent);
+    rows()[0].click();q('#shFoot [data-act=del]').click();await tick();if(detailOpen())$('shBack').click();
     need(rows().length===before-1,'not removed');need(Math.abs(Math.abs(money(q('#kFlow [data-kpi=expenses] .v').textContent))-(Math.abs(card0)-777))<0.005,'card total not updated');});
   await step('closing keeps period and filters',()=>{$('shClose').click();need(/outubro/i.test($('mLab1').textContent),'period lost');});
 
@@ -82,6 +87,13 @@
   await step('transaction list: filters and search',()=>{q('#chips [data-f=despesa]').click();need(qa('#txList [data-tx]').length>0,'empty filter');
     $('qBox').value='zzzz';$('qBox').dispatchEvent(new Event('input'));need($('clearFilt'),'no clear button');$('clearFilt').click();need(qa('#txList [data-tx]').length>0,'clear failed');});
 
+  await step('list rows have no "Excluir"; search finds every month, accents ignored',()=>{
+    need(!qa('#txList button').some(b=>/Excluir/.test(b.textContent)),'Excluir inside a row');
+    q('#t-lanc [data-mv="1"]').click();q('#chips [data-f=todos]').click();
+    $('qBox').value='MÉRCADO';$('qBox').dispatchEvent(new Event('input'));
+    need(qa('#txList .li-month').length>=1,'no month headings');need(/em todos os meses/.test($('t-lanc').textContent),'no "todos os meses" note');
+    need(qa('#txList [data-tx]').some(x=>/45,90/.test(x.textContent)),'October record not found from November');
+    $('qBox').value='';$('qBox').dispatchEvent(new Event('input'));need(!qa('#txList .li-month').length,'month headings after clearing');q('#t-lanc [data-mv="-1"]').click();});
   // category detail
   await step('category detail with months and records',()=>{q('#bnav [data-t=resumo]').click();q('#cats [data-go=cat]').click();need(q('#shBody details.cm[open] [data-tx]'),'month not expanded');$('shClose').click();});
   // groups: Luz and Internet belong to Moradia; the group shows its categories and drills down
@@ -177,6 +189,31 @@
     need(qa('#impList .imp-row.dup').length===3,'duplicates flagged: '+qa('#impList .imp-row.dup').length);need(qa('#impList .imp-row.dup input:checked').length===0,'duplicates should start unselected');
     need(qa('#impList .imp-row input:checked').length===1&&/Importar 1 lançamento/.test($('impGo').textContent),'only the row the user dropped before is new: '+$('impGo').textContent);$('impCancel').click();need(!$('sheet').open,'cancel did not close');need(stored().tx.length===n0,'cancel changed data');});
   await step('import: an old statement keeps its historical months',()=>{const t=stored().tx.filter(x=>x.imp);need(t.length===3&&t.every(x=>x.date.startsWith('2026-09')),'dates moved: '+t.map(x=>x.date));});
+  await step('transfers between own accounts: name in Ajustes, Pix to myself is kept apart, the other bank recognises it, fix a saved side',async()=>{
+    if($('sheet').open)$('shClose').click();q('#nav [data-t=cfg]').click();
+    $('ownNameIn').value='Zuleica';$('ownNameAdd').click();await tick();need(!(stored().ownNames||[]).length,'single word accepted');
+    $('ownNameIn').value='Zuleica Pimentel Tavares';$('ownNameAdd').click();await tick();need((stored().ownNames||[]).length===1&&/Zuleica Pimentel Tavares/.test($('ownNames').textContent),'name not saved/shown');
+    const tx0=stored().tx.length;
+    q('#bnav [data-t=lanc]').click();$('impOpen').click();
+    await chooseFile('santander-out.csv','Data;Descrição;Valor\n12/10/2026;PIX ENVIADO ZULEICA P TAVARES;-7.000,00\n12/10/2026;PIX ENVIADO OUTRA PESSOA;-33,00\n13/10/2026;PIX ENVIADO ALGUEM;-2.500,00');
+    await waitFor(()=>q('#impList .imp-row'),'review transfer');
+    need(/Transferências suas/.test($('impSum').textContent),'transfer tile missing');need(/🔁 Transferência minha/.test($('impList').textContent),'transfer type label');
+    need(/\+ 1 transf/.test($('impGo').textContent),'footer: '+$('impGo').textContent);
+    $('impGo').click();await tick();need(/Transferências entre suas contas/.test($('cfText').textContent),'confirm text: '+$('cfText').textContent);$('cfOk').click();await waitFor(()=>q('.imp-done'),'result');
+    need(/transferência\(s\) entre suas contas guardada/.test(q('.imp-done').textContent),'result text');
+    const st=stored();need(st.tx.length===tx0+2&&(st.transfers||[]).length===1&&!st.tx.some(t=>t.value===7000),'saved wrong: tx '+(st.tx.length-tx0)+' transfers '+(st.transfers||[]).length);
+    $('impDone').click();$('impOpen').click();
+    await chooseFile('nubank-in.csv','Data;Descrição;Valor\n13/10/2026;Transferência recebida;7.000,00\n14/10/2026;Pix recebido;2.500,00');
+    await waitFor(()=>q('#impList .imp-row'),'review other side');
+    need(/reconhecida como transferência/.test($('impList').textContent),'pair with kept transfer not shown');
+    const fix=q('[data-imp-pairfix="1"]');need(fix,'no "fix both" button for the side saved as expense');
+    fix.closest('[data-imp-item]').querySelector('[data-imp-pairfix]').click();await tick();
+    need(/ao importar, ele também vira transferência/.test($('impList').textContent),'fix not marked');
+    $('impGo').click();await tick();need(/vão virar transferência/.test($('cfText').textContent),'confirm does not warn about the fix');$('cfOk').click();await waitFor(()=>q('.imp-done'),'result 2');
+    const s2=stored();need((s2.transfers||[]).length===4&&(s2.transfers||[]).every(t=>t.pair)&&!s2.tx.some(t=>t.value===2500||t.value===7000),'other sides wrong: transfers '+(s2.transfers||[]).length);
+    $('impDone').click();
+    q('#nav [data-t=cfg]').click();need(/4 transferência/.test($('ownNames').textContent),'settings count');
+    q('[data-own-del]').click();await tick();need(!(stored().ownNames||[]).length,'remove name');});
   const b64=t=>Uint8Array.from(atob(t),c=>c.charCodeAt(0));
   const choosePdf=async(name,b64text)=>{const dt=new DataTransfer();dt.items.add(new File([b64(b64text)],name,{type:'application/pdf'}));const i=$('impFile');i.files=dt.files;i.dispatchEvent(new Event('change'));if($('confirmDlg').open)$('cfOk').click();await waitFor(()=>$('impSend')&&$('impDrop').textContent.includes(name),'send button for '+name);need(/Enviar/.test($('impSend').textContent),'send label');$('impSend').click();};
   await step('import PDF: a digital statement spanning two months is split by date',async()=>{n0=stored().tx.length;$('impOpen').click();await choosePdf('extrato-teste.pdf',window.PDF_FIXTURE.bank);
@@ -200,13 +237,20 @@
     const t=stored().tx.slice(n0);need(t.length===2&&t.every(x=>x.fonte==='cartao'&&x.type==='despesa'),'card expenses: '+JSON.stringify(t.map(x=>[x.desc,x.fonte])));
     need(t.some(x=>x.date==='2026-09-28'&&x.value===100)&&t.some(x=>x.date==='2026-10-05'&&x.value===50.5),'dates/values');$('impDone').click();});
   // goal + projection in one tab
-  await step('goal tab includes the projection (no separate tab)',()=>{need(!q('#nav [data-t=proj]'),'proj tab still there');q('#nav [data-t=meta]').click();
-    need($('projCard')&&$('t-meta').contains($('projCard')),'projection not in goal tab');need($('chProj').innerHTML.length>100,'projection chart empty');});
+  await step('Patrimônio: balances first, one chart (projection + lower rate + goal), the table collapsed, account actions in ⋯',()=>{
+    need(!q('#nav [data-t=proj]'),'proj tab still there');q('#nav [data-t=meta]').click();
+    need(!$('chProj'),'second chart still there');need($('chTower').innerHTML.length>100,'chart empty');need(/Se juros caírem/.test($('lgTower').textContent),'no lower-rate line in the legend');
+    need(/Meta/.test($('chTower').textContent),'goal not shown in the chart');
+    const pc=$('projCard');need(pc&&pc.tagName==='DETAILS'&&!pc.open&&$('t-meta').contains(pc),'projection table not collapsed');need(/\(\d+ linhas\)/.test($('projSum').textContent),'summary '+$('projSum').textContent);
+    const top=id=>$(id).getBoundingClientRect().top;need(top('accList')<top('distCard')&&top('distCard')<top('chTower'),'order: balances, distribution, chart');
+    need(!qa('#accList > .acc > button').length,'buttons still inside each account row');
+    const menu=q('#accList details.more');if(menu){menu.open=true;const r=menu.querySelector('[data-reserve]');need(r,'no reserve action');r.click();
+      need(q('#accList .acc-badge'),'reserve badge not shown');q('#accList [data-reserve][aria-pressed=true]').click();need(!q('#accList .acc-badge'),'reserve not removed');}});
 
   // card: purchase, partial payment, cancel payment
   await step('enter card purchase',()=>{$('fab').click();const r=q('input[name=tp][value=despesa]');r.checked=true;r.dispatchEvent(new Event('change'));
     type($('fVal'),'5000');$('fCat').value='Mercado';$('fFonte').value='cartao';$('fDate').value=new Date().toLocaleDateString('sv');$('fSave').click();need(!$('sheet').open,'not saved');});
-  await step('pay invoice (partial) with confirmation',async()=>{q('[data-new=fatura]')?q('[data-new=fatura]').click():$('fab').click();
+  await step('pay invoice (partial) with confirmation',async()=>{$('fab').click();
     const r=q('input[name=tp][value=fatura]');if(!r.checked){r.checked=true;r.dispatchEvent(new Event('change'));}
     need($('payBox').innerHTML.includes('Qual fatura'),'no invoice list');
     if(!q('input[name=payM][value=part]'))q('[data-pa]').click();
@@ -215,6 +259,17 @@
   await step('cancel payment with confirmation',async()=>{q('[data-cp]').click();await confirmYes();});
   if($('sheet').open)$('shClose').click();
 
+  await step('Cartão: ‹ › select the invoice, purchases as list rows, total as a plain line, same name as the Summary',()=>{
+    q('#bnav [data-t=cartao]').click();need(!q('#t-cartao .mnav'),'month arrows still on the Card tab');
+    const name=()=>q('#cycleBox .cc-name b').textContent,n0=name();need(/^Fatura de [a-zç]{3}\/\d\d$/.test(n0),'name '+n0);
+    const box=q('#cycleBox .cc-detail');need(!box.querySelector('table'),'purchases still in a table');
+    need(qa('#cycleBox .cc-detail .lst [data-tx]').some(r=>/50,00/.test(r.textContent)),'purchase not listed');
+    const tot=q('#cycleBox .cc-total');need(tot&&/Total da fatura/.test(tot.textContent)&&money(tot.querySelector('b').textContent)===money(q('#cycleBox .cc-amount').textContent),'total line');
+    need(/Nenhum pagamento lançado/.test(box.textContent),'no paid note');
+    q('#cycleBox [data-cyc-mv="1"]').click();need(name()!==n0&&q('#cycleBox [data-cyc-now]'),'arrow did not move the invoice');
+    q('#cycleBox [data-cyc-mv="-1"]').click();need(name()===n0,'back');q('#cycleBox [data-cyc-mv="1"]').click();q('#cycleBox [data-cyc-now]').click();need(name()===n0,'Atual');
+    q('#bnav [data-t=resumo]').click();q('#t-resumo [data-mtoday]')&&!q('#t-resumo [data-mtoday]').hidden&&q('#t-resumo [data-mtoday]').click();
+    const hero=$('monthHero').textContent;need(!/Fatura de/.test(hero)||hero.includes(n0),'Summary names it differently: '+hero);});
   await step('disable category',()=>{const c=q('[data-co]');need(c,'no toggle');c.checked=false;c.dispatchEvent(new Event('change'));c.checked=true;c.dispatchEvent(new Event('change'));});
   await step('tabs (top and bottom menu)',()=>{qa('#nav button').forEach(b=>b.click());q('#bnav [data-t=more]').click();need($('sheet').open,'more menu');q('[data-more=cfg]').click();need($('t-cfg').classList.contains('on'),'tab');});
   await step('investments: import starts in investment mode (money in = aporte) and needs the destination account',async()=>{
@@ -234,6 +289,18 @@
     const pf=$('portfolio').textContent;need(/Ações/.test(pf)&&/FIIs/.test(pf)&&/PETR4/.test(pf)&&/HGLG11/.test(pf),'portfolio: '+pf.slice(0,200));
     $('impOpenInv').click();await chooseFile('nota.txt',note);await waitFor(()=>q('#ntList .imp-row'),'note review 2');$('ntGo').click();await tick();$('cfOk').click();await waitFor(()=>!$('sheet').open,'note again');
     need(stored().tx.length===n0+2,'duplicated aportes');});
+  await step('new category: asks first, suggests the closest, cancel keeps the form',async()=>{const n0=stored().tx.length;
+    $('fab').click();type($('fVal'),'1234');$('fCat').value='Mercadoo';$('fSave').click();await tick();
+    need($('confirmDlg').open&&/Mercadoo/.test($('cfText').textContent)&&!$('cfAlt').hidden&&/Mercado”/.test($('cfAlt').textContent),'no question: '+$('cfText').textContent);
+    await confirmNo();need($('sheet').open&&$('fVal').value==='R$ 12,34','form lost on cancel');need(stored().tx.length===n0,'saved on cancel');
+    $('fSave').click();await tick();$('cfAlt').click();await tick();
+    const t=stored().tx.find(x=>x.value===12.34);need(t&&t.cat==='Mercado','suggestion not used: '+(t&&t.cat));
+    need(!stored().cats.despesa.some(c=>c.name==='Mercadoo'),'category created anyway');
+    $('fab').click();type($('fVal'),'4321');$('fCat').value='mercado';$('fSave').click();await tick();
+    need(!$('confirmDlg').open,'asked about a case difference');need(stored().tx.find(x=>x.value===43.21).cat==='Mercado','case not fixed');});
+  await step('"Pago com" starts with the last method used',()=>{$('fab').click();type($('fVal'),'555');$('fCat').value='Mercado';$('fFonte').value='beneficio';
+    $('fFonte').dispatchEvent(new Event('change'));$('fSave').click();need(!$('sheet').open,'not saved');
+    $('fab').click();need($('fFonte').value==='beneficio','started with '+$('fFonte').value);$('shClose').click();});
   await step('remove test data',async()=>{$('demoOff').click();await confirmYes();need(!/lançamentos de teste/.test($('demoN').textContent),'still there');
     need(!/teste/.test($('accList').textContent)&&!/teste/.test($('portfolio').textContent),'demo investments still there');});
   await step('generate test data fills investments and portfolio; "Apagar tudo" leaves nothing',async()=>{
@@ -257,5 +324,16 @@
     $('reset').click();await confirmYes();await tick();await tick();
     need($('accList').children.length<=1,'accounts left: '+$('accList').textContent.slice(0,120));need(!/PETR4|HGLG11/.test($('portfolio').textContent),'portfolio left');
     need(stored().tx.length===0&&!(stored().trades||[]).length&&stored().snaps.length===0,'storage not empty');});
+  await step('first visit: welcome steps, no backup warning; a step opens the form',async()=>{
+    q('#nav [data-t=resumo]').click();need(!$('startCard').hidden&&/Bem-vindo/.test($('startCard').textContent),'no welcome card');
+    need(!$('bkNote').textContent.trim(),'backup warning on an empty app');
+    q('[data-start=first-entry]').click();await tick();need($('sheet').open&&$('fVal'),'step did not open the form');$('shClose').click();});
+  await step('"O que fazer agora" opens the right tab (card invoices -> Cartão)',async()=>{
+    const d=new Date();d.setMonth(d.getMonth()-3);const old=d.toLocaleDateString('sv');
+    $('fab').click();await tick();const r=document.querySelector('input[name=tp][value=despesa]');r.checked=true;r.dispatchEvent(new Event('change'));
+    $('fVal').value='R$ 50,00';$('fCat').value='Mercado';$('fFonte').value='cartao';$('fDate').value=old;$('fSave').click();await tick();if($('confirmDlg').open)$('cfOk').click();await tick();
+    if($('sheet').open)$('shClose').click();q('#nav [data-t=resumo]').click();
+    const b=q('#todoCard [data-todo]');need(b&&/venceu|vencidas/.test(b.textContent),'no late invoice item: '+$('todoCard').textContent);
+    b.click();need($('t-cartao').classList.contains('on'),'did not open the Card tab');});
   document.documentElement.setAttribute('data-smoke',out.concat(errs).join(' | '));
 })();

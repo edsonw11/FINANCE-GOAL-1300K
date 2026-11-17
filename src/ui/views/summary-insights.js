@@ -21,9 +21,9 @@ const KIND_CLASS={Fixo:'fixed','Variável':'variable',Pontual:'occasional'};
 function tile(lab,val,sub,tone,key){
   return `<div class="ins-tile tap" data-kpi="${key}" role="button" tabindex="0" aria-label="${lab}: ver detalhes"><span class="kpi-go" aria-hidden="true">›</span><div class="ins-k">${lab}</div><div class="ins-v${tone?' tone-'+tone:''}">${val}</div><div class="ins-s">${sub}</div></div>`;
 }
+// the monthly average is not repeated here: it is on the Summary trend card
 function tilesBlock(a){
   return [
-    tile('Média mensal',f0(a.avg),a.dLast===null?a.N+' mês fechado':`${mShort(a.last.m)}: ${f0(a.last.v)} (${a.dLast>=0?'+':'−'}${pctAbs(a.prevAvg?a.dLast/a.prevAvg:0)} vs média anterior)`,'','avg'),
     tile('Gastos fixos',f0(a.fixed),`${pctAbs(a.fixed/(a.fixed+a.vari+a.pont||1))} da média · variáveis ${f0(a.vari)}`,'','fixed'),
     tile('Concentração',pctAbs(a.top3),'nos 3 maiores grupos: '+a.st.slice(0,3).map(z=>esc(z.c.split(' ')[0])).join(', '),'','top3'),
     tile('Potencial de economia',f0(a.save)+'/mês',`cortando 10% do variável · ${f0(a.save*12)} por ano`,'rec','variable')].join('');

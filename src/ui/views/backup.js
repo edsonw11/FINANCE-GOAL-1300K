@@ -10,10 +10,11 @@ import { toast } from '../toast.js';
 import { runCommand } from '../components/command.js';
 import { renderDemo } from './settings-demo.js';
 import { renderAdvanced } from './advanced-data.js';
+import { backupReminder } from '../../domain/backup-reminder.js';
 const LAST_BACKUP_KEY='metaapp.lastBackup';
 export function renderBackup(){renderDemo();renderAdvanced();
-  const t=+localStorage.getItem(LAST_BACKUP_KEY)||0,days=(Date.now()-t)/864e5;
-  $('bkNote').innerHTML=days>14?`<div class="banner"><span>${t?'Seu último backup foi há '+Math.floor(days)+' dias.':'Você ainda não fez backup.'} Os dados ficam só neste navegador.</span><button class="btn sm pri" id="bkNow">Fazer backup agora</button></div>`:'';
+  const r=backupReminder(+localStorage.getItem(LAST_BACKUP_KEY)||0,Date.now());
+  $('bkNote').innerHTML=r.show?`<div class="banner"><span>${r.days!==null?'Seu último backup foi há '+r.days+' dias.':'Você ainda não fez backup.'} Os dados ficam só neste navegador.</span><button class="btn sm pri" id="bkNow">Fazer backup agora</button></div>`:'';
   const b=$('bkNow');if(b)b.onclick=()=>$('exp').click();
 }
 function downloadJSON(data,name){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download=name;a.click();}

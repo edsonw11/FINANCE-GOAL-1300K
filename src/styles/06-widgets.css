@@ -11,4 +11,8 @@
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 .scroll{overflow-x:auto}
 .foot{color:var(--muted);font-size:12.5px;margin-top:34px}
-#tip2{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);padding:8px 11px;border-radius:8px;font-size:13px;line-height:1.45;opacity:0;white-space:nowrap;z-index:5}
+
+#toast.has-act{display:flex;align-items:center;gap:14px}
+.toast-act{background:none;border:0;color:var(--bg);font:inherit;font-weight:800;text-decoration:underline;cursor:pointer;min-height:44px;padding:0 4px}
+
+.acc-badge{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:999px;background:var(--soft);color:var(--ink2);font-size:12px;font-weight:700;vertical-align:1px}

@@ -32,6 +32,7 @@ export function summaryHtml(s){
       <div><span>Receitas</span><b class="rec">${ov.incomes}</b><small>${f2(ov.incomeTotal)}</small></div>
       <div><span>Despesas</span><b class="des">${ov.expenses}</b><small>${f2(ov.expenseTotal)}</small></div>
       ${ov.contributions?`<div><span>Aportes</span><b class="apo">${ov.contributions}</b><small>${f2(ov.contributionTotal)}</small></div>`:''}
+      ${ov.transfers?`<div><span>Transferências suas</span><b>${ov.transfers}</b><small>${f2(ov.transferTotal)} · não contam</small></div>`:''}
       ${ov.others?`<div><span>Não importáveis</span><b>${ov.others}</b><small>não viram lançamento</small></div>`:''}
       <div class="${ov.review?'warn':''}"><span>Para revisar</span><b>${ov.review}</b></div>
       <div class="${dup?'warn':''}"><span>Duplicados</span><b>${dup}</b>${dup?`<small>${ov.confirmedDup} certos · ${ov.possibleDup} possíveis</small>`:''}</div>
@@ -50,7 +51,11 @@ const listHtml=s=>s.drafts.length?s.drafts.map(d=>itemHtml(s,d)).join(''):'<div 
 export function reviewHtml(s){
   return `<div id="impSum">${summaryHtml(s)}</div>${optionsHtml(s)}${toolbarHtml}<div class="imp-list" id="impList">${listHtml(s)}</div>`;
 }
-export function footerCounts(s){const c=importOverview(s.drafts).selected.count;return {count:c,label:c?`Importar ${c} lançamento${c>1?'s':''}`:'Nada selecionado'};}
+export function footerCounts(s){
+  const ov=importOverview(s.drafts),c=ov.selected.count,t=ov.transfers;
+  const label=c?`Importar ${c} lançamento${c>1?'s':''}${t?' + '+t+' transf.':''}`:t?`Guardar ${t} transferência${t>1?'s':''}`:'Nada selecionado';
+  return {count:c+t,label};
+}
 // binds the events once per draw (assigning on* replaces the previous handlers)
 export function bindReview(body,ctx){
   const s=importState.session,item=id=>body.querySelector(`[data-imp-item="${id}"]`);
@@ -65,6 +70,9 @@ export function bindReview(body,ctx){
     if(s.openId){const e=item(s.openId);if(e&&e.scrollIntoView)e.scrollIntoView({block:'nearest'});}};
   body.onclick=e=>{
     const t=e.target,row=t.closest('[data-imp-item]'),id=row&&row.dataset.impItem;
+    // before the card's own click (the button sits inside the card, which opens the editor)
+    const fix=t.closest('[data-imp-pairfix]');
+    if(fix&&id){patchDraft(id,fix.dataset.impPairfix==='1'?{type:'transferencia',fixPair:true}:{fixPair:false});redrawItem(id);refreshSummary();return;}
     if(t.closest('[data-imp-open]')&&id){if(!t.closest('.imp-chk'))open(id);return;}
     if(t.closest('[data-imp-close]')){open(id);return;}
     if(t.closest('[data-imp-del]')){removeDraft(id);row.remove();refreshSummary();return;}

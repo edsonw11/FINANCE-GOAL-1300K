@@ -31,7 +31,8 @@
     <button data-t="lanc" data-i="receipt">Lançamentos</button>
     <button data-t="cartao" data-i="card">Cartão</button>
     <button data-t="meta" data-i="target">Patrimônio</button>
-        <button data-t="cad" data-i="tag">Categorias</button>
+        <button data-t="analise" data-i="chart">Análise</button>
+    <button data-t="cad" data-i="tag">Categorias</button>
     <button data-t="cfg" data-i="sliders">Ajustes</button>
   </nav>
   <div class="today" id="todayLbl"></div>
@@ -45,9 +46,12 @@
   <div id="bkNote"></div>
 
   <div class="mnav"><button data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab1" aria-live="polite"></div><button data-mv="1" aria-label="Próximo mês">›</button><button class="btn sm mtoday" data-mtoday hidden>Hoje</button></div>
+  <div class="card mt-10 start" id="startCard" hidden></div>
   <div class="card mt-10" id="todoCard" hidden></div>
-  <div class="grid g2 mt-10" id="healthRow"></div>
-  <div class="grid g4 mt-10" id="kFlow"></div>
+  <div class="card mt-10 month-hero" id="monthHero"></div>
+  <div class="card kpi health mt-10" id="reserveCard" hidden></div>
+  <div class="grid g3 mt-10" id="kFlow"></div>
+  <div class="card mt-14"><div class="card-title tight">Onde gastei no mês</div><div class="help mb4">Toque num grupo para ver os lançamentos.</div><div id="cats"></div></div>
   <div class="grid g2 sum-pair">
     <div class="card" id="budgetCard"></div>
     <div class="card" id="billsCard"></div>
@@ -58,50 +62,48 @@
     <div class="rel" id="trendWrap"><svg id="chTrend" role="img" aria-label="Despesas por mês com linha de tendência"></svg><div class="tip-box" id="trendTip"></div></div>
     <div id="trendSel"></div><div class="mt-8" id="trendDemo"></div>
     <div class="legend"><span><i class="lg-bar"></i>Despesas do mês</span><span><i class="lg-real"></i>Mês selecionado</span><span><i class="lg-cur"></i>Mês em andamento</span><span><i class="lg-line lg-real"></i>Curva dos gastos</span><span><i class="lg-line lg-warn"></i>Tendência</span></div>
+    <div class="mt-12"><button type="button" class="btn" data-go-tab="analise">📊 Ver análise completa dos gastos</button></div>
   </div>
-  <div class="card mt-14" id="trendIns"></div>
-  <div class="grid g2 mt-14">
-    <div class="card"><div class="card-title">Receitas × despesas × aportes (6 meses)</div><svg id="chFlow" role="img" aria-label="Receitas, despesas e aportes por mês"></svg>
-      <div class="legend"><span><i class="lg-rec"></i>Receitas</span><span><i class="lg-des"></i>Despesas</span><span><i class="lg-apo"></i>Aportes</span></div></div>
-    <div class="card"><div class="card-title tight">Onde gastei no mês</div><div class="help mb4">Toque numa categoria para ver os lançamentos.</div><div id="cats"></div></div>
-  </div>
+</section>
+
+<!-- ANÁLISE (was the bottom of the Summary) -->
+<section class="tab" id="t-analise">
+  <div class="ph"><h1>Análise dos gastos</h1><p>Média, gastos fixos, o que mudou e cada grupo mês a mês.</p></div>
+  <div class="mnav"><button data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab4" aria-live="polite"></div><button data-mv="1" aria-label="Próximo mês">›</button><button class="btn sm mtoday" data-mtoday hidden>Hoje</button></div>
+  <div class="card" id="trendIns"></div>
 </section>
 
 <!-- CARTÃO -->
 <section class="tab" id="t-cartao">
-  <div class="ph"><h1>Cartão de crédito</h1><p>O que foi pago em cada fatura e o que ainda falta identificar.</p></div>
-  <div class="mnav"><button data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab3" aria-live="polite"></div><button data-mv="1" aria-label="Próximo mês">›</button><button class="btn sm mtoday" data-mtoday hidden>Hoje</button></div>
-  <div class="spacer-10"></div>
+  <div class="ph"><h1>Cartão de crédito</h1><p>Cada fatura com as compras, o fechamento e o que já foi pago. Use ‹ › para trocar de fatura.</p></div>
   <div id="cycleBox"></div>
-
-  <div class="card" id="cardBox"></div><datalist id="catListD"></datalist>
+  <div id="cardBox"></div><datalist id="catListD"></datalist>
 </section>
 
 <!-- META -->
 <section class="tab" id="t-meta">
-  <div class="ph"><h1>Patrimônio e meta</h1><p>Quanto você já tem, quanto falta, a projeção até a meta e onde o dinheiro está investido.</p></div>
+  <div class="ph"><h1>Patrimônio e meta</h1><p>Quanto você já tem, onde está, quanto falta e a projeção até a meta.</p></div>
 
   <div class="grid g4" id="kMeta"></div>
-  <div class="card mt-14">
-    <div class="chartbox" id="box"><svg id="chTower" role="img" aria-label="Evolução do patrimônio líquido: real e projeção"></svg><div id="tip"></div></div>
+  <!-- balances first: where the money is today -->
+  <div id="invStart" class="inv-part"><h2 class="part-h">💼 Onde está seu dinheiro</h2><p class="help">Saldo de cada conta hoje. Toque em ⋯ para marcar a reserva de emergência ou arquivar.</p></div>
+  <div class="card"><div id="accList"></div>
+    <div class="row mt-12"><div class="f mw-260"><label for="newAcc">Adicionar conta/investimento</label><input id="newAcc" placeholder="Ex.: XP CDB"></div><button class="btn" id="addAcc">Adicionar</button></div></div>
+  <h2>🍩 Distribuição dos investimentos</h2>
+  <div class="card" id="distCard"></div>
+  <!-- one chart: real, projection, lower-rate scenario and goal; the table stays collapsed -->
+  <h2>📈 Evolução e projeção</h2>
+  <div class="card">
+    <div class="chartbox" id="box"><svg id="chTower" role="img" aria-label="Patrimônio líquido: real por tipo, projeção, cenário com juros menores e meta"></svg><div id="tip"></div></div>
     <div class="legend" id="lgTower"></div>
     <div class="help" id="paceMsg"></div>
   </div>
-  <!-- projection (was its own tab; now part of the goal) -->
-  <div class="card mt-14" id="projCard">
-    <div class="card-h"><h2 class="card-t">Projeção mês a mês</h2><div class="help flush">Juros sobre juros a partir do saldo de hoje, com o aporte planejado.</div></div>
-    <div class="chartbox" id="box2"><svg id="chProj" role="img" aria-label="Projeção do patrimônio líquido: cenário base, cenário conservador e meta"></svg><div id="tip2"></div></div>
-    <div class="legend mb-14" id="lgProj"></div>
+  <details class="card mt-14 proj-card" id="projCard">
+    <summary class="card-title" id="projSum">Projeção mês a mês</summary>
+    <div class="help">Juros sobre juros a partir do saldo de hoje, com o aporte planejado.</div>
     <div class="scroll"><table id="projTbl"></table></div>
     <div class="help" id="projHelp"></div>
-  </div>
-  <!-- investments (was its own tab; now part of the net worth) -->
-  <div id="invStart" class="inv-part"><h2 class="part-h">Investimentos: onde está seu dinheiro</h2><p class="help">Saldo de cada conta, carteira e evolução mensal.</p></div>
-  <h2>🍩 Distribuição dos investimentos</h2>
-  <div class="card" id="distCard"></div>
-  <h2>💼 Onde está meu dinheiro</h2>
-  <div class="card"><div id="accList"></div>
-    <div class="row mt-12"><div class="f mw-260"><label for="newAcc">Adicionar conta/investimento</label><input id="newAcc" placeholder="Ex.: XP CDB"></div><button class="btn" id="addAcc">Adicionar</button></div></div>
+  </details>
   <h2>📊 Carteira</h2>
   <div class="card" id="portfolio"></div>
   <h2>📥 Importar</h2>
@@ -121,10 +123,6 @@
 <!-- LANÇAMENTOS -->
 <section class="tab" id="t-lanc">
   <div class="ph"><h1>Lançamentos</h1><p>Registre receitas, despesas e aportes. Leva poucos segundos.</p></div>
-  <div class="quick-add" aria-label="Novo lançamento">
-    <button type="button" class="btn qa des" data-new="despesa">➖ Nova despesa</button><button type="button" class="btn qa rec" data-new="receita">➕ Nova receita</button>
-    <button type="button" class="btn qa fat" data-new="fatura">💳 Pagar fatura</button><button type="button" class="btn qa apo" data-new="aporte">🏦 Aporte</button>
-  </div>
   <div class="card smart-add" id="smartAdd">
     <form class="qe" id="qeForm" autocomplete="off">
       <label for="qeText">⚡ Lançamento rápido</label>
@@ -211,6 +209,13 @@
       <div class="f f-note f2">O <b>melhor dia de compra</b> é o dia em que começa a fatura nova (a anterior fecha no dia anterior). Veja no app do banco, na fatura: “melhor data de compra”.</div></div>
     <div class="help" id="avgHelp"></div>
     <div class="help">Referência: CDI 14,75% bruto ≈ 12,5% líquido (IR 15%). Se a Selic cair, use um valor menor (seu relatório usa 11,16%).</div></div>
+  <h2>🔁 Transferências entre suas contas</h2>
+  <div class="card" id="ownCard">
+    <div class="help m0">Dinheiro que você manda de um banco seu para outro (Santander → Nubank) não é receita nem despesa. Informe seu nome <b>como aparece no extrato</b>: na importação, Pix e TED com ele viram “🔁 Transferência minha” e o app reconhece o outro lado quando você importar o outro banco.</div>
+    <div class="row mt-10 own-add"><div class="f mw-260"><label for="ownNameIn">Seu nome no extrato</label><input id="ownNameIn" placeholder="Ex.: Maria Souza Lima" autocomplete="name"></div><button type="button" class="btn" id="ownNameAdd">Adicionar</button></div>
+    <div class="mt-10" id="ownNames"></div>
+    <div class="help">Pode cadastrar variações (ex.: “Maria S Lima”). Salário no seu nome continua sendo receita.</div>
+  </div>
   <h2>🧰 Dados</h2>
   <div class="card"><div class="row">
     <button class="btn" id="exp">⬇️ Exportar backup</button><button class="btn" id="imp">⬆️ Importar backup</button>
@@ -261,7 +266,7 @@
 <dialog id="confirmDlg" class="confirm" aria-labelledby="cfTitle">
   <h3 id="cfTitle"></h3><div id="cfText"></div>
   <label id="cfCheckW" class="cf-check" hidden><input type="checkbox" id="cfCheck"><span id="cfCheckL"></span></label>
-  <div class="cf-actions"><button type="button" class="btn" id="cfCancel">Cancelar</button><button type="button" class="btn pri" id="cfOk">Confirmar</button></div>
+  <div class="cf-actions"><button type="button" class="btn" id="cfCancel">Cancelar</button><button type="button" class="btn" id="cfAlt" hidden></button><button type="button" class="btn pri" id="cfOk">Confirmar</button></div>
 </dialog>
 <button type="button" id="fab" class="fab" aria-label="Novo lançamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 <nav id="bnav" class="bnav" aria-label="Menu principal">

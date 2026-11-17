@@ -81,7 +81,7 @@ dialog.confirm h3{margin:0 0 10px;font-size:18px}
 #cfText{font-size:15px;line-height:1.5;color:var(--ink)}
 .cf-check{display:flex;gap:10px;align-items:center;margin:14px 0 0;font-size:14px;color:var(--ink);font-weight:500;cursor:pointer;min-height:var(--tap)}
 .cf-check input{width:20px;height:20px;flex:none}
-.cf-actions{display:flex;gap:10px;margin-top:18px}.cf-actions .btn{flex:1;min-height:var(--tap)}
+.cf-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.cf-actions .btn{flex:1 1 30%;min-height:var(--tap)}
 button.dngf{background:var(--des);border-color:var(--des);color:#fff}
 /* date field: dd/mm/aaaa text + native calendar on top */
 .dp{position:relative;display:block}
@@ -112,7 +112,7 @@ input[data-money]{font-variant-numeric:tabular-nums}
 .tsel{background:var(--ink);color:var(--card);border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.5;margin-top:10px}
 .tsel .btn{margin-top:10px;width:100%;min-height:var(--tap);background:var(--card);color:var(--ink);border-color:transparent}
 /* quick add, fab and bottom nav: phones only (see 09-mobile.css) */
-.quick-add{display:none}
+
 .fab{position:fixed;right:22px;bottom:calc(22px + var(--safe-b));width:56px;height:56px;border-radius:18px;border:0;background:var(--brand);color:#fff;box-shadow:0 8px 24px rgba(47,95,208,.4);cursor:pointer;z-index:30;display:grid;place-items:center}
 .fab svg{width:26px;height:26px}.fab:active{transform:scale(.95)}
 .bnav{display:none}
@@ -195,3 +195,4 @@ table.tl tr.rowclick{cursor:pointer}
 /* a group of categories is a closed section until opened */
 .cat-det>summary{list-style:none;cursor:pointer}.cat-det>summary::-webkit-details-marker{display:none}
 .cat-det>summary::before{content:'▸';color:var(--muted);margin-right:2px}.cat-det[open]>summary::before{content:'▾'}
+.li-month{font-size:15px;font-weight:800;color:var(--ink);padding:18px 6px 2px;border-top:1px solid var(--line);margin-top:6px}.li-month:first-of-type{border-top:0;margin-top:0}

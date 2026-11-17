@@ -2,7 +2,7 @@
  * ui/views/distribution-view.js
  * Responsibility: the "Distribuição dos investimentos" card: a ring with the share of each part of the net worth,
  * two ways to look at it (by account or by type: fixed income, stocks, FIIs, ETFs). Each slice has a line to its
- * name and percentage (no separate legend). Tapping a slice or its label highlights it and shows its value in the middle. Read only; numbers come from the domain.
+ * name and percentage; on narrow phones the ring has no side labels and the names are a list under it. Tapping a slice or its label highlights it and shows its value in the middle. Read only; numbers come from the domain.
  */
 import { $, esc } from '../../core/dom.js';
 import { f0, pc } from '../../core/format.js';
@@ -15,6 +15,9 @@ import { css } from '../../core/dom.js';
 // compactMoney money for the middle of a small ring: R$ 1,25 mi, R$ 124 mil
 const compactMoney=v=>v>=1e6?'R$ '+(v/1e6).toFixed(2).replace('.',',')+' mi':v>=1e4?'R$ '+Math.round(v/1e3)+' mil':f0(v);
 const view={by:'account',sel:null};
+const NARROW=640; // below this the side labels do not fit: ring only, names in a list under it
+// the list under the ring on phones: whole names, share and value; tapping one highlights its slice
+const legendHtml=(items,pick)=>`<div class="dist-legend">${items.map(i=>`<button type="button" class="dist-li${pick&&pick.id!==i.id?' dim':''}" data-key="${esc(i.id)}" aria-pressed="${!!pick&&pick.id===i.id}"><i style="background:${colorOf(i)}"></i><span class="dist-n">${esc(i.name)}${i.count>1&&view.by==='type'?' ('+i.count+')':''}</span><b>${pc(i.share)}</b><span class="dist-v">${f0(i.value)}</span></button>`).join('')}</div>`;
 const colorOf=i=>i.id===DIST_OTHER_ID?css('--mut')||'#9aa5ba':view.by==='type'?typeColor(i.id):accColor(i.id);
 const tabs=()=>`<div class="dist-tabs" role="tablist">${[['account','Por conta'],['type','Por tipo']].map(([k,l])=>`<button type="button" role="tab" aria-selected="${view.by===k}" class="dist-tab${view.by===k?' on':''}" data-dist-by="${k}">${l}</button>`).join('')}</div>`;
 const GAP_TEXT={on:()=>'✅ no alvo',over:r=>'acima: tirar '+f0(-r.money),under:r=>'abaixo: faltam '+f0(r.money),none:()=>''};
@@ -30,9 +33,9 @@ export function renderDistribution(){
   if(view.sel&&!d.items.some(i=>i.id===view.sel))view.sel=null;
   const pick=d.items.find(i=>i.id===view.sel);
   const slices=d.items.map(i=>({value:i.value,color:colorOf(i),key:i.id,dim:!!pick&&pick.id!==i.id,name:i.name+(i.count>1&&view.by==='type'?' ('+i.count+')':''),text:pc(i.share)}));
-  const narrow=window.innerWidth<=640;
-  el.innerHTML=`${tabs()}${donutSvg(slices,{compact:narrow,width:Math.min(window.innerWidth-56,600),
-      centerTop:(narrow?compactMoney:f0)(pick?pick.value:d.total),centerBottom:pick?esc(pick.name):'total',ariaLabel:'Distribuição dos investimentos: '+d.items.map(i=>i.name+' '+pc(i.share)).join(', ')})}${view.by==='type'?targetsHtml():''}`;
+  const narrow=window.innerWidth<=NARROW;
+  el.innerHTML=`${tabs()}${donutSvg(slices,{bare:narrow,width:Math.min(window.innerWidth-56,600),
+      centerTop:(narrow?compactMoney:f0)(pick?pick.value:d.total),centerBottom:pick?esc(pick.name):'total',ariaLabel:'Distribuição dos investimentos: '+d.items.map(i=>i.name+' '+pc(i.share)).join(', ')})}${narrow?legendHtml(d.items,pick):''}${view.by==='type'?targetsHtml():''}`;
 }
 export function bindDistribution(){
   const el=$('distCard');if(!el)return;

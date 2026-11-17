@@ -23,6 +23,7 @@ import { render } from '../render.js';
 import { fillCategoryOptions } from './transaction-form.js';
 import { drawInvoiceForm, initInvoiceForm } from './invoice-form.js';
 import { openItem } from './item-dialog.js';
+import { invoiceName } from '../invoice-name.js';
 // ---- pay invoice (quick mode): pick the invoice and the amount, no date/description ----
 let paySel=null,payMode='total';
 export const isQuickPay=()=>ui.type==='fatura'&&ui.editId===null&&!ui.payAdvanced;
@@ -37,7 +38,7 @@ function paidInvoicesList(){
   const ps=S.tx.filter(t=>t.type==='fatura').sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id).slice(0,5);
   if(!ps.length)return '';
   return `<div class="pay-paid"><div class="pay-paid-h">Pagamentos já registrados <span class="mut">· pagou sem querer? cancele aqui</span></div>`+
-    ps.map(t=>`<div class="pay-line"><span class="pay-line-t">💳 Fatura de ${formatDateBR(dueDateOf(invoiceMonthOf(t)))} <span class="mut">· paga em ${formatDateBR(t.date)}</span></span><b>${f2(t.value)}</b><button type="button" class="btn sm dng" data-cp="${t.id}">Cancelar pagamento</button></div>`).join('')+'</div>';}
+    ps.map(t=>`<div class="pay-line"><span class="pay-line-t">💳 ${invoiceName(invoiceMonthOf(t))} <span class="mut">· paga em ${formatDateBR(t.date)}</span></span><b>${f2(t.value)}</b><button type="button" class="btn sm dng" data-cp="${t.id}">Cancelar pagamento</button></div>`).join('')+'</div>';}
 function bindPaidInvoices(box){box.querySelectorAll('[data-cp]').forEach(b=>b.onclick=()=>{const t=S.tx.find(x=>x.id===+b.dataset.cp);if(t)cancelPay(t);});}
 export function renderPay(){
   const L=payableInvoices(),box=$('payBox'),t0=today();
@@ -65,7 +66,7 @@ export function renderPay(){
       <div class="row pay-go"><button type="button" class="btn pri" id="payGo">💳 Pagar fatura</button><span class="help flush">Registrado hoje, ${formatDateBR(t0)}. Sai do caixa e não conta como gasto de novo.</span></div></div></div>`;};
   // one invoice (accordion item)
   const acc=x=>{const on=x.fm===payOpen,dd=dueDateOf(x.fm),late=dd<t0;
-    return `<div class="pay-inv${on?' on':''}"><div data-pa="${x.fm}" class="pay-inv-h"><span class="pay-caret">${on?'▾':'▸'}</span><span class="pay-inv-t"><b>Vence em ${formatDateBR(dd)}</b><br><span class="mut">${x.n} compra(s)${x.paid>0?' · já pago '+f2(x.paid):''}${late?' · <b class="late-t">vencida</b>':''}</span></span><b class="pay-inv-v">${f2(x.rest)}</b></div>${on?body(x):''}</div>`;};
+    return `<div class="pay-inv${on?' on':''}"><div data-pa="${x.fm}" class="pay-inv-h"><span class="pay-caret">${on?'▾':'▸'}</span><span class="pay-inv-t"><b>${invoiceName(x.fm)}</b> <span class="mut">· vence ${formatDateBR(dd)}</span><br><span class="mut">${x.n} compra(s)${x.paid>0?' · já pago '+f2(x.paid):''}${late?' · <b class="late-t">vencida</b>':''}</span></span><b class="pay-inv-v">${f2(x.rest)}</b></div>${on?body(x):''}</div>`;};
   const futOpen=fut.some(x=>x.fm===payOpen);
   box.innerHTML=`<div class="pay-q">Qual fatura você vai pagar?</div>${head.map(acc).join('')||'<div class="help">Nenhuma fatura atual ou vencida em aberto.</div>'}
     ${fut.length?`<details id="payFut" ${futOpen?'open':''} class="pay-fut"><summary>Faturas futuras (${fut.length}) · ${f2(sum(fut.map(x=>x.rest)))}</summary><div class="mt-6">${fut.map(acc).join('')}</div></details>`:''}
@@ -86,5 +87,5 @@ export function renderPay(){
     if(!await askConfirm({title:'Confirmar pagamento',html,ok:'💳 Pagar '+f2(plan.value)}))return;
     if(!runCommand(()=>payInvoice(f.fm,plan,t0),{render:false}))return;
     payMode='total';payIds=null;ui.cur=mOf(t0);render();
-    toast('💳 '+(plan.full?'Fatura de ':'Pagamento de ')+formatDateBR(dueDateOf(f.fm))+' paga: '+f2(plan.value));};
+    toast('💳 '+(plan.full?invoiceName(f.fm)+' paga: ':'Pagamento da '+invoiceName(f.fm)+': ')+f2(plan.value));};
 }

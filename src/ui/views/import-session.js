@@ -45,7 +45,8 @@ export function patchDraft(id,patch){
   if(d.type===IMPORT_TYPE.contribution&&!d.acc)d.acc=suggestAccount(d.desc);
   if(d.type!==prevType){
     if(!isSaveable(d)){d.selected=false;}
-    else if(prevType===IMPORT_TYPE.ignore){d.selected=true;d.reason=null;}
+    else if(prevType===IMPORT_TYPE.ignore||prevType===IMPORT_TYPE.ownTransfer){d.selected=true;d.reason=null;}
+    if(d.type!==IMPORT_TYPE.ownTransfer)d.fixPair=false;
   }
   markDuplicates(s.drafts);
   if(!hadDup&&d.dup)d.selected=false; // it became a possible duplicate: the user decides again

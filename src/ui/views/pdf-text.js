@@ -36,7 +36,7 @@ export async function pdfText(file){
   const lines=[];
   for(let i=1;i<=doc.numPages;i++){
     const page=await doc.getPage(i),content=await page.getTextContent();
-    lines.push(...linesFromItems(content.items.map(it=>({str:it.str,x:it.transform[4],y:it.transform[5]}))));
+    lines.push(...linesFromItems(content.items.map(it=>({str:it.str,x:it.transform[4],y:it.transform[5],w:it.width,size:Math.abs(it.transform[0])||it.height}))));
   }
   await doc.destroy();
   return lines.join('\n');

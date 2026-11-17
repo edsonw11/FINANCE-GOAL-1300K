@@ -5,7 +5,7 @@
  * Pure functions only (no DOM).
  */
 import { parse } from './format.js';
-const toCents=v=>Math.round((+v||0)*100);
+export const toCents=v=>Math.round((+v||0)*100);
 const fromCents=c=>c/100;
 export const roundMoney=v=>fromCents(toCents(v));
 export const sumMoney=a=>fromCents(a.reduce((acc,v)=>acc+toCents(v),0));

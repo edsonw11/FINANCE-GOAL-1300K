@@ -10,9 +10,10 @@ export function resultHtml(session){
   const r=session.result,bad=r.items.filter(i=>i.status!=='saved'),byId=new Map(session.snapshot.map(d=>[d.id,d]));
   const line=i=>{const d=byId.get(i.id)||{};return `<div class="li"><span class="li-main"><span class="li-t">${esc(d.desc||'(sem descrição)')}</span><span class="li-s">${esc(i.reason||'')}</span></span><span class="li-v">${d.value?f2(d.value):''}</span></div>`;};
   const failed=bad.filter(i=>i.status==='failed'),skipped=bad.filter(i=>i.status==='skipped');
-  return `<div class="imp-done"><div class="imp-ok">✅ ${r.saved} lançamento(s) cadastrado(s)</div>
+  return `<div class="imp-done">${r.saved||!r.transfers?`<div class="imp-ok">✅ ${r.saved} lançamento(s) cadastrado(s)</div>`:''}
     ${r.months.length?`<p class="help">Em ${r.months.map(m=>'<b>'+esc(mLabel(m))+'</b>').join(', ')}. Dashboard, listas e saldos já foram atualizados.</p>`:''}
     ${failed.length?`<div class="bd-gh"><span>⚠️ Não cadastrados (${failed.length}): corrija e tente de novo</span></div><div class="lst">${failed.map(line).join('')}</div>`:''}
     ${skipped.length?`<div class="bd-gh"><span>Já existiam (${skipped.length}): nada foi duplicado</span></div><div class="lst">${skipped.map(line).join('')}</div>`:''}
-    ${!r.saved&&!bad.length?'<p class="help">Nada foi selecionado.</p>':''}</div>`;
+    ${r.transfers?`<p class="help">🔁 ${r.transfers} transferência(s) entre suas contas guardada(s): não contam como receita nem despesa. Quando você importar o extrato do outro banco, o app reconhece o outro lado.${r.fixedPairs?` ${r.fixedPairs} lançamento(s) já salvo(s) viraram transferência.`:''}</p>`:''}
+    ${!r.saved&&!bad.length&&!r.transfers?'<p class="help">Nada foi selecionado.</p>':''}</div>`;
 }

@@ -31,9 +31,11 @@ const restoreLink=r=>r.ignoredCount?`<div class="help flush bill-foot">${r.ignor
 export function renderBills(){
   const box=$('billsCard'),r=monthlyBills(ui.cur);shown=r.items;
   if(!r.count){box.innerHTML=`<div class="card-h"><h2 class="card-t">Contas do mês</h2></div><div class="help flush">As contas que se repetem todo mês (condomínio, luz, água, convênio...) aparecem aqui sozinhas depois de 2 meses, ou na hora se você lançar com “Repetir por N meses”.</div>${restoreLink(r)}`;return;}
+  // all paid: one line (the list is still one tap away), so the Summary stays short
+  const allPaid=r.paidCount===r.count,list=r.items.map(billRow).join('');
   box.innerHTML=`<div class="card-h"><h2 class="card-t">Contas do mês</h2><div class="help flush">${r.paidCount} de ${r.count} pagas${r.pending>0?' · falta '+f2(r.pending):' · tudo pago ✅'}</div></div>
     ${progressBar(r.paidCount/r.count,r.paidCount===r.count?PROGRESS_TONE.ok:PROGRESS_TONE.near,'Contas pagas')}
-    <div class="lst bill-list">${r.items.map(billRow).join('')}</div>${restoreLink(r)}`;
+    ${allPaid?`<details class="bill-more"><summary>Ver as ${r.count} contas</summary><div class="lst bill-list">${list}</div></details>`:`<div class="lst bill-list">${list}</div>`}${restoreLink(r)}`;
 }
 export function bindBills(){
   $('billsCard').addEventListener('click',e=>{

@@ -13,6 +13,8 @@ import { looksLikeOfx, parseOfx } from './import-ofx.js';
 import { pdfEntries } from './import-pdf.js';
 import { buildDrafts } from './import-draft.js';
 import { markDuplicates } from './import-duplicates.js';
+import { markTransferPairs } from './transfers.js';
+import { ownNames } from './own-names.js';
 export const IMPORT_LIMITS={maxBytes:2*1024*1024,maxPdfBytes:10*1024*1024,maxPdfPages:40,maxEntries:3000};
 export const SUPPORTED_EXTENSIONS=['csv','ofx','qfx','txt','pdf'];
 export const SUPPORTED_TEXT='CSV, OFX e PDF digital';
@@ -48,8 +50,9 @@ export function readImportFile(file,opts){
   }
   if(entries.length>IMPORT_LIMITS.maxEntries)return fail(`Arquivo com ${entries.length} lançamentos (máximo ${IMPORT_LIMITS.maxEntries}). Exporte um período menor.`);
   if(!entries.length)return format==='csv'?{ok:false,needsMapping:true,error:'Não encontrei lançamentos com data e valor. Confira as colunas escolhidas.',format,kind,rows,mapping,fileName:file.name,fileHash}:fail('Não encontrei lançamentos neste arquivo.');
-  const {drafts,dropped}=buildDrafts(entries,{format,kind,invert:!!opts.invert,accountId});
+  const {drafts,dropped}=buildDrafts(entries,{format,kind,invert:!!opts.invert,accountId,ownNames:ownNames()});
   markDuplicates(drafts);
+  markTransferPairs(drafts);
   drafts.forEach(d=>{if(d.dup)d.selected=false;});
   const before=(S.imports||[]).find(i=>i.hash===fileHash)||null;
   return {ok:true,format,kind,fileName:file.name||'arquivo',fileHash,rows,mapping,drafts,dropped,skipped,unreadable,alreadyImported:before};
