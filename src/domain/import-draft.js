@@ -12,7 +12,8 @@ import { parseBrDate } from '../core/import-values.js';
 import { dueMonth } from './card-cycle.js';
 import { IMPORT_TYPE, classifyEntry } from './import-classify.js';
 import { suggestFromHistory } from './import-history.js';
-import { suggestAccount } from './import-account.js';
+import { NEW_ACCOUNT, defaultAccount } from './import-account.js';
+import { splitParts, splitRest } from './import-split.js';
 export const SAVEABLE=[IMPORT_TYPE.expense,IMPORT_TYPE.income,IMPORT_TYPE.contribution];
 export const isSaveable=d=>SAVEABLE.includes(d.type);
 const MAX_VALUE=10000000;
@@ -32,7 +33,7 @@ function keyFor(entry,seen,o){
 let draftSeq=0;
 export const newDraftId=()=>'d'+(++draftSeq);
 export function blankDraft(over){
-  return {id:newDraftId(),key:'',date:'',desc:'',value:0,type:IMPORT_TYPE.expense,reason:null,cat:'',acc:'',fonte:'caixa',installment:null,createRest:false,flow:'',pair:null,fixPair:false,
+  return {id:newDraftId(),key:'',date:'',desc:'',value:0,type:IMPORT_TYPE.expense,reason:null,cat:'',acc:'',fonte:'caixa',newAcc:'',splits:[],installment:null,createRest:false,flow:'',pair:null,fixPair:false,
     selected:true,flags:[],dup:null,raw:'',line:0,manual:true,...over};
 }
 // entries: raw entries from a reader. o: {format:'csv'|'ofx', kind:'bank'|'card', invert, accountId, ownNames}
@@ -46,7 +47,7 @@ export function buildDrafts(entries,o){
     const noCat=!SAVEABLE.includes(cls.type)||cls.type===IMPORT_TYPE.contribution;
     const cat=cls.cat||(noCat?'':(suggestFromHistory(e.desc,cls.type)||{}).cat||'');
     drafts.push(blankDraft({key:keyFor(e,seen,o),date:e.date,desc:e.desc,value,type:cls.type,reason:cls.reason,cat,
-      acc:cls.type===IMPORT_TYPE.contribution?suggestAccount(e.desc):'',
+      acc:cls.type===IMPORT_TYPE.contribution?defaultAccount(e.desc):'',
       fonte:o.kind==='card'&&cls.type===IMPORT_TYPE.expense?'cartao':'caixa',installment:cls.installment,flags:cls.flags.concat(e.flags||[]),
       selected:SAVEABLE.includes(cls.type),flow,raw:e.raw,line:e.line,manual:false}));
   });
@@ -57,8 +58,10 @@ export function draftProblems(d){
   const p=[];
   if(!SAVEABLE.includes(d.type))p.push('Tipo: escolha despesa, receita ou aporte');
   if(d.type===IMPORT_TYPE.contribution&&!d.acc)p.push('Investimento: escolha para onde vai o aporte');
+  if(d.type===IMPORT_TYPE.contribution&&d.acc===NEW_ACCOUNT&&!(d.newAcc||'').trim())p.push('Investimento: digite o nome da conta nova');
   if(!(d.value>0)||d.value>MAX_VALUE)p.push('Valor inválido');
   if(parseBrDate(d.date)!==d.date)p.push('Data inválida'); // a real calendar day, ISO
+  if(splitParts(d).length&&splitRest(d)<0)p.push('Divisão: as partes somam mais que o valor');
   return p;
 }
 // worth a second look: any flag, or no category (it would go to the default category)

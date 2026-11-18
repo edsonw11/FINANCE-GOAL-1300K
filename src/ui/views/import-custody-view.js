@@ -10,10 +10,10 @@ import { f2 } from '../../core/format.js';
 import { formatDateBR } from '../../core/dates.js';
 import { active, accName } from '../../domain/accounts.js';
 import { applyCustody, applyCustodyToNewAccount, currentBalance } from '../../domain/import-custody.js';
+import { NEW_ACCOUNT } from '../../domain/import-account.js';
 import { askConfirm } from '../components/confirm.js';
 import { runCommand } from '../components/command.js';
 import { Sheet } from '../components/sheet.js';
-const NEW_ACCOUNT='__new';
 // no account picked yet: a new one is the natural choice when there is none that matches
 function startChoice(s){
   if(s.acc===undefined||s.acc===null||s.acc==='')s.acc=active().length?'':NEW_ACCOUNT;

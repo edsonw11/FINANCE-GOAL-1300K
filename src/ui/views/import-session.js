@@ -8,7 +8,7 @@ import { today } from '../../core/dates.js';
 import { parseMoney } from '../../core/money.js';
 import { IMPORT_TYPE } from '../../domain/import-classify.js';
 import { blankDraft, isSaveable } from '../../domain/import-draft.js';
-import { suggestAccount } from '../../domain/import-account.js';
+import { defaultAccount } from '../../domain/import-account.js';
 import { markDuplicates } from '../../domain/import-duplicates.js';
 const KEY='metaapp.trace';
 const saved=()=>{try{return JSON.parse(sessionStorage.getItem(KEY))||[];}catch(e){return [];}};
@@ -44,7 +44,7 @@ export function patchDraft(id,patch){
   const hadDup=!!d.dup,prevType=d.type;
   Object.keys(patch).forEach(k=>{d[k]=NUMBER_FIELDS.includes(k)?parseMoney(patch[k]):patch[k];});
   if(d.type!==IMPORT_TYPE.expense&&d.fonte==='cartao')d.fonte='caixa';
-  if(d.type===IMPORT_TYPE.contribution&&!d.acc)d.acc=suggestAccount(d.desc);
+  if(d.type===IMPORT_TYPE.contribution&&!d.acc)d.acc=defaultAccount(d.desc);
   if(d.type!==prevType){
     if(!isSaveable(d)){d.selected=false;}
     else if(prevType===IMPORT_TYPE.ignore||prevType===IMPORT_TYPE.ownTransfer){d.selected=true;d.reason=null;}

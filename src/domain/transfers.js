@@ -4,7 +4,8 @@
  * transactions (never income or expense) but are kept in S.transfers so that, when the statement of
  * the other bank is imported, its side is recognised: same value, opposite direction, a few days apart.
  * Also finds the other side among records already saved as income/expense (an earlier import that
- * did not know it was a transfer) and turns such a record into a transfer when the user confirms.
+ * did not know it was a transfer) and turns such a record into a transfer when the user confirms, and
+ * the other way round: a kept transfer whose line was re-imported as income/expense stops being one.
  */
 import { daysBetween, formatDateBR } from '../core/dates.js';
 import { roundMoney, toCents } from '../core/money.js';
@@ -50,6 +51,16 @@ export function recordToTransfer(id){
   const tr={id:'tr'+(S.nid++),key:t.imp||'',date:t.date,value:roundMoney(t.value),dir:t.type==='despesa'?'out':'in',desc:t.desc||t.cat,pair:null};
   S.tx=S.tx.filter(x=>x.id!==id);S.transfers=transfers().concat([tr]);
   return {transfer:tr};
+}
+// the lines of these keys were saved as income/expense (the money was spent, not moved): the transfers
+// kept for them are removed and their other side is unlinked -> number removed
+export function dropTransfersOf(keys){
+  const k=new Set((keys||[]).filter(Boolean)),gone=transfers().filter(t=>t.key&&k.has(t.key));
+  if(!gone.length)return 0;
+  const ids=new Set(gone.map(t=>t.id));
+  S.transfers=transfers().filter(t=>!ids.has(t.id));
+  S.transfers.forEach(t=>{if(ids.has(t.pair))t.pair=null;});
+  return gone.length;
 }
 // called when an import is confirmed: keeps every draft of type transfer (once), links the pairs and
 // turns the confirmed "other side" records into transfers. -> {kept, fixed}

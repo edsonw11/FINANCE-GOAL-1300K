@@ -627,6 +627,11 @@ dialog.dlg-wide{width:min(580px,94vw)}
 .imp-edit{border-top:1px solid var(--line);padding:12px;background:rgba(120,120,120,.05)}
 .imp-fields{grid-template-columns:1fr 1fr;gap:10px}
 .imp-rest{margin:10px 0 0;font-size:13px}
+.imp-split{margin-top:10px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+.imp-split-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) auto;gap:6px;width:100%}
+.ico-btn{display:inline-flex;align-items:center;gap:6px}.ico-btn svg{width:16px;height:16px;flex:none}
+.imp-split-sum{font-size:13px;color:var(--ink2)}
+@media (max-width:480px){.imp-split-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.imp-split-row .btn{grid-column:1/-1;justify-self:end}}
 .imp-raw{margin-top:10px;font-size:12px;color:var(--ink2);overflow-wrap:anywhere}.imp-raw code{font-size:11.5px}
 .imp-edit-foot{display:flex;justify-content:space-between;gap:8px;margin-top:12px}
 /* column mapping */
@@ -1963,6 +1968,7 @@ const P={
  scale:'<path d="M12 3v18M7 21h10M5 7h14"/><path d="M5 7l-3 8a4 4 0 0 0 6 0zM19 7l-3 8a4 4 0 0 0 6 0z"/>'};
 const svg=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[k]}</svg>`;
 P.tag='<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/>';
+P.pie='<path d="M21.2 15.9A10 10 0 1 1 8 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>';
 P.card='<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>';
 const EM={'💳':'card','💰':'wallet','🎯':'target','⏱️':'clock','📈':'trend','➕':'plus','➖':'minus','🏦':'bank','🧮':'scale'};
 
@@ -3248,8 +3254,10 @@ function parseOfx(text){
  * domain/import-pdf.js
  * Responsibility: reads the TEXT of a digital PDF (statement or card invoice) into raw entries, and
  * rebuilds text lines from the positioned text pieces a PDF reader returns. Generic and approximate:
- * a line that starts with a date and has a money amount is an entry. One layout rule is extra: a
- * "Movimentação" block where only the first entry of the day has a date (Santander).
+ * a line that starts with a date and has a money amount is an entry. Layout rules on top: a
+ * "Movimentação" block where only the first entry of the day has a date (Santander), descriptions above
+ * and below the value line, "Crédito / Débito" columns that give the direction (Bradesco), and groups
+ * headed by "Total de entradas / Total de saídas" that go on across pages (Nubank).
  * It never reads scanned PDFs or photos (no text to read). Signs the PDF does not print are deduced
  * from words and flagged for the user to confirm.
  */
@@ -3276,6 +3284,27 @@ function joinPieces(items){
   });
   return out.replace(/[ ]{2,}/g,' ').trim();
 }
+// Statements with separate "Crédito" and "Débito" columns (Bradesco, Itaú...) print values without a sign:
+// the column says the direction. The header row gives where each column is; a value below it gets " C" or
+// " D" (the reader already understands that suffix). Values under "Saldo" are left alone.
+const COLUMN_HEADS=[['credit',/^cr[eé]dito/i,'C'],['debit',/^d[eé]bito/i,'D'],['balance',/^saldo/i,null]];
+const MONEY_PIECE=/^\d{1,3}(?:\.\d{3})*,\d{2}$/;
+const center=i=>i.x+(i.w||0)/2;
+// header row -> [{mark, at}] or null; "(R$)" right after a title is part of it
+function columnHeads(items){
+  const heads=[];
+  items.forEach((it,k)=>{const h=COLUMN_HEADS.find(([,re])=>re.test(it.str.trim()));if(!h||!(it.w>0))return;
+    const next=items[k+1],end=next&&/^\(/.test(next.str.trim())&&next.x-(it.x+it.w)<(it.size||8)*1.5?next.x+(next.w||0):it.x+it.w;
+    heads.push({mark:h[2],kind:h[0],at:(it.x+end)/2});});
+  return heads.some(h=>h.kind==='credit')&&heads.some(h=>h.kind==='debit')?heads:null;
+}
+function markColumns(items,heads){
+  return items.map(it=>{
+    if(!MONEY_PIECE.test(it.str.trim()))return it;
+    const near=heads.reduce((a,h)=>Math.abs(h.at-center(it))<Math.abs(a.at-center(it))?h:a);
+    return near.mark?Object.assign({},it,{str:it.str.trim()+' '+near.mark}):it;
+  });
+}
 // pieces [{str, x, y, w?, size?}] -> text lines: same baseline = same line, left to right, top to bottom.
 // Blank pieces are dropped (the gap between the others tells where the spaces are).
 function linesFromItems(items){
@@ -3285,7 +3314,12 @@ function linesFromItems(items){
     if(!r){r={y:i.y,items:[]};rows.push(r);}
     r.items.push(i);
   });
-  return rows.sort((a,b)=>b.y-a.y).map(r=>joinPieces(r.items.sort((a,b)=>a.x-b.x)));
+  let heads=null;
+  return rows.sort((a,b)=>b.y-a.y).map(r=>{
+    const its=r.items.sort((a,b)=>a.x-b.x),h=columnHeads(its);
+    if(h){heads=h;return joinPieces(its);}
+    return joinPieces(heads?markColumns(its,heads):its);
+  });
 }
 const NUM_DATE=/^(\d{1,2}[/.-]\d{1,2}(?:[/.-](?:\d{4}|\d{2}))?)(?=\s|$)/;
 const NAME_DATE=/^(\d{1,2})\s+(?:de\s+)?(jan|fev|mar|abr|mai|jun|jul|ago|set|out|nov|dez)[a-zçã]*\.?(?:\s+(?:de\s+)?(\d{4}))?(?=\s|$)/i;
@@ -3299,6 +3333,12 @@ const BLOCK_START=/^(movimentacao|movimentacoes|lancamentos|extrato de movimenta
 const MAX_DESC_LINE=60,PROSE_LINE=70;
 // page footers and print codes that sit between entries ("Extrato_P F_A4_Inteligente", "...PIM -", "Pagina: 2/4")
 const PAGE_NOISE=/_|\.pim\b|^p\s?agina\b/i;
+// Nubank-like groups: "Total de entradas + 4.150,00" / "Total de saídas - 79,90" heads the entries of that
+// direction (the entries themselves have no sign)
+const GROUP_TOTAL=/^total de (entradas|saidas)\b/;
+// the period of the statement in a page header ("01 DE MARÇO DE 2026 a 31 DE MARÇO DE 2026", "01/03/2026 a
+// 31/03/2026") is not the date of an entry
+const PERIOD_LINE=/^\d{1,2}(?:[/.-]\d{1,2}[/.-]\d{2,4}|\s+(?:de\s+)?[a-zç]+\.?\s+(?:de\s+)?\d{4})\s+(?:a|ate)\s+\d{1,2}\b/i;
 // "Quarta, 11 de novembro": a day heading without numbers in the date position (the entries below carry their own date)
 const WEEKDAY_HEADING=/^(segunda|terca|quarta|quinta|sexta|sabado|domingo)(-feira)?\b/;
 const CARD_DOC=/fatura|fechamento|limite (total|disponivel)/;
@@ -3333,56 +3373,81 @@ function pdfEntries(text,opts){
   const found=[];
   // Some banks print the date once as a heading ("06 NOV 2026" or "06 de novembro de 2026") and list that
   // day's entries below it without a date: those entries take the date of the last heading.
-  let section=null;
+  let section=null,groupDir=null;
+  // the direction of the group this line belongs to ("Total de saídas" above it), if any
+  const noteGroup=text=>{const g=normalizeText(text).match(GROUP_TOTAL);if(g)groupDir=g[1]==='entradas'?'in':'out';};
   const add=(date,text,line,i)=>{
     const am=[...text.matchAll(AMOUNT)];if(!am.length)return false;
     const raw=cleanAmount(am[0][0]),v=parseAmount(raw);if(v===null||v===0)return false;
-    const desc=text.slice(0,am[0].index).replace(/\bR\$\s*$/i,'').replace(/[\s|:;-]+$/,'').split(COLUMN_MARK).join(' ').replace(/\s+/g,' ').trim();
+    // a document number column ("Docto. 4674934") is not part of the description
+    const desc=text.slice(0,am[0].index).replace(/\bR\$\s*$/i,'').replace(/[\s|:;-]+$/,'').split(COLUMN_MARK).join(' ').replace(/(^|\s)\d{5,}(?=\s|$)/g,' ').replace(/^[\s|]+/,'').replace(/\s+/g,' ').trim();
     const signed=/^[^\d]*[-+]|\(|-$|\s[CD]$/i.test(raw),negative=v<0,positive=/^\s*\+|\sC$/i.test(raw);
-    found.push({date,desc,abs:Math.abs(v),negative,signed,positive,flags:am.length>1&&kind==='bank'&&!inColumns(text,am)?['two-amounts']:[],raw:line,line:i+1});
+    found.push({date,desc,abs:Math.abs(v),negative,signed,positive,dir:GROUP_TOTAL.test(normalizeText(desc))?null:groupDir,flags:am.length>1&&kind==='bank'&&!inColumns(text,am)?['two-amounts']:[],raw:line,line:i+1});
     return true;
   };
   const blocks=lines.some(l=>BLOCK_START.test(plainLine(l)));
   let inBlock=false,lastDate=null,lastEntry=null;
   const readBlock=(line,i)=>{
-    if(BLOCK_START.test(plainLine(line))){inBlock=true;lastDate=null;lastEntry=null;return;}
+    if(BLOCK_START.test(plainLine(line))){inBlock=true;lastDate=null;lastEntry=null;groupDir=null;return;}
+    if(PERIOD_LINE.test(line))return;
+    // a group total re-opens the block: the movements go on after a page footer (Nubank)
+    // a group total, or an entry while a group is open, re-opens the block: the movements go on after a page
+    // footer (Nubank)
+    if(!inBlock&&lastDate&&(groupDir&&hasAmount(line)||GROUP_TOTAL.test(plainLine(line).replace(/^\d{1,2} [a-z]{3} \d{4} /,''))))inBlock=true;
     if(!inBlock)return;
-    if(!hasAmount(line)&&line.length>=PROSE_LINE){inBlock=false;return;} // a paragraph of text ends the block
+    if(!hasAmount(line)&&line.length>=PROSE_LINE){inBlock=false;lastEntry=null;return;} // a paragraph of text ends the block
     const sd=splitDate(line,ref);
-    if(sd){lastDate=sd.date;lastEntry=sd.rest&&add(sd.date,sd.rest,line,i)?found[found.length-1]:null;return;}
+    if(sd){lastDate=sd.date;groupDir=null;if(sd.rest)noteGroup(sd.rest);lastEntry=sd.rest&&add(sd.date,sd.rest,line,i)?found[found.length-1]:null;return;}
+    noteGroup(line);
     if(lastDate&&hasAmount(line)){lastEntry=add(lastDate,line,line,i)?found[found.length-1]:null;return;}
     if(lastEntry&&line.length<=MAX_DESC_LINE&&!PAGE_NOISE.test(line)&&!/^(total|saldo)\b/.test(plainLine(line))){lastEntry.desc=(lastEntry.desc+' '+line.split(COLUMN_MARK).join(' ')).trim();lastEntry.raw+=' / '+line;}
   };
   // Some layouts print the description on the line above the date line and the other party on the line
   // below ("Pix enviado" / "06/11/2026 | -R$ 30.000,00" / "Fulano"): a dated entry without its own text takes
   // the lines kept since the last entry, and the next short line completes it.
-  let pending=[],completes=null;
+  // Bradesco-like tables: the date only on the first entry of the day (the next ones keep it), the
+  // description above the value line and "DES:/REM: <name> dd/mm" below it.
+  let pending=[],completes=null,dayDate=null;
   const descLine=line=>!hasAmount(line)&&line.length<=MAX_DESC_LINE&&!line.includes(COLUMN_MARK.trim())&&!PAGE_NOISE.test(line);
+  const tableRow=line=>/\d,\d{2} [CD]\b/.test(line)||([...line.matchAll(AMOUNT)].length>=2&&line.includes(COLUMN_MARK.trim()));
+  const addition=line=>line.replace(/^(des|rem|dest|favorecido):\s*/i,'').replace(/\s+\d{2}\/\d{2}$/,'').trim();
+  const takeEntry=(date,text,line,i)=>{
+    if(!add(date,text,line,i))return false;
+    const e=found[found.length-1];if(!/[a-z]/i.test(e.desc))e.desc='';
+    if(!e.desc&&pending.length){e.desc=pending.join(' ');e.raw=pending.join(' / ')+' / '+e.raw;}
+    completes=text.slice(0,text.search(/\d/)).replace(/[\s|R$-]/g,'')?null:e;
+    return true;
+  };
   const readAll=(line,i)=>{
+    if(PERIOD_LINE.test(line))return;
     const sd=splitDate(line,ref);
-    if(sd){
+    if(sd){groupDir=null;noteGroup(sd.rest||'');
       const heading=!sd.rest||/^(total|saldo)\b/i.test(normalizeText(sd.rest));
-      section=heading?sd.date:null;completes=null;
-      if(sd.rest&&add(sd.date,sd.rest,line,i)){const e=found[found.length-1];
-        if(!e.desc&&pending.length){e.desc=pending.join(' ');e.raw=pending.join(' / ')+' / '+e.raw;}
-        if(!sd.rest.slice(0,sd.rest.search(/\d/)).replace(/[\s|R$-]/g,''))completes=e;}
+      section=heading?sd.date:null;completes=null;dayDate=sd.date;
+      if(sd.rest)takeEntry(sd.date,sd.rest,line,i);
       pending=[];
       return;
     }
     if(WEEKDAY_HEADING.test(plainLine(line))){pending=[];completes=null;return;}
-    if(completes&&descLine(line)){completes.desc=(completes.desc+' '+line).trim();completes.raw+=' / '+line;completes=null;return;}
+    noteGroup(line);
+    if(completes&&descLine(line)){const a=addition(line);completes.desc=(completes.desc+' '+a).trim();completes.raw+=' / '+line;completes=null;return;}
     completes=null;
-    if(section&&!/^(total|saldo)\b/i.test(normalizeText(line))){if(add(section,line,line,i))return;}
+    if(/^(total|saldo)\b/i.test(normalizeText(line))){pending=[];return;}
+    if(section){if(add(section,line,line,i))return;}
+    else if(dayDate&&tableRow(line)&&takeEntry(dayDate,line,line,i)){pending=[];return;}
     if(descLine(line))pending=pending.slice(-1).concat(line);
+    else if(!hasAmount(line))pending=[]; // a header or a page line: what was kept above does not belong to the next entry
   };
   if(blocks)lines.forEach(readBlock);
   if(!found.length)lines.forEach(readAll); // no block, or a block this reader did not understand: read every line
-  const docHasNegatives=found.some(f=>f.negative);
+  // group totals and balances do not tell how the entries are signed
+  const docHasNegatives=found.some(f=>f.negative&&!/^(total|saldo)\b/.test(normalizeText(f.desc)));
   const entries=found.map(f=>{
     let amount,flags=f.flags.slice();
     if(kind==='card')amount=f.negative?-f.abs:f.abs;
     else if(f.negative)amount=-f.abs;
     else if(f.positive)amount=f.abs;
+    else if(f.dir)amount=f.dir==='in'?f.abs:-f.abs; // under "Total de entradas / saídas"
     else{
       // the PDF marks debits with "-", so a plain value is a credit (the sign beats the words)
       const n=normalizeText(f.desc),dir=docHasNegatives?'in':IN_WORDS.test(n)?'in':OUT_WORDS.test(n)?'out':null;
@@ -3463,7 +3528,7 @@ const OWN_TRANSFER_TEXT='Transferência entre suas contas: não é receita nem d
 const BALANCE=/^(saldo|total|subtotal|sub total)\b|\bsaldo (anterior|final|inicial|do dia|disponivel|parcial|em conta|total)\b/;
 const INVOICE_PAYMENT=/\b(pagamento (de )?fatura|pgto fatura|pag fatura|pagto fatura|pagamento recebido|pagamento efetuado|pagamento on ?line|fatura cartao|pagamento cartao|pagto cartao|credito pagamento|pagamento da fatura)\b/;
 const OWN_TRANSFER=/\b(transferencia entre contas|transf(erencia)? (entre )?contas|mesma titularidade|poupanca)\b/;
-const INVEST_WORDS=/\b(aplicacao|aplic automatica|aplic financeira|investimento|rdb|cdb|lci|lca|tesouro|caixinha|cofrinho|aporte)\b/;
+const INVEST_WORDS=/\b(rentab|rentabilidade|aplicacao|aplic automatica|aplic financeira|investimento|rdb|cdb|lci|lca|tesouro|caixinha|cofrinho|aporte)\b/;
 const REDEMPTION=/\b(resgate|saque|retirada)\b/;
 const YIELD_OR_TAX=/\b(rendimentos?|juros|dividendos?|jcp|cupom|bonificacao|ir|iof|imposto|taxa|custodia)\b/;
 const MAYBE_TRANSFER=/\b(pix|ted|doc|transferencia|transf)\b/;
@@ -3543,6 +3608,8 @@ function suggestFromHistory(desc,type){
  * domain/import-account.js
  * Responsibility: suggests the investment account that a statement line refers to. Only answers
  * when exactly one active account matches the words of the description; otherwise the user chooses.
+ * With no investment account yet, the default choice is a new account (created only when the import
+ * is confirmed, see import-commit.js).
  */
 
 
@@ -3558,6 +3625,32 @@ function suggestAccount(desc){
   return hits.length===1?hits[0].id:'';
 }
 const hasAccounts=()=>S.accounts.some(a=>!a.archived);
+// the draft goes to an account that does not exist yet: d.acc = NEW_ACCOUNT, d.newAcc = its name
+const NEW_ACCOUNT='__new';
+// account of a contribution draft: the suggested one, or a new account when there is none to choose
+const defaultAccount=desc=>suggestAccount(desc)||(hasAccounts()?'':NEW_ACCOUNT);
+// active account with this name (any case), so confirming twice does not create two accounts
+const accountNamed=name=>{const n=normalizeText(name||'');return n?(active().find(a=>normalizeText(a.name)===n)||null):null;};
+
+// ---- src/domain/import-split.js
+/**
+ * domain/import-split.js
+ * Responsibility: dividing one import draft across categories before it is saved. A draft keeps
+ * extra parts as splits [{cat, value}] (the same shape the manual form saves); what the parts do not
+ * cover stays in the main category of the draft. Pure helpers: they return new lists, the session
+ * applies them with patchDraft.
+ */
+
+
+// only income and expense have categories to divide (a contribution goes to an account)
+const canSplit=d=>d.type===IMPORT_TYPE.expense||d.type===IMPORT_TYPE.income;
+// the parts that count: a category and a value
+const splitParts=d=>canSplit(d)?(d.splits||[]).filter(p=>p.cat&&p.cat.trim()&&p.value>0):[];
+// what is left for the main category (negative when the parts are bigger than the value)
+const splitRest=d=>roundMoney((d.value||0)-sumMoney(splitParts(d).map(p=>p.value)));
+const splitAdded=d=>(d.splits||[]).concat([{cat:'',value:0}]);
+const splitChanged=(d,i,patch)=>(d.splits||[]).map((p,k)=>k===i?Object.assign({},p,patch):p);
+const splitRemoved=(d,i)=>(d.splits||[]).filter((p,k)=>k!==i);
 
 // ---- src/domain/import-draft.js
 /**
@@ -3567,6 +3660,7 @@ const hasAccounts=()=>S.accounts.some(a=>!a.archived);
  * file, classification, category suggestion, stable key), validates one, and sums a selection.
  * The draft is NOT a transaction: it only becomes one in import-commit.js after the user confirms.
  */
+
 
 
 
@@ -3594,7 +3688,7 @@ function keyFor(entry,seen,o){
 let draftSeq=0;
 const newDraftId=()=>'d'+(++draftSeq);
 function blankDraft(over){
-  return {id:newDraftId(),key:'',date:'',desc:'',value:0,type:IMPORT_TYPE.expense,reason:null,cat:'',acc:'',fonte:'caixa',installment:null,createRest:false,flow:'',pair:null,fixPair:false,
+  return {id:newDraftId(),key:'',date:'',desc:'',value:0,type:IMPORT_TYPE.expense,reason:null,cat:'',acc:'',fonte:'caixa',newAcc:'',splits:[],installment:null,createRest:false,flow:'',pair:null,fixPair:false,
     selected:true,flags:[],dup:null,raw:'',line:0,manual:true,...over};
 }
 // entries: raw entries from a reader. o: {format:'csv'|'ofx', kind:'bank'|'card', invert, accountId, ownNames}
@@ -3608,7 +3702,7 @@ function buildDrafts(entries,o){
     const noCat=!SAVEABLE.includes(cls.type)||cls.type===IMPORT_TYPE.contribution;
     const cat=cls.cat||(noCat?'':(suggestFromHistory(e.desc,cls.type)||{}).cat||'');
     drafts.push(blankDraft({key:keyFor(e,seen,o),date:e.date,desc:e.desc,value,type:cls.type,reason:cls.reason,cat,
-      acc:cls.type===IMPORT_TYPE.contribution?suggestAccount(e.desc):'',
+      acc:cls.type===IMPORT_TYPE.contribution?defaultAccount(e.desc):'',
       fonte:o.kind==='card'&&cls.type===IMPORT_TYPE.expense?'cartao':'caixa',installment:cls.installment,flags:cls.flags.concat(e.flags||[]),
       selected:SAVEABLE.includes(cls.type),flow,raw:e.raw,line:e.line,manual:false}));
   });
@@ -3619,8 +3713,10 @@ function draftProblems(d){
   const p=[];
   if(!SAVEABLE.includes(d.type))p.push('Tipo: escolha despesa, receita ou aporte');
   if(d.type===IMPORT_TYPE.contribution&&!d.acc)p.push('Investimento: escolha para onde vai o aporte');
+  if(d.type===IMPORT_TYPE.contribution&&d.acc===NEW_ACCOUNT&&!(d.newAcc||'').trim())p.push('Investimento: digite o nome da conta nova');
   if(!(d.value>0)||d.value>MAX_VALUE)p.push('Valor inválido');
   if(parseBrDate(d.date)!==d.date)p.push('Data inválida'); // a real calendar day, ISO
+  if(splitParts(d).length&&splitRest(d)<0)p.push('Divisão: as partes somam mais que o valor');
   return p;
 }
 // worth a second look: any flag, or no category (it would go to the default category)
@@ -3713,7 +3809,8 @@ function markDuplicates(drafts){
  * transactions (never income or expense) but are kept in S.transfers so that, when the statement of
  * the other bank is imported, its side is recognised: same value, opposite direction, a few days apart.
  * Also finds the other side among records already saved as income/expense (an earlier import that
- * did not know it was a transfer) and turns such a record into a transfer when the user confirms.
+ * did not know it was a transfer) and turns such a record into a transfer when the user confirms, and
+ * the other way round: a kept transfer whose line was re-imported as income/expense stops being one.
  */
 
 
@@ -3759,6 +3856,16 @@ function recordToTransfer(id){
   const tr={id:'tr'+(S.nid++),key:t.imp||'',date:t.date,value:roundMoney(t.value),dir:t.type==='despesa'?'out':'in',desc:t.desc||t.cat,pair:null};
   S.tx=S.tx.filter(x=>x.id!==id);S.transfers=transfers().concat([tr]);
   return {transfer:tr};
+}
+// the lines of these keys were saved as income/expense (the money was spent, not moved): the transfers
+// kept for them are removed and their other side is unlinked -> number removed
+function dropTransfersOf(keys){
+  const k=new Set((keys||[]).filter(Boolean)),gone=transfers().filter(t=>t.key&&k.has(t.key));
+  if(!gone.length)return 0;
+  const ids=new Set(gone.map(t=>t.id));
+  S.transfers=transfers().filter(t=>!ids.has(t.id));
+  S.transfers.forEach(t=>{if(ids.has(t.pair))t.pair=null;});
+  return gone.length;
 }
 // called when an import is confirmed: keeps every draft of type transfer (once), links the pairs and
 // turns the confirmed "other side" records into transfers. -> {kept, fixed}
@@ -4098,7 +4205,7 @@ const currentBalance=(acc,date)=>balance(acc,date).v;
 
 
 
-const NEW_ACCOUNT='__new';
+
 // no account picked yet: a new one is the natural choice when there is none that matches
 function startChoice(s){
   if(s.acc===undefined||s.acc===null||s.acc==='')s.acc=active().length?'':NEW_ACCOUNT;
@@ -4185,7 +4292,7 @@ function patchDraft(id,patch){
   const hadDup=!!d.dup,prevType=d.type;
   Object.keys(patch).forEach(k=>{d[k]=NUMBER_FIELDS.includes(k)?parseMoney(patch[k]):patch[k];});
   if(d.type!==IMPORT_TYPE.expense&&d.fonte==='cartao')d.fonte='caixa';
-  if(d.type===IMPORT_TYPE.contribution&&!d.acc)d.acc=suggestAccount(d.desc);
+  if(d.type===IMPORT_TYPE.contribution&&!d.acc)d.acc=defaultAccount(d.desc);
   if(d.type!==prevType){
     if(!isSaveable(d)){d.selected=false;}
     else if(prevType===IMPORT_TYPE.ignore||prevType===IMPORT_TYPE.ownTransfer){d.selected=true;d.reason=null;}
@@ -4427,9 +4534,13 @@ function bindDateFields(){
 /**
  * ui/views/import-rows.js
  * Responsibility: the HTML of one draft in the review list: the compact card (date, description,
- * value, type, category, where the money goes, why it needs attention) and its inline editor.
+ * value, type, category, where the money goes, why it needs attention) and its inline editor (with
+ * the parts when the value is divided across categories).
  * Pure text builders: no events and no state.
  */
+
+
+
 
 
 
@@ -4468,18 +4579,33 @@ function rowCard(d){
   const dirTag=d.type===IMPORT_TYPE.ownTransfer?(d.flow==='in'?'<span class="mut">entrou</span>':'<span class="mut">saiu</span>'):'';
   const inv=invoiceMonth(d),month=targetMonth(d);
   const isApo=d.type===IMPORT_TYPE.contribution;
-  const where=!isSaveable(d)?'':isApo?(d.acc?'📈 '+esc(accName(d.acc)):'<span class="warn-c">📈 escolha o investimento</span>'):d.fonte==='cartao'?'💳 Cartão'+(inv?' · fatura de '+mShort(inv):''):d.fonte==='beneficio'?'🍴 VR/VA':'🏦 Conta';
+  const where=!isSaveable(d)?'':isApo?(d.acc===NEW_ACCOUNT?((d.newAcc||'').trim()?'📈 ➕ '+esc(d.newAcc.trim())+' (conta nova)':'<span class="warn-c">📈 dê um nome à conta nova</span>'):d.acc?'📈 '+esc(accName(d.acc)):'<span class="warn-c">📈 escolha o investimento</span>'):d.fonte==='cartao'?'💳 Cartão'+(inv?' · fatura de '+mShort(inv):''):d.fonte==='beneficio'?'🍴 VR/VA':'🏦 Conta';
   const cat=!isSaveable(d)||isApo?'':d.cat?'🏷️ '+esc(d.cat):'<span class="warn-c">🏷️ sem categoria</span>';
+  const parts=splitParts(d).length,catTxt=cat&&parts?cat+' + '+parts+(parts>1?' partes':' parte'):cat;
   const bad=isSaveable(d)&&(needsReview(d)||draftProblems(d).length);
   return `<div class="imp-row${d.selected?' sel':''}${!isSaveable(d)?' ign':''}${d.dup?' dup':''}${bad?' rev':''}" data-imp-row="${d.id}">
     <label class="imp-chk" aria-label="Importar este lançamento"><input type="checkbox" data-imp-sel${d.selected?' checked':''}${isSaveable(d)?'':' disabled'}></label>
     <div class="imp-main" data-imp-open role="button" tabindex="0">
       <div class="imp-top"><span class="imp-date">${d.date?formatDateBR(d.date).slice(0,5):'--/--'}</span><span class="imp-desc">${esc(d.desc||'(sem descrição)')}</span><b class="imp-val ${tone}">${d.value?sign+' '+f2(d.value):'—'}</b></div>
-      <div class="imp-meta"><span class="tag ${d.type==='ignorar'||d.type==='transferencia'?'':d.type}">${IMPORT_TYPE_LABEL[d.type]}</span>${cat?'<span>'+cat+'</span>':''}${where?'<span>'+where+'</span>':''}${dirTag}${month&&isSaveable(d)?'<span class="mut">conta em '+mShort(month)+'</span>':''}</div>
+      <div class="imp-meta"><span class="tag ${d.type==='ignorar'||d.type==='transferencia'?'':d.type}">${IMPORT_TYPE_LABEL[d.type]}</span>${catTxt?'<span>'+catTxt+'</span>':''}${where?'<span>'+where+'</span>':''}${dirTag}${month&&isSaveable(d)?'<span class="mut">conta em '+mShort(month)+'</span>':''}</div>
       ${notes(d)}
     </div>
     <button type="button" class="btn sm" data-imp-open aria-label="Editar">${bad?'Revisar':'Editar'}</button>
   </div>`;
+}
+// rest of the value that stays in the main category, under the parts
+function splitRestHtml(d){
+  const r=splitRest(d);
+  return `Resto em <b>${esc(d.cat||'categoria principal')}</b>: <b class="${r<0?'neg':''}">${f2(r)}</b>${r<0?' · as partes passam do valor':''}`;
+}
+// the value divided across categories: one line per extra part, the rest stays in the main category
+function splitHtml(d){
+  const rows=(d.splits||[]).map((p,i)=>`<div class="imp-split-row">
+    <input data-sp-cat="${i}" list="impCats" value="${esc(p.cat)}" placeholder="Categoria da parte (ex.: Saúde)" aria-label="Categoria da parte ${i+1}">
+    <input data-money data-sp-val="${i}" value="${p.value?m2(p.value):''}" placeholder="R$ 0,00" aria-label="Valor da parte ${i+1}">
+    <button type="button" class="btn sm dng" data-sp-del="${i}">remover</button></div>`).join('');
+  return `<div class="imp-split">${rows}${rows?`<div class="imp-split-sum" data-sp-sum>${splitRestHtml(d)}</div>`:''}
+    <button type="button" class="btn sm ico-btn" data-sp-add>${svg(rows?'plus':'pie')}${rows?'Adicionar outra parte':'Dividir em categorias'}</button></div>`;
 }
 // editor shown under the card when it is open
 function rowEditor(d,catNames){
@@ -4491,10 +4617,14 @@ function rowEditor(d,catNames){
       <div><label>Valor</label><input data-money data-f="value" value="${d.value?m2(d.value):''}" placeholder="R$ 0,00"></div>
       <div class="span-all"><label>Descrição</label><input data-f="desc" value="${esc(d.desc)}" placeholder="Estabelecimento ou descrição"></div>
       <div><label>Tipo</label><select data-f="type">${typeOptions(d)}</select></div>
-      ${d.type===IMPORT_TYPE.contribution?`<div class="span-all"><label>Investimento de destino</label><select data-f="acc"><option value="">Escolha…</option>${active().map(a=>`<option value="${a.id}"${d.acc===a.id?' selected':''}>${esc(a.name)}</option>`).join('')}</select></div>`:''}
+      ${d.type===IMPORT_TYPE.contribution?`<div class="span-all"><label>Investimento de destino</label><select data-f="acc"><option value="">Escolha…</option>${active().map(a=>`<option value="${a.id}"${d.acc===a.id?' selected':''}>${esc(a.name)}</option>`).join('')}<option value="${NEW_ACCOUNT}"${d.acc===NEW_ACCOUNT?' selected':''}>➕ Criar conta nova</option></select></div>
+      ${d.acc===NEW_ACCOUNT?`<div class="span-all"><label>Nome da conta nova</label><input data-f="newAcc" value="${esc(d.newAcc||'')}" placeholder="Ex.: Itaú Investimentos, Nubank Caixinhas"><div class="help">A conta é criada quando você confirmar a importação.</div></div>`:''}`:''}
       ${isSaveable(d)&&d.type!==IMPORT_TYPE.contribution?`<div><label>Categoria</label><input data-f="cat" list="impCats" value="${esc(d.cat)}" placeholder="Escolha ou digite"><datalist id="impCats">${catNames.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div>
       <div><label>${d.type===IMPORT_TYPE.income?'Entrou em':'Pago com'}</label><select data-f="fonte">${sourceOptions(d)}</select></div>`:''}
     </div>
+    ${canSplit(d)?splitHtml(d):''}
+    ${d.type===IMPORT_TYPE.ownTransfer&&d.flow==='out'?`<div class="imp-split"><button type="button" class="btn sm ico-btn" data-sp-spent>${svg('pie')}Esse dinheiro foi gasto: dividir em categorias</button>
+      <span class="imp-split-sum">Vira despesa (sai da lista de transferências) e você divide o valor entre categorias.</span></div>`:''}
     ${rest?`<label class="check-opt imp-rest"><input type="checkbox" data-f="createRest"${d.createRest?' checked':''}> Criar também as ${rest} parcelas seguintes (${firstEnd}), uma por mês</label>`:''}
     ${d.raw?`<div class="imp-raw"><span class="mut">Linha ${d.line||''} do arquivo:</span> <code>${esc(d.raw)}</code></div>`:''}
     <div class="imp-edit-foot"><button type="button" class="btn dng sm" data-imp-del>Tirar da importação</button><button type="button" class="btn pri sm" data-imp-close>Concluir</button></div>
@@ -4533,6 +4663,8 @@ function ownNameHint(drafts){
  * options of the file, the list of draft cards with their inline editor, and the events that edit,
  * select, remove or add drafts. Updates only the parts that changed so what the user typed stays.
  */
+
+
 
 
 
@@ -4614,6 +4746,13 @@ function bindReview(body,ctx){
     if(fix&&id){patchDraft(id,fix.dataset.impPairfix==='1'?{type:'transferencia',fixPair:true}:{fixPair:false});redrawItem(id);refreshSummary();return;}
     if(t.closest('[data-imp-open]')&&id){if(!t.closest('.imp-chk'))open(id);return;}
     if(t.closest('[data-imp-close]')){open(id);return;}
+    // a transfer that was in fact spent: becomes an expense with a first part to fill in
+    if(t.closest('[data-sp-spent]')&&id){const d=draftById(id);patchDraft(id,{type:'despesa',splits:(d.splits||[]).length?d.splits:splitAdded(d)});redrawItem(id);refreshSummary();
+      const c=item(id).querySelector('[data-f="cat"]');if(c)c.focus();return;}
+    // dividing the value across categories (the editor is redrawn: the list of parts changed)
+    const sp=t.closest('[data-sp-add],[data-sp-del]');
+    if(sp&&id){const d=draftById(id);patchDraft(id,{splits:sp.matches('[data-sp-add]')?splitAdded(d):splitRemoved(d,+sp.dataset.spDel)});redrawItem(id);refreshSummary();
+      if(sp.matches('[data-sp-add]')){const ins=item(id).querySelectorAll('[data-sp-cat]');if(ins.length)ins[ins.length-1].focus();}return;}
     if(t.closest('[data-imp-del]')){removeDraft(id);row.remove();refreshSummary();return;}
     const all=t.closest('[data-imp-all]');
     if(all){setAllSelected(all.dataset.impAll==='1');s.drafts.forEach(d=>redrawCard(d.id));refreshSummary();return;}
@@ -4623,6 +4762,13 @@ function bindReview(body,ctx){
     const own=t.closest('[data-imp-own]');
     if(own&&runCommand(()=>addOwnName(own.dataset.impOwn),{ok:'✅ Nome salvo em Ajustes: Pix para você não conta como gasto',render:false})){rereadSession({});ctx.redraw();}
   };
+  // a part typed in: the rest updates while typing, the card when the field is left
+  function editPart(id,t){
+    const d=draftById(id),i=+(t.dataset.spCat||t.dataset.spVal);
+    patchDraft(id,{splits:splitChanged(d,i,t.matches('[data-sp-cat]')?{cat:t.value}:{value:parseMoney(t.value)})});
+    const sum=item(id)&&item(id).querySelector('[data-sp-sum]');if(sum)sum.innerHTML=splitRestHtml(draftById(id));
+  }
+  body.oninput=e=>{const t=e.target,row=t.closest('[data-imp-item]');if(row&&t.matches('[data-sp-cat],[data-sp-val]'))editPart(row.dataset.impItem,t);};
   body.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.imp-main')){e.preventDefault();e.target.click();}};
   body.onchange=e=>{
     const t=e.target,row=t.closest('[data-imp-item]'),id=row&&row.dataset.impItem;
@@ -4630,9 +4776,11 @@ function bindReview(body,ctx){
     if(t.id==='impInvert'){rereadSession({invert:t.checked});ctx.redraw();return;}
     if(!id)return;
     if(t.matches('[data-imp-sel]')){patchDraft(id,{selected:t.checked});redrawCard(id);refreshSummary();return;}
+    if(t.matches('[data-sp-cat],[data-sp-val]')){editPart(id,t);redrawCard(id);refreshSummary();return;}
     const f=t.dataset.f;if(!f)return;
     patchDraft(id,{[f]:f==='createRest'?t.checked:t.value});
-    if(f==='type'||f==='createRest')redrawItem(id);else redrawCard(id);
+    if(f==='type'||f==='createRest'||f==='acc')redrawItem(id);else redrawCard(id);
+    if(f==='cat'||f==='value'){const sum=item(id).querySelector('[data-sp-sum]');if(sum)sum.innerHTML=splitRestHtml(draftById(id));}
     refreshSummary();
   };
 }
@@ -4644,36 +4792,45 @@ function bindReview(body,ctx){
  * user confirmed. Saves each selected draft through the same builder as the manual form
  * (validation, categories, series for installments), tags it with the import key so the same
  * row can never be saved twice, and reports the outcome item by item. Does not touch existing records.
- * commitImport(drafts, {fileHash, fileName, at}) -> {saved, items:[{id, status:'saved'|'skipped'|'failed', reason}], months, transfers, fixedPairs}
- * Transfers between own accounts are kept by domain/transfers.js (not as transactions).
+ * commitImport(drafts, {fileHash, fileName, at}) -> {saved, items:[{id, status:'saved'|'skipped'|'failed', reason}], months, transfers, fixedPairs, accounts (names created)}
+ * Transfers between own accounts are kept by domain/transfers.js (not as transactions). A contribution
+ * to a new account creates that account here (once per name), so the preview never saves anything.
  */
 
 
 
 
+
+
+
 const MAX_LOG=200;
-const formOfDraft=d=>({editId:null,type:d.type,value:d.value,date:d.date,cat:d.cat,fonte:d.fonte,acc:d.type==='aporte'?d.acc:undefined,desc:d.desc,splits:[],
+const formOfDraft=d=>({editId:null,type:d.type,value:d.value,date:d.date,cat:d.cat,fonte:d.fonte,acc:d.type==='aporte'?d.acc:undefined,desc:d.desc,splits:splitParts(d).map(p=>({cat:p.cat.trim(),value:p.value})),
   repeat:d.installment&&d.createRest?Math.max(1,d.installment.of-d.installment.n+1):1});
 function commitImport(drafts,meta){
   meta=meta||{};
-  const items=[],months=new Set(),taken=new Set(S.tx.map(t=>t.imp).filter(Boolean));let saved=0;
+  const items=[],months=new Set(),taken=new Set(S.tx.map(t=>t.imp).filter(Boolean));let saved=0;const created=[];
+  // the id of the account the user named: an existing one with that name, or created now
+  const accountOf=name=>{const a=accountNamed(name);if(a)return a.id;const r=addAccount(name);if(r.id)created.push(name.trim());return r.id||'';};
   drafts.filter(d=>d.selected).forEach(d=>{
     const problems=draftProblems(d);
     if(problems.length)return items.push({id:d.id,status:'failed',reason:problems[0]});
     if(d.key&&taken.has(d.key))return items.push({id:d.id,status:'skipped',reason:'Já importado antes (nada foi duplicado)'});
     const form=formOfDraft(d),err=validateTransaction(form);
     if(err)return items.push({id:d.id,status:'failed',reason:err.msg});
+    if(form.acc===NEW_ACCOUNT)form.acc=accountOf(d.newAcc);
     const r=saveTransaction(form);
     r.ids.forEach((id,i)=>{const t=S.tx.find(x=>x.id===id);if(t&&d.key)t.imp=i===0?d.key:d.key+'/'+i;});
     if(d.key)taken.add(d.key);
     months.add(targetMonth(d));saved++;
     items.push({id:d.id,status:'saved',count:r.ids.length});
   });
+  // a line kept as a transfer before and now saved as income/expense is no longer a transfer
+  dropTransfersOf(drafts.filter(d=>items.some(i=>i.id===d.id&&i.status==='saved')).map(d=>d.key));
   const tr=keepTransfers(drafts); // transfers between own accounts: kept apart, never income/expense
   if((saved||tr.kept)&&meta.fileHash){
     S.imports=(S.imports||[]).concat([{hash:meta.fileHash,name:meta.fileName||'',at:meta.at||'',count:saved,transfers:tr.kept}]).slice(-MAX_LOG);
   }
-  return {saved,items,months:[...months].sort(),transfers:tr.kept,fixedPairs:tr.fixed};
+  return {saved,items,months:[...months].sort(),transfers:tr.kept,fixedPairs:tr.fixed,accounts:created};
 }
 
 // ---- src/ui/views/import-confirm.js
@@ -4762,6 +4919,7 @@ function resultHtml(session){
     ${failed.length?`<div class="bd-gh"><span>⚠️ Não cadastrados (${failed.length}): corrija e tente de novo</span></div><div class="lst">${failed.map(line).join('')}</div>`:''}
     ${skipped.length?`<div class="bd-gh"><span>Já existiam (${skipped.length}): nada foi duplicado</span></div><div class="lst">${skipped.map(line).join('')}</div>`:''}
     ${r.transfers?`<p class="help">🔁 ${r.transfers} transferência(s) entre suas contas guardada(s): não contam como receita nem despesa. Quando você importar o extrato do outro banco, o app reconhece o outro lado.${r.fixedPairs?` ${r.fixedPairs} lançamento(s) já salvo(s) viraram transferência.`:''}</p>`:''}
+    ${(r.accounts||[]).length?`<p class="help">📈 Conta(s) de investimento criada(s): <b>${r.accounts.map(esc).join(', ')}</b>. Veja em Patrimônio.</p>`:''}
     ${!r.saved&&!bad.length&&!r.transfers?'<p class="help">Nada foi selecionado.</p>':''}</div>`;
 }
 

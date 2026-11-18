@@ -179,11 +179,19 @@
     need(stored().tx.length===n0,'delete in review touched saved data');
     q('[data-imp-all="0"]').click();need(/Selecionados: 0/.test($('impSum').textContent)&&$('impGo').disabled,'deselect all');q('[data-imp-all="1"]').click();
     need(!q('#impList .imp-row.ign input').checked,'select all must not select non-importable rows');});
+  await step('import: divide a row across categories, the rest stays in the main one',()=>{const row=qa('#impList .imp-item')[0];row.querySelector('.imp-main').click();
+    need(/Dividir em categorias/.test(q('#impList .imp-edit').textContent),'no split option');q('#impList [data-sp-add]').click();
+    const c=q('#impList [data-sp-cat="0"]'),v=q('#impList [data-sp-val="0"]');need(c&&v,'part fields');need(document.activeElement===c,'focus on the new part');
+    c.value='Mercado';c.dispatchEvent(new Event('change',{bubbles:true}));v.value='3,37';v.dispatchEvent(new Event('input',{bubbles:true}));
+    need(/Resto em Restaurantes: R\$\s?10,00/.test(q('#impList [data-sp-sum]').textContent),'rest '+q('#impList [data-sp-sum]').textContent);
+    v.value='50,00';v.dispatchEvent(new Event('change',{bubbles:true}));need(/passam do valor/.test(q('#impList [data-sp-sum]').textContent)&&/Divisão/.test(q('#impList .imp-row').textContent),'over the value must be blocked');
+    v.value='3,37';v.dispatchEvent(new Event('change',{bubbles:true}));need(/Restaurantes \+ 1 parte/.test(q('#impList .imp-row').textContent),'card: '+q('#impList .imp-row .imp-meta').textContent);
+    q('#impList [data-imp-close]').click();});
   await step('import: confirm shows the totals, then the result per item',async()=>{need(!$('impGo').disabled,'button disabled');$('impGo').click();await tick();need($('confirmDlg').open,'no confirmation');
     need(/R\$ 4\.321,09/.test($('cfText').textContent),'totals in confirmation: '+$('cfText').textContent);$('cfOk').click();await waitFor(()=>q('.imp-ok'),'result');
     need(/3 lançamento/.test(q('.imp-ok').textContent),'result '+q('.imp-ok').textContent);const t=stored().tx;need(t.length===n0+3,'saved '+(t.length-n0));
     need(t.some(x=>x.date==='2026-09-04'&&x.type==='receita'&&x.value===4321.09&&x.imp),'income with exact date/value/key');
-    need(!$('impFix'),'nothing failed, so no "fix" button');need(t.filter(x=>x.desc==='PADARIA TESTE UM').length===1,'padaria count');need(!t.some(x=>/FATURA|SALDO/.test(x.desc||'')),'ignored rows saved');});
+    need(!$('impFix'),'nothing failed, so no "fix" button');need(t.filter(x=>x.desc==='PADARIA TESTE UM').length===1,'padaria count');const pd=t.find(x=>x.desc==='PADARIA TESTE UM');need(pd.cat==='Restaurantes'&&JSON.stringify(pd.splits)==='[{"cat":"Mercado","value":3.37}]','split not saved: '+JSON.stringify(pd));need(!t.some(x=>/FATURA|SALDO/.test(x.desc||'')),'ignored rows saved');});
   await step('import: the same file again does not duplicate',async()=>{$('impDone').click();need(!$('sheet').open,'sheet open');n0=stored().tx.length;$('impOpen').click();await chooseFile('extrato.csv',csv);
     await waitFor(()=>q('#impList .imp-row'),'review 2');need(/já foi importado/.test($('impSum').textContent),'file recognised? '+$('impSum').textContent.slice(0,300));
     need(qa('#impList .imp-row.dup').length===3,'duplicates flagged: '+qa('#impList .imp-row.dup').length);need(qa('#impList .imp-row.dup input:checked').length===0,'duplicates should start unselected');
@@ -214,6 +222,36 @@
     $('impDone').click();
     q('#nav [data-t=cfg]').click();need(/4 transferência/.test($('ownNames').textContent),'settings count');
     q('[data-own-del]').click();await tick();need(!(stored().ownNames||[]).length,'remove name');});
+  await step('a Pix to myself that was in fact spent: becomes an expense divided across categories',async()=>{
+    q('#nav [data-t=cfg]').click();$('ownNameIn').value='Zuleica Pimentel Tavares';$('ownNameAdd').click();await tick();
+    const tx0=stored().tx.length,tr0=(stored().transfers||[]).length;q('#bnav [data-t=lanc]').click();$('impOpen').click();
+    await chooseFile('pix-gasto.csv','Data;Descrição;Valor\n20/10/2026;PIX ENVIADO ZULEICA P TAVARES;-1.176,00');await waitFor(()=>q('#impList .imp-row'),'review spent');
+    q('#impList .imp-main').click();need(!q('#impList [data-sp-add]'),'a transfer has no categories to divide');
+    const b=q('#impList [data-sp-spent]');need(b,'no "money was spent" option');b.click();await tick();
+    need(q('#impList [data-f=type]').value==='despesa'&&q('#impList [data-sp-cat="0"]'),'not an expense with a part');
+    const c=q('#impList [data-f=cat]');c.value='Saúde';c.dispatchEvent(new Event('change',{bubbles:true}));
+    const pc=q('#impList [data-sp-cat="0"]'),pv=q('#impList [data-sp-val="0"]');pc.value='Presente';pc.dispatchEvent(new Event('change',{bubbles:true}));pv.value='750,00';pv.dispatchEvent(new Event('change',{bubbles:true}));
+    need(/Resto em Saúde: R\$\s?426,00/.test(q('#impList [data-sp-sum]').textContent),'rest '+q('#impList [data-sp-sum]').textContent);
+    $('impGo').click();await tick();if($('confirmDlg').open)$('cfOk').click();await waitFor(()=>q('.imp-done'),'result spent');
+    const st=stored(),t=st.tx.find(x=>x.value===1176);need(st.tx.length===tx0+1&&t&&t.type==='despesa'&&t.cat==='Saúde'&&JSON.stringify(t.splits)==='[{"cat":"Presente","value":750}]','saved: '+JSON.stringify(t));
+    need((st.transfers||[]).length===tr0,'kept as a transfer too');
+    $('impDone').click();q('#nav [data-t=cfg]').click();q('[data-own-del]').click();await tick();need(!(stored().ownNames||[]).length,'remove name');});
+  await step('aporte to an investment account that does not exist yet: created on confirm',async()=>{
+    const acc0=stored().accounts.length,tx0=stored().tx.length;q('#bnav [data-t=lanc]').click();$('impOpen').click();
+    await chooseFile('aporte-novo.csv','Data;Descrição;Valor\n06/11/2026;PIX ENVIADO CORRETORA TESTE;-3.000,00');await waitFor(()=>q('#impList .imp-row'),'review aporte');
+    q('#impList .imp-main').click();need(q('#impList [data-sp-add] svg'),'split button without icon');
+    const ty=q('#impList [data-f=type]');ty.value='aporte';ty.dispatchEvent(new Event('change',{bubbles:true}));
+    const sel=q('#impList [data-f=acc]');need(sel&&[...sel.options].some(o=>/Criar conta nova/.test(o.textContent)),'no "new account" option');
+    sel.value='__new';sel.dispatchEvent(new Event('change',{bubbles:true}));
+    need(/dê um nome à conta nova/.test(q('#impList .imp-row').textContent)&&/conta nova/.test(q('#impList .imp-row').textContent),'card does not ask for the name');
+    need(stored().accounts.length===acc0,'account created in the preview');
+    const nm=q('#impList [data-f=newAcc]');need(nm,'no name field');nm.value='Corretora Teste';nm.dispatchEvent(new Event('change',{bubbles:true}));
+    need(/Corretora Teste \(conta nova\)/.test(q('#impList .imp-row').textContent),'card: '+q('#impList .imp-row .imp-meta').textContent);
+    $('impGo').click();await tick();if($('confirmDlg').open)$('cfOk').click();await waitFor(()=>q('.imp-done'),'result aporte');
+    need(/Corretora Teste/.test(q('.imp-done').textContent),'result does not say the account was created');
+    const st=stored(),a=st.accounts.find(x=>x.name==='Corretora Teste');need(st.accounts.length===acc0+1&&a,'account not created');
+    need(st.tx.length===tx0+1&&st.tx.some(t=>t.type==='aporte'&&t.value===3000&&t.acc===a.id),'aporte not saved to the new account');
+    $('impDone').click();});
   await step('holder name: suggested from the salary line, "Sim, sou eu" saves it; records saved before are fixed in Ajustes',async()=>{
     q('#bnav [data-t=lanc]').click();$('impOpen').click();
     await chooseFile('antes.csv','Data;Descrição;Valor\n02/09/2026;PIX ENVIADO Joana Prado Leite;-4.000,00\n03/09/2026;PIX ENVIADO Padaria;-12,00');

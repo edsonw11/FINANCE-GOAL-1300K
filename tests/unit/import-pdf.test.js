@@ -83,5 +83,32 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('import-pdf');
   // ---- a page footer between two entries is not part of a description
   const pf=pe(['Movimentação','05/10 PIX RECEBIDO | - | 10,00 | 20,00','Extrato_P F_A4_Inteligente - 27/11/2024','BALP_UY_M3SM.PIM -','Pagina: 2/4','06/10 PIX ENVIADO | - | 5,00- | 15,00']);
   eq('page footer ignored',pf.entries.map(e=>e.desc),['PIX RECEBIDO','PIX ENVIADO']);
+  // ---- Bradesco-like table (invented values): "Crédito" and "Débito" columns without signs, the date only on
+  // the first entry of the day, the description above the value line and "DES:/REM:" below it
+  const at=(str,x,y)=>({str,x,y,w:str.length*5,size:8}),hy=700;
+  const bp=[at('Data',20,hy),at('Histórico',80,hy),at('Docto.',260,hy),at('Crédito',330,hy),at('(R$)',368,hy),at('Débito',400,hy),at('(R$)',433,hy),at('Saldo',470,hy),at('(R$)',498,hy),
+    at('05/01/2026',20,680),at('RENTAB.INVEST',80,680),at('4674934',260,680),at('0,01',350,680),at('2.977,80',470,680),
+    at('PIX QR CODE ESTATICO',80,670),at('1035546',260,660),at('140,00',412,660),at('2.837,80',470,660),at('DES: PADARIA DO ZE 03/01',80,650),
+    at('PIX QR CODE ESTATIC',80,640),at('12/01/2026',20,630),at('1928183',260,630),at('500,00',340,630),at('3.337,80',470,630),at('REM: FULANO DE TAL 12/01',80,620),
+    at('Total',20,600),at('500,01',340,600),at('140,00',412,600),at('3.337,80',470,600)];
+  const bl=run(`linesFromItems(${J(bp)})`);
+  eq('values get the column they sit in (C or D); the balance stays plain',bl.filter(l=>/,\d\d/.test(l)).slice(0,3),
+    ['05/01/2026 RENTAB.INVEST | 4674934 | 0,01 C | 2.977,80','1035546 | 140,00 D | 2.837,80','12/01/2026 | 1928183 | 500,00 C | 3.337,80']);
+  const be=run(`pdfEntries(${J(bl.join('\n'))},{today:'2026-11-18'})`).entries;
+  eq('direction from the column, no guess; date carried; description above + DES/REM below; document number and total left out',
+    be.map(e=>[e.date,e.desc,e.amount,e.flags]),
+    [['2026-01-05','RENTAB.INVEST',0.01,[]],['2026-01-05','PIX QR CODE ESTATICO PADARIA DO ZE',-140,[]],['2026-01-12','PIX QR CODE ESTATIC FULANO DE TAL',500,[]]]);
+  // ---- Nubank-like statement (invented values): a summary on top, groups headed by "Total de entradas / saídas"
+  // without signs on the entries, a page break with the period header and a paragraph in the middle of a group
+  const nu=pe(['Resumo do período','Total de entradas | +1.010,00','Total de saídas | -230,00','Movimentações',
+    '02 MAR 2026 | Total de entradas | + 1.000,00','Transferência recebida pelo Pix | FULANO DE TAL - •••.123.456-•• - BCO X | 1.000,00',
+    'Total de saídas | - 80,00','Pagamento de boleto efetuado | LOJA X LTDA | 80,00',
+    'Tem alguma dúvida? Mande uma mensagem para nosso time de atendimento pelo app ou ligue para o número abaixo',
+    '01 DE MARÇO DE 2026 a 31 DE MARÇO DE 2026 | VALORES EM R$',
+    'Transferência enviada pelo Pix | CICRANO - •••.111.222-•• - BCO Y | 150,00',
+    '05 MAR 2026 | Total de entradas | + 10,00','Estorno de compra | LOJA Z | 10,00','Saldo final do dia | 1.000,00'],{today:'2026-11-18'});
+  eq('direction by group, the period header is no date, the group goes on after the page break',
+    nu.entries.filter(e=>!/^(total|saldo)/i.test(e.desc)).map(e=>[e.date,e.desc.slice(0,14),e.amount,e.flags]),
+    [['2026-03-02','Transferência ',1000,[]],['2026-03-02','Pagamento de b',-80,[]],['2026-03-02','Transferência ',-150,[]],['2026-03-05','Estorno de com',10,[]]]);
   eq('without width/size every piece is still a word (old behavior)',run(`linesFromItems(${J([{str:'A',x:1,y:1},{str:'B',x:2,y:1}])})`),['A B']);
   return res;};

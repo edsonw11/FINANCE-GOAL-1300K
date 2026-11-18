@@ -1,7 +1,8 @@
 /**
  * Transfers between the user's own accounts: the user's names, classification of Pix/TED to or from
  * them, keeping transfers apart from income/expense, recognising the other side in another bank's
- * statement (in any order), fixing a side that was saved as an expense, and idempotency.
+ * statement (in any order), fixing a side that was saved as an expense, a kept transfer that was in fact
+ * spent (re-imported as an expense), and idempotency.
  * Names, banks and values are made up.
  */
 const {createContext,suite}=require('./harness');
@@ -87,4 +88,15 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('transfers');
   eq('fix: moved to transfers with their direction',[run('convertSavedTransfers()'),run('S.tx.map(t=>t.id)'),run("S.transfers.map(t=>[t.dir,t.value])")],
     [{count:2,total:10750},[903,904,905],[['out',750],['in',10000]]]);
   ok('nothing left to fix',!!run('convertSavedTransfers()').error);
+  // ---- a transfer kept before, re-imported and saved as an expense (the money was spent): it stops being a transfer
+  fresh();run("addOwnName('Zuleica Pimentel Tavares')");
+  const line=['17/11/2026;PIX ENVIADO ZULEICA PIMENTEL TAVARES;-1.176,00'];
+  read('a.csv',line);eq('first read: a transfer',types(),[['PIX ENVIADO ZULEICA PIMENTEL TAVARES','transferencia']]);commit();
+  read('b.csv',['18/11/2026;PIX RECEBIDO ZULEICA PIMENTEL TAVARES;1.176,00']);commit();
+  eq('kept and paired with the other bank',run("S.transfers.map(t=>[t.dir,!!t.pair])"),[['out',true],['in',true]]);
+  read('a.csv',line);eq('read again: already kept',run("R.drafts[0].dup.level"),'confirmed');
+  run("R.drafts[0].type='despesa';R.drafts[0].selected=true;R.drafts[0].dup=null;R.drafts[0].cat='Saúde';R.drafts[0].splits=[{cat:'Presente',value:750}]");
+  eq('saved as an expense with its parts',[commit().saved,run("S.tx.map(t=>[t.cat,t.value,t.splits])")],[1,[['Saúde',1176,[{cat:'Presente',value:750}]]]]);
+  eq('the transfer is gone, the other side is no longer paired',run("S.transfers.map(t=>[t.dir,t.pair])"),[['in',null]]);
+  eq('nothing to drop',run("dropTransfersOf(['nope',''])"),0);
   return res;};

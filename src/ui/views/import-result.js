@@ -15,5 +15,6 @@ export function resultHtml(session){
     ${failed.length?`<div class="bd-gh"><span>⚠️ Não cadastrados (${failed.length}): corrija e tente de novo</span></div><div class="lst">${failed.map(line).join('')}</div>`:''}
     ${skipped.length?`<div class="bd-gh"><span>Já existiam (${skipped.length}): nada foi duplicado</span></div><div class="lst">${skipped.map(line).join('')}</div>`:''}
     ${r.transfers?`<p class="help">🔁 ${r.transfers} transferência(s) entre suas contas guardada(s): não contam como receita nem despesa. Quando você importar o extrato do outro banco, o app reconhece o outro lado.${r.fixedPairs?` ${r.fixedPairs} lançamento(s) já salvo(s) viraram transferência.`:''}</p>`:''}
+    ${(r.accounts||[]).length?`<p class="help">📈 Conta(s) de investimento criada(s): <b>${r.accounts.map(esc).join(', ')}</b>. Veja em Patrimônio.</p>`:''}
     ${!r.saved&&!bad.length&&!r.transfers?'<p class="help">Nada foi selecionado.</p>':''}</div>`;
 }

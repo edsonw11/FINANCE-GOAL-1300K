@@ -13,7 +13,9 @@ import { prepareMoneyInputs } from '../components/money-input.js';
 import { datePicker } from '../components/date-input.js';
 import { rereadSession } from './import-load.js';
 import { addManualDraft, draftById, importState, patchDraft, removeDraft, setAllSelected } from './import-session.js';
-import { rowCard, rowEditor } from './import-rows.js';
+import { rowCard, rowEditor, splitRestHtml } from './import-rows.js';
+import { splitAdded, splitChanged, splitRemoved } from '../../domain/import-split.js';
+import { parseMoney } from '../../core/money.js';
 import { ownNameHint } from '../../domain/own-name-hint.js';
 import { addOwnName } from '../../domain/own-names.js';
 import { runCommand } from '../components/command.js';
@@ -85,6 +87,13 @@ export function bindReview(body,ctx){
     if(fix&&id){patchDraft(id,fix.dataset.impPairfix==='1'?{type:'transferencia',fixPair:true}:{fixPair:false});redrawItem(id);refreshSummary();return;}
     if(t.closest('[data-imp-open]')&&id){if(!t.closest('.imp-chk'))open(id);return;}
     if(t.closest('[data-imp-close]')){open(id);return;}
+    // a transfer that was in fact spent: becomes an expense with a first part to fill in
+    if(t.closest('[data-sp-spent]')&&id){const d=draftById(id);patchDraft(id,{type:'despesa',splits:(d.splits||[]).length?d.splits:splitAdded(d)});redrawItem(id);refreshSummary();
+      const c=item(id).querySelector('[data-f="cat"]');if(c)c.focus();return;}
+    // dividing the value across categories (the editor is redrawn: the list of parts changed)
+    const sp=t.closest('[data-sp-add],[data-sp-del]');
+    if(sp&&id){const d=draftById(id);patchDraft(id,{splits:sp.matches('[data-sp-add]')?splitAdded(d):splitRemoved(d,+sp.dataset.spDel)});redrawItem(id);refreshSummary();
+      if(sp.matches('[data-sp-add]')){const ins=item(id).querySelectorAll('[data-sp-cat]');if(ins.length)ins[ins.length-1].focus();}return;}
     if(t.closest('[data-imp-del]')){removeDraft(id);row.remove();refreshSummary();return;}
     const all=t.closest('[data-imp-all]');
     if(all){setAllSelected(all.dataset.impAll==='1');s.drafts.forEach(d=>redrawCard(d.id));refreshSummary();return;}
@@ -94,6 +103,13 @@ export function bindReview(body,ctx){
     const own=t.closest('[data-imp-own]');
     if(own&&runCommand(()=>addOwnName(own.dataset.impOwn),{ok:'✅ Nome salvo em Ajustes: Pix para você não conta como gasto',render:false})){rereadSession({});ctx.redraw();}
   };
+  // a part typed in: the rest updates while typing, the card when the field is left
+  function editPart(id,t){
+    const d=draftById(id),i=+(t.dataset.spCat||t.dataset.spVal);
+    patchDraft(id,{splits:splitChanged(d,i,t.matches('[data-sp-cat]')?{cat:t.value}:{value:parseMoney(t.value)})});
+    const sum=item(id)&&item(id).querySelector('[data-sp-sum]');if(sum)sum.innerHTML=splitRestHtml(draftById(id));
+  }
+  body.oninput=e=>{const t=e.target,row=t.closest('[data-imp-item]');if(row&&t.matches('[data-sp-cat],[data-sp-val]'))editPart(row.dataset.impItem,t);};
   body.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.imp-main')){e.preventDefault();e.target.click();}};
   body.onchange=e=>{
     const t=e.target,row=t.closest('[data-imp-item]'),id=row&&row.dataset.impItem;
@@ -101,9 +117,11 @@ export function bindReview(body,ctx){
     if(t.id==='impInvert'){rereadSession({invert:t.checked});ctx.redraw();return;}
     if(!id)return;
     if(t.matches('[data-imp-sel]')){patchDraft(id,{selected:t.checked});redrawCard(id);refreshSummary();return;}
+    if(t.matches('[data-sp-cat],[data-sp-val]')){editPart(id,t);redrawCard(id);refreshSummary();return;}
     const f=t.dataset.f;if(!f)return;
     patchDraft(id,{[f]:f==='createRest'?t.checked:t.value});
-    if(f==='type'||f==='createRest')redrawItem(id);else redrawCard(id);
+    if(f==='type'||f==='createRest'||f==='acc')redrawItem(id);else redrawCard(id);
+    if(f==='cat'||f==='value'){const sum=item(id).querySelector('[data-sp-sum]');if(sum)sum.innerHTML=splitRestHtml(draftById(id));}
     refreshSummary();
   };
 }
