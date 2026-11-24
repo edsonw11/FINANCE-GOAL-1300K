@@ -30,7 +30,8 @@ export function txRow(t,o){
   o=o||{};
   const v=o.value!==undefined?o.value:t.value,sign=o.sign!==undefined?o.sign:TX_SIGN[t.type];
   const cat=t.type==='despesa'||t.type==='receita'?(t.splits&&t.splits.length?catParts(t).map(p=>p.cat).join(' + '):t.cat):'';
-  const sub=o.sub!==undefined?o.sub:[formatDateBR(t.date),t.desc&&cat?cat:'',paymentLabel(t)].filter(Boolean).join(' · ');
+  // o.sub is HTML built by the caller; the default line carries user text (category, account) and is escaped
+  const sub=o.sub!==undefined?o.sub:esc([formatDateBR(t.date),t.desc&&cat?cat:'',paymentLabel(t)].filter(Boolean).join(' · '));
   return `<div class="li ${o.cls||''}" data-tx="${t.id}" role="button" tabindex="0" aria-label="${esc(txTitle(t))}, ${esc(f2(v))}. Abrir detalhes">
     <span class="li-ic" aria-hidden="true">${txIcon(t)}</span>
     <span class="li-main"><span class="li-t">${esc(o.title||txTitle(t))}${t.serie?' <span class="li-badge" title="Repete todo mês">🔁</span>':''}</span><span class="li-s">${sub}</span></span>

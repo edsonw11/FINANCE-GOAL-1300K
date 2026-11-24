@@ -1563,6 +1563,32 @@ function hide(){
   clearTimeout(toast.h2);toast.h2=setTimeout(()=>{try{t.hidePopover&&t.hidePopover();}catch(e){}},300);
 }
 
+// ---- src/core/text-normalize.js
+/**
+ * core/text-normalize.js
+ * Responsibility: text helpers for matching descriptions: lowercase without accents or punctuation,
+ * the significant words of a description, and a short stable hash (used to recognise a file or a row again).
+ * Pure functions.
+ */
+const normalizeText=s=>String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+// words that say how the money moved, not who received it
+const NOISE=new Set(['compra','compras','debito','credito','pix','enviado','recebido','pagamento','pagto','pgto','transferencia','transf','cartao','no','na','em','de','da','do','das','dos','ltda','sa','me','epp','com','br','a','o','e','via','pag','parcela','parc','ted','doc']);
+// "COMPRA NO DEBITO - MERCADO EXTRA 1234" -> ['mercado','extra']
+// removes accents only: digits and punctuation stay (dates and amounts are matched on it)
+// an icon is a short symbol typed by the user (usually an emoji): at most 8 characters and none that can open
+// markup, so it is safe wherever it is shown (applied when saving AND when reading, so old data and backups are covered)
+const DEFAULT_ICON='🏷️';
+const safeIcon=v=>Array.from(String(v==null?'':v).replace(/[<>"'&`]/g,'').trim()).slice(0,8).join('')||DEFAULT_ICON;
+const stripAccents=t=>String(t==null?'':t).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const significantWords=s=>normalizeText(s).split(' ').filter(w=>w.length>=3&&!/^\d+$/.test(w)&&!NOISE.has(w));
+const descriptionKey=s=>significantWords(s).slice(0,3).join(' ');
+// FNV-1a, two seeds -> 16 hex chars (not for security: only to compare)
+function textHash(s){
+  s=String(s==null?'':s);let a=0x811c9dc5,b=0x9747b28c;
+  for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,0x01000193)>>>0;b=Math.imul(b^c,0x85ebca6b)>>>0;}
+  return a.toString(16).padStart(8,'0')+b.toString(16).padStart(8,'0');
+}
+
 // ---- src/domain/category-groups.js
 /**
  * domain/category-groups.js
@@ -1572,13 +1598,14 @@ function hide(){
  */
 
 
+
 const same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
 const expenseCats=()=>((S.cats||{}).despesa||[]);
 // group of a category name (the name itself when it has no group or is unknown)
 function groupOf(cat){const c=expenseCats().find(x=>x.name===cat);return (c&&c.group)||cat;}
 function groupIcon(g){
-  const gr=(S.groups||[]).find(x=>x.name===g);if(gr)return gr.icon;
-  const c=expenseCats().find(x=>x.name===g);return (c&&c.icon)||'🏷️';
+  const gr=(S.groups||[]).find(x=>x.name===g);if(gr)return safeIcon(gr.icon);
+  const c=expenseCats().find(x=>x.name===g);return safeIcon(c&&c.icon);
 }
 // category names inside a group (a lone category is a group of one)
 function categoriesOfGroup(g){
@@ -1601,7 +1628,7 @@ function ensureGroup(name,icon){
   S.groups=S.groups||[];
   const g=S.groups.find(x=>same(x.name,name));if(g)return g.name;
   const def=DEFAULT_GROUPS.find(([n])=>same(n,name));
-  S.groups.push({name:def?def[0]:name,icon:(def&&def[1])||icon||'🏷️'});return def?def[0]:name;
+  S.groups.push({name:def?def[0]:name,icon:safeIcon((def&&def[1])||icon)});return def?def[0]:name;
 }
 // once: creates the default groups and places every expense category that has no group yet
 function assignDefaultGroups(){
@@ -1615,6 +1642,7 @@ function assignDefaultGroups(){
  * domain/categories.js
  * Responsibility: Category catalog: create, rename, usage, icon and monthly totals (groups live in category-groups.js).
  */
+
 
 
 
@@ -1648,7 +1676,7 @@ function catUse(t,name){let n=0,v=0;S.tx.forEach(x=>{if(x.type!==t)return;
   const parts=t==='despesa'?catParts(x):[{cat:x.cat,value:x.value}];
   const hit=parts.filter(p=>p.cat===name);if(hit.length){n++;v+=sum(hit.map(p=>p.value));}});return {n,v};}
 function renameCat(t,from,to){S.tx.forEach(x=>{if(x.type!==t)return;if(x.cat===from)x.cat=to;(x.splits||[]).forEach(sp=>{if(sp.cat===from)sp.cat=to;});});}
-const icon=(t,c)=>((((S.cats||{})[t])||[]).find(x=>x.name===c)||{}).icon||(DEFAULT_CATEGORIES[t]&&DEFAULT_CATEGORIES[t][c])||LEG[c]||'🏷️';
+const icon=(t,c)=>safeIcon(((((S.cats||{})[t])||[]).find(x=>x.name===c)||{}).icon||(DEFAULT_CATEGORIES[t]&&DEFAULT_CATEGORIES[t][c])||LEG[c]);
 function catMonth(m){const c={};txIn(m,'despesa').forEach(t=>catParts(t).forEach(p=>c[p.cat]=roundMoney((c[p.cat]||0)+p.value)));
   txIn(m,'fatura').forEach(t=>{const u=invoiceUndetailed(t);if(u>0)c['Cartão (sem detalhe)']=(c['Cartão (sem detalhe)']||0)+u;});return c;}
 
@@ -2607,7 +2635,8 @@ function txRow(t,o){
   o=o||{};
   const v=o.value!==undefined?o.value:t.value,sign=o.sign!==undefined?o.sign:TX_SIGN[t.type];
   const cat=t.type==='despesa'||t.type==='receita'?(t.splits&&t.splits.length?catParts(t).map(p=>p.cat).join(' + '):t.cat):'';
-  const sub=o.sub!==undefined?o.sub:[formatDateBR(t.date),t.desc&&cat?cat:'',paymentLabel(t)].filter(Boolean).join(' · ');
+  // o.sub is HTML built by the caller; the default line carries user text (category, account) and is escaped
+  const sub=o.sub!==undefined?o.sub:esc([formatDateBR(t.date),t.desc&&cat?cat:'',paymentLabel(t)].filter(Boolean).join(' · '));
   return `<div class="li ${o.cls||''}" data-tx="${t.id}" role="button" tabindex="0" aria-label="${esc(txTitle(t))}, ${esc(f2(v))}. Abrir detalhes">
     <span class="li-ic" aria-hidden="true">${txIcon(t)}</span>
     <span class="li-main"><span class="li-t">${esc(o.title||txTitle(t))}${t.serie?' <span class="li-badge" title="Repete todo mês">🔁</span>':''}</span><span class="li-s">${sub}</span></span>
@@ -3107,28 +3136,6 @@ function bindTransactionFormSheet(){
   $('fCancel').onclick=()=>{
     if(formInSheet){Sheet.depth()>1?Sheet.pop():Sheet.close();return;}
     endEdit();$('fVal').value='';$('fDesc').value='';clearFieldErrors($('txForm'));};
-}
-
-// ---- src/core/text-normalize.js
-/**
- * core/text-normalize.js
- * Responsibility: text helpers for matching descriptions: lowercase without accents or punctuation,
- * the significant words of a description, and a short stable hash (used to recognise a file or a row again).
- * Pure functions.
- */
-const normalizeText=s=>String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
-// words that say how the money moved, not who received it
-const NOISE=new Set(['compra','compras','debito','credito','pix','enviado','recebido','pagamento','pagto','pgto','transferencia','transf','cartao','no','na','em','de','da','do','das','dos','ltda','sa','me','epp','com','br','a','o','e','via','pag','parcela','parc','ted','doc']);
-// "COMPRA NO DEBITO - MERCADO EXTRA 1234" -> ['mercado','extra']
-// removes accents only: digits and punctuation stay (dates and amounts are matched on it)
-const stripAccents=t=>String(t==null?'':t).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-const significantWords=s=>normalizeText(s).split(' ').filter(w=>w.length>=3&&!/^\d+$/.test(w)&&!NOISE.has(w));
-const descriptionKey=s=>significantWords(s).slice(0,3).join(' ');
-// FNV-1a, two seeds -> 16 hex chars (not for security: only to compare)
-function textHash(s){
-  s=String(s==null?'':s);let a=0x811c9dc5,b=0x9747b28c;
-  for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,0x01000193)>>>0;b=Math.imul(b^c,0x85ebca6b)>>>0;}
-  return a.toString(16).padStart(8,'0')+b.toString(16).padStart(8,'0');
 }
 
 // ---- src/core/import-values.js
@@ -6499,9 +6506,10 @@ $('addAcc').onclick=()=>{if(runCommand(()=>addAccount($('newAcc').value),{ok:'Co
 
 
 
+
 const sameName=(a,b)=>a.toLowerCase()===b.toLowerCase();
 function setCategoryEnabled(t,i,on){const c=S.cats[t][i];if(on)delete c.off;else c.off=true;return {name:c.name};}
-function setCategoryIcon(t,i,ic){S.cats[t][i].icon=(ic||'').trim()||'🏷️';}
+function setCategoryIcon(t,i,ic){S.cats[t][i].icon=safeIcon(ic);}
 function renameCategoryAt(t,i,name){
   const c=S.cats[t][i],nn=(name||'').trim();
   if(!nn||nn===c.name)return {name:c.name,unchanged:true};
@@ -6512,7 +6520,7 @@ function addCategory(t,name,ic){
   const nn=(name||'').trim();
   if(!nn)return {error:'Digite o nome da categoria'};
   if(S.cats[t].some(x=>sameName(x.name,nn)))return {error:'Essa categoria já existe'};
-  const c={name:nn,icon:(ic||'').trim()||'🏷️'},g=t==='despesa'?suggestGroup(nn):null;
+  const c={name:nn,icon:safeIcon(ic)},g=t==='despesa'?suggestGroup(nn):null;
   if(g)c.group=ensureGroup(g);
   S.cats[t].push(c);return {name:nn,group:c.group||null};
 }
@@ -6526,7 +6534,7 @@ function deleteCategoryAt(t,i,moveTo){
   S.cats[t].splice(i,1);return {name:c.name,movedTo:used?moveTo:null};
 }
 function addCategories(list){let added=0;list.forEach(({name,icon})=>{if(!S.cats.despesa.some(c=>sameName(c.name,name))){
-  const c={name,icon},g=suggestGroup(name);if(g)c.group=ensureGroup(g);S.cats.despesa.push(c);added++;}});return {added};}
+  const c={name,icon:safeIcon(icon)},g=suggestGroup(name);if(g)c.group=ensureGroup(g);S.cats.despesa.push(c);added++;}});return {added};}
 // moves an expense category to a group; a new group name creates the group; empty = no group
 function setCategoryGroup(i,name){
   const c=S.cats.despesa[i],nn=(name||'').trim();
@@ -6535,7 +6543,7 @@ function setCategoryGroup(i,name){
   c.group=ensureGroup(nn,c.icon);return {name:c.name,group:c.group};
 }
 // group icon (the group must exist)
-function setGroupIcon(name,ic){const g=(S.groups||[]).find(x=>x.name===name);if(!g)return {error:'Grupo não encontrado'};g.icon=(ic||'').trim()||'🏷️';return {name};}
+function setGroupIcon(name,ic){const g=(S.groups||[]).find(x=>x.name===name);if(!g)return {error:'Grupo não encontrado'};g.icon=safeIcon(ic);return {name};}
 
 // ---- src/ui/views/categories.js
 /**

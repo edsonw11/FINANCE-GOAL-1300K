@@ -9,6 +9,10 @@ export const normalizeText=s=>String(s==null?'':s).normalize('NFD').replace(/[\u
 const NOISE=new Set(['compra','compras','debito','credito','pix','enviado','recebido','pagamento','pagto','pgto','transferencia','transf','cartao','no','na','em','de','da','do','das','dos','ltda','sa','me','epp','com','br','a','o','e','via','pag','parcela','parc','ted','doc']);
 // "COMPRA NO DEBITO - MERCADO EXTRA 1234" -> ['mercado','extra']
 // removes accents only: digits and punctuation stay (dates and amounts are matched on it)
+// an icon is a short symbol typed by the user (usually an emoji): at most 8 characters and none that can open
+// markup, so it is safe wherever it is shown (applied when saving AND when reading, so old data and backups are covered)
+export const DEFAULT_ICON='🏷️';
+export const safeIcon=v=>Array.from(String(v==null?'':v).replace(/[<>"'&`]/g,'').trim()).slice(0,8).join('')||DEFAULT_ICON;
 export const stripAccents=t=>String(t==null?'':t).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 export const significantWords=s=>normalizeText(s).split(' ').filter(w=>w.length>=3&&!/^\d+$/.test(w)&&!NOISE.has(w));
 export const descriptionKey=s=>significantWords(s).slice(0,3).join(' ');
