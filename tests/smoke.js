@@ -252,6 +252,19 @@
     const st=stored(),a=st.accounts.find(x=>x.name==='Corretora Teste');need(st.accounts.length===acc0+1&&a,'account not created');
     need(st.tx.length===tx0+1&&st.tx.some(t=>t.type==='aporte'&&t.value===3000&&t.acc===a.id),'aporte not saved to the new account');
     $('impDone').click();});
+  await step('printed report: filled when printing, plain language, only the month on screen; e-mail link with subject and summary',async()=>{
+    q('#nav [data-t=resumo]').click();
+    need($('printReport')&&getComputedStyle($('printReport')).display==='none','the report must be hidden on screen');
+    window.dispatchEvent(new Event('beforeprint'));const rp=$('printReport');
+    need(rp.querySelector('h1')&&/Relatório financeiro/.test(rp.textContent),'report not filled before printing');
+    need(/Entrou/.test(rp.textContent)&&/Saiu/.test(rp.textContent)&&/Sobrou/.test(rp.textContent)&&/Meta de R\$/.test(rp.textContent),'main sections missing: '+rp.textContent.slice(0,300));
+    need(rp.querySelector('svg.rp-bar')&&!rp.querySelector('[style]'),'bars must be SVG, with no inline styles');
+    need(new RegExp(q('#mLab1').textContent.trim().split(' ')[0],'i').test(rp.querySelector('h1').textContent),'report month differs from the screen: '+rp.querySelector('h1').textContent);
+    const links=[];const spy=e=>{const a=e.target.closest&&e.target.closest('a[href^="mailto:"]');if(a){e.preventDefault();links.push(a.href);}};
+    document.addEventListener('click',spy,true);$('mailBtn').click();document.removeEventListener('click',spy,true);
+    need(links.length===1,'e-mail link not opened');const u=decodeURIComponent(links[0]);
+    need(/^mailto:\?subject=Relatório financeiro: /.test(u)&&/Entrou: R\$/.test(u)&&/Imprimir \/ PDF/.test(u),'mail text: '+u.slice(0,200));
+    need(links[0].length<2600,'mail link too long: '+links[0].length);});
   await step('holder name: suggested from the salary line, "Sim, sou eu" saves it; records saved before are fixed in Ajustes',async()=>{
     q('#bnav [data-t=lanc]').click();$('impOpen').click();
     await chooseFile('antes.csv','Data;Descrição;Valor\n02/09/2026;PIX ENVIADO Joana Prado Leite;-4.000,00\n03/09/2026;PIX ENVIADO Padaria;-12,00');

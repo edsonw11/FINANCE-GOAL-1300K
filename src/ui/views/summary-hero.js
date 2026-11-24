@@ -13,7 +13,7 @@ import { dueDateOf, dueMonth } from '../../domain/card-cycle.js';
 import { cycleTotals } from '../../domain/card-status.js';
 import { ui } from '../ui-state.js';
 import { invoiceName } from '../invoice-name.js';
-const LEVEL_TEXT={
+export const LEVEL_TEXT={
   good:'Excelente: você guardou boa parte do que ganhou.',ok:'Bom: dá para chegar a 20% se cortar um pouco.',
   low:'Pouco: sobrou menos de 10% do que entrou.',negative:'Você gastou mais do que ganhou neste mês.',none:'Sem receitas neste mês.'};
 const RESERVE_TEXT={good:'Reserva confortável.',ok:'Reserva razoável: a meta é 6 meses.',low:'Reserva curta: a meta é 6 meses.',none:''};

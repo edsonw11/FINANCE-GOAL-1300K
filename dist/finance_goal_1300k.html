@@ -690,7 +690,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
   body{font-size:15px;overflow-x:hidden}
   .hd{padding:8px 14px calc(8px) max(14px,env(safe-area-inset-left));gap:10px;flex-wrap:nowrap}
   #nav,.today{display:none}
-  #printBtn{display:none}
+  #printBtn,#mailBtn{display:none}
   main{padding:14px 12px calc(96px + var(--safe-b));overflow-x:clip}
   .ph h1{font-size:22px}.ph p{font-size:13.5px}
   h2{margin:22px 0 8px}
@@ -833,12 +833,51 @@ dialog.dlg-wide{width:min(580px,94vw)}
 @media (max-width:720px){.g3{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.g3 .kpi{padding:10px}.g3 .kpi .v{font-size:15px}.g3 .kpi .n{display:none}.g3 .kpi .k{font-size:12px}.hero-v{font-size:30px}}
 </style>
 <style>
-/* 10-print.css: Print / PDF */
+/* 10-print.css: Print / PDF. Only the report (#printReport, filled by ui/views/report-print.js) is printed; the screens stay out. */
+.rp{display:none}
 @media print{
-  header,.chips,#toast,.banner,button,.mnav,#tip,.seg,#t-lanc form,#bnav,#fab,dialog{display:none!important}
-  body{background:#fff;color:#000}.card{box-shadow:none;break-inside:avoid}
-  section.tab{display:block!important}#txFormHome,#t-cfg{display:none!important}
-  main{max-width:none;padding:0}
+  @page{size:A4;margin:14mm 14mm 16mm}
+  body>*:not(#printReport){display:none!important}
+  body{background:#fff;color:#111}
+  #printReport{display:block}
+}
+</style>
+<style>
+/* 11-report.css: look of the printed report (A4). Colors are fixed so the PDF looks the same everywhere. */
+@media print{
+  .rp{font:10.5pt/1.45 "Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;color:#111;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .rp b{font-weight:700}
+  .rp .pos{color:#15803d}.rp .neg{color:#b91c1c}.rp .rp-dim{color:#6b7280}
+  .rp-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12pt;padding-bottom:7pt;border-bottom:2pt solid #2f5fd0}
+  .rp-kicker{font-size:8.5pt;letter-spacing:.08em;text-transform:uppercase;color:#6b7280}
+  .rp h1{margin:0;font-size:22pt;line-height:1.15}
+  .rp-meta{font-size:8.5pt;color:#6b7280;text-align:right}
+  .rp-lead{margin:12pt 0 0;padding:9pt 12pt;font-size:12pt;line-height:1.5;background:#f1f5fd;border-left:4pt solid #2f5fd0;break-inside:avoid}
+  .rp-lead-sub{font-size:10pt;color:#4b5563}
+  .rp-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8pt;margin-top:10pt}
+  .rp-tile{padding:8pt 10pt;border:1pt solid #d9deea;border-radius:6pt;break-inside:avoid}
+  .rp-k{font-size:8pt;letter-spacing:.06em;text-transform:uppercase;color:#6b7280}
+  .rp-v{font-size:14pt;font-weight:700;line-height:1.3;white-space:nowrap}
+  .rp-n{font-size:8pt;color:#6b7280}
+  .rp-sec{margin-top:14pt;break-inside:avoid}
+  .rp-sec h2{margin:0 0 6pt;padding-bottom:3pt;font-size:12pt;color:#1f2a44;border-bottom:1pt solid #d9deea}
+  .rp-text{margin:6pt 0 0}
+  .rp-note{margin:5pt 0 0;font-size:8.5pt;color:#6b7280}
+  .rp-table{width:100%;border-collapse:collapse}
+  .rp-table th{padding:2pt 4pt;font-size:8pt;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#6b7280;border-bottom:1pt solid #d9deea}
+  .rp-table td{padding:3.5pt 4pt;border-bottom:.5pt solid #eceff5;vertical-align:middle}
+  .rp-table .rp-name{text-align:left}
+  .rp-table .rp-num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .rp-table .rp-date{width:34pt;color:#6b7280;white-space:nowrap}
+  .rp-barcell{width:34%}
+  .rp-bar{display:block;width:100%;height:7pt}
+  .rp-track{fill:#e6eaf3}.rp-fill{fill:#2f5fd0}
+  .rp-ok .rp-fill{fill:#2e9e5b}.rp-near .rp-fill{fill:#d98e04}.rp-over .rp-fill{fill:#c62828}
+  .rp-ok-t{color:#15803d}.rp-near-t{color:#b45309}.rp-over-t{color:#b91c1c;font-weight:700}
+  .rp-attn,.rp-list{margin:0;padding-left:16pt}
+  .rp-attn li{margin:2pt 0;padding-left:2pt}
+  .rp-attn li::marker{color:#d98e04}
+  .rp-foot{margin-top:16pt;padding-top:6pt;border-top:.5pt solid #d9deea;font-size:8pt;color:#6b7280}
 }
 </style>
 </head>
@@ -856,6 +895,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
   </nav>
   <div class="today" id="todayLbl"></div>
   <button class="btn sm" id="printBtn" title="Imprimir ou salvar como PDF">Imprimir / PDF</button>
+  <button class="btn sm" id="mailBtn" title="Abrir o e-mail com o resumo do relatório">Enviar por e-mail</button>
 </div></header>
 <main>
 
@@ -1092,6 +1132,8 @@ dialog.dlg-wide{width:min(580px,94vw)}
   <button data-t="resumo" data-i="chart" class="on">Resumo</button><button data-t="lanc" data-i="receipt">Lançamentos</button><button data-t="cartao" data-i="card">Cartão</button><button data-t="meta" data-i="target">Patrimônio</button><button data-t="more" data-i="menu">Mais</button>
 </nav>
 <div id="toast" popover="manual" role="status" aria-live="polite"></div>
+
+<div id="printReport" class="rp" aria-hidden="true"></div>
 
 <script>
 "use strict";
@@ -3943,12 +3985,366 @@ function readImportFile(file,opts){
   return {ok:true,format,kind,fileName:file.name||'arquivo',fileHash,rows,mapping,drafts,dropped,skipped,unreadable,alreadyImported:before};
 }
 
+// ---- src/domain/savings.js
+/**
+ * domain/savings.js
+ * Responsibility: the savings rate of a month: how much of the income was NOT spent, and a plain
+ * level (good / ok / low / negative) so the screen can say it in one sentence. Pure read.
+ */
+
+
+const SAVINGS_LEVEL={none:'none',negative:'negative',low:'low',ok:'ok',good:'good'};
+const SAVINGS_OK=0.1,SAVINGS_GOOD=0.2;
+function savingsLevel(rate){
+  if(rate===null)return SAVINGS_LEVEL.none;
+  if(rate<0)return SAVINGS_LEVEL.negative;
+  if(rate>=SAVINGS_GOOD)return SAVINGS_LEVEL.good;
+  if(rate>=SAVINGS_OK)return SAVINGS_LEVEL.ok;
+  return SAVINGS_LEVEL.low;
+}
+// {income, expenses, saved, rate (null when there is no income), level}
+function savingsRate(m){
+  const sm=monthSummary(m),income=sm.income.total,expenses=sm.expenses.total,saved=roundMoney(income-expenses);
+  const rate=income>0?saved/income:null;
+  return {income,expenses,saved,rate,level:savingsLevel(rate)};
+}
+
+// ---- src/domain/month-result.js
+/**
+ * domain/month-result.js
+ * Responsibility: the one answer to "how much was left this month": income minus expenses (the same
+ * rule as the savings rate), split into what went to investments and what stayed in the account.
+ * The Summary shows only this number for "left"; the cash-timing view (invoices paid, card purchases
+ * not yet paid) stays inside its own detail list, so the screen never shows two different "left" values.
+ */
+
+
+
+// {income, expenses, left, rate (null without income), level, invested, kept}
+// kept = left - invested: positive = stayed in the account; negative = taken from the account (or savings)
+function monthResult(m){
+  const sm=monthSummary(m),income=sm.income.total,expenses=sm.expenses.total,invested=sm.contributions.total;
+  const left=roundMoney(income-expenses),rate=income>0?left/income:null;
+  return {income,expenses,left,rate,level:savingsLevel(rate),invested,kept:roundMoney(left-invested)};
+}
+
+// ---- src/domain/emergency-fund.js
+/**
+ * domain/emergency-fund.js
+ * Responsibility: the emergency reserve: how many months of expenses the accounts the user marked
+ * as "reserve" can pay. Also the command that marks / unmarks an account.
+ */
+
+
+
+
+
+const RESERVE_TARGET_MONTHS=6,RESERVE_MIN_MONTHS=3,AVERAGE_MONTHS=3;
+const reserveAccounts=()=>S.accounts.filter(a=>a.reserve&&!a.archived);
+function setReserveAccount(id,flag){
+  const a=S.accounts.find(x=>x.id===id);if(!a)return {error:'Conta não encontrada'};
+  if(flag)a.reserve=true;else delete a.reserve;
+  return {name:a.name};
+}
+// average expenses of the last closed months that have any expense (the month in progress is not complete)
+function monthlyExpenseAverage(day=today()){
+  const cur=mOf(day),vals=[];
+  for(let k=1;k<=AVERAGE_MONTHS;k++){const v=monthSummary(mKey(mIdx(cur)-k)).expenses.total;if(v>0)vals.push(v);}
+  return vals.length?roundMoney(vals.reduce((s,v)=>s+v,0)/vals.length):0;
+}
+// {accounts, balance, monthlyExpense, months (null when it cannot be told), target, level}
+function emergencyFund(day=today()){
+  const accs=reserveAccounts(),bal=roundMoney(accs.reduce((s,a)=>s+balance(a.id,day).v,0)),avg=monthlyExpenseAverage(day);
+  const months=accs.length&&avg>0?bal/avg:null;
+  const level=months===null?'none':months>=RESERVE_TARGET_MONTHS?'good':months>=RESERVE_MIN_MONTHS?'ok':'low';
+  return {accounts:accs.map(a=>a.id),balance:bal,monthlyExpense:avg,months,target:RESERVE_TARGET_MONTHS,level};
+}
+
+// ---- src/domain/report.js
+/**
+ * domain/report.js
+ * Responsibility: every number of the printed report (PDF) of one month, in one place: the month result,
+ * what needs attention, the goal, where the money went (by group), the last months, the biggest
+ * expenses, the investments, the card invoice, the budgets and the emergency reserve. Pure read: the
+ * words and the layout live in ui/views/report-html.js. Reuses the same domain functions as the screens,
+ * so the report never disagrees with the app.
+ * buildReport(m, day = today) -> {m, day, current, hasData, month, compare, attention, goal, spending, trend,
+ *   biggest, investments, card, budgets, reserve}
+ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+const REPORT_MONTHS=6,REPORT_GROUPS=6,REPORT_BIGGEST=5,REPORT_OTHER_GROUP='Outros';
+const EPS=0.004;
+// the biggest groups, the small ones together as "Outros"; share = part of the month's expenses
+function groupsOf(m,expenses){
+  const rows=Object.entries(groupMonth(m)).filter(([,v])=>v>EPS).map(([name,value])=>({name,value:roundMoney(value)}))
+    .sort((a,b)=>b.value-a.value);
+  const top=rows.slice(0,REPORT_GROUPS),rest=rows.slice(REPORT_GROUPS);
+  if(rest.length)top.push({name:REPORT_OTHER_GROUP,value:roundMoney(rest.reduce((t,r)=>t+r.value,0)),count:rest.length});
+  return top.map(r=>({...r,share:expenses>0?r.value/expenses:0}));
+}
+// the last months up to m (empty months before the first record are left out); average = of the closed ones
+function trendOf(m,current){
+  const all=[];
+  for(let k=REPORT_MONTHS-1;k>=0;k--){const x=mKey(mIdx(m)-k),r=monthResult(x);all.push({m:x,income:r.income,expenses:r.expenses,left:r.left});}
+  const first=all.findIndex(r=>r.income>EPS||r.expenses>EPS),rows=first<0?all.slice(-1):all.slice(first);
+  const closed=rows.filter((r,i)=>!(current&&i===rows.length-1)&&(r.income>EPS||r.expenses>EPS));
+  return {rows,averageLeft:closed.length?roundMoney(closed.reduce((t,r)=>t+r.left,0)/closed.length):null};
+}
+function goalOf(m){
+  const real=realSeries(),last=real[real.length-1],{hit}=project(real),net=total(asOf(m));
+  return {target:S.goal,networth:roundMoney(net),progress:S.goal>0?Math.min(Math.max(net/S.goal,0),1):0,remaining:roundMoney(Math.max(S.goal-net,0)),
+    planned:S.planned,rate:S.rate,monthsLeft:hit,reached:hit===0,etaMonth:hit>0?mKey(mIdx(last.m)+hit):null};
+}
+// the invoice that is open today, when something is left to pay
+function cardOf(day){
+  const fm=dueMonth(day),t=cycleTotals(fm),rest=roundMoney(Math.max(0,t.bought-t.paid));
+  return rest>EPS?{fm,rest,due:dueDateOf(fm)}:null;
+}
+function buildReport(m,day=today()){
+  const current=m===mOf(day),month=monthResult(m),sm=monthSummary(m),goal=goalOf(m);
+  const prevM=mKey(mIdx(m)-1),prev=monthResult(prevM);
+  // a month in progress is not comparable with a whole one
+  const compare=!current&&prev.expenses>EPS?{m:prevM,expenses:prev.expenses,delta:roundMoney(month.expenses-prev.expenses),pct:(month.expenses-prev.expenses)/prev.expenses}:null;
+  const dist=investmentDistribution(asOf(m),'account'),bs=budgetStatus(m,day),reserve=emergencyFund(day);
+  return {m,day,current,hasData:month.income>EPS||month.expenses>EPS||month.invested>EPS||goal.networth>EPS,
+    month,compare,attention:current?nextActions(day):[],goal,
+    spending:groupsOf(m,month.expenses),trend:trendOf(m,current),
+    biggest:sm.expenses.items.slice().sort((a,b)=>b.value-a.value||a.date.localeCompare(b.date)).slice(0,REPORT_BIGGEST)
+      .map(t=>({date:t.date,desc:t.desc||t.cat,cat:t.cat,value:t.value})),
+    investments:dist.items.length?dist:null,card:current?cardOf(day):null,
+    budgets:bs.rows.length?bs:null,reserve:reserve.accounts.length?reserve:null};
+}
+
+// ---- src/ui/views/summary-hero.js
+/**
+ * ui/views/summary-hero.js
+ * Responsibility: the main number of the Summary, "Sobrou no mês" (domain/month-result.js), with how
+ * much of it was invested and how much stayed in the account; the card invoice of today under it; and
+ * the emergency reserve card, shown only when an account is marked as the reserve.
+ */
+
+
+
+
+
+
+
+
+
+const LEVEL_TEXT={
+  good:'Excelente: você guardou boa parte do que ganhou.',ok:'Bom: dá para chegar a 20% se cortar um pouco.',
+  low:'Pouco: sobrou menos de 10% do que entrou.',negative:'Você gastou mais do que ganhou neste mês.',none:'Sem receitas neste mês.'};
+const RESERVE_TEXT={good:'Reserva confortável.',ok:'Reserva razoável: a meta é 6 meses.',low:'Reserva curta: a meta é 6 meses.',none:''};
+const months=v=>v.toFixed(1).replace('.',',');
+// the invoice that is open today (same name and number as the Card tab)
+function invoiceLine(){
+  const fm=dueMonth(today()),t=cycleTotals(fm),rest=Math.max(0,t.bought-t.paid);
+  return rest>0.004?`<div class="hero-line">💳 ${invoiceName(fm)}: <b>${f2(rest)}</b> · vence ${formatDateBR(dueDateOf(fm))}</div>`:'';
+}
+function renderHero(){
+  const r=monthResult(ui.cur),isNow=ui.cur===mOf(today());
+  const sign=r.left<0?'−':'';
+  $('monthHero').className='card mt-10 month-hero '+r.level;
+  $('monthHero').innerHTML=`<div class="hero-k">Sobrou em ${mLabel(ui.cur).toLowerCase()}${isNow?' (até hoje)':''}</div>
+    <div class="hero-v">${sign}${f2(Math.abs(r.left))}</div>
+    <div class="hero-n">${r.rate===null?'':`${pc(r.rate)} do que entrou · `}${LEVEL_TEXT[r.level]}</div>
+    ${r.invested>0||r.left!==0?`<div class="hero-split"><span>📈 Investiu <b>${f2(r.invested)}</b></span><span>🏦 ${r.kept>=0?'Ficou na conta':'Saiu da conta'} <b>${f2(Math.abs(r.kept))}</b></span></div>`:''}
+    ${isNow?invoiceLine():''}`;
+  const e=emergencyFund(today()),el=$('reserveCard');
+  el.hidden=!e.accounts.length;
+  el.innerHTML=!e.accounts.length?'':e.months===null
+    ?`<div class="k">🛟 Reserva de emergência</div><div class="v">${f2(e.balance)}</div><div class="n">Falta histórico de despesas para calcular quantos meses ela cobre.</div>`
+    :`<div class="k">🛟 Reserva de emergência</div><div class="v">${months(e.months)} meses</div><div class="n">${f2(e.balance)} cobrem ${months(e.months)} meses de gastos (média ${f2(e.monthlyExpense)}/mês). ${RESERVE_TEXT[e.level]}</div>`;
+  el.className='card kpi health mt-10 '+e.level;
+}
+
+// ---- src/ui/views/report-html.js
+/**
+ * ui/views/report-html.js
+ * Responsibility: the words and the layout of the printed report (PDF) of one month, from the numbers of
+ * domain/report.js: a one-sentence summary, four big numbers, what needs attention, the goal, where the
+ * money went, the last months, the biggest expenses, investments, card, budgets and reserve. Plain
+ * language, no jargon, no emojis (they print differently on each computer). Pure text builder: no DOM
+ * reads, no events, no state. The look is in styles/11-report.css.
+ */
+
+
+
+
+
+
+const RP_ATTENTION={
+  'invoice-late':a=>a.count>1?`${a.count} faturas de cartão venceram sem pagamento lançado (${rpF2(a.rest)})`:`${invoiceName(a.fm)} venceu e não foi paga (${rpF2(a.rest)})`,
+  'invoice-due':a=>`${invoiceName(a.fm)} vence em ${a.days} dia${a.days===1?'':'s'} (${rpF2(a.rest)})`,
+  'budget-over':a=>`Passou do limite de gastos em: ${a.groups.map(esc).join(', ')}`,
+  'bills-missing':a=>`${a.count} conta${a.count===1?'':'s'} do mês ainda não lançada${a.count===1?'':'s'}`,
+  'no-contribution':()=>'Nenhum aporte (dinheiro investido) neste mês ainda',
+  'no-reserve':()=>'Falta marcar qual investimento é a sua reserva de emergência'};
+const RP_BUDGET_TEXT={[BUDGET_LEVEL.ok]:'Dentro do limite',[BUDGET_LEVEL.near]:'Perto do limite',[BUDGET_LEVEL.over]:'Passou do limite'};
+const RP_RESERVE_TEXT={good:'confortável',ok:'razoável',low:'curta'};
+// "R$" and the number stay on the same line
+const rpF2=v=>f2(v).replace('R$ ','R$\u00a0'),rpF0=v=>f0(v).replace('R$ ','R$\u00a0');
+const rpMoney=v=>(v<0?'− ':'')+rpF2(Math.abs(v));
+const rpTone=v=>v<0?'neg':'pos';
+const rpComma=n=>String(n).replace('.',',');
+// "7 meses" / "1 ano e 3 meses"
+function rpSpan(n){
+  const mo=k=>k+(k===1?' mês':' meses');
+  if(n<12)return mo(n);
+  const y=Math.floor(n/12),r=n%12;
+  return y+(y===1?' ano':' anos')+(r?' e '+mo(r):'');
+}
+// a horizontal bar drawn as SVG (it prints even when the browser drops background colors)
+const rpBar=(share,tone='')=>`<svg class="rp-bar${tone?' rp-'+tone:''}" viewBox="0 0 100 4" preserveAspectRatio="none" aria-hidden="true"><rect class="rp-track" width="100" height="4"/><rect class="rp-fill" width="${(Math.max(0,Math.min(1,share||0))*100).toFixed(1)}" height="4"/></svg>`;
+const rpSection=(title,body,note)=>`<section class="rp-sec"><h2>${title}</h2>${body}${note?`<p class="rp-note">${note}</p>`:''}</section>`;
+const rpTile=(k,v,n,tone)=>`<div class="rp-tile"><div class="rp-k">${k}</div><div class="rp-v ${tone||''}">${v}</div><div class="rp-n">${n||'&nbsp;'}</div></div>`;
+// ---- parts
+function rpHead(r){
+  const part=r.current?`Mês em andamento: valores até ${formatDateBR(r.day).slice(0,5)}`:'Mês fechado';
+  return `<header class="rp-head"><div><div class="rp-kicker">Relatório financeiro</div><h1>${esc(mLabel(r.m))}</h1></div>
+    <div class="rp-meta">${part}<br>Gerado em ${formatDateBR(r.day)}</div></header>`;
+}
+function rpLead(r){
+  const x=r.month,name=mLabel(r.m).toLowerCase();
+  if(!r.hasData)return `<p class="rp-lead">Ainda não há lançamentos em ${esc(name)}. Lance suas receitas e despesas (ou importe o extrato) para ver o relatório completo.</p>`;
+  const left=x.left>=0?`sobraram <b class="pos">${rpF2(x.left)}</b>${x.rate!==null&&x.left>0?` (${pc(x.rate)} do que entrou)`:''}`:`faltaram <b class="neg">${rpF2(-x.left)}</b>`;
+  const invested=x.invested>0?` Você investiu <b>${rpF2(x.invested)}</b> neste mês.`:'';
+  return `<p class="rp-lead">${r.current?'Até hoje, em':'Em'} ${esc(name)} você recebeu <b>${rpF2(x.income)}</b>, gastou <b>${rpF2(x.expenses)}</b> e ${left}.${invested}<br><span class="rp-lead-sub">${LEVEL_TEXT[x.level]}</span></p>`;
+}
+const rpTiles=r=>`<div class="rp-tiles">${rpTile('Entrou',rpF2(r.month.income),'receitas do mês','pos')}${rpTile('Saiu',rpF2(r.month.expenses),'despesas do mês','neg')}
+  ${rpTile('Sobrou',rpMoney(r.month.left),r.month.rate!==null?pc(r.month.rate)+' do que entrou':'sem receitas no mês',rpTone(r.month.left))}
+  ${rpTile('Patrimônio',rpF2(r.goal.networth),'meta: '+rpF0(r.goal.target))}</div>`;
+const rpAttention=r=>r.attention.length?rpSection('Pontos de atenção',`<ul class="rp-attn">${r.attention.map(a=>`<li>${RP_ATTENTION[a.code](a.data)}</li>`).join('')}</ul>`):'';
+function rpGoal(r){
+  const g=r.goal;
+  const pace=`No ritmo atual (aporte de ${rpF0(g.planned)} por mês e rendimento de ${rpComma(g.rate)}% ao ano)`;
+  const eta=g.monthsLeft===null?`${pace}, a meta leva <b>mais de 5 anos</b>.`
+    :`${pace}, a meta chega em <b>${esc(g.etaMonth?mLabel(g.etaMonth).toLowerCase():'')}</b>, daqui a ${rpSpan(g.monthsLeft)}.`;
+  const text=g.reached?`Você tem <b>${rpF2(g.networth)}</b>: <b class="pos">a meta foi atingida.</b>`
+    :`Você tem <b>${rpF2(g.networth)}</b>, que é <b>${pc(g.progress)}</b> da meta. Faltam <b>${rpF2(g.remaining)}</b>. ${eta}`;
+  const body=`${rpBar(g.progress)}<p class="rp-text">${text}</p>`;
+  return rpSection('Meta de '+rpF0(g.target),body,r.current?'':'A previsão parte dos saldos de hoje, não do fim deste mês.');
+}
+function rpSpending(r){
+  if(!r.spending.length)return '';
+  const rows=r.spending.map(g=>`<tr><td class="rp-name">${esc(g.name)}</td><td class="rp-barcell">${rpBar(g.share)}</td><td class="rp-num">${rpF2(g.value)}</td><td class="rp-num rp-dim">${pc(g.share)}</td></tr>`).join('');
+  const c=r.compare;
+  const cmp=c?`<p class="rp-text">${c.delta===0?'Os gastos ficaram iguais aos':`Você gastou <b>${rpF2(Math.abs(c.delta))} ${c.delta>0?'a mais':'a menos'}</b> (${pc(Math.abs(c.pct))}) que`} de ${esc(mLabel(c.m).toLowerCase())}.</p>`:'';
+  return rpSection('Para onde foi o dinheiro',`<table class="rp-table">${rows}</table>${cmp}`);
+}
+function rpTrend(r){
+  const rows=r.trend.rows.map((t,i)=>{const open=r.current&&i===r.trend.rows.length-1;
+    return `<tr><td class="rp-name">${esc(mShort(t.m))}${open?' <span class="rp-dim">(até hoje)</span>':''}</td><td class="rp-num">${rpF2(t.income)}</td><td class="rp-num">${rpF2(t.expenses)}</td><td class="rp-num ${rpTone(t.left)}">${rpMoney(t.left)}</td></tr>`;}).join('');
+  const avg=r.trend.averageLeft===null?'':`<p class="rp-text">Média do que sobrou nos meses fechados: <b class="${rpTone(r.trend.averageLeft)}">${rpMoney(r.trend.averageLeft)}</b> por mês.</p>`;
+  return rpSection('Últimos meses',`<table class="rp-table"><tr><th class="rp-name">Mês</th><th class="rp-num">Entrou</th><th class="rp-num">Saiu</th><th class="rp-num">Sobrou</th></tr>${rows}</table>${avg}`);
+}
+const rpBiggest=r=>r.biggest.length?rpSection('Maiores gastos do mês',`<table class="rp-table">${r.biggest.map(b=>
+  `<tr><td class="rp-date">${formatDateBR(b.date).slice(0,5)}</td><td class="rp-name">${esc(b.desc)}${b.desc!==b.cat?` <span class="rp-dim">· ${esc(b.cat)}</span>`:''}</td><td class="rp-num">${rpF2(b.value)}</td></tr>`).join('')}</table>`):'';
+const rpInvest=r=>r.investments?rpSection('Onde está o seu dinheiro investido',`<table class="rp-table">${r.investments.items.map(i=>
+  `<tr><td class="rp-name">${esc(i.name)}</td><td class="rp-barcell">${rpBar(i.share)}</td><td class="rp-num">${rpF2(i.value)}</td><td class="rp-num rp-dim">${pc(i.share)}</td></tr>`).join('')}</table>
+  <p class="rp-text">Total: <b>${rpF2(r.investments.total)}</b></p>`):'';
+function rpBudgets(r){
+  if(!r.budgets)return '';
+  const rows=r.budgets.rows.map(b=>`<tr><td class="rp-name">${esc(b.group)}</td><td class="rp-barcell">${rpBar(b.share,b.level)}</td><td class="rp-num">${rpF2(b.spent)} de ${rpF2(b.budget)}</td><td class="rp-num rp-${b.level}-t">${RP_BUDGET_TEXT[b.level]}</td></tr>`).join('');
+  return rpSection('Limites de gastos do mês',`<table class="rp-table">${rows}</table>`);
+}
+function rpCardReserve(r){
+  const lines=[];
+  if(r.card)lines.push(`<li><b>${esc(invoiceName(r.card.fm))}:</b> ${rpF2(r.card.rest)} a pagar, vence em ${formatDateBR(r.card.due)}.</li>`);
+  const e=r.reserve;
+  if(e)lines.push(e.months===null?`<li><b>Reserva de emergência:</b> ${rpF2(e.balance)} (falta histórico de gastos para saber quantos meses ela cobre).</li>`
+    :`<li><b>Reserva de emergência:</b> ${rpF2(e.balance)}, o que cobre <b>${rpComma(e.months.toFixed(1))} meses</b> de gastos (meta: ${e.target} meses). Situação ${RP_RESERVE_TEXT[e.level]}.</li>`);
+  return lines.length?rpSection('Cartão e reserva',`<ul class="rp-list">${lines.join('')}</ul>`):'';
+}
+const rpFoot=()=>`<footer class="rp-foot">Como ler: “Entrou” e “Saiu” não incluem transferências entre as suas contas nem o dinheiro aplicado em investimentos. Compras no cartão contam na data da compra. Valores em reais (R$).</footer>`;
+// the whole report
+function reportHtml(r){
+  return `<article class="rp-page">${rpHead(r)}${rpLead(r)}${r.hasData?rpTiles(r)+rpAttention(r)+rpGoal(r)+rpSpending(r)+rpTrend(r)+rpBiggest(r)+rpInvest(r)+rpBudgets(r)+rpCardReserve(r):''}${rpFoot()}</article>`;
+}
+
+// ---- src/ui/views/report-text.js
+/**
+ * ui/views/report-text.js
+ * Responsibility: the report as plain text for an e-mail (subject and body), from domain/report.js. Short on
+ * purpose: mail programs cut very long links, so the sections go by importance and the text stops at the limit.
+ * Pure text builder: no DOM, no state.
+ */
+
+
+
+const MAIL_BODY_LIMIT=1500; // characters of text before encoding
+const money=v=>(v<0?'-':'')+f2(Math.abs(v));
+const ATTENTION={
+  'invoice-late':a=>a.count>1?`${a.count} faturas vencidas sem pagamento lançado (${f2(a.rest)})`:`${invoiceName(a.fm)} venceu e não foi paga (${f2(a.rest)})`,
+  'invoice-due':a=>`${invoiceName(a.fm)} vence em ${a.days} dia${a.days===1?'':'s'} (${f2(a.rest)})`,
+  'budget-over':a=>`Passou do limite de gastos em: ${a.groups.join(', ')}`,
+  'bills-missing':a=>`${a.count} conta${a.count===1?'':'s'} do mês ainda não lançada${a.count===1?'':'s'}`,
+  'no-contribution':()=>'Nenhum aporte neste mês ainda',
+  'no-reserve':()=>'Falta marcar a reserva de emergência'};
+const reportSubject=r=>'Relatório financeiro: '+mLabel(r.m);
+// the sections in order of importance; each one is a list of lines
+function sections(r){
+  const x=r.month,g=r.goal;
+  const out=[[`Relatório financeiro: ${mLabel(r.m)}`,r.current?`(valores até ${formatDateBR(r.day).slice(0,5)})`:'']];
+  if(!r.hasData)return out.concat([['Ainda não há lançamentos neste mês.']]);
+  out.push([`Entrou: ${f2(x.income)}`,`Saiu: ${f2(x.expenses)}`,`Sobrou: ${money(x.left)}${x.rate!==null&&x.left>0?` (${pc(x.rate)} do que entrou)`:''}`,
+    `Patrimônio: ${f2(g.networth)} (${pc(g.progress)} da meta de ${f0(g.target)})`]);
+  if(r.attention.length)out.push(['Atenção:'].concat(r.attention.map(a=>'- '+ATTENTION[a.code](a.data))));
+  if(r.spending.length)out.push(['Para onde foi o dinheiro:'].concat(r.spending.map(s=>`- ${s.name}: ${f2(s.value)} (${pc(s.share)})`)));
+  if(g.monthsLeft!==null&&!g.reached&&g.etaMonth)out.push([`Previsão da meta: ${mLabel(g.etaMonth).toLowerCase()} (aporte de ${f0(g.planned)}/mês).`]);
+  return out;
+}
+function reportMailBody(r){
+  const blocks=sections(r).map(b=>b.filter(Boolean).join('\n')),foot='Para anexar o relatório completo, use Imprimir / PDF no app, salve o arquivo e anexe a este e-mail.';
+  let body='';
+  for(const b of blocks){const next=body?body+'\n\n'+b:b;if(next.length>MAIL_BODY_LIMIT)break;body=next;}
+  return body+'\n\n'+foot;
+}
+const reportMailUrl=r=>`mailto:?subject=${encodeURIComponent(reportSubject(r))}&body=${encodeURIComponent(reportMailBody(r))}`;
+
+// ---- src/ui/views/report-print.js
+/**
+ * ui/views/report-print.js
+ * Responsibility: the printed report (PDF). Fills the print-only box with the report of the month on screen
+ * right before the browser prints (the "Imprimir / PDF" buttons and Ctrl+P alike), so it is never stale.
+ * On screen the box is hidden; when printing it is the only thing shown (styles/10-print.css).
+ * Also opens the mail program with the subject and a short text of the same report (a web page cannot attach
+ * a file or send mail by itself, so the PDF is attached by the user).
+ */
+
+
+
+
+
+
+
+function renderReport(){$('printReport').innerHTML=reportHtml(buildReport(ui.cur,today()));}
+// a link clicked by code: the mail program opens without leaving the app
+function sendReportMail(){
+  const a=document.createElement('a');a.href=reportMailUrl(buildReport(ui.cur,today()));document.body.appendChild(a);a.click();a.remove();
+  toast('✉️ Abrindo o seu e-mail. Para anexar o PDF: Imprimir / PDF, salve e anexe.');
+}
+function bindReportPrint(){window.addEventListener('beforeprint',renderReport);const b=$('mailBtn');if(b)b.onclick=sendReportMail;}
+
 // ---- src/ui/navigation.js
 /**
  * ui/navigation.js
  * Responsibility: tab and month navigation. Top menu on wide screens, bottom bar on phones
  * ("Mais" opens the other tabs). The selected month and filters are kept when switching tabs.
  */
+
 
 
 
@@ -3971,8 +4367,9 @@ function moreView(){
   return {render(body){
     const items=[['analise','chart','Análise dos gastos','Média, gastos fixos e o que mudou'],['cad','tag','Categorias','Criar, renomear, ativar ou excluir'],['cfg','sliders','Ajustes','Meta, cartão, backup e dados de teste']];
     body.innerHTML='<div class="lst">'+items.map(([t,i,n,d])=>`<div class="li" data-more="${t}" role="button" tabindex="0"><span class="li-ic">${svg(i)}</span><span class="li-main"><span class="li-t">${n}</span><span class="li-s">${d}</span></span><span class="li-v">›</span></div>`).join('')+
-      `<div class="li" data-more="print" role="button" tabindex="0"><span class="li-ic">🖨️</span><span class="li-main"><span class="li-t">Imprimir / salvar PDF</span></span><span class="li-v">›</span></div></div>`;
-    body.querySelectorAll('[data-more]').forEach(el=>el.onclick=()=>{Sheet.close();if(el.dataset.more==='print')return window.print();goTab(el.dataset.more);});
+      `<div class="li" data-more="print" role="button" tabindex="0"><span class="li-ic">🖨️</span><span class="li-main"><span class="li-t">Imprimir / salvar PDF</span></span><span class="li-v">›</span></div>
+      <div class="li" data-more="mail" role="button" tabindex="0"><span class="li-ic">✉️</span><span class="li-main"><span class="li-t">Enviar relatório por e-mail</span></span><span class="li-v">›</span></div></div>`;
+    body.querySelectorAll('[data-more]').forEach(el=>el.onclick=()=>{Sheet.close();if(el.dataset.more==='print')return window.print();if(el.dataset.more==='mail')return sendReportMail();goTab(el.dataset.more);});
     return {title:'Mais opções'};
   }};
 }
@@ -5060,124 +5457,6 @@ function bindStart(){
     if(b.dataset.start===START_STEP.entry)openTxForm({type:'despesa'});
     else if(b.dataset.start===START_STEP.import)openImport();
     else goTab('inv');};
-}
-
-// ---- src/domain/savings.js
-/**
- * domain/savings.js
- * Responsibility: the savings rate of a month: how much of the income was NOT spent, and a plain
- * level (good / ok / low / negative) so the screen can say it in one sentence. Pure read.
- */
-
-
-const SAVINGS_LEVEL={none:'none',negative:'negative',low:'low',ok:'ok',good:'good'};
-const SAVINGS_OK=0.1,SAVINGS_GOOD=0.2;
-function savingsLevel(rate){
-  if(rate===null)return SAVINGS_LEVEL.none;
-  if(rate<0)return SAVINGS_LEVEL.negative;
-  if(rate>=SAVINGS_GOOD)return SAVINGS_LEVEL.good;
-  if(rate>=SAVINGS_OK)return SAVINGS_LEVEL.ok;
-  return SAVINGS_LEVEL.low;
-}
-// {income, expenses, saved, rate (null when there is no income), level}
-function savingsRate(m){
-  const sm=monthSummary(m),income=sm.income.total,expenses=sm.expenses.total,saved=roundMoney(income-expenses);
-  const rate=income>0?saved/income:null;
-  return {income,expenses,saved,rate,level:savingsLevel(rate)};
-}
-
-// ---- src/domain/month-result.js
-/**
- * domain/month-result.js
- * Responsibility: the one answer to "how much was left this month": income minus expenses (the same
- * rule as the savings rate), split into what went to investments and what stayed in the account.
- * The Summary shows only this number for "left"; the cash-timing view (invoices paid, card purchases
- * not yet paid) stays inside its own detail list, so the screen never shows two different "left" values.
- */
-
-
-
-// {income, expenses, left, rate (null without income), level, invested, kept}
-// kept = left - invested: positive = stayed in the account; negative = taken from the account (or savings)
-function monthResult(m){
-  const sm=monthSummary(m),income=sm.income.total,expenses=sm.expenses.total,invested=sm.contributions.total;
-  const left=roundMoney(income-expenses),rate=income>0?left/income:null;
-  return {income,expenses,left,rate,level:savingsLevel(rate),invested,kept:roundMoney(left-invested)};
-}
-
-// ---- src/domain/emergency-fund.js
-/**
- * domain/emergency-fund.js
- * Responsibility: the emergency reserve: how many months of expenses the accounts the user marked
- * as "reserve" can pay. Also the command that marks / unmarks an account.
- */
-
-
-
-
-
-const RESERVE_TARGET_MONTHS=6,RESERVE_MIN_MONTHS=3,AVERAGE_MONTHS=3;
-const reserveAccounts=()=>S.accounts.filter(a=>a.reserve&&!a.archived);
-function setReserveAccount(id,flag){
-  const a=S.accounts.find(x=>x.id===id);if(!a)return {error:'Conta não encontrada'};
-  if(flag)a.reserve=true;else delete a.reserve;
-  return {name:a.name};
-}
-// average expenses of the last closed months that have any expense (the month in progress is not complete)
-function monthlyExpenseAverage(day=today()){
-  const cur=mOf(day),vals=[];
-  for(let k=1;k<=AVERAGE_MONTHS;k++){const v=monthSummary(mKey(mIdx(cur)-k)).expenses.total;if(v>0)vals.push(v);}
-  return vals.length?roundMoney(vals.reduce((s,v)=>s+v,0)/vals.length):0;
-}
-// {accounts, balance, monthlyExpense, months (null when it cannot be told), target, level}
-function emergencyFund(day=today()){
-  const accs=reserveAccounts(),bal=roundMoney(accs.reduce((s,a)=>s+balance(a.id,day).v,0)),avg=monthlyExpenseAverage(day);
-  const months=accs.length&&avg>0?bal/avg:null;
-  const level=months===null?'none':months>=RESERVE_TARGET_MONTHS?'good':months>=RESERVE_MIN_MONTHS?'ok':'low';
-  return {accounts:accs.map(a=>a.id),balance:bal,monthlyExpense:avg,months,target:RESERVE_TARGET_MONTHS,level};
-}
-
-// ---- src/ui/views/summary-hero.js
-/**
- * ui/views/summary-hero.js
- * Responsibility: the main number of the Summary, "Sobrou no mês" (domain/month-result.js), with how
- * much of it was invested and how much stayed in the account; the card invoice of today under it; and
- * the emergency reserve card, shown only when an account is marked as the reserve.
- */
-
-
-
-
-
-
-
-
-
-const LEVEL_TEXT={
-  good:'Excelente: você guardou boa parte do que ganhou.',ok:'Bom: dá para chegar a 20% se cortar um pouco.',
-  low:'Pouco: sobrou menos de 10% do que entrou.',negative:'Você gastou mais do que ganhou neste mês.',none:'Sem receitas neste mês.'};
-const RESERVE_TEXT={good:'Reserva confortável.',ok:'Reserva razoável: a meta é 6 meses.',low:'Reserva curta: a meta é 6 meses.',none:''};
-const months=v=>v.toFixed(1).replace('.',',');
-// the invoice that is open today (same name and number as the Card tab)
-function invoiceLine(){
-  const fm=dueMonth(today()),t=cycleTotals(fm),rest=Math.max(0,t.bought-t.paid);
-  return rest>0.004?`<div class="hero-line">💳 ${invoiceName(fm)}: <b>${f2(rest)}</b> · vence ${formatDateBR(dueDateOf(fm))}</div>`:'';
-}
-function renderHero(){
-  const r=monthResult(ui.cur),isNow=ui.cur===mOf(today());
-  const sign=r.left<0?'−':'';
-  $('monthHero').className='card mt-10 month-hero '+r.level;
-  $('monthHero').innerHTML=`<div class="hero-k">Sobrou em ${mLabel(ui.cur).toLowerCase()}${isNow?' (até hoje)':''}</div>
-    <div class="hero-v">${sign}${f2(Math.abs(r.left))}</div>
-    <div class="hero-n">${r.rate===null?'':`${pc(r.rate)} do que entrou · `}${LEVEL_TEXT[r.level]}</div>
-    ${r.invested>0||r.left!==0?`<div class="hero-split"><span>📈 Investiu <b>${f2(r.invested)}</b></span><span>🏦 ${r.kept>=0?'Ficou na conta':'Saiu da conta'} <b>${f2(Math.abs(r.kept))}</b></span></div>`:''}
-    ${isNow?invoiceLine():''}`;
-  const e=emergencyFund(today()),el=$('reserveCard');
-  el.hidden=!e.accounts.length;
-  el.innerHTML=!e.accounts.length?'':e.months===null
-    ?`<div class="k">🛟 Reserva de emergência</div><div class="v">${f2(e.balance)}</div><div class="n">Falta histórico de despesas para calcular quantos meses ela cobre.</div>`
-    :`<div class="k">🛟 Reserva de emergência</div><div class="v">${months(e.months)} meses</div><div class="n">${f2(e.balance)} cobrem ${months(e.months)} meses de gastos (média ${f2(e.monthlyExpense)}/mês). ${RESERVE_TEXT[e.level]}</div>`;
-  el.className='card kpi health mt-10 '+e.level;
 }
 
 // ---- src/ui/components/progress-bar.js
@@ -7042,6 +7321,7 @@ function bindDescriptionSuggestions(){
 
 
 
+
 bindMoneyInputs();
 bindDateFields();
 bindInvoiceMonthField();
@@ -7065,6 +7345,7 @@ bindDemo();
 bindSettings();
 bindOwnNames();
 bindStart();
+bindReportPrint();
 bindBackup();
 bindAdvanced();
 bindInvestments();

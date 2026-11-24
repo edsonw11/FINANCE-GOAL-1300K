@@ -9,6 +9,7 @@ import { ui } from './ui-state.js';
 import { svg } from './icons.js';
 import { Sheet } from './components/sheet.js';
 import { render } from './render.js';
+import { sendReportMail } from './views/report-print.js';
 const MORE_TABS=['analise','cad','cfg'];
 // old tab ids that now live inside another tab: [tab, element to scroll to]
 const MOVED_TABS={proj:['meta','projCard'],inv:['meta','invStart']};
@@ -25,8 +26,9 @@ function moreView(){
   return {render(body){
     const items=[['analise','chart','Análise dos gastos','Média, gastos fixos e o que mudou'],['cad','tag','Categorias','Criar, renomear, ativar ou excluir'],['cfg','sliders','Ajustes','Meta, cartão, backup e dados de teste']];
     body.innerHTML='<div class="lst">'+items.map(([t,i,n,d])=>`<div class="li" data-more="${t}" role="button" tabindex="0"><span class="li-ic">${svg(i)}</span><span class="li-main"><span class="li-t">${n}</span><span class="li-s">${d}</span></span><span class="li-v">›</span></div>`).join('')+
-      `<div class="li" data-more="print" role="button" tabindex="0"><span class="li-ic">🖨️</span><span class="li-main"><span class="li-t">Imprimir / salvar PDF</span></span><span class="li-v">›</span></div></div>`;
-    body.querySelectorAll('[data-more]').forEach(el=>el.onclick=()=>{Sheet.close();if(el.dataset.more==='print')return window.print();goTab(el.dataset.more);});
+      `<div class="li" data-more="print" role="button" tabindex="0"><span class="li-ic">🖨️</span><span class="li-main"><span class="li-t">Imprimir / salvar PDF</span></span><span class="li-v">›</span></div>
+      <div class="li" data-more="mail" role="button" tabindex="0"><span class="li-ic">✉️</span><span class="li-main"><span class="li-t">Enviar relatório por e-mail</span></span><span class="li-v">›</span></div></div>`;
+    body.querySelectorAll('[data-more]').forEach(el=>el.onclick=()=>{Sheet.close();if(el.dataset.more==='print')return window.print();if(el.dataset.more==='mail')return sendReportMail();goTab(el.dataset.more);});
     return {title:'Mais opções'};
   }};
 }

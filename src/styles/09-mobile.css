@@ -4,7 +4,7 @@
   body{font-size:15px;overflow-x:hidden}
   .hd{padding:8px 14px calc(8px) max(14px,env(safe-area-inset-left));gap:10px;flex-wrap:nowrap}
   #nav,.today{display:none}
-  #printBtn{display:none}
+  #printBtn,#mailBtn{display:none}
   main{padding:14px 12px calc(96px + var(--safe-b));overflow-x:clip}
   .ph h1{font-size:22px}.ph p{font-size:13.5px}
   h2{margin:22px 0 8px}

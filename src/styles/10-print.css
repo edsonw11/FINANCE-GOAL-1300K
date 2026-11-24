@@ -1,7 +1,8 @@
-/* 10-print.css: Print / PDF */
+/* 10-print.css: Print / PDF. Only the report (#printReport, filled by ui/views/report-print.js) is printed; the screens stay out. */
+.rp{display:none}
 @media print{
-  header,.chips,#toast,.banner,button,.mnav,#tip,.seg,#t-lanc form,#bnav,#fab,dialog{display:none!important}
-  body{background:#fff;color:#000}.card{box-shadow:none;break-inside:avoid}
-  section.tab{display:block!important}#txFormHome,#t-cfg{display:none!important}
-  main{max-width:none;padding:0}
+  @page{size:A4;margin:14mm 14mm 16mm}
+  body>*:not(#printReport){display:none!important}
+  body{background:#fff;color:#111}
+  #printReport{display:block}
 }

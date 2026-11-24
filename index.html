@@ -22,6 +22,7 @@
 <link rel="stylesheet" href="src/styles/08-import.css">
 <link rel="stylesheet" href="src/styles/09-mobile.css">
 <link rel="stylesheet" href="src/styles/10-print.css">
+<link rel="stylesheet" href="src/styles/11-report.css">
 </head>
 <body>
 <header><div class="hd">
@@ -37,6 +38,7 @@
   </nav>
   <div class="today" id="todayLbl"></div>
   <button class="btn sm" id="printBtn" title="Imprimir ou salvar como PDF">Imprimir / PDF</button>
+  <button class="btn sm" id="mailBtn" title="Abrir o e-mail com o resumo do relatório">Enviar por e-mail</button>
 </div></header>
 <main>
 
@@ -273,6 +275,8 @@
   <button data-t="resumo" data-i="chart" class="on">Resumo</button><button data-t="lanc" data-i="receipt">Lançamentos</button><button data-t="cartao" data-i="card">Cartão</button><button data-t="meta" data-i="target">Patrimônio</button><button data-t="more" data-i="menu">Mais</button>
 </nav>
 <div id="toast" popover="manual" role="status" aria-live="polite"></div>
+
+<div id="printReport" class="rp" aria-hidden="true"></div>
 
 <script type="module" src="src/app.js"></script>
 </body>
