@@ -9,6 +9,7 @@ export const DEFAULT_CATEGORIES={despesa:{'Moradia':'🏠','Mercado':'🛒','Tra
             receita:{'Salário':'💼','VR/VA (benefício)':'🍴','Freelance':'🧑‍💻','Rendimentos':'📈','Renda Extra':'➕','Serviços':'🛠️','Outros':'💰'}};
 // expense groups: each category belongs to one group (Luz, Água, Gás... are part of Moradia).
 // [group, icon, default categories]; the user can move categories and create groups.
+/** @type {[string, string, string[]][]} */
 export const DEFAULT_GROUPS=[
   ['Moradia','🏠',['Moradia','Aluguel','Condomínio','Luz','Água','Gás','Internet','Telefone','IPTU','Manutenção da casa']],
   ['Alimentação','🍽️',['Mercado','Restaurantes','Alimentação (outros)']],
@@ -19,6 +20,7 @@ export const DEFAULT_GROUPS=[
   ['Família','🍼',['Filhos e bebê']],
   ['Financeiro e impostos','🏦',['Tarifas bancárias e juros','Imposto de renda e taxas','Financiamentos e empréstimos','Cartão de crédito']]];
 // a new category whose name matches is placed in that group (first match wins)
+/** @type {[string, RegExp][]} */
 export const GROUP_KEYWORDS=[
   ['Saúde',/academia|wellhub|gympass|smart ?fit|muscula|pilates|crossfit|farm[aá]cia|drogaria|m[eé]dic|dentist|odonto|consulta|exame|plano de sa|conv[eê]nio|sa[uú]de|terapia|psic|hospital|cl[ií]nica|fisio|nutri/i],
   ['Transporte',/uber|\b99\b|t[aá]xi|combust|gasolina|etanol|transporte|[oô]nibus|metr[oô]|estacion|ped[aá]gio|ipva|ve[ií]culo|carro|moto\b|oficina/i],
@@ -29,6 +31,7 @@ export const GROUP_KEYWORDS=[
   ['Lazer e compras',/lazer|cinema|viagem|hotel|roupa|cal[cç]ado|presente|show|bar\b/i],
   ['Financeiro e impostos',/tarifa|juros|imposto|taxa|financiamento|empr[eé]stimo|iof/i]];
 export const LEG={'Contas (luz, água, net)':'💡'};
+/** @type {[string, [string, string, number][]][]} */
 export const SUGGESTED_CATEGORIES=[
  ['Casa',[['Manutenção da casa','🔧',1],['IPTU','🏛️',0]]],
  ['Transporte',[['Combustível','⛽',1],['Uber e transporte por app','🚕',1],['Veículo (manutenção e seguro)','🛠️',1],['IPVA e licenciamento','📄',1],['Estacionamento e pedágio','🅿️',1]]],

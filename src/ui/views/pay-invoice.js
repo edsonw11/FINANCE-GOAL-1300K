@@ -25,7 +25,7 @@ import { drawInvoiceForm, initInvoiceForm } from './invoice-form.js';
 import { openItem } from './item-dialog.js';
 import { invoiceName } from '../invoice-name.js';
 // ---- pay invoice (quick mode): pick the invoice and the amount, no date/description ----
-let paySel=null,payMode='total';
+let payMode='total';
 export const isQuickPay=()=>ui.type==='fatura'&&ui.editId===null&&!ui.payAdvanced;
 let payOpen=null,payIds=null,payIdsFm=null;
 export async function cancelPay(t){
@@ -45,7 +45,6 @@ export function renderPay(){
   if(!L.length){box.innerHTML='<div class="empty pay-empty">Nenhuma fatura em aberto. Lance as compras com “Cartão de crédito” para elas aparecerem aqui.</div><div class="tc"><button type="button" class="btn sm" id="payAdv">Registrar pagamento manualmente</button></div>'+paidInvoicesList();bindPaidInvoices(box);$('payAdv').onclick=()=>{ui.payAdvanced=true;fillCategoryOptions();};return;}
   if(payOpen===null){const nf=nearestDueMonth(t0);payOpen=(L.find(f=>f.fm===nf)||L[0]).fm;}
   if(payOpen&&!L.some(f=>f.fm===payOpen))payOpen=L[0].fm;
-  paySel=payOpen;
   const fmNow=dueMonth(t0),head=L.filter(f=>f.fm<=fmNow),fut=L.filter(f=>f.fm>fmNow);
   const f=L.find(x=>x.fm===payOpen);
   let its=[];

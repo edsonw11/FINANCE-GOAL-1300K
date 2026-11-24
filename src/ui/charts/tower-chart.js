@@ -28,7 +28,6 @@ export function drawTower(real,rows){
   const goal=S.goal,all=real.concat(proj),N=all.length,nReal=real.length;
   const W=chartWidth($('chTower'),980,240),narrow=W<640,H=narrow?300:410,L=narrow?60:74,R=narrow?8:14,T=30,B=46,pw=W-L-R,ph=H-T-B;
   const sc=chartScale(all.map(a=>a.t),goal),ymax=sc.max,y=v=>T+ph-v/ymax*ph,bw=pw/N,w=Math.min(bw*0.7,48),step=niceStep(ymax);
-  const last=real[real.length-1];
   let s=`<defs><pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="${css('--proj')}" fill-opacity=".3"/><line x1="0" y1="0" x2="0" y2="7" stroke="${css('--proj')}" stroke-width="3"/></pattern></defs>`;
   for(let g=0;g<=ymax;g+=step)s+=`<line x1="${L}" x2="${W-R}" y1="${y(g)}" y2="${y(g)}" stroke="${css('--line')}"/><text x="${L-8}" y="${y(g)+4}" text-anchor="end" font-size="12" fill="${css('--muted')}">${axisText(g)}</text>`;
   const every=Math.ceil(N/(narrow?Math.max(3,Math.floor(W/70)):13));

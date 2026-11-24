@@ -1159,6 +1159,7 @@ const DEFAULT_CATEGORIES={despesa:{'Moradia':'🏠','Mercado':'🛒','Transporte
             receita:{'Salário':'💼','VR/VA (benefício)':'🍴','Freelance':'🧑‍💻','Rendimentos':'📈','Renda Extra':'➕','Serviços':'🛠️','Outros':'💰'}};
 // expense groups: each category belongs to one group (Luz, Água, Gás... are part of Moradia).
 // [group, icon, default categories]; the user can move categories and create groups.
+/** @type {[string, string, string[]][]} */
 const DEFAULT_GROUPS=[
   ['Moradia','🏠',['Moradia','Aluguel','Condomínio','Luz','Água','Gás','Internet','Telefone','IPTU','Manutenção da casa']],
   ['Alimentação','🍽️',['Mercado','Restaurantes','Alimentação (outros)']],
@@ -1169,6 +1170,7 @@ const DEFAULT_GROUPS=[
   ['Família','🍼',['Filhos e bebê']],
   ['Financeiro e impostos','🏦',['Tarifas bancárias e juros','Imposto de renda e taxas','Financiamentos e empréstimos','Cartão de crédito']]];
 // a new category whose name matches is placed in that group (first match wins)
+/** @type {[string, RegExp][]} */
 const GROUP_KEYWORDS=[
   ['Saúde',/academia|wellhub|gympass|smart ?fit|muscula|pilates|crossfit|farm[aá]cia|drogaria|m[eé]dic|dentist|odonto|consulta|exame|plano de sa|conv[eê]nio|sa[uú]de|terapia|psic|hospital|cl[ií]nica|fisio|nutri/i],
   ['Transporte',/uber|\b99\b|t[aá]xi|combust|gasolina|etanol|transporte|[oô]nibus|metr[oô]|estacion|ped[aá]gio|ipva|ve[ií]culo|carro|moto\b|oficina/i],
@@ -1179,6 +1181,7 @@ const GROUP_KEYWORDS=[
   ['Lazer e compras',/lazer|cinema|viagem|hotel|roupa|cal[cç]ado|presente|show|bar\b/i],
   ['Financeiro e impostos',/tarifa|juros|imposto|taxa|financiamento|empr[eé]stimo|iof/i]];
 const LEG={'Contas (luz, água, net)':'💡'};
+/** @type {[string, [string, string, number][]][]} */
 const SUGGESTED_CATEGORIES=[
  ['Casa',[['Manutenção da casa','🔧',1],['IPTU','🏛️',0]]],
  ['Transporte',[['Combustível','⛽',1],['Uber e transporte por app','🚕',1],['Veículo (manutenção e seguro)','🛠️',1],['IPVA e licenciamento','📄',1],['Estacionamento e pedágio','🅿️',1]]],
@@ -1209,7 +1212,7 @@ const daysInMonth=(y,mi)=>new Date(y,mi+1,0).getDate();                 // days 
 const formatISODate=dt=>dt.getFullYear()+'-'+pad2(dt.getMonth()+1)+'-'+pad2(dt.getDate());
 const isWeekend=d=>{const w=new Date(d+'T12:00:00').getDay();return w===0||w===6;};
 const addDay=(d,n)=>{const dt=new Date(d+'T12:00:00');dt.setDate(dt.getDate()+n);return formatISODate(dt);};
-const daysBetween=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5);
+const daysBetween=(a,b)=>Math.round((new Date(b+'T12:00:00').getTime()-new Date(a+'T12:00:00').getTime())/864e5);
 
 // ---- src/core/format.js
 /**
@@ -1218,7 +1221,6 @@ const daysBetween=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:
  */
 const f0=v=>'R$ '+Math.round(v).toLocaleString('pt-BR');
 const f2=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-const n2=v=>v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const pc=v=>(v*100).toFixed(1).replace('.',',')+'%';
 const sum=a=>a.reduce((x,y)=>x+y,0);
 function parse(s){s=String(s).trim().replace(/[R$\s%]/g,'');if(!s)return 0;
@@ -1269,50 +1271,6 @@ function formatMoneyDigits(text){
 // any typed or pasted text ("R$ 1.234,56", "1500", "1.500,5", "12.3") -> number with 2 decimals
 const parseMoney=s=>roundMoney(parse(s));
 
-// ---- src/domain/transactions.js
-/**
- * domain/transactions.js
- * Responsibility: Transaction queries (by month/type, contributions, category parts, future series)
- * and the delete / undo-delete commands.
- */
-
-
-
-
-
-const txIn=(m,type,upto)=>S.tx.filter(t=>t.type===type&&mOf(t.date)===m&&(!upto||t.date<=upto));
-const contributionsInMonth=m=>sum(txIn(m,'aporte',asOf(m)).map(t=>t.value));
-// category parts of a transaction: the informed splits + the remainder in the main category
-const catParts=t=>{const ex=t.splits||[];const rest=roundMoney(t.value-sumMoney(ex.map(s=>s.value)));return ex.concat(rest>0.004?[{cat:t.cat,value:rest}]:[]);};
-// "equal" future transactions (same Repeat series; for old ones, same data)
-const futureSiblings=t=>{
-  if(t.type==='fatura')return [];
-  if(t.serie)return S.tx.filter(x=>x.serie===t.serie&&x.id!==t.id&&x.date>t.date);
-  return S.tx.filter(x=>x.id!==t.id&&!x.serie&&x.type===t.type&&x.date>t.date&&mOf(x.date)!==mOf(t.date)&&x.cat===t.cat&&(x.desc||'')===(t.desc||'')&&(x.fonte||'')===(t.fonte||'')&&(x.acc||'')===(t.acc||'')&&Math.abs(x.value-t.value)<0.005);
-};
-// removes transactions and drops them from the invoices that listed them
-// returns what was removed ({removed, items}) so restoreTransactions can undo it exactly
-function deleteTransactions(ids){
-  const del=new Set(ids),copy=x=>JSON.parse(JSON.stringify(x));
-  const removed=S.tx.filter(t=>del.has(t.id)).map(copy),items={};
-  S.tx.forEach(t=>{if(t.items&&t.items.some(id=>del.has(id)))items[t.id]=t.items.slice();});
-  S.tx=S.tx.filter(t=>!del.has(t.id));
-  S.tx.forEach(t=>{if(t.items)t.items=t.items.filter(id=>!del.has(id));});
-  return {removed,items};
-}
-// undo of deleteTransactions: puts the records back with their ids and the invoices' lists as they were
-function restoreTransactions(undo){
-  if(!undo||!undo.removed||!undo.removed.length)return {error:'Nada para desfazer'};
-  const taken=new Set(S.tx.map(t=>t.id));
-  if(undo.removed.some(t=>taken.has(t.id)))return {error:'Esses lançamentos já existem'};
-  S.tx=S.tx.concat(undo.removed.map(t=>JSON.parse(JSON.stringify(t))));
-  Object.keys(undo.items||{}).forEach(id=>{const inv=S.tx.find(t=>String(t.id)===id);if(inv)inv.items=undo.items[id].slice();});
-  return {restored:undo.removed.length};
-}
-// the paid invoice that currently absorbs a card purchase (null when it is still open)
-function invoiceOfPurchase(t){const {map}=alloc();const id=Object.keys(map).find(k=>map[k].includes(t.id));return id?S.tx.find(x=>x.id===+id)||null:null;}
-const TYPE_LABEL={despesa:'despesa',receita:'receita',aporte:'aporte',fatura:'pagamento de fatura'};
-
 // ---- src/domain/card-cycle.js
 /**
  * domain/card-cycle.js
@@ -1331,7 +1289,7 @@ const CARD=()=>{
 // closing date of cycle "j" (month j, day best-1; if best=1, the last day of month j)
 const closingIn=(y,mi)=>{const B=CARD().best;return B===1?formatISODate(new Date(y,mi+1,0)):formatISODate(new Date(y,mi,Math.min(B-1,daysInMonth(y,mi))));};
 // due date = first "due" day after closing
-const dueAfter=cl=>{const [y,m,d]=cl.split('-').map(Number),D=CARD().due;
+const dueAfter=cl=>{const [y,m]=cl.split('-').map(Number),D=CARD().due;
   const t1=formatISODate(new Date(y,m-1,Math.min(D,daysInMonth(y,m-1))));if(t1>cl)return t1;
   const ny=m===12?y+1:y,nm=m===12?0:m;return formatISODate(new Date(ny,nm,Math.min(D,daysInMonth(ny,nm))));};
 const dueDateOf=fm=>{const [y,m]=fm.split('-').map(Number);return fm+'-'+pad2(Math.min(CARD().due,daysInMonth(y,m-1)));};
@@ -1358,7 +1316,6 @@ const invoiceMonthOf=f=>f.fm||nearestDueMonth(f.date);
 
 
 
-
 // cached allocation; any change to the transactions must call invalidateAllocation()
 let _al=null;
 function invalidateAllocation(){_al=null;}
@@ -1378,7 +1335,6 @@ const openCard=(upto,ex)=>{const {map,used}=alloc();const mine=new Set(ex?map[ex
   return S.tx.filter(t=>t.type==='despesa'&&t.fonte==='cartao'&&(!used.has(t.id)||mine.has(t.id))&&(!upto||t.date<=upto));};
 const invoiceItems=t=>(alloc().map[t.id]||[]).map(id=>S.tx.find(x=>x.id===id)).filter(Boolean);
 const invoiceUndetailed=t=>Math.max(0,roundMoney(t.value-sumMoney(invoiceItems(t).map(x=>x.value))));
-const undetailedInMonth=m=>sumMoney(txIn(m,'fatura').map(invoiceUndetailed));
 function payableInvoices(){
   const fms=new Set(S.tx.filter(t=>t.type==='despesa'&&t.fonte==='cartao').map(t=>dueMonth(t.date)));
   return [...fms].sort().map(fm=>{const its=S.tx.filter(t=>t.type==='despesa'&&t.fonte==='cartao'&&dueMonth(t.date)===fm),
@@ -1468,6 +1424,8 @@ function transact(mutate){
   try{save();}catch(e){restore();transact.lastError=e;return false;}
   return r===undefined?true:r;
 }
+// the error of the last failed change (for diagnosis); null until something fails
+transact.lastError=null;
 let S=load();
 
 // ---- src/domain/settings-commands.js
@@ -1588,6 +1546,49 @@ function textHash(s){
   for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,0x01000193)>>>0;b=Math.imul(b^c,0x85ebca6b)>>>0;}
   return a.toString(16).padStart(8,'0')+b.toString(16).padStart(8,'0');
 }
+
+// ---- src/domain/transactions.js
+/**
+ * domain/transactions.js
+ * Responsibility: Transaction queries (by month/type, contributions, category parts, future series)
+ * and the delete / undo-delete commands.
+ */
+
+
+
+
+
+const txIn=(m,type,upto)=>S.tx.filter(t=>t.type===type&&mOf(t.date)===m&&(!upto||t.date<=upto));
+const contributionsInMonth=m=>sum(txIn(m,'aporte',asOf(m)).map(t=>t.value));
+// category parts of a transaction: the informed splits + the remainder in the main category
+const catParts=t=>{const ex=t.splits||[];const rest=roundMoney(t.value-sumMoney(ex.map(s=>s.value)));return ex.concat(rest>0.004?[{cat:t.cat,value:rest}]:[]);};
+// "equal" future transactions (same Repeat series; for old ones, same data)
+const futureSiblings=t=>{
+  if(t.type==='fatura')return [];
+  if(t.serie)return S.tx.filter(x=>x.serie===t.serie&&x.id!==t.id&&x.date>t.date);
+  return S.tx.filter(x=>x.id!==t.id&&!x.serie&&x.type===t.type&&x.date>t.date&&mOf(x.date)!==mOf(t.date)&&x.cat===t.cat&&(x.desc||'')===(t.desc||'')&&(x.fonte||'')===(t.fonte||'')&&(x.acc||'')===(t.acc||'')&&Math.abs(x.value-t.value)<0.005);
+};
+// removes transactions and drops them from the invoices that listed them
+// returns what was removed ({removed, items}) so restoreTransactions can undo it exactly
+function deleteTransactions(ids){
+  const del=new Set(ids),copy=x=>JSON.parse(JSON.stringify(x));
+  const removed=S.tx.filter(t=>del.has(t.id)).map(copy),items={};
+  S.tx.forEach(t=>{if(t.items&&t.items.some(id=>del.has(id)))items[t.id]=t.items.slice();});
+  S.tx=S.tx.filter(t=>!del.has(t.id));
+  S.tx.forEach(t=>{if(t.items)t.items=t.items.filter(id=>!del.has(id));});
+  return {removed,items};
+}
+// undo of deleteTransactions: puts the records back with their ids and the invoices' lists as they were
+function restoreTransactions(undo){
+  if(!undo||!undo.removed||!undo.removed.length)return {error:'Nada para desfazer'};
+  const taken=new Set(S.tx.map(t=>t.id));
+  if(undo.removed.some(t=>taken.has(t.id)))return {error:'Esses lançamentos já existem'};
+  S.tx=S.tx.concat(undo.removed.map(t=>JSON.parse(JSON.stringify(t))));
+  Object.keys(undo.items||{}).forEach(id=>{const inv=S.tx.find(t=>String(t.id)===id);if(inv)inv.items=undo.items[id].slice();});
+  return {restored:undo.removed.length};
+}
+// the paid invoice that currently absorbs a card purchase (null when it is still open)
+function invoiceOfPurchase(t){const {map}=alloc();const id=Object.keys(map).find(k=>map[k].includes(t.id));return id?S.tx.find(x=>x.id===+id)||null:null;}
 
 // ---- src/domain/category-groups.js
 /**
@@ -1984,7 +1985,6 @@ function drawTower(real,rows){
   const goal=S.goal,all=real.concat(proj),N=all.length,nReal=real.length;
   const W=chartWidth($('chTower'),980,240),narrow=W<640,H=narrow?300:410,L=narrow?60:74,R=narrow?8:14,T=30,B=46,pw=W-L-R,ph=H-T-B;
   const sc=chartScale(all.map(a=>a.t),goal),ymax=sc.max,y=v=>T+ph-v/ymax*ph,bw=pw/N,w=Math.min(bw*0.7,48),step=niceStep(ymax);
-  const last=real[real.length-1];
   let s=`<defs><pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="${css('--proj')}" fill-opacity=".3"/><line x1="0" y1="0" x2="0" y2="7" stroke="${css('--proj')}" stroke-width="3"/></pattern></defs>`;
   for(let g=0;g<=ymax;g+=step)s+=`<line x1="${L}" x2="${W-R}" y1="${y(g)}" y2="${y(g)}" stroke="${css('--line')}"/><text x="${L-8}" y="${y(g)+4}" text-anchor="end" font-size="12" fill="${css('--muted')}">${axisText(g)}</text>`;
   const every=Math.ceil(N/(narrow?Math.max(3,Math.floor(W/70)):13));
@@ -2099,7 +2099,7 @@ function renderMeta(){
   const prog=Math.min(last.t/goal,1);
   const ets=hit===0?'🎉 Meta atingida!':(hit===null?'mais de 5 anos':hit+(hit===1?' mês':' meses'));
   const etaN=hit>0?`Previsto para ${mShort(mKey(mIdx(last.m)+hit))} · aporte de ${f0(S.planned)}/mês`:'';
-  const first=real[0],gain=sum(real.slice(1).map(r=>r.y||0));
+  const gain=sum(real.slice(1).map(r=>r.y||0));
   $('kMeta').innerHTML=
     `<div class="card hero tap" data-kpi="networth" role="button" tabindex="0" aria-label="Patrimônio líquido: ver contas"><span class="kpi-go" aria-hidden="true">›</span><div class="ring"><svg viewBox="0 0 132 132"><circle cx="66" cy="66" r="56" fill="none" stroke="${css('--soft')}" stroke-width="12"/><circle cx="66" cy="66" r="56" fill="none" stroke="${css('--brand')}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(prog*351.86).toFixed(1)} 351.86" transform="rotate(-90 66 66)"/></svg><div class="pct">${Math.round(prog*100)}%</div></div><div><div class="k2">Patrimônio líquido hoje ${paceChip(real)}</div><div class="big">${f0(last.t)}</div><div class="n">${last.t>=goal?'🎉 Meta atingida':'Faltam <b>'+f0(goal-last.t)+'</b> para '+f0(goal)}</div><div class="n mt-2">${(()=>{const tg=totalGross(today());return 'Bruto nos apps: <b>'+(tg.ok?'':'≈ ')+f0(tg.g)+'</b> · IR embutido: '+f0(tg.g-last.t);})()}</div></div></div>`+
     kpi('','⏱️','Previsão para a meta',ets,etaN||'','','eta')+
@@ -2738,7 +2738,7 @@ function classifyUndetailed(invoiceId,{cat,desc,value}){
 
 
 // ---- pay invoice (quick mode): pick the invoice and the amount, no date/description ----
-let paySel=null,payMode='total';
+let payMode='total';
 const isQuickPay=()=>ui.type==='fatura'&&ui.editId===null&&!ui.payAdvanced;
 let payOpen=null,payIds=null,payIdsFm=null;
 async function cancelPay(t){
@@ -2758,7 +2758,6 @@ function renderPay(){
   if(!L.length){box.innerHTML='<div class="empty pay-empty">Nenhuma fatura em aberto. Lance as compras com “Cartão de crédito” para elas aparecerem aqui.</div><div class="tc"><button type="button" class="btn sm" id="payAdv">Registrar pagamento manualmente</button></div>'+paidInvoicesList();bindPaidInvoices(box);$('payAdv').onclick=()=>{ui.payAdvanced=true;fillCategoryOptions();};return;}
   if(payOpen===null){const nf=nearestDueMonth(t0);payOpen=(L.find(f=>f.fm===nf)||L[0]).fm;}
   if(payOpen&&!L.some(f=>f.fm===payOpen))payOpen=L[0].fm;
-  paySel=payOpen;
   const fmNow=dueMonth(t0),head=L.filter(f=>f.fm<=fmNow),fut=L.filter(f=>f.fm>fmNow);
   const f=L.find(x=>x.fm===payOpen);
   let its=[];
@@ -3336,6 +3335,7 @@ function joinPieces(items){
 // Statements with separate "Crédito" and "Débito" columns (Bradesco, Itaú...) print values without a sign:
 // the column says the direction. The header row gives where each column is; a value below it gets " C" or
 // " D" (the reader already understands that suffix). Values under "Saldo" are left alone.
+/** @type {[string, RegExp, string|null][]} */
 const COLUMN_HEADS=[['credit',/^cr[eé]dito/i,'C'],['debit',/^d[eé]bito/i,'D'],['balance',/^saldo/i,null]];
 const MONEY_PIECE=/^\d{1,3}(?:\.\d{3})*,\d{2}$/;
 const center=i=>i.x+(i.w||0)/2;
@@ -4095,6 +4095,7 @@ const REPORT_MONTHS=6,REPORT_GROUPS=6,REPORT_BIGGEST=5,REPORT_OTHER_GROUP='Outro
 const EPS=0.004;
 // the biggest groups, the small ones together as "Outros"; share = part of the month's expenses
 function groupsOf(m,expenses){
+  /** @type {{name:string, value:number, count?:number}[]} */
   const rows=Object.entries(groupMonth(m)).filter(([,v])=>v>EPS).map(([name,value])=>({name,value:roundMoney(value)}))
     .sort((a,b)=>b.value-a.value);
   const top=rows.slice(0,REPORT_GROUPS),rest=rows.slice(REPORT_GROUPS);
@@ -4553,6 +4554,7 @@ const CUSTODY_TOTAL_ROW=new RegExp('total geral\\s+'+MONEY_RE+'\\s+'+MONEY_RE+'\
 const CUSTODY_DATE_ROW=/custodia em:?\s*(\d{2}\/\d{2}\/\d{4})/;
 // who issued the statement (by the names printed on it) and the first kind of investment of the summary,
 // to suggest the account name ("Nubank Caixinhas") when the user has no account for it yet
+/** @type {[RegExp, string][]} */
 const BROKERS=[[/\bnu investimentos\b|\bnubank\b|\bnu pagamentos\b/,'Nubank'],[/\bxp investimentos\b/,'XP'],[/\bbanco inter\b|\binter dtvm\b/,'Inter'],
   [/\bbtg pactual\b/,'BTG'],[/\brico\b/,'Rico'],[/\bclear corretora\b/,'Clear'],[/\bitau\b/,'Itaú'],[/\bbradesco\b/,'Bradesco'],[/\bsantander\b/,'Santander']];
 const FIRST_KIND=/saldo liquido \(r\$\)\s+([a-z][a-z ]{2,30}?)\s+\d/;
@@ -4816,12 +4818,12 @@ async function loadPdfjs(){
 }
 async function pdfText(file){
   let lib;
-  try{lib=await loadPdfjs();}catch(e){throw new Error('Não consegui carregar o leitor de PDF. Use CSV ou OFX por enquanto.');}
+  try{lib=await loadPdfjs();}catch(e){throw new Error('Não consegui carregar o leitor de PDF. Use CSV ou OFX por enquanto.',{cause:e});}
   // pdf.js takes ownership of the bytes it is given: always hand it a copy, so the same file can be read again
   const data=new Uint8Array((await file.arrayBuffer()).slice(0));
   let doc;
   try{doc=await lib.getDocument({data,isEvalSupported:false}).promise;}
-  catch(e){throw new Error(e&&e.name==='PasswordException'?'Este PDF tem senha. Baixe uma versão sem senha ou exporte CSV/OFX.':'Não consegui abrir este PDF (arquivo corrompido ou protegido).');}
+  catch(e){throw new Error(e&&e.name==='PasswordException'?'Este PDF tem senha. Baixe uma versão sem senha ou exporte CSV/OFX.':'Não consegui abrir este PDF (arquivo corrompido ou protegido).',{cause:e});}
   if(doc.numPages>IMPORT_LIMITS.maxPdfPages){await doc.destroy();throw new Error(`PDF com ${doc.numPages} páginas (máximo ${IMPORT_LIMITS.maxPdfPages}). Baixe um período menor.`);}
   const lines=[];
   for(let i=1;i<=doc.numPages;i++){
@@ -4860,7 +4862,7 @@ async function fileText(file){
 async function loadImportFile(file,opts){
   const token=importState.token;
   const isPdf=/\.pdf$/i.test(file.name)||file.type==='application/pdf',tooBig=file.size>(isPdf?IMPORT_LIMITS.maxPdfBytes:IMPORT_LIMITS.maxBytes);
-  let text='';
+  let text;
   try{text=tooBig?'':isPdf?await withTimeout(pdfText(file),PDF_TIMEOUT_MS):await fileText(file);}
   catch(e){return {error:isPdf&&e.message?e.message:'Não consegui ler o arquivo. Tente de novo ou exporte outro.'};}
   if(token!==importState.token)return {cancelled:true};
@@ -5837,6 +5839,7 @@ const demoMonths=()=>{const end=mIdx(mOf(today()));return Array.from({length:DEM
 // a day of that month, never later than today (no records in the future)
 const demoDate=(month,day)=>{const t=today(),d=month+'-'+String(day).padStart(2,'0');return d>t?t:d;};
 // [month offset from the first month, ticker, class, side, qty, price]
+/** @type {[number, string, string, string, number, number][]} */
 const DEMO_TRADES=[[0,'PETR4','acao','C',100,36.4],[1,'HGLG11','fii','C',20,155.2],[2,'IVVB11','etf','C',10,298.5],[3,'VALE3','acao','C',40,62.1],
   [4,'HGLG11','fii','C',15,157.9],[5,'PETR4','acao','C',60,37.8],[6,'IVVB11','etf','C',8,305.3],[8,'VALE3','acao','V',15,64.7],[9,'XPLG11','fii','C',30,98.4],[10,'BOVA11','etf','C',12,128.6],[11,'HGLG11','fii','C',10,161.3],[11,'ITSA4','acao','C',200,10.2]];
 const demoAccountFor=cls=>{
@@ -5845,6 +5848,7 @@ const demoAccountFor=cls=>{
   const id='a'+(S.nid++);S.accounts.push({id,name,demo:true});return id;
 };
 // investment accounts with made-up balances that grow every month, so the Investments screen and the chart are full
+/** @type {[string, number, number, number][]} */
 const DEMO_ACCOUNTS=[['Renda fixa (teste)',18000,0.009,1500],['Tesouro Selic (teste)',30000,0.010,0],['CDB liquidez diária (teste)',9000,0.0085,300],['Reserva de emergência (teste)',12000,0.008,0]];
 function addDemoAccounts(months){
   const ids=DEMO_ACCOUNTS.map(([name,v0,rate,aporte])=>{
@@ -5899,14 +5903,14 @@ function removeDemoData(){
 function addDemoData(){
   removeDemoData();
   let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  /** @type {[string, string, number, number, number][]} */
   const base=[['Moradia','Condomínio',685,0,5],['Internet','Internet',120,0,10],['Luz','Conta de luz',190,.25,15],['Mercado','Mercado',880,.18,8],['Mercado','Mercado',420,.3,22],
     ['Transporte','Combustível',260,.25,12],['Saúde','Plano e farmácia',340,.3,18],['Restaurantes','Restaurantes e delivery',300,.4,20],['Lazer','Lazer e passeios',240,.5,25],['Assinaturas','Streaming e apps',95,.05,3]];
-  let n=0;
   demoMonths().forEach((m,k)=>{const g=1+k*0.012; // slow rise of ~1.2% per month
     base.forEach(([cat,desc,v,var_,day])=>{ensureCat('despesa',cat);
       const val=Math.round(v*(cat==='Moradia'||cat==='Internet'||cat==='Assinaturas'?(1+k*0.004):g)*(1+(rnd()*2-1)*var_)*100)/100;
-      S.tx.push({id:S.nid++,type:'despesa',date:demoDate(m,day),value:val,desc,cat,fonte:'caixa',demo:true});n++;});
-    if(k===3||k===7){ensureCat('despesa','Imprevistos / Outros');S.tx.push({id:S.nid++,type:'despesa',date:demoDate(m,27),value:Math.round((500+rnd()*700)*100)/100,desc:'Imprevisto (teste)',cat:'Imprevistos / Outros',fonte:'caixa',demo:true});n++;}});
+      S.tx.push({id:S.nid++,type:'despesa',date:demoDate(m,day),value:val,desc,cat,fonte:'caixa',demo:true});});
+    if(k===3||k===7){ensureCat('despesa','Imprevistos / Outros');S.tx.push({id:S.nid++,type:'despesa',date:demoDate(m,27),value:Math.round((500+rnd()*700)*100)/100,desc:'Imprevisto (teste)',cat:'Imprevistos / Outros',fonte:'caixa',demo:true});}});
   addDemoExtras();
   invalidateAllocation();
   return S.tx.filter(t=>t.demo).length;
@@ -5951,7 +5955,7 @@ $('demoOff').onclick=async()=>{if(!hasDemoData()||!await askConfirm({title:'Remo
 
 
 function renderTrend(){
-  const sv=$('chTrend'),nowM=mOf(today());
+  const sv=$('chTrend');
   if(!S.tx.length){sv.innerHTML='';$('trendSum').innerHTML='<div class="empty">Lance despesas para ver a evolução.</div>';return;}
   const {ms,vals,part,ci}=spendingWindow(ui.cur),cv=ci.map(k=>vals[k]),n=cv.length;
   const tr=linearTrend(ci,cv),avg=tr.avg,slope=n>=3?tr.slope:0,icpt=n>=3?tr.intercept:avg;

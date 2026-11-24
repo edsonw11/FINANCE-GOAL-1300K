@@ -1,0 +1,31 @@
+# CI: the same gate as `npm run check`, plus a dependency audit. No secrets are used.
+name: ci
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:unit
+      - name: build, and fail if dist/ is not the build of src/
+        run: npm run build && git diff --exit-code -- dist/
+      - name: end-to-end and phone widths (headless Chrome of the runner)
+        run: npm run test:e2e && npm run test:mobile

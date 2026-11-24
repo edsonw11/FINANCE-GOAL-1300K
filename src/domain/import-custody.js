@@ -16,6 +16,7 @@ const CUSTODY_TOTAL_ROW=new RegExp('total geral\\s+'+MONEY_RE+'\\s+'+MONEY_RE+'\
 const CUSTODY_DATE_ROW=/custodia em:?\s*(\d{2}\/\d{2}\/\d{4})/;
 // who issued the statement (by the names printed on it) and the first kind of investment of the summary,
 // to suggest the account name ("Nubank Caixinhas") when the user has no account for it yet
+/** @type {[RegExp, string][]} */
 const BROKERS=[[/\bnu investimentos\b|\bnubank\b|\bnu pagamentos\b/,'Nubank'],[/\bxp investimentos\b/,'XP'],[/\bbanco inter\b|\binter dtvm\b/,'Inter'],
   [/\bbtg pactual\b/,'BTG'],[/\brico\b/,'Rico'],[/\bclear corretora\b/,'Clear'],[/\bitau\b/,'Itaú'],[/\bbradesco\b/,'Bradesco'],[/\bsantander\b/,'Santander']];
 const FIRST_KIND=/saldo liquido \(r\$\)\s+([a-z][a-z ]{2,30}?)\s+\d/;

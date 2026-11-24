@@ -49,7 +49,7 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('import-flow')
   eq('and says why',run("commitImport(R.drafts,{}).items.filter(i=>i.status==='skipped').length"),8);
   eq('still 8 records',run('S.tx.length'),8);
   // ---- overlapping statement: same rows, other file, new row
-  const overlap=read('extrato-2.csv',bank.replace('09/11/2026;CAFE CENTRAL;-7,00\n09/11/2026;CAFE CENTRAL;-7,00','10/11/2026;LIVRARIA;-45,00'));
+  read('extrato-2.csv',bank.replace('09/11/2026;CAFE CENTRAL;-7,00\n09/11/2026;CAFE CENTRAL;-7,00','10/11/2026;LIVRARIA;-45,00'));
   eq('overlap: old rows are duplicates, the new one is not',run("R.drafts.filter(d=>!d.dup&&d.type!=='ignorar').map(d=>d.desc)"),['LIVRARIA']);
   // ---- possible duplicate of a manual record
   fresh();run(`S.tx.push({id:S.nid++,type:'despesa',date:'2026-11-05',value:12.5,desc:'Padaria',cat:'Restaurantes',fonte:'caixa'})`);

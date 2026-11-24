@@ -50,7 +50,7 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('calc-audit');
   const yields=real.filter(r=>r.y!==null).map(r=>r.y/r.prev);
   ok('demo monthly yield is the growth built into the demo (0,5% to 1,1% a month: no aporte is counted as yield)',yields.length>=10&&yields.every(y=>y>0.005&&y<0.011));
   // a new account entered with a balance it already had is a starting point, not yield
-  const yBefore=run("realSeries().map(r=>r.y)"),lastM=real[real.length-1].m;
+  const yBefore=run("realSeries().map(r=>r.y)");
   run("S.accounts.push({id:'newacc',name:'Conta nova'});S.snaps.push({date:today(),acc:'newacc',value:90000,est:false})");
   const yAfter=run("realSeries().map(r=>r.y)");
   ok('adding an account with an existing balance does not change any month yield',yBefore.every((y,i)=>y===null?yAfter[i]===null:near(y,yAfter[i],0.02)));
@@ -68,7 +68,7 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('calc-audit');
   eq('with a planned aporte of 2.000 the date moves earlier and matches',[pj2,pj2<=pj.hit||pj.hit===null],[h2,true]);
   run("S.planned=0");
   // ---- 4. budgets
-  const cur=D.today.slice(0,7),spentBy={};run(`groupMonth('${cur}')`);
+  const cur=D.today.slice(0,7);run(`groupMonth('${cur}')`);
   const grp=run(`groupMonth('${cur}')`),bs=run(`budgetStatus('${cur}','${D.today}')`);
   ok('budget share = spent / budget, remaining = budget − spent',bs.rows.every(r=>near(r.share,(grp[r.group]||0)/r.budget,1e-9)&&near(r.spent,grp[r.group]||0)&&near(r.remaining,r.budget-(grp[r.group]||0))));
   const groupsTotal=sumC(Object.values(grp)),monthExp=run(`monthSummary('${cur}').expenses.total`);

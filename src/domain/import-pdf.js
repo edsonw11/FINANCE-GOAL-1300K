@@ -35,6 +35,7 @@ function joinPieces(items){
 // Statements with separate "Crédito" and "Débito" columns (Bradesco, Itaú...) print values without a sign:
 // the column says the direction. The header row gives where each column is; a value below it gets " C" or
 // " D" (the reader already understands that suffix). Values under "Saldo" are left alone.
+/** @type {[string, RegExp, string|null][]} */
 const COLUMN_HEADS=[['credit',/^cr[eé]dito/i,'C'],['debit',/^d[eé]bito/i,'D'],['balance',/^saldo/i,null]];
 const MONEY_PIECE=/^\d{1,3}(?:\.\d{3})*,\d{2}$/;
 const center=i=>i.x+(i.w||0)/2;

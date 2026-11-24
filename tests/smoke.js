@@ -58,8 +58,8 @@
     q('#t-resumo [data-kpi=avg]').click();const mrow=q('#shBody [data-go=month]');need(mrow,'no month row');mrow.click();need(/Despesas/.test($('shTitle').textContent),'month row did not open expenses');$('shClose').click();});
   await step('goal cards open their lists',()=>{q('#bnav [data-t=meta]').click();q('[data-kpi=networth]').click();need(rows().length===0&&qa('#shBody .li').length>0,'no accounts');$('shClose').click();q('[data-kpi=yield]').click();need($('sheet').open,'yield');$('shClose').click();q('#bnav [data-t=resumo]').click();});
   // detail, delete cancel, edit, delete
-  let before=0,firstTitle='';
-  await step('tap a record opens the detail',()=>{openKpi('expenses');before=rows().length;firstTitle=rows()[0].querySelector('.li-t').textContent;rows()[0].click();
+  let before=0;
+  await step('tap a record opens the detail',()=>{openKpi('expenses');before=rows().length;rows()[0].click();
     need(q('#shFoot [data-act=edit]')&&q('#shFoot [data-act=del]'),'no actions');need(!$('shBack').hidden,'no back button');});
   await step('delete is immediate, Desfazer brings it back',async()=>{q('#shFoot [data-act=del]').click();await tick();
     need(!$('confirmDlg').open,'plain record still asks');need(/Lançamento excluído/.test($('toast').textContent),'toast: '+$('toast').textContent);

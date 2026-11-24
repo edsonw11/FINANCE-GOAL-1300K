@@ -16,6 +16,8 @@ Data lives only in the browser (`localStorage`, key `metaapp.v2`). Export a back
 | Open the app without a server | open `index.html` (it forwards to `dist/finance_goal_1300k.html`, same data) or the dist file itself; run `python3 scripts/build.py` after changing `src/` |
 | Build a single file to keep or share | `python3 scripts/build.py` → `dist/finance_goal_1300k.html` |
 | Open on the phone (same Wi-Fi) | `scripts/serve-phone.sh` (serves dist/ with caching disabled) and open the printed `http://<pc-ip>:8080/` (today `http://192.168.15.13:8080/`); on the phone, "Add to Home screen" makes it an app icon |
+| Install the dev tools (once) | `npm ci` (lint and type checker only; the app itself has no dependencies) |
+| Run every check (same as CI) | `npm run check` = lint + typecheck + unit + build + e2e + phone widths; one by one: `npm run lint`, `npm run typecheck`, … |
 | Run the unit tests | `node tests/run-unit.js` (one file per module in `tests/unit/`, plus the architecture and module-graph rules) |
 | Run the end-to-end test | `scripts/smoke.sh` (headless Chrome; use `CHROME=chromium` if needed) |
 | Check phone widths | `scripts/mobile-check.sh` (320, 360, 375, 390, 430, 768 px: no horizontal scroll, readable charts, 44 px targets) |
@@ -26,6 +28,12 @@ Data lives only in the browser (`localStorage`, key `metaapp.v2`). Export a back
 > uses it to bundle everything into one classic script for `dist/` (so the built file still opens from
 > `file://`), and the unit tests use it to load core + domain in evaluation order.
 > `src/package.json` (`"type": "module"`) lets Node import the core/domain modules directly.
+
+## Architecture and roadmap
+
+Working name of the product: **Everfox** (public, paid). Current state, risks and the incremental plan: [docs/architecture/00-current-state.md](docs/architecture/00-current-state.md);
+decisions: [docs/architecture/decisions/](docs/architecture/decisions/). The financial rules are pinned by `tests/unit/golden.test.js`
+(`docs/architecture/baseline/golden-calculations.json`): if a rule changes on purpose, regenerate it with `node tools/golden-calculations.cjs` and say so in the review.
 
 ## Structure
 

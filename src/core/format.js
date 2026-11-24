@@ -4,7 +4,6 @@
  */
 export const f0=v=>'R$ '+Math.round(v).toLocaleString('pt-BR');
 export const f2=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-const n2=v=>v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 export const pc=v=>(v*100).toFixed(1).replace('.',',')+'%';
 export const sum=a=>a.reduce((x,y)=>x+y,0);
 export function parse(s){s=String(s).trim().replace(/[R$\s%]/g,'');if(!s)return 0;

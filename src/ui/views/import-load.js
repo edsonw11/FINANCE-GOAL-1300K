@@ -25,7 +25,7 @@ export async function fileText(file){
 export async function loadImportFile(file,opts){
   const token=importState.token;
   const isPdf=/\.pdf$/i.test(file.name)||file.type==='application/pdf',tooBig=file.size>(isPdf?IMPORT_LIMITS.maxPdfBytes:IMPORT_LIMITS.maxBytes);
-  let text='';
+  let text;
   try{text=tooBig?'':isPdf?await withTimeout(pdfText(file),PDF_TIMEOUT_MS):await fileText(file);}
   catch(e){return {error:isPdf&&e.message?e.message:'Não consegui ler o arquivo. Tente de novo ou exporte outro.'};}
   if(token!==importState.token)return {cancelled:true};

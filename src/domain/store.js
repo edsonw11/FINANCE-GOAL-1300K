@@ -25,7 +25,7 @@ export function migrate(){
 }
 // storage is injected (DIP): the browser uses localStorage; tests pass an in-memory one
 let storage=typeof localStorage!=='undefined'?localStorage:{getItem:()=>null,setItem:()=>{}};
-function configureStorage(adapter){storage=adapter;}
+export function configureStorage(adapter){storage=adapter;}
 // what happened when the app opened: recovered=true when the saved data could not be read (a copy was kept aside)
 export const bootNotice={recovered:false};
 // a first visit opens an empty app (the example data is on demand); unreadable data is kept aside, never overwritten
@@ -50,4 +50,6 @@ export function transact(mutate){
   try{save();}catch(e){restore();transact.lastError=e;return false;}
   return r===undefined?true:r;
 }
+// the error of the last failed change (for diagnosis); null until something fails
+transact.lastError=null;
 export let S=load();

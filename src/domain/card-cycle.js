@@ -15,7 +15,7 @@ export const CARD=()=>{
 // closing date of cycle "j" (month j, day best-1; if best=1, the last day of month j)
 const closingIn=(y,mi)=>{const B=CARD().best;return B===1?formatISODate(new Date(y,mi+1,0)):formatISODate(new Date(y,mi,Math.min(B-1,daysInMonth(y,mi))));};
 // due date = first "due" day after closing
-const dueAfter=cl=>{const [y,m,d]=cl.split('-').map(Number),D=CARD().due;
+const dueAfter=cl=>{const [y,m]=cl.split('-').map(Number),D=CARD().due;
   const t1=formatISODate(new Date(y,m-1,Math.min(D,daysInMonth(y,m-1))));if(t1>cl)return t1;
   const ny=m===12?y+1:y,nm=m===12?0:m;return formatISODate(new Date(ny,nm,Math.min(D,daysInMonth(ny,nm))));};
 export const dueDateOf=fm=>{const [y,m]=fm.split('-').map(Number);return fm+'-'+pad2(Math.min(CARD().due,daysInMonth(y,m-1)));};

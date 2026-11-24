@@ -15,6 +15,7 @@ export const demoMonths=()=>{const end=mIdx(mOf(today()));return Array.from({len
 // a day of that month, never later than today (no records in the future)
 export const demoDate=(month,day)=>{const t=today(),d=month+'-'+String(day).padStart(2,'0');return d>t?t:d;};
 // [month offset from the first month, ticker, class, side, qty, price]
+/** @type {[number, string, string, string, number, number][]} */
 const DEMO_TRADES=[[0,'PETR4','acao','C',100,36.4],[1,'HGLG11','fii','C',20,155.2],[2,'IVVB11','etf','C',10,298.5],[3,'VALE3','acao','C',40,62.1],
   [4,'HGLG11','fii','C',15,157.9],[5,'PETR4','acao','C',60,37.8],[6,'IVVB11','etf','C',8,305.3],[8,'VALE3','acao','V',15,64.7],[9,'XPLG11','fii','C',30,98.4],[10,'BOVA11','etf','C',12,128.6],[11,'HGLG11','fii','C',10,161.3],[11,'ITSA4','acao','C',200,10.2]];
 const demoAccountFor=cls=>{
@@ -23,6 +24,7 @@ const demoAccountFor=cls=>{
   const id='a'+(S.nid++);S.accounts.push({id,name,demo:true});return id;
 };
 // investment accounts with made-up balances that grow every month, so the Investments screen and the chart are full
+/** @type {[string, number, number, number][]} */
 const DEMO_ACCOUNTS=[['Renda fixa (teste)',18000,0.009,1500],['Tesouro Selic (teste)',30000,0.010,0],['CDB liquidez diária (teste)',9000,0.0085,300],['Reserva de emergência (teste)',12000,0.008,0]];
 function addDemoAccounts(months){
   const ids=DEMO_ACCOUNTS.map(([name,v0,rate,aporte])=>{
