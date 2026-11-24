@@ -35,6 +35,26 @@ Working name of the product: **Everfox** (public, paid). Current state, risks an
 decisions: [docs/architecture/decisions/](docs/architecture/decisions/). The financial rules are pinned by `tests/unit/golden.test.js`
 (`docs/architecture/baseline/golden-calculations.json`): if a rule changes on purpose, regenerate it with `node tools/golden-calculations.cjs` and say so in the review.
 
+## Backend (Phase 2, work in progress)
+
+`backend/` is the API (NestJS on Fastify, PostgreSQL through Prisma). It is separate from the browser app and not used by it yet.
+
+```
+docker compose up -d --wait        database + migrations + API on 127.0.0.1 (curl localhost:3000/health/ready)
+docker compose down                stop (the data volume stays)
+
+cd backend
+cp .env.example .env               local settings (git ignores it)
+docker compose -f ../docker-compose.yml up -d db
+npm ci
+npm run db:migrate                 apply prisma/migrations
+npm run check                      typecheck + unit tests + build
+npm run test:integration           real PostgreSQL + the built program (needs the db above and `npm run build`)
+```
+
+Decisions and what is still missing (login, ownership, security headers): [ADR-0007](docs/architecture/decisions/ADR-0007-backend-skeleton.md).
+The default database password is for this machine only: the API refuses it when `NODE_ENV=production`.
+
 ## Structure
 
 ```

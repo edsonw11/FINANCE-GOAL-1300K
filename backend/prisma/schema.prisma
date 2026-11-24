@@ -1,0 +1,21 @@
+// Everfox database schema (ADR-0004): PostgreSQL, money as BIGINT cents, a user_id on every row.
+// The connection URL is not here: Prisma 7 reads it from prisma.config.ts (DATABASE_URL).
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// The owner of every other row. Identity columns (OIDC subject, e-mail) arrive with the login phase,
+// as their own migration.
+model AppUser {
+  id        String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("app_user")
+}

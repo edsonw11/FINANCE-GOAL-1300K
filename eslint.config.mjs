@@ -2,7 +2,7 @@
 import js from '@eslint/js';
 import globals from 'globals';
 export default [
-  {ignores:['dist/**','vendor/**','node_modules/**','tests/.*.html','docs/**']},
+  {ignores:['dist/**','vendor/**','node_modules/**','tests/.*.html','docs/**','backend/**']},
   js.configs.recommended,
   // the app: ES modules in the browser
   {files:['src/**/*.js'],languageOptions:{ecmaVersion:2022,sourceType:'module',globals:{...globals.browser}},
