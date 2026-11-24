@@ -26,11 +26,13 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,near,res}=suite('finance-
   run(`S=blankState();S.accounts=[];S.tx=[]`);
   eq('nothing to do on a blank app',run("nextActions('2026-10-20')"),[]);
   run(`S.accounts=[{id:'a1',name:'CDB'}]`);
+  eq('invests and no account marked as reserve: suggests marking one (last)',run("nextActions('2026-10-05').map(a=>a.code)"),['no-reserve']);
+  run(`S.accounts=[{id:'a1',name:'CDB',reserve:true}]`);
   eq('invests but no contribution this month (after day 10)',run("nextActions('2026-10-20').map(a=>a.code)"),['no-contribution']);
   eq('not before day 10',run("nextActions('2026-10-05').length"),0);
   run(`S.tx=[${tx(1,'aporte','2026-10-02',100,{acc:'a1'})}]`);
   eq('contributed: quiet',run("nextActions('2026-10-20').length"),0);
-  run(`S=seed();initCats();S.accounts=[{id:'a1',name:'CDB'}];S.snaps=[];S.tx=[];S.budgets={'Moradia':100};S.tx.push(${tx(2,'despesa','2026-10-03',300,{cat:'Moradia'})})`);
+  run(`S=seed();initCats();S.accounts=[{id:'a1',name:'CDB',reserve:true}];S.snaps=[];S.tx=[];S.budgets={'Moradia':100};S.tx.push(${tx(2,'despesa','2026-10-03',300,{cat:'Moradia'})})`);
   const over=run("nextActions('2026-10-20')");
   ok('budget over appears with its group',over.some(a=>a.code==='budget-over'&&a.data.groups.length===1));
   run(`S=blankState();S.accounts=[];S.tx=[${tx(1,'despesa','2026-01-10',100,{fonte:'cartao'})},${tx(2,'despesa','2026-02-10',50,{fonte:'cartao'})}]`);
@@ -39,4 +41,14 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,near,res}=suite('finance-
   run(`S=blankState();S.tx=[]`);
   const many=run("nextActions('2026-10-20').length");
   ok('never more than 3',many<=3);
+  // first steps and backup reminder
+  run(`S=blankState();`);
+  eq('new user: welcome card with nothing done',run("(s=>[s.show,s.steps.map(x=>x.done)])(startSteps())"),[true,[false,false,false]]);
+  eq('no real data: no backup reminder even if never backed up',run("backupReminder(0,Date.now()).show"),false);
+  run(`S.tx=[${tx(9,'despesa','2026-10-06',10,{demo:true})}];S.accounts=[{id:'d1',name:'Demo',demo:true}]`);
+  eq('with test data: no welcome card (already exploring), step not done, no backup reminder',[run("startSteps().show"),run("startSteps().steps[0].done"),run("backupReminder(0,Date.now()).show")],[false,false,false]);
+  run(`S.tx.push(${tx(10,'despesa','2026-10-06',10)})`);
+  eq('first real record: card hidden, step done',run("(s=>[s.show,s.steps[0].done])(startSteps())"),[false,true]);
+  eq('real data and never backed up: remind',run("(r=>[r.show,r.days])(backupReminder(0,Date.now()))"),[true,null]);
+  eq('backup 3 days ago: quiet; 20 days ago: remind',[run("backupReminder(Date.now()-3*864e5,Date.now()).show"),run("backupReminder(Date.now()-20*864e5,Date.now()).days")],[false,20]);
   return res;};

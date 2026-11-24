@@ -1,8 +1,8 @@
 /**
  * ui/views/transaction-save.js
  * Responsibility: the "save" button of the transaction form. Reads the fields, asks the domain
- * to validate (message next to the field) and to save (domain/transaction-builder.js), then
- * returns to where the user came from. If saving fails, the form keeps what was typed.
+ * to validate (message next to the field), confirms a category that does not exist yet
+ * (category-confirm.js), asks the domain to save (domain/transaction-builder.js), then returns to where the user came from. If saving fails, the form keeps what was typed.
  */
 import { BUDGET_LEVEL, budgetAlerts } from '../../domain/budgets.js';
 import { groupOf } from '../../domain/category-groups.js';
@@ -20,6 +20,7 @@ import { render } from '../render.js';
 import { endEdit } from './transaction-form.js';
 import { selectedInvoiceTotal } from './invoice-form.js';
 import { afterFormSave } from './transaction-form-sheet.js';
+import { confirmCategories, prepareCategories } from './category-confirm.js';
 function readTransactionForm(){
   return {editId:ui.editId,type:ui.type,value:parseMoney($('fVal').value),date:$('fDate').value,cat:$('fCat').value,fonte:$('fFonte').value,
     desc:$('fDesc').value,acc:$('fAcc').value,splits:ui.splitRows.map(r=>({cat:r.cat,value:r.val})),
@@ -40,13 +41,9 @@ export function budgetWarning(d){
   const a=budgetAlerts(mOf(d.date),cats,groupOf);
   return a.map(x=>` · ⚠️ ${x.group}: ${Math.round(x.share*100)}% do orçamento${x.level===BUDGET_LEVEL.over?' (estourou)':''}`).join('');
 }
-export function bindTransactionSave(){
-$('fSave').onclick=()=>{
-  const btn=$('fSave');if(btn.disabled)return;
-  const d=readTransactionForm();
-  clearFieldErrors($('txForm'));
-  const err=validateTransaction(d);
-  if(err)return fieldError($(FORM_FIELD[err.field]||'fVal'),err.msg);
+function saveRecord(d){
+  const btn=$('fSave');
+  if(d.cat)$('fCat').value=d.cat;
   btn.disabled=true;btn.classList.add('busy');
   const r=runCommand(()=>saveTransaction(d),{render:false});
   btn.disabled=false;btn.classList.remove('busy');
@@ -55,5 +52,16 @@ $('fSave').onclick=()=>{
   if(d.editId===null)ui.cur=mOf(d.date);
   $('fVal').value='';$('fDesc').value='';endEdit();
   afterFormSave();render();toast(successMessage(d,r)+budgetWarning(d));
+}
+export function bindTransactionSave(){
+$('fSave').onclick=()=>{
+  const btn=$('fSave');if(btn.disabled)return;
+  clearFieldErrors($('txForm'));
+  const err=validateTransaction(readTransactionForm());
+  if(err)return fieldError($(FORM_FIELD[err.field]||'fVal'),err.msg);
+  const {record,ask}=prepareCategories(readTransactionForm());
+  if(!ask.length)return saveRecord(record);
+  btn.disabled=true; // one question at a time; the form keeps what was typed when cancelled
+  confirmCategories(record,ask).then(d=>{btn.disabled=false;if(d)saveRecord(d);});
 };
 }

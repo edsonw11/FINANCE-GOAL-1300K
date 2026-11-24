@@ -17,5 +17,6 @@ const P={
  scale:'<path d="M12 3v18M7 21h10M5 7h14"/><path d="M5 7l-3 8a4 4 0 0 0 6 0zM19 7l-3 8a4 4 0 0 0 6 0z"/>'};
 export const svg=k=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${P[k]}</svg>`;
 P.tag='<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.2"/>';
+P.pie='<path d="M21.2 15.9A10 10 0 1 1 8 2.8"/><path d="M22 12A10 10 0 0 0 12 2v10z"/>';
 P.card='<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>';
 export const EM={'💳':'card','💰':'wallet','🎯':'target','⏱️':'clock','📈':'trend','➕':'plus','➖':'minus','🏦':'bank','🧮':'scale'};

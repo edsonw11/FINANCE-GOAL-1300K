@@ -1,7 +1,7 @@
 /**
  * Import flow (no browser): classification, sign conventions, balances, card statements, installments,
  * competence months, duplicates (in the file and in the data), the confirmation rule, idempotency,
- * partial failure and the history suggestion. Fixtures are made up; no real data.
+ * partial failure, the history suggestion and dividing one draft across categories. Fixtures are made up; no real data.
  */
 const {createContext,suite}=require('./harness');
 module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('import-flow');
@@ -153,4 +153,30 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('import-flow')
   const inv=['Data;Descrição;Valor','03/11/2026;APORTE TESOURO SELIC 2031;2.000,00','04/11/2026;RENDIMENTO;35,10','05/11/2026;IOF;-0,50','06/11/2026;RESGATE;-100,00'].join('\n');
   run(`globalThis.R=readImportFile({name:'corretora.csv',text:${J(inv)}},{today:'2026-11-10',kind:'invest'});R`);
   eq('investment statement: aporte in, rest ignored with reasons',run("R.drafts.map(d=>[d.type,d.reason])"),[['aporte',null],['ignorar','rendimento'],['ignorar','resgate'],['ignorar','resgate']]);
+  // ---- dividing one draft across categories (invented values): the parts are saved as splits, the rest
+  // stays in the main category, parts bigger than the value block the import
+  fresh();
+  read('div.csv',['Data;Descrição;Valor','17/11/2026;PIX ENVIADO FULANO;-1.176,00'].join('\n'));
+  run("globalThis.D=R.drafts[0];D.cat='Saúde';D.splits=splitAdded(D);D.splits=splitChanged(D,0,{cat:'Presente',value:750})");
+  eq('the part and the rest',[run('splitParts(D)'),run('splitRest(D)')],[[{cat:'Presente',value:750}],426]);
+  eq('an empty part does not count',run("splitParts({type:'despesa',value:10,splits:[{cat:'',value:5},{cat:'X',value:0}]}).length"),0);
+  eq('a contribution is not divided',[run("canSplit({type:'aporte'})"),run("splitParts({type:'aporte',value:10,splits:[{cat:'X',value:5}]}).length")],[false,0]);
+  eq('removing a part',run("splitRemoved({splits:[{cat:'A',value:1},{cat:'B',value:2}]},0)"),[{cat:'B',value:2}]);
+  eq('parts bigger than the value: a problem that blocks the import',run("draftProblems(Object.assign({},D,{splits:[{cat:'Presente',value:1200}]}))"),['Divisão: as partes somam mais que o valor']);
+  run("commitImport(R.drafts,{})");
+  const saved=run("S.tx.find(t=>t.desc.indexOf('FULANO')>=0)");
+  eq('saved like the manual form: main category, value, splits',[saved.cat,saved.value,saved.splits],['Saúde',1176,[{cat:'Presente',value:750}]]);
+  eq('each category gets its share',run("catParts(S.tx.find(t=>t.desc.indexOf('FULANO')>=0))"),[{cat:'Presente',value:750},{cat:'Saúde',value:426}]);
+  // ---- contribution to an investment account that does not exist yet: created only on confirm, once per name
+  fresh();run("S.accounts=[]");
+  read('apo.csv',['Data;Descrição;Valor','06/11/2026;PIX ENVIADO FULANO;-30.000,00','07/11/2026;PIX ENVIADO FULANO;-1.000,00'].join('\n'));
+  run("R.drafts.forEach(d=>{d.type='aporte';d.acc=defaultAccount(d.desc);d.selected=true;})");
+  eq('with no account the default choice is a new one',run("R.drafts.map(d=>d.acc)"),['__new','__new']);
+  eq('without a name it cannot be imported',run("draftProblems(R.drafts[0])"),['Investimento: digite o nome da conta nova']);
+  eq('the preview creates nothing',run("S.accounts.length"),0);
+  run("R.drafts[0].newAcc='Itaú Invest';R.drafts[1].newAcc=' itaú invest '");
+  const ca=run("commitImport(R.drafts,{})");
+  eq('one account for the same name, both contributions go to it',[ca.saved,ca.accounts,run("S.accounts.map(a=>a.name)"),run("new Set(S.tx.map(t=>t.acc)).size"),run("S.tx[0].acc===S.accounts[0].id")],[2,['Itaú Invest'],['Itaú Invest'],1,true]);
+  eq('an existing account with that name is reused',run("accountNamed('ITAÚ INVEST').id===S.accounts[0].id"),true);
+  eq('with an account, nothing is chosen for the user',run("defaultAccount('PIX QUALQUER')"),'');
   return res;};

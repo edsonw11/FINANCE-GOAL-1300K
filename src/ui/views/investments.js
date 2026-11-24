@@ -1,6 +1,7 @@
 /**
  * ui/views/investments.js
- * Responsibility: Investments tab: accounts and balances.
+ * Responsibility: Patrimônio, accounts part: balance of each account (reserve / archive in the ⋯ menu),
+ * the form to update balances and the net worth history.
  */
 import { $, esc } from '../../core/dom.js';
 import { f2, m2, pc } from '../../core/format.js';
@@ -17,12 +18,20 @@ import { accColor } from '../account-colors.js';
 import { askConfirm } from '../components/confirm.js';
 import { fieldError } from '../components/field-error.js';
 import { runCommand } from '../components/command.js';
+import { bindMoreMenus, moreMenu } from '../components/more-menu.js';
+// one account: name, when the balance was given, value; the rare actions stay in the ⋯ menu
+function accountRow(a,d){
+  const b=balance(a.id,d),sn=b.snap;
+  const sub=sn?`Saldo de ${formatDateBR(sn.date)}${sn.est?' (estimado 🟠)':''}${b.v!==sn.value?' + aportes depois':''}`:'Sem saldo informado';
+  const menu=moreMenu([{label:a.reserve?'🛟 Deixar de ser reserva':'🛟 Marcar como reserva de emergência',attrs:`data-reserve="${a.id}" aria-pressed="${!!a.reserve}"`},
+    {label:'Arquivar (o histórico é mantido)',attrs:`data-arq="${a.id}"`}],'Ações de '+esc(a.name));
+  return `<div class="acc"><i style="background:${accColor(a.id)}"></i><div class="nm">${esc(a.name)}${a.reserve?' <span class="acc-badge" title="Reserva de emergência">🛟 reserva</span>':''}<span class="sb">${sub}</span></div><div class="vl r">${f2(b.v)}<span class="sb fw5">${b.g!==null?'bruto '+f2(b.g)+' · IR '+f2(b.g-b.v):'bruto não informado'}</span></div>${menu}</div>`;
+}
 export function renderInvestments(){
   const d=today();renderDistribution();renderPortfolio();
-  $('accList').innerHTML=active().map(a=>{const b=balance(a.id,d);const sn=b.snap;
-    const sub=sn?`Saldo informado em ${formatDateBR(sn.date)}${sn.est?' (estimado 🟠)':''}${b.v!==sn.value?' + aportes depois':''}`:'Sem saldo informado';
-    return `<div class="acc"><i style="background:${accColor(a.id)}"></i><div class="nm">${esc(a.name)}<span class="sb">${sub}</span></div><button class="btn sm${a.reserve?' pri':''}" data-reserve="${a.id}" aria-pressed="${!!a.reserve}" title="Conta que cobre imprevistos (reserva de emergência)">🛟 ${a.reserve?'É reserva':'Reserva'}</button><button class="btn sm" data-arq="${a.id}" title="Remover da lista (o histórico é mantido)">arquivar</button><div class="vl r">${f2(b.v)}<span class="sb fw5">${b.g!==null?'bruto '+f2(b.g)+' · IR '+f2(b.g-b.v):'bruto não informado'}</span></div></div>`;}).join('')+
+  $('accList').innerHTML=active().map(a=>accountRow(a,d)).join('')+
     (()=>{const tg=totalGross(d);return `<div class="acc"><i class="swatch-total"></i><div class="nm">Total<span class="sb">líquido (o que você recebe ao resgatar)</span></div><div class="vl r">${f2(total(d))}<span class="sb fw5">${tg.ok?'':'≈ '}bruto ${f2(tg.g)} · IR embutido ${f2(tg.g-total(d))}</span></div></div>`;})();
+  bindMoreMenus($('accList'));
   $('snapForm').innerHTML=`<div class="snap-grid help"><span></span><b>Saldo líquido (R$)</b><b>Saldo bruto (R$, opcional)</b></div>`+
     active().map(a=>{const b=balance(a.id,d);return `<div class="snap-grid c"><label for="s_${a.id}" class="m0"><i class="swatch" style="background:${accColor(a.id)}"></i>${esc(a.name)}</label><input id="s_${a.id}" inputmode="decimal" value="${m2(b.v)}"><input id="g_${a.id}" inputmode="decimal" placeholder="igual ao do app" value="${b.g!==null?m2(b.g):''}"></div>`;}).join('');
   $('snapDate').value=d;

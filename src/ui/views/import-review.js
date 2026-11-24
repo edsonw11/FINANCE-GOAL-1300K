@@ -13,7 +13,12 @@ import { prepareMoneyInputs } from '../components/money-input.js';
 import { datePicker } from '../components/date-input.js';
 import { rereadSession } from './import-load.js';
 import { addManualDraft, draftById, importState, patchDraft, removeDraft, setAllSelected } from './import-session.js';
-import { rowCard, rowEditor } from './import-rows.js';
+import { rowCard, rowEditor, splitRestHtml } from './import-rows.js';
+import { splitAdded, splitChanged, splitRemoved } from '../../domain/import-split.js';
+import { parseMoney } from '../../core/money.js';
+import { ownNameHint } from '../../domain/own-name-hint.js';
+import { addOwnName } from '../../domain/own-names.js';
+import { runCommand } from '../components/command.js';
 const catNames=type=>((S.cats||{})[type]||[]).filter(c=>!c.off).map(c=>c.name);
 const catsFor=d=>catNames(d.type==='receita'?'receita':'despesa');
 export function summaryHtml(s){
@@ -32,12 +37,20 @@ export function summaryHtml(s){
       <div><span>Receitas</span><b class="rec">${ov.incomes}</b><small>${f2(ov.incomeTotal)}</small></div>
       <div><span>Despesas</span><b class="des">${ov.expenses}</b><small>${f2(ov.expenseTotal)}</small></div>
       ${ov.contributions?`<div><span>Aportes</span><b class="apo">${ov.contributions}</b><small>${f2(ov.contributionTotal)}</small></div>`:''}
+      ${ov.transfers?`<div><span>Transferências suas</span><b>${ov.transfers}</b><small>${f2(ov.transferTotal)} · não contam</small></div>`:''}
       ${ov.others?`<div><span>Não importáveis</span><b>${ov.others}</b><small>não viram lançamento</small></div>`:''}
       <div class="${ov.review?'warn':''}"><span>Para revisar</span><b>${ov.review}</b></div>
       <div class="${dup?'warn':''}"><span>Duplicados</span><b>${dup}</b>${dup?`<small>${ov.confirmedDup} certos · ${ov.possibleDup} possíveis</small>`:''}</div>
     </div>
     <div class="imp-pick-sum">Selecionados: <b>${sel.count}</b>${sel.count?` · receitas ${f2(sel.income)} · despesas ${f2(sel.expense)} · ${sel.months.map(m=>esc(mShort(m))).join(', ')}`:''}</div>
-    ${notes.map(n=>`<div class="imp-note">ℹ️ ${esc(n)}</div>`).join('')}`;
+    ${ownHintHtml(s)}${notes.map(n=>`<div class="imp-note">ℹ️ ${esc(n)}</div>`).join('')}`;
+}
+// "is this you?": the name that receives the salary also sends/receives Pix in this statement
+function ownHintHtml(s){
+  if(s.read.kind!=='bank')return '';
+  const h=ownNameHint(s.drafts);if(!h)return '';
+  return `<div class="imp-own-hint"><div>💡 <b>${esc(h.name)}</b> recebe o salário e aparece em mais <b>${h.count}</b> linha(s) (${f2(h.total)}). Se é você, isso é dinheiro mudando de banco: não é gasto nem receita.</div>
+    <button type="button" class="btn sm pri" data-imp-own="${esc(h.name)}">Sim, sou eu</button></div>`;
 }
 const optionsHtml=s=>`<details class="imp-opts-d"><summary>Opções do arquivo: extrato ou fatura, sinais, colunas</summary><div class="imp-opts">
   <label>Este arquivo é<select id="impKind"><option value="bank"${s.opts.kind!=='card'?' selected':''}>Extrato da conta</option><option value="card"${s.opts.kind==='card'?' selected':''}>Fatura do cartão</option></select></label>
@@ -50,7 +63,11 @@ const listHtml=s=>s.drafts.length?s.drafts.map(d=>itemHtml(s,d)).join(''):'<div 
 export function reviewHtml(s){
   return `<div id="impSum">${summaryHtml(s)}</div>${optionsHtml(s)}${toolbarHtml}<div class="imp-list" id="impList">${listHtml(s)}</div>`;
 }
-export function footerCounts(s){const c=importOverview(s.drafts).selected.count;return {count:c,label:c?`Importar ${c} lançamento${c>1?'s':''}`:'Nada selecionado'};}
+export function footerCounts(s){
+  const ov=importOverview(s.drafts),c=ov.selected.count,t=ov.transfers;
+  const label=c?`Importar ${c} lançamento${c>1?'s':''}${t?' + '+t+' transf.':''}`:t?`Guardar ${t} transferência${t>1?'s':''}`:'Nada selecionado';
+  return {count:c+t,label};
+}
 // binds the events once per draw (assigning on* replaces the previous handlers)
 export function bindReview(body,ctx){
   const s=importState.session,item=id=>body.querySelector(`[data-imp-item="${id}"]`);
@@ -65,14 +82,34 @@ export function bindReview(body,ctx){
     if(s.openId){const e=item(s.openId);if(e&&e.scrollIntoView)e.scrollIntoView({block:'nearest'});}};
   body.onclick=e=>{
     const t=e.target,row=t.closest('[data-imp-item]'),id=row&&row.dataset.impItem;
+    // before the card's own click (the button sits inside the card, which opens the editor)
+    const fix=t.closest('[data-imp-pairfix]');
+    if(fix&&id){patchDraft(id,fix.dataset.impPairfix==='1'?{type:'transferencia',fixPair:true}:{fixPair:false});redrawItem(id);refreshSummary();return;}
     if(t.closest('[data-imp-open]')&&id){if(!t.closest('.imp-chk'))open(id);return;}
     if(t.closest('[data-imp-close]')){open(id);return;}
+    // a transfer that was in fact spent: becomes an expense with a first part to fill in
+    if(t.closest('[data-sp-spent]')&&id){const d=draftById(id);patchDraft(id,{type:'despesa',splits:(d.splits||[]).length?d.splits:splitAdded(d)});redrawItem(id);refreshSummary();
+      const c=item(id).querySelector('[data-f="cat"]');if(c)c.focus();return;}
+    // dividing the value across categories (the editor is redrawn: the list of parts changed)
+    const sp=t.closest('[data-sp-add],[data-sp-del]');
+    if(sp&&id){const d=draftById(id);patchDraft(id,{splits:sp.matches('[data-sp-add]')?splitAdded(d):splitRemoved(d,+sp.dataset.spDel)});redrawItem(id);refreshSummary();
+      if(sp.matches('[data-sp-add]')){const ins=item(id).querySelectorAll('[data-sp-cat]');if(ins.length)ins[ins.length-1].focus();}return;}
     if(t.closest('[data-imp-del]')){removeDraft(id);row.remove();refreshSummary();return;}
     const all=t.closest('[data-imp-all]');
     if(all){setAllSelected(all.dataset.impAll==='1');s.drafts.forEach(d=>redrawCard(d.id));refreshSummary();return;}
     if(t.closest('[data-imp-add]')){const d=addManualDraft();$('impList').insertAdjacentHTML('afterbegin',itemHtml(s,d));openEditorTools(item(d.id));refreshSummary();return;}
-    if(t.closest('[data-imp-cols]')){s.phase='mapping';ctx.redraw();}
+    if(t.closest('[data-imp-cols]')){s.phase='mapping';ctx.redraw();return;}
+    // saves the holder's name (also in Ajustes) and reads the file again, so those lines become transfers
+    const own=t.closest('[data-imp-own]');
+    if(own&&runCommand(()=>addOwnName(own.dataset.impOwn),{ok:'✅ Nome salvo em Ajustes: Pix para você não conta como gasto',render:false})){rereadSession({});ctx.redraw();}
   };
+  // a part typed in: the rest updates while typing, the card when the field is left
+  function editPart(id,t){
+    const d=draftById(id),i=+(t.dataset.spCat||t.dataset.spVal);
+    patchDraft(id,{splits:splitChanged(d,i,t.matches('[data-sp-cat]')?{cat:t.value}:{value:parseMoney(t.value)})});
+    const sum=item(id)&&item(id).querySelector('[data-sp-sum]');if(sum)sum.innerHTML=splitRestHtml(draftById(id));
+  }
+  body.oninput=e=>{const t=e.target,row=t.closest('[data-imp-item]');if(row&&t.matches('[data-sp-cat],[data-sp-val]'))editPart(row.dataset.impItem,t);};
   body.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.imp-main')){e.preventDefault();e.target.click();}};
   body.onchange=e=>{
     const t=e.target,row=t.closest('[data-imp-item]'),id=row&&row.dataset.impItem;
@@ -80,9 +117,11 @@ export function bindReview(body,ctx){
     if(t.id==='impInvert'){rereadSession({invert:t.checked});ctx.redraw();return;}
     if(!id)return;
     if(t.matches('[data-imp-sel]')){patchDraft(id,{selected:t.checked});redrawCard(id);refreshSummary();return;}
+    if(t.matches('[data-sp-cat],[data-sp-val]')){editPart(id,t);redrawCard(id);refreshSummary();return;}
     const f=t.dataset.f;if(!f)return;
     patchDraft(id,{[f]:f==='createRest'?t.checked:t.value});
-    if(f==='type'||f==='createRest')redrawItem(id);else redrawCard(id);
+    if(f==='type'||f==='createRest'||f==='acc')redrawItem(id);else redrawCard(id);
+    if(f==='cat'||f==='value'){const sum=item(id).querySelector('[data-sp-sum]');if(sum)sum.innerHTML=splitRestHtml(draftById(id));}
     refreshSummary();
   };
 }

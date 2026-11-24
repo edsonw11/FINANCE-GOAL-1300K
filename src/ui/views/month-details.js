@@ -1,12 +1,11 @@
 /**
  * ui/views/month-details.js
  * Responsibility: what each month summary card opens (Receitas, Despesas, Aportes, Sobrou no caixa,
- * Fatura em aberto, Saldo VR/VA). Every list comes from monthSummary(), the same source as the card.
+ * Saldo VR/VA). Every list comes from monthSummary(), the same source as the card.
  */
 import { f2 } from '../../core/format.js';
-import { formatDateBR, mIdx, mKey, mLabel, mShort, monthEnd } from '../../core/dates.js';
+import { formatDateBR, mIdx, mKey, mLabel, monthEnd } from '../../core/dates.js';
 import { sumMoney } from '../../core/money.js';
-import { dueDateOf, dueMonth } from '../../domain/card-cycle.js';
 import { monthSummary } from '../../domain/month-summary.js';
 import { UNDETAILED_CAT } from '../../domain/spending.js';
 import { Sheet } from '../components/sheet.js';
@@ -34,11 +33,6 @@ const MONTH_DETAILS={
           {label:'➖ Saídas pela conta (Pix, débito)',total:'− '+t(c.cashOut),rows:txRows(c.cashOut),always:true},
           {label:'💳 Faturas pagas',total:'− '+t(c.invoices),rows:txRows(c.invoices),always:true},
           {label:'🏦 Aportes',total:'− '+t(c.contributions),rows:byDateDesc(c.contributions).map(t=>txRow(t,{sign:'−'})),always:true}]};},
-  opencard:(s,m,P)=>{const by={};s.openCard.items.forEach(t=>{const fm=dueMonth(t.date);(by[fm]=by[fm]||[]).push(t);});
-        return {title:'Fatura em aberto',sub:'Até '+formatDateBR(monthEnd(m)),total:f2(s.openCard.total),totalLabel:'Compras no cartão ainda não pagas',
-        groups:Object.keys(by).sort().map(fm=>({label:'Fatura que vence em '+formatDateBR(dueDateOf(fm)),total:f2(sumMoney(by[fm].map(t=>t.value))),rows:txRows(by[fm])})),
-        note:`Compras no cartão em ${mShort(m)}: <b>${f2(s.cardBought)}</b> · fatura paga no mês: <b>${f2(s.invoicesPaid)}</b>.`,
-        empty:'Nenhuma compra de cartão em aberto.'};},
   voucher:(s,m,P)=>{const v=s.voucher;
         return {title:'Saldo VR/VA',sub:'Até '+formatDateBR(monthEnd(m)),total:signedMoney(v.total),totalLabel:'Saldo no fim do mês',
         count:v.items.length,
