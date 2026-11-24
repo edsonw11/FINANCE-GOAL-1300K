@@ -1426,6 +1426,28 @@ function transact(mutate){
 }
 // the error of the last failed change (for diagnosis); null until something fails
 transact.lastError=null;
+// storage used inside withState(): reads find nothing, writes are dropped
+const NO_STORAGE={getItem:()=>null,setItem:()=>{}};
+/**
+ * withState(state, fn): runs domain code against a given state (one user's data on the server, a test fixture)
+ * and puts the previous state back afterwards, also when fn throws. Nested calls are fine.
+ * - synchronous only: an async fn would let other code run while this state is in force, so a promise result
+ *   is refused with an error;
+ * - nothing is persisted: transact() inside it saves nowhere; storing the result is the caller's job;
+ * - returns {result, state}: state is the one in force at the end (a command may swap it, e.g. backup import).
+ * See docs/architecture/decisions/ADR-0006.
+ */
+function withState(state,fn){
+  if(!state||typeof state!=='object'||Array.isArray(state))throw new TypeError('withState: state must be an object');
+  if(typeof fn!=='function')throw new TypeError('withState: fn must be a function');
+  const prevState=S,prevStorage=storage;
+  S=state;storage=NO_STORAGE;invalidateAllocation();
+  try{
+    const result=fn();
+    if(result&&typeof result.then==='function')throw new Error('withState: fn must be synchronous');
+    return {result,state:S};
+  }finally{S=prevState;storage=prevStorage;invalidateAllocation();}
+}
 let S=load();
 
 // ---- src/domain/settings-commands.js

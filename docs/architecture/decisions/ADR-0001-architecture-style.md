@@ -12,7 +12,7 @@ The product needs a server (several users, one source of truth, billing) and mus
 - **Framework: NestJS on the Fastify adapter.** Modules and dependency injection map to the domains; guards give one place to enforce
   authentication and ownership on every endpoint; first-party OpenAPI generation. Fastify keeps it fast and lean.
 - **The rules are shared, not rewritten:** `src/domain` becomes a package used by the browser and by the server. Prerequisite: the state is
-  passed as a parameter instead of the global `S` (Phase 1b), behaviour-neutral, proven by `tests/unit/golden.test.js`.
+  passed as a parameter instead of the global `S` (Phase 1b), behaviour-neutral, proven by `tests/unit/golden.test.js`. Done as a scoped state, see ADR-0006.
 - REST under `/api/v1`, OpenAPI as the contract; the web client is generated from it.
 
 ## Consequences

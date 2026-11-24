@@ -219,7 +219,7 @@ Not in the original brief, required for this case:
 | Phase | Content | Gate |
 |---|---|---|
 | 0 | this document, baseline images, golden file | ✅ reviewed 2026-11-24 (D1 = public paid product) |
-| 1 | tooling: lint, format, `checkJs`, CI, README of the monorepo layout; state-as-parameter refactor of the domain (behaviour-neutral, golden test must stay green) | all checks + 4,011 assertions + golden unchanged |
+| 1 | tooling: lint, format, `checkJs`, CI, README of the monorepo layout; state-as-parameter refactor of the domain (behaviour-neutral, golden test must stay green) | ✅ 1a tooling + CI (0dc4a56); ✅ 1b scoped state `withState` (ADR-0006) |
 | 2 | Docker Compose with Postgres, backend skeleton, config validation, health, migrations, first vertical slice | backend + DB up, migrations and tests pass |
 | 3 | Auth (OIDC + PKCE), ownership on every endpoint, IDOR/BOLA tests | login works; user A cannot read user B |
 | 4 | Domain modules behind the API, import of your JSON, golden file reproduced through the API | totals and golden match the browser app |
