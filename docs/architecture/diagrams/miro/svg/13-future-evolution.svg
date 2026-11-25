@@ -1,0 +1,143 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1136" viewBox="0 0 1120 1136"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: Architectural Evolution</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">Current state first, then what limits it, then proposals. A PROPOSAL is not implemented.</text>
+<rect x="20" y="96" width="300" height="495" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Current architecture</text>
+<rect x="40" y="152" width="260" height="137" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Rules shared by browser and</text>
+<text x="48" y="186" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">API</text>
+<text x="48" y="204" font-family="Helvetica,Arial,sans-serif" font-size="11">One set of files runs in both places</text>
+<text x="48" y="218" font-family="Helvetica,Arial,sans-serif" font-size="11">(ADR-0001, ADR-0006).</text>
+<text x="48" y="234" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/domain/domain-runtime.ts &gt;</text>
+<text x="48" y="247" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">loadDomain</text>
+<text x="48" y="262" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="309" width="260" height="121" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="48" y="327" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Offline-first sync</text>
+<text x="48" y="345" font-family="Helvetica,Arial,sans-serif" font-size="11">Outbox, cursor and idempotent mutations</text>
+<text x="48" y="359" font-family="Helvetica,Arial,sans-serif" font-size="11">(ADR-0008, ADR-0010).</text>
+<text x="48" y="375" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/sync/sync.service.ts &gt;</text>
+<text x="48" y="388" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">SyncService</text>
+<text x="48" y="403" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="450" width="260" height="121" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="48" y="468" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Android shell</text>
+<text x="48" y="486" font-family="Helvetica,Arial,sans-serif" font-size="11">Same page in a WebView, offline, app</text>
+<text x="48" y="500" font-family="Helvetica,Arial,sans-serif" font-size="11">lock (ADR-0014).</text>
+<text x="48" y="516" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">android/app/src/main/java/com/everfox/</text>
+<text x="48" y="529" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">app/MainActivity.java &gt; MainActivity</text>
+<text x="48" y="544" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="905" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Observed limits and risks</text>
+<rect x="430" y="152" width="260" height="122" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">The API is not hosted</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">It only runs in Docker on a developer</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">machine; the web app has no production</text>
+<text x="438" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">address.</text>
+<text x="438" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">docker-compose.yml &gt; api:</text>
+<text x="438" y="247" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="294" width="260" height="122" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="438" y="312" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Android has no login or sync</text>
+<text x="438" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">The shell makes no network calls; the</text>
+<text x="438" y="344" font-family="Helvetica,Arial,sans-serif" font-size="11">cookie login of the web app does not</text>
+<text x="438" y="358" font-family="Helvetica,Arial,sans-serif" font-size="11">carry over to another origin.</text>
+<text x="438" y="374" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/sync-view.js &gt; bindSync</text>
+<text x="438" y="389" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="436" width="260" height="121" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="438" y="454" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Rate limits are per instance</text>
+<text x="438" y="472" font-family="Helvetica,Arial,sans-serif" font-size="11">Counters live in memory; behind several</text>
+<text x="438" y="486" font-family="Helvetica,Arial,sans-serif" font-size="11">instances the limits multiply.</text>
+<text x="438" y="502" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/security/rate-limiter.ts &gt;</text>
+<text x="438" y="515" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">RateLimiter</text>
+<text x="438" y="530" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="577" width="260" height="135" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="438" y="595" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Records are JSON bodies</text>
+<text x="438" y="613" font-family="Helvetica,Arial,sans-serif" font-size="11">Money and dates are not typed columns;</text>
+<text x="438" y="627" font-family="Helvetica,Arial,sans-serif" font-size="11">SQL reports and constraints cannot use</text>
+<text x="438" y="641" font-family="Helvetica,Arial,sans-serif" font-size="11">them.</text>
+<text x="438" y="657" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/prisma/schema.prisma &gt; model</text>
+<text x="438" y="670" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">Record</text>
+<text x="438" y="685" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="732" width="260" height="121" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="438" y="750" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Little to observe</text>
+<text x="438" y="768" font-family="Helvetica,Arial,sans-serif" font-size="11">Logs only; no metrics, traces or error</text>
+<text x="438" y="782" font-family="Helvetica,Arial,sans-serif" font-size="11">reporting were found.</text>
+<text x="438" y="798" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/logging/nest-log-levels.ts &gt;</text>
+<text x="438" y="811" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">nestLogLevels</text>
+<text x="438" y="826" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: NOT IDENTIFIED</text>
+<rect x="430" y="873" width="260" height="108" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="438" y="891" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">No billing</text>
+<text x="438" y="909" font-family="Helvetica,Arial,sans-serif" font-size="11">Plans and feature locks exist; nothing</text>
+<text x="438" y="923" font-family="Helvetica,Arial,sans-serif" font-size="11">charges or changes a plan by itself.</text>
+<text x="438" y="939" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/plans/features.ts &gt; FEATURES</text>
+<text x="438" y="954" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: PARTIAL</text>
+<rect x="800" y="96" width="300" height="946" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Proposals</text>
+<rect x="820" y="152" width="260" height="135" rx="8" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="828" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Host the API and the web app</text>
+<text x="828" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Run the container behind a proxy with</text>
+<text x="828" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">trustProxy set on purpose (AWS, phases 9</text>
+<text x="828" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">and 10 of the plan).</text>
+<text x="828" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">docs/architecture/00-current-state.md &gt;</text>
+<text x="828" y="245" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">Phase</text>
+<text x="828" y="260" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: PROPOSAL</text>
+<rect x="820" y="307" width="260" height="135" rx="8" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="828" y="325" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Phone sign-in for Android</text>
+<text x="828" y="343" font-family="Helvetica,Arial,sans-serif" font-size="11">System browser, app link and a token in</text>
+<text x="828" y="357" font-family="Helvetica,Arial,sans-serif" font-size="11">the Android Keystore, with its own</text>
+<text x="828" y="371" font-family="Helvetica,Arial,sans-serif" font-size="11">threat model.</text>
+<text x="828" y="387" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">docs/architecture/decisions/</text>
+<text x="828" y="400" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">ADR-0014-android-shell.md &gt; sign-in</text>
+<text x="828" y="415" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: PROPOSAL</text>
+<rect x="820" y="462" width="260" height="121" rx="8" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="828" y="480" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Shared rate-limit store</text>
+<text x="828" y="498" font-family="Helvetica,Arial,sans-serif" font-size="11">Move the counters to a shared store when</text>
+<text x="828" y="512" font-family="Helvetica,Arial,sans-serif" font-size="11">more than one instance runs.</text>
+<text x="828" y="528" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/security/rate-limiter.ts &gt;</text>
+<text x="828" y="541" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">RateLimiter</text>
+<text x="828" y="556" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: PROPOSAL</text>
+<rect x="820" y="603" width="260" height="137" rx="8" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="828" y="621" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Typed columns and command</text>
+<text x="828" y="637" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">endpoints</text>
+<text x="828" y="655" font-family="Helvetica,Arial,sans-serif" font-size="11">Phase 4b-2: cents and dates as columns,</text>
+<text x="828" y="669" font-family="Helvetica,Arial,sans-serif" font-size="11">endpoints that run one command each.</text>
+<text x="828" y="685" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">docs/architecture/00-current-state.md &gt;</text>
+<text x="828" y="698" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">4b</text>
+<text x="828" y="713" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: PROPOSAL</text>
+<rect x="820" y="760" width="260" height="121" rx="8" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="828" y="778" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Metrics and error reporting</text>
+<text x="828" y="796" font-family="Helvetica,Arial,sans-serif" font-size="11">Request counts and latency, errors with</text>
+<text x="828" y="810" font-family="Helvetica,Arial,sans-serif" font-size="11">context, a dashboard.</text>
+<text x="828" y="826" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/logging/nest-log-levels.ts &gt;</text>
+<text x="828" y="839" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">nestLogLevels</text>
+<text x="828" y="854" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: PROPOSAL</text>
+<rect x="820" y="901" width="260" height="121" rx="8" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="828" y="919" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Billing</text>
+<text x="828" y="937" font-family="Helvetica,Arial,sans-serif" font-size="11">Web checkout and Play Billing mapped to</text>
+<text x="828" y="951" font-family="Helvetica,Arial,sans-serif" font-size="11">plans (phase 8b).</text>
+<text x="828" y="967" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">docs/architecture/00-current-state.md &gt;</text>
+<text x="828" y="980" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">8b</text>
+<text x="828" y="995" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: PROPOSAL</text>
+<path d="M690,213 L737,213 L737,219.5 L820,219.5" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<rect x="700.6" y="196" width="72.80000000000001" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="704.6" y="207" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">addressed by</text>
+<path d="M690,355 L746,355 L746,374.5 L820,374.5" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<rect x="709.6" y="338" width="72.80000000000001" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="713.6" y="349" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">addressed by</text>
+<path d="M690,496.5 L755,496.5 L755,522.5 L820,522.5" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<rect x="718.6" y="479.5" width="72.80000000000001" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="722.6" y="490.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">addressed by</text>
+<path d="M690,644.5 L764,644.5 L764,671.5 L820,671.5" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<rect x="727.6" y="627.5" width="72.80000000000001" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="731.6" y="638.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">addressed by</text>
+<path d="M690,792.5 L773,792.5 L773,820.5 L820,820.5" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<rect x="736.6" y="775.5" width="72.80000000000001" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="740.6" y="786.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">addressed by</text>
+<path d="M690,927 L737,927 L737,961.5 L820,961.5" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<rect x="700.6" y="910" width="72.80000000000001" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="704.6" y="921" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">addressed by</text>
+<rect x="20" y="1066" width="150" height="26" rx="5" fill="#d5e8d4" stroke="#82b366"/>
+<text x="26" y="1083" font-family="Helvetica,Arial,sans-serif" font-size="10">Processing and domain rules</text>
+<rect x="180" y="1066" width="150" height="26" rx="5" fill="#f8cecc" stroke="#b85450"/>
+<text x="186" y="1083" font-family="Helvetica,Arial,sans-serif" font-size="10">Errors and attention points</text>
+<rect x="340" y="1066" width="150" height="26" rx="5" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="346" y="1083" font-family="Helvetica,Arial,sans-serif" font-size="10">External integrations</text>
+<text x="20" y="1114" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text></svg>

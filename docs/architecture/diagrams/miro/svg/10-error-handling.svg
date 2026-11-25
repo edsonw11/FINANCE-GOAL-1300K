@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1510" height="1192" viewBox="0 0 1510 1192"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: Error Handling</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">Only behaviour found in the code. A failure with no entry here has no specific handling.</text>
+<rect x="20" y="96" width="300" height="824" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">On the device</text>
+<rect x="40" y="152" width="260" height="138" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Saving fails (storage full,</text>
+<text x="48" y="186" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">private mode)</text>
+<text x="48" y="204" font-family="Helvetica,Arial,sans-serif" font-size="11">transact() undoes the change and returns</text>
+<text x="48" y="218" font-family="Helvetica,Arial,sans-serif" font-size="11">false; the person is told, nothing</text>
+<text x="48" y="232" font-family="Helvetica,Arial,sans-serif" font-size="11">half-saved.</text>
+<text x="48" y="248" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/store.js &gt; transact</text>
+<text x="48" y="263" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="310" width="260" height="136" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="48" y="328" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Stored data cannot be read</text>
+<text x="48" y="346" font-family="Helvetica,Arial,sans-serif" font-size="11">It is copied to a .broken key, never</text>
+<text x="48" y="360" font-family="Helvetica,Arial,sans-serif" font-size="11">overwritten; a blank state is used; a</text>
+<text x="48" y="374" font-family="Helvetica,Arial,sans-serif" font-size="11">notice offers to restore yesterday's</text>
+<text x="48" y="388" font-family="Helvetica,Arial,sans-serif" font-size="11">copy.</text>
+<text x="48" y="404" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/state-recovery.js &gt; readState</text>
+<text x="48" y="419" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="466" width="260" height="151" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="48" y="484" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Import file too big, wrong</text>
+<text x="48" y="500" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">type or unreadable</text>
+<text x="48" y="518" font-family="Helvetica,Arial,sans-serif" font-size="11">A plain message with the limit; photos</text>
+<text x="48" y="532" font-family="Helvetica,Arial,sans-serif" font-size="11">and scans are refused; nothing is</text>
+<text x="48" y="546" font-family="Helvetica,Arial,sans-serif" font-size="11">written.</text>
+<text x="48" y="562" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/import-reader.js &gt;</text>
+<text x="48" y="575" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">IMPORT_LIMITS</text>
+<text x="48" y="590" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="637" width="260" height="122" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="48" y="655" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Backup cannot leave the phone</text>
+<text x="48" y="673" font-family="Helvetica,Arial,sans-serif" font-size="11">A cancelled share sheet is not an error</text>
+<text x="48" y="687" font-family="Helvetica,Arial,sans-serif" font-size="11">and is not counted as a backup; a write</text>
+<text x="48" y="701" font-family="Helvetica,Arial,sans-serif" font-size="11">failure is told and not counted.</text>
+<text x="48" y="717" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/native-bridge.js &gt; shareTextFile</text>
+<text x="48" y="732" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="779" width="260" height="121" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="48" y="797" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Phone lost its screen lock</text>
+<text x="48" y="815" font-family="Helvetica,Arial,sans-serif" font-size="11">The app opens and switches its lock off</text>
+<text x="48" y="829" font-family="Helvetica,Arial,sans-serif" font-size="11">with a message: no lock-out.</text>
+<text x="48" y="845" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/app-lock/app-lock.js &gt;</text>
+<text x="48" y="858" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">createAppLock</text>
+<text x="48" y="873" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="510" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Sync (web app)</text>
+<rect x="430" y="152" width="260" height="122" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Offline, 401 or server error</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">The api client turns it into offline,</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">unauthorized or server; the outbox stays</text>
+<text x="438" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">as it is and the run stops.</text>
+<text x="438" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/api-client.js &gt; createApiClient</text>
+<text x="438" y="247" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="294" width="260" height="136" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="312" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">A mutation is rejected</text>
+<text x="438" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">unknown resource, invalid data or not</text>
+<text x="438" y="344" font-family="Helvetica,Arial,sans-serif" font-size="11">found: it goes to the review list and</text>
+<text x="438" y="358" font-family="Helvetica,Arial,sans-serif" font-size="11">the batch stops; later ones are skipped</text>
+<text x="438" y="372" font-family="Helvetica,Arial,sans-serif" font-size="11">and sent again.</text>
+<text x="438" y="388" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/runner.js &gt; review</text>
+<text x="438" y="403" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="450" width="260" height="136" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="468" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Retries and back-off</text>
+<text x="438" y="486" font-family="Helvetica,Arial,sans-serif" font-size="11">No automatic retry loop or back-off</text>
+<text x="438" y="500" font-family="Helvetica,Arial,sans-serif" font-size="11">timer was found: a run is started by the</text>
+<text x="438" y="514" font-family="Helvetica,Arial,sans-serif" font-size="11">app, and a failed run leaves the outbox</text>
+<text x="438" y="528" font-family="Helvetica,Arial,sans-serif" font-size="11">for the next one.</text>
+<text x="438" y="544" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/runner.js &gt; createSync</text>
+<text x="438" y="559" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: NOT IDENTIFIED</text>
+<rect x="800" y="96" width="300" height="1002" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">On the API</text>
+<rect x="820" y="152" width="260" height="135" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="828" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">400 invalid input</text>
+<text x="828" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Bodies and parameters are checked</text>
+<text x="828" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">against a schema; the answer names the</text>
+<text x="828" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">field and the kind of problem.</text>
+<text x="828" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/http/parse-input.ts &gt;</text>
+<text x="828" y="245" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">parseInput</text>
+<text x="828" y="260" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="307" width="260" height="149" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="828" y="325" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">401 not logged in</text>
+<text x="828" y="343" font-family="Helvetica,Arial,sans-serif" font-size="11">Every route needs a login unless marked</text>
+<text x="828" y="357" font-family="Helvetica,Arial,sans-serif" font-size="11">public; unknown, expired or idle</text>
+<text x="828" y="371" font-family="Helvetica,Arial,sans-serif" font-size="11">sessions are refused (and idle ones</text>
+<text x="828" y="385" font-family="Helvetica,Arial,sans-serif" font-size="11">deleted).</text>
+<text x="828" y="401" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/auth/auth.guard.ts &gt;</text>
+<text x="828" y="414" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">AuthGuard</text>
+<text x="828" y="429" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="476" width="260" height="151" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="828" y="494" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">403 CSRF, locked feature, not</text>
+<text x="828" y="510" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">admin</text>
+<text x="828" y="528" font-family="Helvetica,Arial,sans-serif" font-size="11">A write must come from the app's own</text>
+<text x="828" y="542" font-family="Helvetica,Arial,sans-serif" font-size="11">origin with the CSRF header; a locked</text>
+<text x="828" y="556" font-family="Helvetica,Arial,sans-serif" font-size="11">feature answers code feature_locked.</text>
+<text x="828" y="572" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/auth/csrf.guard.ts &gt;</text>
+<text x="828" y="585" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">CsrfGuard</text>
+<text x="828" y="600" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="647" width="260" height="149" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="828" y="665" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">429 too many requests</text>
+<text x="828" y="683" font-family="Helvetica,Arial,sans-serif" font-size="11">Fixed-window counters in memory, by</text>
+<text x="828" y="697" font-family="Helvetica,Arial,sans-serif" font-size="11">address and by person; the answer has</text>
+<text x="828" y="711" font-family="Helvetica,Arial,sans-serif" font-size="11">retryAfterSeconds. Per instance: several</text>
+<text x="828" y="725" font-family="Helvetica,Arial,sans-serif" font-size="11">instances count separately.</text>
+<text x="828" y="741" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/security/rate-limit.guard.ts</text>
+<text x="828" y="754" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">&gt; RateLimit</text>
+<text x="828" y="769" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="816" width="260" height="121" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="828" y="834" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">413 body too large</text>
+<text x="828" y="852" font-family="Helvetica,Arial,sans-serif" font-size="11">1 MB for every route, 25 MB for the</text>
+<text x="828" y="866" font-family="Helvetica,Arial,sans-serif" font-size="11">whole-state import.</text>
+<text x="828" y="882" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/create-app.ts &gt;</text>
+<text x="828" y="895" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">BODY_LIMIT_BYTES</text>
+<text x="828" y="910" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="957" width="260" height="121" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="828" y="975" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">503 login unavailable</text>
+<text x="828" y="993" font-family="Helvetica,Arial,sans-serif" font-size="11">The identity provider could not be</text>
+<text x="828" y="1007" font-family="Helvetica,Arial,sans-serif" font-size="11">reached to start a login.</text>
+<text x="828" y="1023" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/auth/auth.controller.ts &gt;</text>
+<text x="828" y="1036" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">ServiceUnavailableException</text>
+<text x="828" y="1051" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1190" y="96" width="300" height="508" fill="#fff" stroke="#9aa4b2"/><rect x="1190" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="1340" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Operation</text>
+<rect x="1210" y="152" width="260" height="135" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="1218" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Database not ready</text>
+<text x="1218" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">/health/ready answers not ready when the</text>
+<text x="1218" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">database does not answer within the</text>
+<text x="1218" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">timeout; /health/live stays up.</text>
+<text x="1218" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/health/health.service.ts &gt;</text>
+<text x="1218" y="245" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">HealthService</text>
+<text x="1218" y="260" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1210" y="307" width="260" height="135" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="1218" y="325" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Shutdown</text>
+<text x="1218" y="343" font-family="Helvetica,Arial,sans-serif" font-size="11">SIGTERM or SIGINT closes the server and</text>
+<text x="1218" y="357" font-family="Helvetica,Arial,sans-serif" font-size="11">the pool; after 10 s without finishing</text>
+<text x="1218" y="371" font-family="Helvetica,Arial,sans-serif" font-size="11">it exits with an error.</text>
+<text x="1218" y="387" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/shutdown.ts &gt;</text>
+<text x="1218" y="400" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">DEFAULT_SHUTDOWN_TIMEOUT_MS</text>
+<text x="1218" y="415" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1210" y="462" width="260" height="122" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="1218" y="480" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Logs</text>
+<text x="1218" y="498" font-family="Helvetica,Arial,sans-serif" font-size="11">Nest logger with a configurable level;</text>
+<text x="1218" y="512" font-family="Helvetica,Arial,sans-serif" font-size="11">the database URL is logged without its</text>
+<text x="1218" y="526" font-family="Helvetica,Arial,sans-serif" font-size="11">password.</text>
+<text x="1218" y="542" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/config/redact.ts &gt; redact</text>
+<text x="1218" y="557" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<path d="M560,274 L560,294" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="566" y="273" width="67.4" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="570" y="284" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">if answered</text>
+<rect x="20" y="1122" width="150" height="26" rx="5" fill="#f8cecc" stroke="#b85450"/>
+<text x="26" y="1139" font-family="Helvetica,Arial,sans-serif" font-size="10">Errors and attention points</text>
+<rect x="180" y="1122" width="150" height="26" rx="5" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="186" y="1139" font-family="Helvetica,Arial,sans-serif" font-size="10">Orchestration and services</text>
+<rect x="340" y="1122" width="150" height="26" rx="5" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="346" y="1139" font-family="Helvetica,Arial,sans-serif" font-size="10">API and entry</text>
+<rect x="500" y="1122" width="150" height="26" rx="5" fill="#f5f5f5" stroke="#666666"/>
+<text x="506" y="1139" font-family="Helvetica,Arial,sans-serif" font-size="10">Infrastructure</text>
+<text x="20" y="1170" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text></svg>

@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1112" viewBox="0 0 1120 1112"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: Integrations and Data Sources</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">The app itself calls no third-party service. The API calls one identity provider and one database. Prices, balances and market data are typed or imported from files.</text>
+<rect x="20" y="96" width="300" height="904" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Who calls</text>
+<rect x="40" y="152" width="260" height="190" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">OpenIdClientProvider</text>
+<text x="48" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">At login (authorization request, code</text>
+<text x="48" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">exchange) and logout (end-session</text>
+<text x="48" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">address). Errors: a failed start answers</text>
+<text x="48" y="230" font-family="Helvetica,Arial,sans-serif" font-size="11">503; a failed callback ends in the</text>
+<text x="48" y="244" font-family="Helvetica,Arial,sans-serif" font-size="11">login-failed page; a missing end-session</text>
+<text x="48" y="258" font-family="Helvetica,Arial,sans-serif" font-size="11">address is null, logout still works.</text>
+<text x="48" y="274" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/auth/</text>
+<text x="48" y="287" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">openid-client.provider.ts &gt;</text>
+<text x="48" y="300" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">OpenIdClientProvider</text>
+<text x="48" y="315" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="362" width="260" height="149" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="48" y="380" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">PrismaService</text>
+<text x="48" y="398" font-family="Helvetica,Arial,sans-serif" font-size="11">Every request that reads or writes data.</text>
+<text x="48" y="412" font-family="Helvetica,Arial,sans-serif" font-size="11">Connects on first use, so the API can</text>
+<text x="48" y="426" font-family="Helvetica,Arial,sans-serif" font-size="11">start before the database. Ready check</text>
+<text x="48" y="440" font-family="Helvetica,Arial,sans-serif" font-size="11">has a timeout.</text>
+<text x="48" y="456" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/database/prisma.service.ts &gt;</text>
+<text x="48" y="469" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">PrismaService</text>
+<text x="48" y="484" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="531" width="260" height="152" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="48" y="549" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">shareTextFile and</text>
+<text x="48" y="565" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">AppLockPlugin</text>
+<text x="48" y="583" font-family="Helvetica,Arial,sans-serif" font-size="11">Android only: share sheet (backup file)</text>
+<text x="48" y="597" font-family="Helvetica,Arial,sans-serif" font-size="11">and BiometricPrompt (app lock). A</text>
+<text x="48" y="611" font-family="Helvetica,Arial,sans-serif" font-size="11">cancelled sheet or prompt is an answer,</text>
+<text x="48" y="625" font-family="Helvetica,Arial,sans-serif" font-size="11">not an error.</text>
+<text x="48" y="641" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/native-bridge.js &gt; shareTextFile</text>
+<text x="48" y="656" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="703" width="260" height="149" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="48" y="721" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Telegram APK service</text>
+<text x="48" y="739" font-family="Helvetica,Arial,sans-serif" font-size="11">Developer tool, not part of the app:</text>
+<text x="48" y="753" font-family="Helvetica,Arial,sans-serif" font-size="11">sends the debug APK to a chat. Token</text>
+<text x="48" y="767" font-family="Helvetica,Arial,sans-serif" font-size="11">only from an ignored .env; errors never</text>
+<text x="48" y="781" font-family="Helvetica,Arial,sans-serif" font-size="11">print it.</text>
+<text x="48" y="797" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">services/telegram-apk/lib/telegram.mjs &gt;</text>
+<text x="48" y="810" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">createTelegram</text>
+<text x="48" y="825" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="872" width="260" height="108" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="48" y="890" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">pdf.js (vendored copy)</text>
+<text x="48" y="908" font-family="Helvetica,Arial,sans-serif" font-size="11">Reads the text of a PDF in the page,</text>
+<text x="48" y="922" font-family="Helvetica,Arial,sans-serif" font-size="11">from a local file; no network.</text>
+<text x="48" y="938" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/pdf-text.js &gt; pdfText</text>
+<text x="48" y="953" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="750" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">External system or platform</text>
+<rect x="430" y="152" width="260" height="122" rx="8" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Keycloak (OIDC)</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Identity provider. Local: Docker</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">Compose, development realm. Endpoint</text>
+<text x="438" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">comes from OIDC_ISSUER.</text>
+<text x="438" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">docker-compose.yml &gt; keycloak:</text>
+<text x="438" y="247" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="294" width="260" height="122" rx="8" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="438" y="312" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">PostgreSQL 18</text>
+<text x="438" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">The only database. Local: Docker</text>
+<text x="438" y="344" font-family="Helvetica,Arial,sans-serif" font-size="11">Compose, port 5433 on the host. Limits:</text>
+<text x="438" y="358" font-family="Helvetica,Arial,sans-serif" font-size="11">one instance, no hosted copy yet.</text>
+<text x="438" y="374" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">docker-compose.yml &gt; postgres:</text>
+<text x="438" y="389" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="436" width="260" height="121" rx="8" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="438" y="454" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Android system</text>
+<text x="438" y="472" font-family="Helvetica,Arial,sans-serif" font-size="11">BiometricPrompt (fingerprint, face or</text>
+<text x="438" y="486" font-family="Helvetica,Arial,sans-serif" font-size="11">phone PIN), share sheet, file cache.</text>
+<text x="438" y="502" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">android/app/src/main/java/com/everfox/</text>
+<text x="438" y="515" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">app/AppLockPlugin.java &gt; AppLockPlugin</text>
+<text x="438" y="530" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="577" width="260" height="121" rx="8" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="438" y="595" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Telegram Bot API</text>
+<text x="438" y="613" font-family="Helvetica,Arial,sans-serif" font-size="11">api.telegram.org: getMe, getChat,</text>
+<text x="438" y="627" font-family="Helvetica,Arial,sans-serif" font-size="11">sendMessage, sendDocument (50 MB limit).</text>
+<text x="438" y="643" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">services/telegram-apk/lib/telegram.mjs &gt;</text>
+<text x="438" y="656" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">DEFAULT_API</text>
+<text x="438" y="671" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="718" width="260" height="108" rx="8" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="438" y="736" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">No network</text>
+<text x="438" y="754" font-family="Helvetica,Arial,sans-serif" font-size="11">The PDF library ships inside the</text>
+<text x="438" y="768" font-family="Helvetica,Arial,sans-serif" font-size="11">repository.</text>
+<text x="438" y="784" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">vendor/pdfjs/pdf.min.mjs</text>
+<text x="438" y="799" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="800" y="96" width="300" height="498" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Searched and not found</text>
+<rect x="820" y="152" width="260" height="122" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="828" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Market data and prices</text>
+<text x="828" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">No call to any price, quote or</text>
+<text x="828" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">fundamentals service in src, backend,</text>
+<text x="828" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">services or scripts.</text>
+<text x="828" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666"></text>
+<text x="828" y="247" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: NOT IDENTIFIED</text>
+<rect x="820" y="294" width="260" height="152" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="828" y="312" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Brokers, OpLab, Bolsai, Open</text>
+<text x="828" y="328" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Finance, Tesouro Direto</text>
+<text x="828" y="346" font-family="Helvetica,Arial,sans-serif" font-size="11">No code or configuration refers to them.</text>
+<text x="828" y="360" font-family="Helvetica,Arial,sans-serif" font-size="11">Investments are typed, or read from</text>
+<text x="828" y="374" font-family="Helvetica,Arial,sans-serif" font-size="11">files (OFX, CSV, PDF, B3 brokerage</text>
+<text x="828" y="388" font-family="Helvetica,Arial,sans-serif" font-size="11">notes).</text>
+<text x="828" y="404" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666"></text>
+<text x="828" y="419" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: NOT IDENTIFIED</text>
+<rect x="820" y="466" width="260" height="108" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="828" y="484" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Payments and billing</text>
+<text x="828" y="502" font-family="Helvetica,Arial,sans-serif" font-size="11">Plans exist as data and a guard; there</text>
+<text x="828" y="516" font-family="Helvetica,Arial,sans-serif" font-size="11">is no payment provider.</text>
+<text x="828" y="532" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/plans/features.ts &gt; FEATURES</text>
+<text x="828" y="547" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: PARTIAL</text>
+<path d="M300,247 L347,247 L347,213 L430,213" fill="none" stroke="#d79b00" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="332.2" y="230" width="29.6" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="336.2" y="241" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">OIDC</text>
+<path d="M300,436.5 L356,436.5 L356,355 L430,355" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="335.8" y="419.5" width="40.400000000000006" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="339.8" y="430.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">Prisma</text>
+<path d="M300,607 L365,607 L365,496.5 L430,496.5" fill="none" stroke="#d79b00" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="315.1" y="590" width="99.80000000000001" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="319.1" y="601" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">Capacitor plugins</text>
+<path d="M300,777.5 L374,777.5 L374,637.5 L430,637.5" fill="none" stroke="#d79b00" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="329.5" y="760.5" width="89" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="333.5" y="771.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">HTTPS multipart</text>
+<path d="M300,926 L383,926 L383,772 L430,772" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<rect x="352" y="909" width="62" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="356" y="920" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">local file</text>
+<rect x="20" y="1024" width="150" height="26" rx="5" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="26" y="1041" font-family="Helvetica,Arial,sans-serif" font-size="10">Orchestration and services</text>
+<rect x="180" y="1024" width="150" height="26" rx="5" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="186" y="1041" font-family="Helvetica,Arial,sans-serif" font-size="10">External integrations</text>
+<rect x="340" y="1024" width="150" height="26" rx="5" fill="#f8cecc" stroke="#b85450"/>
+<text x="346" y="1041" font-family="Helvetica,Arial,sans-serif" font-size="10">Errors and attention points</text>
+<text x="20" y="1072" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text>
+<text x="20" y="1094" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">GitHub Actions (.github/workflows/ci.yml) runs the checks and builds the debug APK; it is not called by the running app.</text></svg>

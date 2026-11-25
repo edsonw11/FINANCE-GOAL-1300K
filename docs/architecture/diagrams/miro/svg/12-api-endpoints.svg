@@ -1,0 +1,188 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1440" viewBox="0 0 1120 1440"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: API and Use Cases</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">Every route except the ones marked public needs a login. Writes also need the app's origin and the CSRF header. Unless said otherwise the errors are 400 (input), 401, 403, 429.</text>
+<rect x="20" y="96" width="300" height="1101" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Pages, health and login</text>
+<rect x="40" y="152" width="260" height="151" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">GET /, /index.html, /src/*,</text>
+<text x="48" y="186" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">/vendor/*</text>
+<text x="48" y="204" font-family="Helvetica,Arial,sans-serif" font-size="11">Serves the browser app from an</text>
+<text x="48" y="218" font-family="Helvetica,Arial,sans-serif" font-size="11">allow-list of files (public, no rate</text>
+<text x="48" y="232" font-family="Helvetica,Arial,sans-serif" font-size="11">limit). 404 for anything else.</text>
+<text x="48" y="248" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/web/web.controller.ts &gt;</text>
+<text x="48" y="261" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">WebController</text>
+<text x="48" y="276" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="323" width="260" height="107" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="341" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">GET /health/live</text>
+<text x="48" y="359" font-family="Helvetica,Arial,sans-serif" font-size="11">The process is up (public).</text>
+<text x="48" y="375" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/health/health.controller.ts</text>
+<text x="48" y="388" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">&gt; live</text>
+<text x="48" y="403" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="450" width="260" height="121" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="468" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">GET /health/ready</text>
+<text x="48" y="486" font-family="Helvetica,Arial,sans-serif" font-size="11">The database answers within the timeout</text>
+<text x="48" y="500" font-family="Helvetica,Arial,sans-serif" font-size="11">(public). Not ready otherwise.</text>
+<text x="48" y="516" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/health/health.controller.ts</text>
+<text x="48" y="529" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">&gt; ready</text>
+<text x="48" y="544" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="591" width="260" height="149" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="609" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">GET /auth/login?returnTo</text>
+<text x="48" y="627" font-family="Helvetica,Arial,sans-serif" font-size="11">Starts the OIDC login; 302 to the</text>
+<text x="48" y="641" font-family="Helvetica,Arial,sans-serif" font-size="11">provider. Public, 20 per minute per</text>
+<text x="48" y="655" font-family="Helvetica,Arial,sans-serif" font-size="11">address. 503 when the provider is</text>
+<text x="48" y="669" font-family="Helvetica,Arial,sans-serif" font-size="11">unreachable.</text>
+<text x="48" y="685" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/auth/auth.controller.ts &gt;</text>
+<text x="48" y="698" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">start</text>
+<text x="48" y="713" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="760" width="260" height="135" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="778" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">GET /auth/callback</text>
+<text x="48" y="796" font-family="Helvetica,Arial,sans-serif" font-size="11">Finishes the login; session cookie; 302</text>
+<text x="48" y="810" font-family="Helvetica,Arial,sans-serif" font-size="11">to returnTo, or to the login-failed</text>
+<text x="48" y="824" font-family="Helvetica,Arial,sans-serif" font-size="11">page. Public, 20 per minute per address.</text>
+<text x="48" y="840" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/auth/auth.controller.ts &gt;</text>
+<text x="48" y="853" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">finish</text>
+<text x="48" y="868" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="915" width="260" height="121" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="933" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">POST /auth/logout</text>
+<text x="48" y="951" font-family="Helvetica,Arial,sans-serif" font-size="11">Ends the session; answers the provider's</text>
+<text x="48" y="965" font-family="Helvetica,Arial,sans-serif" font-size="11">end-session address or null. Public.</text>
+<text x="48" y="981" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/auth/auth.controller.ts &gt;</text>
+<text x="48" y="994" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">logout</text>
+<text x="48" y="1009" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="1056" width="260" height="121" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="1074" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">GET /api/v1/me</text>
+<text x="48" y="1092" font-family="Helvetica,Arial,sans-serif" font-size="11">Who is logged in, with the plan features</text>
+<text x="48" y="1106" font-family="Helvetica,Arial,sans-serif" font-size="11">(the app shows locked ones as PRO).</text>
+<text x="48" y="1122" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/auth/me.controller.ts &gt;</text>
+<text x="48" y="1135" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">MeController</text>
+<text x="48" y="1150" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="1232" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">A person's data</text>
+<rect x="430" y="152" width="260" height="163" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">POST /api/v1/sync/push</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Applies the outbox in order. Body:</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">mutations (mutationId, resource, id, op,</text>
+<text x="438" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">data). Answer: one result per mutation</text>
+<text x="438" y="230" font-family="Helvetica,Arial,sans-serif" font-size="11">(applied, superseded, rejected,</text>
+<text x="438" y="244" font-family="Helvetica,Arial,sans-serif" font-size="11">skipped). 120 per minute per person.</text>
+<text x="438" y="260" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/sync/sync.controller.ts &gt;</text>
+<text x="438" y="273" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">push</text>
+<text x="438" y="288" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="335" width="260" height="135" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="353" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">GET /api/v1/sync/changes</text>
+<text x="438" y="371" font-family="Helvetica,Arial,sans-serif" font-size="11">Changes after a cursor, in version</text>
+<text x="438" y="385" font-family="Helvetica,Arial,sans-serif" font-size="11">order. Query: cursor, limit. Answer:</text>
+<text x="438" y="399" font-family="Helvetica,Arial,sans-serif" font-size="11">changes, cursor, hasMore.</text>
+<text x="438" y="415" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/sync/sync.controller.ts &gt;</text>
+<text x="438" y="428" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">changes</text>
+<text x="438" y="443" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="490" width="260" height="107" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="508" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">GET /api/v1/accounts</text>
+<text x="438" y="526" font-family="Helvetica,Arial,sans-serif" font-size="11">The person's accounts: { items }.</text>
+<text x="438" y="542" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/accounts/</text>
+<text x="438" y="555" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">accounts.controller.ts &gt; list</text>
+<text x="438" y="570" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="617" width="260" height="107" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="635" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">GET /api/v1/accounts/:id</text>
+<text x="438" y="653" font-family="Helvetica,Arial,sans-serif" font-size="11">One account. 404 when it is not found.</text>
+<text x="438" y="669" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/accounts/</text>
+<text x="438" y="682" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">accounts.controller.ts &gt; get</text>
+<text x="438" y="697" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="744" width="260" height="121" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="762" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">PUT /api/v1/accounts/:id</text>
+<text x="438" y="780" font-family="Helvetica,Arial,sans-serif" font-size="11">Creates or renames an account</text>
+<text x="438" y="794" font-family="Helvetica,Arial,sans-serif" font-size="11">(idempotent). Body: name.</text>
+<text x="438" y="810" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/accounts/</text>
+<text x="438" y="823" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">accounts.controller.ts &gt; save</text>
+<text x="438" y="838" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="885" width="260" height="107" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="903" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">DELETE /api/v1/accounts/:id</text>
+<text x="438" y="921" font-family="Helvetica,Arial,sans-serif" font-size="11">Removes an account (204).</text>
+<text x="438" y="937" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/accounts/</text>
+<text x="438" y="950" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">accounts.controller.ts &gt; remove</text>
+<text x="438" y="965" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="1012" width="260" height="153" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="1030" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">POST</text>
+<text x="438" y="1046" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">/api/v1/import/</text>
+<text x="438" y="1062" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">legacy-state?replace</text>
+<text x="438" y="1080" font-family="Helvetica,Arial,sans-serif" font-size="11">Imports a whole state (up to 25 MB). 6</text>
+<text x="438" y="1094" font-family="Helvetica,Arial,sans-serif" font-size="11">per hour per person.</text>
+<text x="438" y="1110" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/legacy/legacy.controller.ts</text>
+<text x="438" y="1123" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">&gt; importState</text>
+<text x="438" y="1138" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="1185" width="260" height="123" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="1203" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">GET</text>
+<text x="438" y="1219" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">/api/v1/export/legacy-state</text>
+<text x="438" y="1237" font-family="Helvetica,Arial,sans-serif" font-size="11">Exports the whole state.</text>
+<text x="438" y="1253" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/legacy/legacy.controller.ts</text>
+<text x="438" y="1266" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">&gt; exportState</text>
+<text x="438" y="1281" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="800" y="96" width="300" height="1201" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Month rules and admin</text>
+<rect x="820" y="152" width="260" height="137" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">GET</text>
+<text x="828" y="186" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">/api/v1/months/:month/summary</text>
+<text x="828" y="204" font-family="Helvetica,Arial,sans-serif" font-size="11">Month summary computed by the shared</text>
+<text x="828" y="218" font-family="Helvetica,Arial,sans-serif" font-size="11">rules. :month is yyyy-mm.</text>
+<text x="828" y="234" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/legacy/months.controller.ts</text>
+<text x="828" y="247" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">&gt; summary</text>
+<text x="828" y="262" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="309" width="260" height="137" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="327" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">GET</text>
+<text x="828" y="343" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">/api/v1/months/:month/result</text>
+<text x="828" y="361" font-family="Helvetica,Arial,sans-serif" font-size="11">Month result: income, expenses, left,</text>
+<text x="828" y="375" font-family="Helvetica,Arial,sans-serif" font-size="11">rate, level.</text>
+<text x="828" y="391" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/legacy/months.controller.ts</text>
+<text x="828" y="404" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">&gt; result</text>
+<text x="828" y="419" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="466" width="260" height="151" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="484" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">GET</text>
+<text x="828" y="500" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">/api/v1/months/:month/report</text>
+<text x="828" y="518" font-family="Helvetica,Arial,sans-serif" font-size="11">Monthly report data. Needs plan feature</text>
+<text x="828" y="532" font-family="Helvetica,Arial,sans-serif" font-size="11">report.monthly (403 feature_locked).</text>
+<text x="828" y="546" font-family="Helvetica,Arial,sans-serif" font-size="11">Optional today=yyyy-mm-dd.</text>
+<text x="828" y="562" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/legacy/months.controller.ts</text>
+<text x="828" y="575" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">&gt; report</text>
+<text x="828" y="590" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="637" width="260" height="107" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="655" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">GET /api/v1/admin/plans</text>
+<text x="828" y="673" font-family="Helvetica,Arial,sans-serif" font-size="11">Plans and their features. Admin only.</text>
+<text x="828" y="689" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/plans/admin.controller.ts &gt;</text>
+<text x="828" y="702" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">list</text>
+<text x="828" y="717" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="764" width="260" height="181" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="782" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">PUT</text>
+<text x="828" y="798" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">/api/v1/admin/plans/:planId/</text>
+<text x="828" y="814" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">features/:key</text>
+<text x="828" y="832" font-family="Helvetica,Arial,sans-serif" font-size="11">Turns a feature on for a plan (key must</text>
+<text x="828" y="846" font-family="Helvetica,Arial,sans-serif" font-size="11">be in the catalogue; 400</text>
+<text x="828" y="860" font-family="Helvetica,Arial,sans-serif" font-size="11">unknown_feature). Written to the audit</text>
+<text x="828" y="874" font-family="Helvetica,Arial,sans-serif" font-size="11">log.</text>
+<text x="828" y="890" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/plans/admin.controller.ts &gt;</text>
+<text x="828" y="903" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">enable</text>
+<text x="828" y="918" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="965" width="260" height="139" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="983" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">DELETE</text>
+<text x="828" y="999" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">/api/v1/admin/plans/:planId/</text>
+<text x="828" y="1015" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">features/:key</text>
+<text x="828" y="1033" font-family="Helvetica,Arial,sans-serif" font-size="11">Turns a feature off. Audit logged.</text>
+<text x="828" y="1049" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/plans/admin.controller.ts &gt;</text>
+<text x="828" y="1062" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">disable</text>
+<text x="828" y="1077" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="1124" width="260" height="153" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="1142" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">PUT</text>
+<text x="828" y="1158" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">/api/v1/admin/users/:userId/</text>
+<text x="828" y="1174" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">plan</text>
+<text x="828" y="1192" font-family="Helvetica,Arial,sans-serif" font-size="11">Moves a person to a plan. 404 when the</text>
+<text x="828" y="1206" font-family="Helvetica,Arial,sans-serif" font-size="11">person is not found. Audit logged.</text>
+<text x="828" y="1222" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/plans/admin.controller.ts &gt;</text>
+<text x="828" y="1235" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">setPlan</text>
+<text x="828" y="1250" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="20" y="1352" width="150" height="26" rx="5" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="26" y="1369" font-family="Helvetica,Arial,sans-serif" font-size="10">API and entry</text>
+<rect x="180" y="1352" width="150" height="26" rx="5" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="186" y="1369" font-family="Helvetica,Arial,sans-serif" font-size="10">Orchestration and services</text>
+<rect x="340" y="1352" width="150" height="26" rx="5" fill="#d5e8d4" stroke="#82b366"/>
+<text x="346" y="1369" font-family="Helvetica,Arial,sans-serif" font-size="10">Processing and domain rules</text>
+<text x="20" y="1400" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text>
+<text x="20" y="1422" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">The rows of this diagram are generated into analysis/api-catalog.md too. A route is never listed unless it is a decorated method of a controller.</text></svg>

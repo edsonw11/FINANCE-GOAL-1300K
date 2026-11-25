@@ -1,0 +1,45 @@
+%% Everfox: Pipeline of the Monthly Report
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_s1["1. Ask"]
+    direction TB
+    n_r_btn["PRINT BUTTON<br/>The person prints the month on screen.<br/>src/ui/views/settings.js  bindSettings<br/>IMPLEMENTED"]
+    n_r_mail["E-MAIL BUTTON<br/>Opens the mail program with a subject and a short text.<br/>src/ui/views/report-print.js  reportMailUrl<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_s2["2. Compute"]
+    direction TB
+    n_r_build["BUILDREPORT<br/>Every number of the report in one place: month result, last 6 months, biggest groups and expenses, goal.<br/>src/domain/report.js  buildReport<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_s3["3. Write the content"]
+    direction TB
+    n_r_html["REPORTHTML<br/>The page of the report in plain language.<br/>src/ui/views/report-html.js  reportHtml<br/>IMPLEMENTED"]
+    n_r_fill["RENDERREPORT<br/>Fills the print-only box of the page.<br/>src/ui/views/report-print.js  renderReport<br/>IMPLEMENTED"]
+    n_r_text["REPORTTEXT<br/>The short text for the e-mail.<br/>src/ui/views/report-text.js  reportMailUrl<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_s4["4. Deliver"]
+    direction TB
+    n_r_css["PRINT STYLES<br/>Only the report is shown when printing.<br/>src/styles/10-print.css<br/>IMPLEMENTED"]
+    n_r_pdf["BROWSER PRINT DIALOG<br/>The person saves it as a PDF or prints it. The app does not write a PDF file itself.<br/>src/ui/views/report-print.js  renderReport<br/>IMPLEMENTED"]
+  end
+  n_r_btn --> n_r_build
+  n_r_mail --> n_r_build
+  n_r_build --> n_r_html
+  n_r_html --> n_r_fill
+  n_r_build -->|"e-mail"| n_r_text
+  n_r_fill --> n_r_css
+  n_r_css --> n_r_pdf
+  class n_r_btn api
+  class n_r_mail api
+  class n_r_build dom
+  class n_r_html svc
+  class n_r_fill svc
+  class n_r_text svc
+  class n_r_css out
+  class n_r_pdf out

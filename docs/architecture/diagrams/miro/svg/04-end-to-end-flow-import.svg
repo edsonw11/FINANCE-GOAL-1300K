@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="529" viewBox="0 0 1900 529"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: Flow of Importing a Bank File</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">OFX, CSV or digital PDF becomes drafts the person reviews; only the confirmation writes to the state.</text>
+<rect x="20" y="96" width="300" height="324" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">1. Pick the file</text>
+<rect x="40" y="152" width="260" height="107" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Choose a file</text>
+<text x="48" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">The file input of the Importar panel.</text>
+<text x="48" y="204" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/import-load.js &gt;</text>
+<text x="48" y="217" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">loadImportFile</text>
+<text x="48" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="279" width="260" height="121" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="297" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Size and type checks</text>
+<text x="48" y="315" font-family="Helvetica,Arial,sans-serif" font-size="11">Up to 2 MB (PDF 10 MB, 40 pages, 3000</text>
+<text x="48" y="329" font-family="Helvetica,Arial,sans-serif" font-size="11">entries); csv, ofx, qfx, txt, pdf only.</text>
+<text x="48" y="345" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/import-reader.js &gt;</text>
+<text x="48" y="358" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">IMPORT_LIMITS</text>
+<text x="48" y="373" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="339" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">2. Read</text>
+<rect x="430" y="152" width="260" height="122" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">PDF text</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">pdf.js (a vendored copy) extracts the</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">text of a digital PDF; photos and scans</text>
+<text x="438" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">are refused.</text>
+<text x="438" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/pdf-text.js &gt; pdfText</text>
+<text x="438" y="247" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="294" width="260" height="121" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="312" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Choose the reader by content</text>
+<text x="438" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">OFX, CSV or PDF statement / card invoice</text>
+<text x="438" y="344" font-family="Helvetica,Arial,sans-serif" font-size="11">become raw entries.</text>
+<text x="438" y="360" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/import-reader.js &gt;</text>
+<text x="438" y="373" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">readImportFile</text>
+<text x="438" y="388" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="800" y="96" width="300" height="338" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">3. Classify</text>
+<rect x="820" y="152" width="260" height="135" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">What is each entry?</text>
+<text x="828" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Balance lines dropped; income, expense,</text>
+<text x="828" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">own transfer, aporte, or ignore (invoice</text>
+<text x="828" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">payment, refund, redemption, yield).</text>
+<text x="828" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/import-classify.js &gt;</text>
+<text x="828" y="245" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">IMPORT_TYPE</text>
+<text x="828" y="260" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="307" width="260" height="107" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="325" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Possible duplicates</text>
+<text x="828" y="343" font-family="Helvetica,Arial,sans-serif" font-size="11">Marks drafts that may already exist.</text>
+<text x="828" y="359" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/import-duplicates.js &gt;</text>
+<text x="828" y="372" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">markDuplicates</text>
+<text x="828" y="387" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1190" y="96" width="300" height="311" fill="#fff" stroke="#9aa4b2"/><rect x="1190" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="1340" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">4. Review</text>
+<rect x="1210" y="152" width="260" height="121" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="1218" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Review screen</text>
+<text x="1218" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Edit a row, remove one, divide across</text>
+<text x="1218" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">categories, select or deselect.</text>
+<text x="1218" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/import-review.js &gt;</text>
+<text x="1218" y="231" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">reviewHtml</text>
+<text x="1218" y="246" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1210" y="293" width="260" height="94" rx="8" fill="#fff2cc" stroke="#d6b656" stroke-dasharray="5 3"/>
+<text x="1218" y="311" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Confirm?</text>
+<text x="1218" y="329" font-family="Helvetica,Arial,sans-serif" font-size="11">The confirmation shows the totals first.</text>
+<text x="1218" y="345" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/import-confirm.js</text>
+<text x="1218" y="360" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1580" y="96" width="300" height="339" fill="#fff" stroke="#9aa4b2"/><rect x="1580" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="1730" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">5. Commit</text>
+<rect x="1600" y="152" width="260" height="121" rx="8" fill="#ffffff" stroke="#333333"/>
+<text x="1608" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">commitImport</text>
+<text x="1608" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">The only place where reviewed drafts</text>
+<text x="1608" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">become transactions, inside transact().</text>
+<text x="1608" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/import-commit.js &gt;</text>
+<text x="1608" y="231" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">commitImport</text>
+<text x="1608" y="246" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1600" y="293" width="260" height="122" rx="8" fill="#ffffff" stroke="#333333"/>
+<text x="1608" y="311" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Result per item</text>
+<text x="1608" y="329" font-family="Helvetica,Arial,sans-serif" font-size="11">Saved, skipped and kept-unsaved items</text>
+<text x="1608" y="343" font-family="Helvetica,Arial,sans-serif" font-size="11">are listed; the same file again adds</text>
+<text x="1608" y="357" font-family="Helvetica,Arial,sans-serif" font-size="11">nothing.</text>
+<text x="1608" y="373" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/import-result.js</text>
+<text x="1608" y="388" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<path d="M170,259 L170,279" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M300,339.5 L356,339.5 L356,213 L430,213" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="343.9" y="322.5" width="24.200000000000003" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="347.9" y="333.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">pdf</text>
+<path d="M560,274 L560,294" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M690,354.5 L764,354.5 L764,219.5 L820,219.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M950,287 L950,307" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1080,360.5 L1127,360.5 L1127,212.5 L1210,212.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1340,273 L1340,293" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1470,340 L1535,340 L1535,212.5 L1600,212.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="1522.9" y="323" width="24.200000000000003" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="1526.9" y="334" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">yes</text>
+<path d="M1730,273 L1730,293" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="20" y="459" width="150" height="26" rx="5" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="26" y="476" font-family="Helvetica,Arial,sans-serif" font-size="10">API and entry</text>
+<rect x="180" y="459" width="150" height="26" rx="5" fill="#d5e8d4" stroke="#82b366"/>
+<text x="186" y="476" font-family="Helvetica,Arial,sans-serif" font-size="10">Processing and domain rules</text>
+<rect x="340" y="459" width="150" height="26" rx="5" fill="#fff2cc" stroke="#d6b656"/>
+<text x="346" y="476" font-family="Helvetica,Arial,sans-serif" font-size="10">Decisions and validations</text>
+<rect x="500" y="459" width="150" height="26" rx="5" fill="#ffffff" stroke="#333333"/>
+<text x="506" y="476" font-family="Helvetica,Arial,sans-serif" font-size="10">Results and outputs</text>
+<text x="20" y="507" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text></svg>

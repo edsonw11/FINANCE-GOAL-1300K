@@ -1,0 +1,22 @@
+%% Everfox: Sequence of a Sync Run
+sequenceDiagram
+  autonumber
+  participant n_br as Browser sync runner
+  participant n_gd as Global guards
+  participant n_sc as SyncController
+  participant n_sv as SyncService
+  participant n_rs as SyncResource (per kind)
+  participant n_db as PostgreSQL
+  n_br->>n_gd: POST /api/v1/sync/push (cookie, origin, CSRF header)
+  n_gd->>n_sc: rate limit, CSRF, login ok
+  n_sc->>n_sv: push(userId, mutations)
+  n_sv->>n_db: find the mutation id in the log
+  n_sv->>n_rs: put / remove, if not seen
+  n_rs->>n_db: write the record with a new version
+  n_sv->>n_db: record the outcome
+  n_sv-->>n_br: per mutation: applied, superseded, rejected or skipped
+  n_br->>n_sc: GET /api/v1/sync/changes?cursor
+  n_sc->>n_sv: changes(userId, cursor, limit)
+  n_sv->>n_rs: changesSince(version) of every resource
+  n_sv-->>n_br: changes in version order, new cursor, hasMore
+  n_gd--xn_br: 401 login / 403 CSRF / 429 too many requests

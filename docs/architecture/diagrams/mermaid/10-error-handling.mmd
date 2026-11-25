@@ -1,0 +1,57 @@
+%% Everfox: Error Handling
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_dev["On the device"]
+    direction TB
+    n_x_save["SAVING FAILS (STORAGE FULL, PRIVATE MODE)<br/>transact() undoes the change and returns false, the person is told, nothing half-saved.<br/>src/domain/store.js  transact<br/>IMPLEMENTED"]
+    n_x_read["STORED DATA CANNOT BE READ<br/>It is copied to a .broken key, never overwritten, a blank state is used, a notice offers to restore yesterday's copy.<br/>src/domain/state-recovery.js  readState<br/>IMPLEMENTED"]
+    n_x_imp["IMPORT FILE TOO BIG, WRONG TYPE OR UNREADABLE<br/>A plain message with the limit, photos and scans are refused, nothing is written.<br/>src/domain/import-reader.js  IMPORT_LIMITS<br/>IMPLEMENTED"]
+    n_x_share["BACKUP CANNOT LEAVE THE PHONE<br/>A cancelled share sheet is not an error and is not counted as a backup, a write failure is told and not counted.<br/>src/ui/native-bridge.js  shareTextFile<br/>IMPLEMENTED"]
+    n_x_lock["PHONE LOST ITS SCREEN LOCK<br/>The app opens and switches its lock off with a message: no lock-out.<br/>src/ui/app-lock/app-lock.js  createAppLock<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_sync["Sync (web app)"]
+    direction TB
+    n_x_net["OFFLINE, 401 OR SERVER ERROR<br/>The api client turns it into offline, unauthorized or server, the outbox stays as it is and the run stops.<br/>src/sync/api-client.js  createApiClient<br/>IMPLEMENTED"]
+    n_x_rej["A MUTATION IS REJECTED<br/>unknown resource, invalid data or not found: it goes to the review list and the batch stops, later ones are skipped and sent again.<br/>src/sync/runner.js  review<br/>IMPLEMENTED"]
+    n_x_none["RETRIES AND BACK-OFF<br/>No automatic retry loop or back-off timer was found: a run is started by the app, and a failed run leaves the outbox for the next one.<br/>src/sync/runner.js  createSync<br/>NOT IDENTIFIED"]
+  end
+  subgraph n_l_api["On the API"]
+    direction TB
+    n_x_400["400 INVALID INPUT<br/>Bodies and parameters are checked against a schema, the answer names the field and the kind of problem.<br/>backend/src/http/parse-input.ts  parseInput<br/>IMPLEMENTED"]
+    n_x_401["401 NOT LOGGED IN<br/>Every route needs a login unless marked public, unknown, expired or idle sessions are refused (and idle ones deleted).<br/>backend/src/auth/auth.guard.ts  AuthGuard<br/>IMPLEMENTED"]
+    n_x_403["403 CSRF, LOCKED FEATURE, NOT ADMIN<br/>A write must come from the app's own origin with the CSRF header, a locked feature answers code feature_locked.<br/>backend/src/auth/csrf.guard.ts  CsrfGuard<br/>IMPLEMENTED"]
+    n_x_429["429 TOO MANY REQUESTS<br/>Fixed-window counters in memory, by address and by person, the answer has retryAfterSeconds. Per instance: several instances count separately.<br/>backend/src/security/rate-limit.guard.ts  RateLimit<br/>IMPLEMENTED"]
+    n_x_413["413 BODY TOO LARGE<br/>1 MB for every route, 25 MB for the whole-state import.<br/>backend/src/create-app.ts  BODY_LIMIT_BYTES<br/>IMPLEMENTED"]
+    n_x_503["503 LOGIN UNAVAILABLE<br/>The identity provider could not be reached to start a login.<br/>backend/src/auth/auth.controller.ts  ServiceUnavailableException<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_ops["Operation"]
+    direction TB
+    n_x_ready["DATABASE NOT READY<br/>/health/ready answers not ready when the database does not answer within the timeout, /health/live stays up.<br/>backend/src/health/health.service.ts  HealthService<br/>IMPLEMENTED"]
+    n_x_down["SHUTDOWN<br/>SIGTERM or SIGINT closes the server and the pool, after 10 s without finishing it exits with an error.<br/>backend/src/shutdown.ts  DEFAULT_SHUTDOWN_TIMEOUT_MS<br/>IMPLEMENTED"]
+    n_x_log["LOGS<br/>Nest logger with a configurable level, the database URL is logged without its password.<br/>backend/src/config/redact.ts  redact<br/>IMPLEMENTED"]
+  end
+  n_x_net -->|"if answered"| n_x_rej
+  class n_x_save err
+  class n_x_read err
+  class n_x_imp err
+  class n_x_share err
+  class n_x_lock err
+  class n_x_net svc
+  class n_x_rej svc
+  class n_x_none svc
+  class n_x_400 api
+  class n_x_401 api
+  class n_x_403 api
+  class n_x_429 api
+  class n_x_413 api
+  class n_x_503 api
+  class n_x_ready infra
+  class n_x_down infra
+  class n_x_log infra

@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="616" viewBox="0 0 1900 616"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: Flow of Adding an Expense</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">From the + button to the new number on the Summary. Nothing leaves the device in this flow.</text>
+<rect x="20" y="96" width="300" height="184" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">1. Open</text>
+<rect x="40" y="152" width="260" height="108" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Open the form</text>
+<text x="48" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">The + button opens the form in a sheet;</text>
+<text x="48" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">the date starts as today.</text>
+<text x="48" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/item-dialog.js &gt; openItem</text>
+<text x="48" y="233" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="239" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">2. Fill</text>
+<rect x="430" y="152" width="260" height="163" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Fill the form</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Value, date, category, account. Optional</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">help: a short sentence fills the form</text>
+<text x="438" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">(nothing is saved until Salvar), and a</text>
+<text x="438" y="230" font-family="Helvetica,Arial,sans-serif" font-size="11">past description offers its category</text>
+<text x="438" y="244" font-family="Helvetica,Arial,sans-serif" font-size="11">(never applied alone).</text>
+<text x="438" y="260" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/quick-entry.js &gt;</text>
+<text x="438" y="273" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">parseQuickEntry</text>
+<text x="438" y="288" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="800" y="96" width="300" height="325" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">3. Validate</text>
+<rect x="820" y="152" width="260" height="135" rx="8" fill="#fff2cc" stroke="#d6b656" stroke-dasharray="5 3"/>
+<text x="828" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Valid?</text>
+<text x="828" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Value above zero, a date, a destination</text>
+<text x="828" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">for an aporte, splits not above the</text>
+<text x="828" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">total.</text>
+<text x="828" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/transaction-builder.js &gt;</text>
+<text x="828" y="245" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">validateTransaction</text>
+<text x="828" y="260" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="307" width="260" height="94" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="828" y="325" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Message under the field</text>
+<text x="828" y="343" font-family="Helvetica,Arial,sans-serif" font-size="11">The form stays open with what was typed.</text>
+<text x="828" y="359" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/components/field-error.js</text>
+<text x="828" y="374" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1190" y="96" width="300" height="339" fill="#fff" stroke="#9aa4b2"/><rect x="1190" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="1340" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">4. Save</text>
+<rect x="1210" y="152" width="260" height="135" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="1218" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Build the record</text>
+<text x="1218" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Copies the form into a transaction; a</text>
+<text x="1218" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">monthly series or an edit with future</text>
+<text x="1218" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">siblings.</text>
+<text x="1218" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/transaction-builder.js &gt;</text>
+<text x="1218" y="245" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">saveTransaction</text>
+<text x="1218" y="260" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1210" y="307" width="260" height="108" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="1218" y="325" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">transact()</text>
+<text x="1218" y="343" font-family="Helvetica,Arial,sans-serif" font-size="11">Runs the change and saves; if saving</text>
+<text x="1218" y="357" font-family="Helvetica,Arial,sans-serif" font-size="11">fails the change is undone.</text>
+<text x="1218" y="373" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/store.js &gt; transact</text>
+<text x="1218" y="388" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1580" y="96" width="300" height="426" fill="#fff" stroke="#9aa4b2"/><rect x="1580" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="1730" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">5. React</text>
+<rect x="1600" y="152" width="260" height="108" rx="8" fill="#ffffff" stroke="#333333"/>
+<text x="1608" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Redraw</text>
+<text x="1608" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">render() redraws the screens from the</text>
+<text x="1608" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">new state.</text>
+<text x="1608" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/render.js &gt; render</text>
+<text x="1608" y="233" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1600" y="280" width="260" height="108" rx="8" fill="#ffffff" stroke="#333333"/>
+<text x="1608" y="298" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Budget warning</text>
+<text x="1608" y="316" font-family="Helvetica,Arial,sans-serif" font-size="11">Saving an expense over its group budget</text>
+<text x="1608" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">warns.</text>
+<text x="1608" y="346" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/budgets.js &gt; budgetAlerts</text>
+<text x="1608" y="361" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1600" y="408" width="260" height="94" rx="8" fill="#ffffff" stroke="#333333"/>
+<text x="1608" y="426" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Toast with Desfazer</text>
+<text x="1608" y="444" font-family="Helvetica,Arial,sans-serif" font-size="11">The record can be brought back.</text>
+<text x="1608" y="460" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/toast.js &gt; toast</text>
+<text x="1608" y="475" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<path d="M300,206 L347,206 L347,233.5 L430,233.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M690,233.5 L746,233.5 L746,219.5 L820,219.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="725.8" y="216.5" width="40.400000000000006" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="729.8" y="227.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">Salvar</text>
+<path d="M950,287 L950,307" fill="none" stroke="#b85450" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="956" y="286" width="18.8" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="960" y="297" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">no</text>
+<path d="M1080,219.5 L1154,219.5 L1154,219.5 L1210,219.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="1141.9" y="202.5" width="24.200000000000003" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="1145.9" y="213.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">yes</text>
+<path d="M1340,287 L1340,307" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1470,361 L1517,361 L1517,206 L1600,206" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="1499.5" y="344" width="35" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="1503.5" y="355" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">saved</text>
+<path d="M1730,260 L1730,280" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1730,388 L1730,408" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="20" y="546" width="150" height="26" rx="5" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="26" y="563" font-family="Helvetica,Arial,sans-serif" font-size="10">API and entry</text>
+<rect x="180" y="546" width="150" height="26" rx="5" fill="#fff2cc" stroke="#d6b656"/>
+<text x="186" y="563" font-family="Helvetica,Arial,sans-serif" font-size="10">Decisions and validations</text>
+<rect x="340" y="546" width="150" height="26" rx="5" fill="#f8cecc" stroke="#b85450"/>
+<text x="346" y="563" font-family="Helvetica,Arial,sans-serif" font-size="10">Errors and attention points</text>
+<rect x="500" y="546" width="150" height="26" rx="5" fill="#d5e8d4" stroke="#82b366"/>
+<text x="506" y="563" font-family="Helvetica,Arial,sans-serif" font-size="10">Processing and domain rules</text>
+<rect x="660" y="546" width="150" height="26" rx="5" fill="#ffffff" stroke="#333333"/>
+<text x="666" y="563" font-family="Helvetica,Arial,sans-serif" font-size="10">Results and outputs</text>
+<text x="20" y="594" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text></svg>

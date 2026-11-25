@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1510" height="628" viewBox="0 0 1510 628"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: Pipeline of the Monthly Report</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">Built in the page from the state; the PDF is made by the browser's own print dialog (Save as PDF). The same data can be asked of the API (second page).</text>
+<rect x="20" y="96" width="300" height="311" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">1. Ask</text>
+<rect x="40" y="152" width="260" height="94" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Print button</text>
+<text x="48" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">The person prints the month on screen.</text>
+<text x="48" y="204" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/settings.js &gt; bindSettings</text>
+<text x="48" y="219" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="266" width="260" height="121" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="284" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">E-mail button</text>
+<text x="48" y="302" font-family="Helvetica,Arial,sans-serif" font-size="11">Opens the mail program with a subject</text>
+<text x="48" y="316" font-family="Helvetica,Arial,sans-serif" font-size="11">and a short text.</text>
+<text x="48" y="332" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/report-print.js &gt;</text>
+<text x="48" y="345" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">reportMailUrl</text>
+<text x="48" y="360" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="198" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">2. Compute</text>
+<rect x="430" y="152" width="260" height="122" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">buildReport</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Every number of the report in one place:</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">month result, last 6 months, biggest</text>
+<text x="438" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">groups and expenses, goal.</text>
+<text x="438" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/report.js &gt; buildReport</text>
+<text x="438" y="247" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="800" y="96" width="300" height="438" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">3. Write the content</text>
+<rect x="820" y="152" width="260" height="108" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="828" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">reportHtml</text>
+<text x="828" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">The page of the report in plain</text>
+<text x="828" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">language.</text>
+<text x="828" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/report-html.js &gt; reportHtml</text>
+<text x="828" y="233" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="280" width="260" height="107" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="828" y="298" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">renderReport</text>
+<text x="828" y="316" font-family="Helvetica,Arial,sans-serif" font-size="11">Fills the print-only box of the page.</text>
+<text x="828" y="332" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/report-print.js &gt;</text>
+<text x="828" y="345" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">renderReport</text>
+<text x="828" y="360" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="407" width="260" height="107" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="828" y="425" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">reportText</text>
+<text x="828" y="443" font-family="Helvetica,Arial,sans-serif" font-size="11">The short text for the e-mail.</text>
+<text x="828" y="459" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/report-text.js &gt;</text>
+<text x="828" y="472" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">reportMailUrl</text>
+<text x="828" y="487" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1190" y="96" width="300" height="325" fill="#fff" stroke="#9aa4b2"/><rect x="1190" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="1340" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">4. Deliver</text>
+<rect x="1210" y="152" width="260" height="94" rx="8" fill="#ffffff" stroke="#333333"/>
+<text x="1218" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Print styles</text>
+<text x="1218" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Only the report is shown when printing.</text>
+<text x="1218" y="204" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/styles/10-print.css</text>
+<text x="1218" y="219" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1210" y="266" width="260" height="135" rx="8" fill="#ffffff" stroke="#333333"/>
+<text x="1218" y="284" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Browser print dialog</text>
+<text x="1218" y="302" font-family="Helvetica,Arial,sans-serif" font-size="11">The person saves it as a PDF or prints</text>
+<text x="1218" y="316" font-family="Helvetica,Arial,sans-serif" font-size="11">it. The app does not write a PDF file</text>
+<text x="1218" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">itself.</text>
+<text x="1218" y="346" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/report-print.js &gt;</text>
+<text x="1218" y="359" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">renderReport</text>
+<text x="1218" y="374" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<path d="M300,199 L347,199 L347,213 L430,213" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M300,326.5 L356,326.5 L356,213 L430,213" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M690,213 L755,213 L755,206 L820,206" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M950,260 L950,280" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M690,213 L773,213 L773,460.5 L820,460.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="752.8" y="196" width="40.400000000000006" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="756.8" y="207" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">e-mail</text>
+<path d="M1080,333.5 L1127,333.5 L1127,199 L1210,199" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1340,246 L1340,266" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="20" y="558" width="150" height="26" rx="5" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="26" y="575" font-family="Helvetica,Arial,sans-serif" font-size="10">API and entry</text>
+<rect x="180" y="558" width="150" height="26" rx="5" fill="#d5e8d4" stroke="#82b366"/>
+<text x="186" y="575" font-family="Helvetica,Arial,sans-serif" font-size="10">Processing and domain rules</text>
+<rect x="340" y="558" width="150" height="26" rx="5" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="346" y="575" font-family="Helvetica,Arial,sans-serif" font-size="10">Orchestration and services</text>
+<rect x="500" y="558" width="150" height="26" rx="5" fill="#ffffff" stroke="#333333"/>
+<text x="506" y="575" font-family="Helvetica,Arial,sans-serif" font-size="10">Results and outputs</text>
+<text x="20" y="606" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text></svg>

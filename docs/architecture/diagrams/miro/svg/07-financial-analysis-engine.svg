@@ -1,0 +1,180 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1510" height="1841" viewBox="0 0 1510 1841"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: Rules and Calculations</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">Everything is a pure rule over the state S (transactions, accounts and balance snapshots, trades, settings). No score or ranking of assets exists in this product.</text>
+<rect x="20" y="96" width="300" height="610" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Data the rules read</text>
+<rect x="40" y="152" width="260" height="122" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Transactions</text>
+<text x="48" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Income, expense, aporte (money into an</text>
+<text x="48" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">investment), card purchases and invoice</text>
+<text x="48" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">payments.</text>
+<text x="48" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/transactions.js &gt; txIn</text>
+<text x="48" y="247" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="294" width="260" height="122" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="48" y="312" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Accounts and balances</text>
+<text x="48" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">Each account has dated balance</text>
+<text x="48" y="344" font-family="Helvetica,Arial,sans-serif" font-size="11">snapshots; a balance on a day comes from</text>
+<text x="48" y="358" font-family="Helvetica,Arial,sans-serif" font-size="11">them.</text>
+<text x="48" y="374" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/accounts.js &gt; balance</text>
+<text x="48" y="389" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="436" width="260" height="108" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="48" y="454" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Trades</text>
+<text x="48" y="472" font-family="Helvetica,Arial,sans-serif" font-size="11">Buys and sells read from B3 brokerage</text>
+<text x="48" y="486" font-family="Helvetica,Arial,sans-serif" font-size="11">notes.</text>
+<text x="48" y="502" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/portfolio.js &gt; tradesOf</text>
+<text x="48" y="517" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="564" width="260" height="122" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="48" y="582" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Settings</text>
+<text x="48" y="600" font-family="Helvetica,Arial,sans-serif" font-size="11">Goal (default 1,300,000), yearly rate</text>
+<text x="48" y="614" font-family="Helvetica,Arial,sans-serif" font-size="11">(default 12.5%), planned monthly</text>
+<text x="48" y="628" font-family="Helvetica,Arial,sans-serif" font-size="11">contribution, card days.</text>
+<text x="48" y="644" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/store.js &gt; blankState</text>
+<text x="48" y="659" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="764" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Month numbers</text>
+<rect x="430" y="152" width="260" height="135" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Month summary</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Income, expenses and contributions of a</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">month, with the records behind each</text>
+<text x="438" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">number.</text>
+<text x="438" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/month-summary.js &gt;</text>
+<text x="438" y="245" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">monthSummary</text>
+<text x="438" y="260" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="307" width="260" height="122" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="325" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Month result</text>
+<text x="438" y="343" font-family="Helvetica,Arial,sans-serif" font-size="11">left = income - expenses; rate = left /</text>
+<text x="438" y="357" font-family="Helvetica,Arial,sans-serif" font-size="11">income (none without income); kept =</text>
+<text x="438" y="371" font-family="Helvetica,Arial,sans-serif" font-size="11">left - invested.</text>
+<text x="438" y="387" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/month-result.js &gt; monthResult</text>
+<text x="438" y="402" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="449" width="260" height="108" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="467" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Savings level</text>
+<text x="438" y="485" font-family="Helvetica,Arial,sans-serif" font-size="11">rate below 0: negative; below 10%: low;</text>
+<text x="438" y="499" font-family="Helvetica,Arial,sans-serif" font-size="11">10% to 20%: ok; 20% or more: good.</text>
+<text x="438" y="515" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/savings.js &gt; savingsLevel</text>
+<text x="438" y="530" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="577" width="260" height="108" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="595" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Budget by group</text>
+<text x="438" y="613" font-family="Helvetica,Arial,sans-serif" font-size="11">Share of the budget used: up to 80% ok,</text>
+<text x="438" y="627" font-family="Helvetica,Arial,sans-serif" font-size="11">from 80% near, above 100% over.</text>
+<text x="438" y="643" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/budgets.js &gt; budgetStatus</text>
+<text x="438" y="658" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="705" width="260" height="135" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="723" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Monthly bills</text>
+<text x="438" y="741" font-family="Helvetica,Arial,sans-serif" font-size="11">Recurring expenses found in the last 3</text>
+<text x="438" y="755" font-family="Helvetica,Arial,sans-serif" font-size="11">months (at least 2 times, amount varying</text>
+<text x="438" y="769" font-family="Helvetica,Arial,sans-serif" font-size="11">up to 20%).</text>
+<text x="438" y="785" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/monthly-bills.js &gt;</text>
+<text x="438" y="798" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">monthlyBills</text>
+<text x="438" y="813" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="800" y="96" width="300" height="566" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Credit card</text>
+<rect x="820" y="152" width="260" height="178" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Cycle and invoice month</text>
+<text x="828" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Best purchase day starts the invoice;</text>
+<text x="828" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">closing is the day before; due is the</text>
+<text x="828" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">next due day after closing; a purchase</text>
+<text x="828" y="230" font-family="Helvetica,Arial,sans-serif" font-size="11">belongs to the first invoice whose</text>
+<text x="828" y="244" font-family="Helvetica,Arial,sans-serif" font-size="11">closing has not passed. Weekend closing</text>
+<text x="828" y="258" font-family="Helvetica,Arial,sans-serif" font-size="11">moves to the next business day if the</text>
+<text x="828" y="272" font-family="Helvetica,Arial,sans-serif" font-size="11">option is on.</text>
+<text x="828" y="288" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/card-cycle.js &gt; dueMonth</text>
+<text x="828" y="303" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="350" width="260" height="151" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="368" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Invoice items and undetailed</text>
+<text x="828" y="384" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">amount</text>
+<text x="828" y="402" font-family="Helvetica,Arial,sans-serif" font-size="11">Which purchases belong to an invoice,</text>
+<text x="828" y="416" font-family="Helvetica,Arial,sans-serif" font-size="11">and what the invoice total leaves</text>
+<text x="828" y="430" font-family="Helvetica,Arial,sans-serif" font-size="11">undetailed.</text>
+<text x="828" y="446" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/card-invoices.js &gt;</text>
+<text x="828" y="459" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">invoiceUndetailed</text>
+<text x="828" y="474" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="521" width="260" height="121" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="539" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Invoice payment</text>
+<text x="828" y="557" font-family="Helvetica,Arial,sans-serif" font-size="11">Plans and records a full or partial</text>
+<text x="828" y="571" font-family="Helvetica,Arial,sans-serif" font-size="11">payment.</text>
+<text x="828" y="587" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/invoice-payment.js &gt;</text>
+<text x="828" y="600" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">planPayment</text>
+<text x="828" y="615" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="908" width="300" height="821" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="908" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="931" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Goal and wealth</text>
+<rect x="430" y="964" width="260" height="149" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="982" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Goal projection</text>
+<text x="438" y="1000" font-family="Helvetica,Arial,sans-serif" font-size="11">monthly rate = (1 + yearly/100)^(1/12) -</text>
+<text x="438" y="1014" font-family="Helvetica,Arial,sans-serif" font-size="11">1; each month: balance + interest +</text>
+<text x="438" y="1028" font-family="Helvetica,Arial,sans-serif" font-size="11">planned contribution. A second line uses</text>
+<text x="438" y="1042" font-family="Helvetica,Arial,sans-serif" font-size="11">the rate 2 points lower.</text>
+<text x="438" y="1058" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/goal-projection.js &gt;</text>
+<text x="438" y="1071" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">projectionPlan</text>
+<text x="438" y="1086" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="1133" width="260" height="124" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="1151" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Real series and average</text>
+<text x="438" y="1167" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">contribution</text>
+<text x="438" y="1185" font-family="Helvetica,Arial,sans-serif" font-size="11">Net worth by month from the balances;</text>
+<text x="438" y="1199" font-family="Helvetica,Arial,sans-serif" font-size="11">average of real contributions.</text>
+<text x="438" y="1215" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/investments.js &gt; realSeries</text>
+<text x="438" y="1230" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="1277" width="260" height="135" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="1295" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Emergency reserve</text>
+<text x="438" y="1313" font-family="Helvetica,Arial,sans-serif" font-size="11">Reserve balance divided by the average</text>
+<text x="438" y="1327" font-family="Helvetica,Arial,sans-serif" font-size="11">expense of the last 3 closed months;</text>
+<text x="438" y="1341" font-family="Helvetica,Arial,sans-serif" font-size="11">target 6 months, minimum 3.</text>
+<text x="438" y="1357" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/emergency-fund.js &gt;</text>
+<text x="438" y="1370" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">emergencyFund</text>
+<text x="438" y="1385" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="1432" width="260" height="122" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="1450" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Portfolio positions</text>
+<text x="438" y="1468" font-family="Helvetica,Arial,sans-serif" font-size="11">Per ticker: quantity, average cost</text>
+<text x="438" y="1482" font-family="Helvetica,Arial,sans-serif" font-size="11">(costs included), amount invested,</text>
+<text x="438" y="1496" font-family="Helvetica,Arial,sans-serif" font-size="11">result of what was sold.</text>
+<text x="438" y="1512" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/portfolio.js &gt; positions</text>
+<text x="438" y="1527" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="1574" width="260" height="135" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="1592" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Allocation target</text>
+<text x="438" y="1610" font-family="Helvetica,Arial,sans-serif" font-size="11">Optional target share per kind of asset;</text>
+<text x="438" y="1624" font-family="Helvetica,Arial,sans-serif" font-size="11">within 2 points of the target counts as</text>
+<text x="438" y="1638" font-family="Helvetica,Arial,sans-serif" font-size="11">on target.</text>
+<text x="438" y="1654" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/allocation.js &gt;</text>
+<text x="438" y="1667" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">allocationStatus</text>
+<text x="438" y="1682" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1190" y="96" width="300" height="408" fill="#fff" stroke="#9aa4b2"/><rect x="1190" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="1340" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Import classification</text>
+<rect x="1210" y="152" width="260" height="177" rx="8" fill="#fff2cc" stroke="#d6b656" stroke-dasharray="5 3"/>
+<text x="1218" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">What an entry is</text>
+<text x="1218" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Balance line: dropped. Invoice payment,</text>
+<text x="1218" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">own transfer, refund, redemption, yield</text>
+<text x="1218" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">or tax: not income or expense on their</text>
+<text x="1218" y="230" font-family="Helvetica,Arial,sans-serif" font-size="11">own. Pix, TED and doc: flagged to</text>
+<text x="1218" y="244" font-family="Helvetica,Arial,sans-serif" font-size="11">confirm. &quot;PARC 03/10&quot;: read as an</text>
+<text x="1218" y="258" font-family="Helvetica,Arial,sans-serif" font-size="11">installment.</text>
+<text x="1218" y="274" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/import-classify.js &gt;</text>
+<text x="1218" y="287" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">IMPORT_TYPE</text>
+<text x="1218" y="302" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1210" y="349" width="260" height="135" rx="8" fill="#fff2cc" stroke="#d6b656" stroke-dasharray="5 3"/>
+<text x="1218" y="367" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Own-account transfers</text>
+<text x="1218" y="385" font-family="Helvetica,Arial,sans-serif" font-size="11">Pairs the two sides of a transfer</text>
+<text x="1218" y="399" font-family="Helvetica,Arial,sans-serif" font-size="11">between the person's accounts, so it is</text>
+<text x="1218" y="413" font-family="Helvetica,Arial,sans-serif" font-size="11">neither income nor expense.</text>
+<text x="1218" y="429" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/transfers.js &gt;</text>
+<text x="1218" y="442" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">markTransferPairs</text>
+<text x="1218" y="457" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<path d="M300,213 L347,213 L347,219.5 L430,219.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="321.4" y="196" width="51.2" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="325.4" y="207" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">by month</text>
+<path d="M560,287 L560,307" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M560,429 L560,449" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M300,355 L374,355 L374,1195 L430,1195" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="348.4" y="338" width="51.2" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="352.4" y="349" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">balances</text>
+<path d="M300,625 L383,625 L383,1038.5 L430,1038.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="335.8" y="608" width="94.4" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="339.8" y="619" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">goal, rate, plan</text>
+<path d="M300,490 L347,490 L347,1493 L430,1493" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="20" y="1753" width="150" height="26" rx="5" fill="#f5f5f5" stroke="#666666"/>
+<text x="26" y="1770" font-family="Helvetica,Arial,sans-serif" font-size="10">Infrastructure</text>
+<rect x="180" y="1753" width="150" height="26" rx="5" fill="#d5e8d4" stroke="#82b366"/>
+<text x="186" y="1770" font-family="Helvetica,Arial,sans-serif" font-size="10">Processing and domain rules</text>
+<rect x="340" y="1753" width="150" height="26" rx="5" fill="#fff2cc" stroke="#d6b656"/>
+<text x="346" y="1770" font-family="Helvetica,Arial,sans-serif" font-size="10">Decisions and validations</text>
+<text x="20" y="1801" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text>
+<text x="20" y="1823" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Constants are the ones in the code at the time of the build (see the traceability matrix for the line of each).</text></svg>

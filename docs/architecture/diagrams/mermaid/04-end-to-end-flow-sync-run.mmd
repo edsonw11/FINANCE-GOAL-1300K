@@ -1,0 +1,48 @@
+%% Everfox: Flow of One Sync Run (web app)
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_s1["1. A change is saved"]
+    direction TB
+    n_y_save["SAVED STATE<br/>Every save tells its listeners.<br/>src/domain/store.js  onSave<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_s2["2. Queue"]
+    direction TB
+    n_y_split["SPLIT INTO RECORDS<br/>The state is split like the server does, each record with a fingerprint.<br/>src/sync/records.js  splitState<br/>IMPLEMENTED"]
+    n_y_queue["OUTBOX ENTRIES<br/>Only what changed since the last run becomes an entry.<br/>src/sync/outbox.js  queueChanges<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_s3["3. Push"]
+    direction TB
+    n_y_push["SEND IN BATCHES OF 100<br/>POST /api/v1/sync/push, entries are marked as attempted first.<br/>src/sync/runner.js  BATCH<br/>IMPLEMENTED"]
+    n_y_rej{"REJECTED?<br/>A rejected mutation goes to the review list, the batch stops there.<br/>src/sync/runner.js  review<br/>IMPLEMENTED"}
+  end
+  subgraph n_l_s4["4. Pull"]
+    direction TB
+    n_y_pull["ASK FOR CHANGES AFTER THE CURSOR<br/>GET /api/v1/sync/changes, page by page until no more.<br/>src/sync/api-client.js  createApiClient<br/>IMPLEMENTED"]
+    n_y_apply["MERGE INTO THE STATE<br/>applyChanges puts them in without echoing them back.<br/>src/sync/apply.js  applyChanges<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_s5["5. Failure"]
+    direction TB
+    n_y_fail["OFFLINE, UNAUTHORIZED OR SERVER<br/>During the push or the pull. The outbox stays as it is, the person sees the state on the sync card.<br/>src/ui/views/sync-view.js  renderSync<br/>IMPLEMENTED"]
+  end
+  n_y_save --> n_y_split
+  n_y_split --> n_y_queue
+  n_y_queue --> n_y_push
+  n_y_push --> n_y_rej
+  n_y_rej -->|"no / handled"| n_y_pull
+  n_y_pull --> n_y_apply
+  n_y_pull -.->|"any step fails"| n_y_fail
+  class n_y_save api
+  class n_y_split dom
+  class n_y_queue dom
+  class n_y_push svc
+  class n_y_rej dec
+  class n_y_pull svc
+  class n_y_apply svc
+  class n_y_fail err

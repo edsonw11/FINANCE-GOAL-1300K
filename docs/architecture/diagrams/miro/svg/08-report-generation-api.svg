@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1510" height="417" viewBox="0 0 1510 417"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: Monthly Report on the API (Pro)</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">JSON only. A Pro feature: a person on a plan without report.monthly gets 403 feature_locked.</text>
+<rect x="20" y="96" width="300" height="227" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">1. Request</text>
+<rect x="40" y="152" width="260" height="151" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">GET</text>
+<text x="48" y="186" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">/api/v1/months/:month/report</text>
+<text x="48" y="204" font-family="Helvetica,Arial,sans-serif" font-size="11">Month as yyyy-mm; optional</text>
+<text x="48" y="218" font-family="Helvetica,Arial,sans-serif" font-size="11">today=yyyy-mm-dd for a person whose day</text>
+<text x="48" y="232" font-family="Helvetica,Arial,sans-serif" font-size="11">differs from the server's.</text>
+<text x="48" y="248" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/legacy/months.controller.ts</text>
+<text x="48" y="261" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">&gt; report</text>
+<text x="48" y="276" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="197" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">2. Check</text>
+<rect x="430" y="152" width="260" height="121" rx="8" fill="#fff2cc" stroke="#d6b656" stroke-dasharray="5 3"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">FeatureGuard</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">The plan must have report.monthly, read</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">from the database on every call.</text>
+<text x="438" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/plans/guards.ts &gt;</text>
+<text x="438" y="231" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">FeatureGuard</text>
+<text x="438" y="246" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="800" y="96" width="300" height="211" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">3. Compute</text>
+<rect x="820" y="152" width="260" height="135" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">FinanceRulesService.compute</text>
+<text x="828" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Loads the stored state, completes it</text>
+<text x="828" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">from the blank state, runs the shared</text>
+<text x="828" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">buildReport. Nothing is saved.</text>
+<text x="828" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/legacy/</text>
+<text x="828" y="245" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">finance-rules.service.ts &gt; compute</text>
+<text x="828" y="260" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1190" y="96" width="300" height="184" fill="#fff" stroke="#9aa4b2"/><rect x="1190" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="1340" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">4. Answer</text>
+<rect x="1210" y="152" width="260" height="108" rx="8" fill="#ffffff" stroke="#333333"/>
+<text x="1218" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Report data (JSON)</text>
+<text x="1218" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">The same numbers the page prints; no</text>
+<text x="1218" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">file is generated.</text>
+<text x="1218" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/report.js &gt; buildReport</text>
+<text x="1218" y="233" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<path d="M300,227.5 L347,227.5 L347,212.5 L430,212.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M690,212.5 L746,212.5 L746,219.5 L820,219.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="723.1" y="195.5" width="45.800000000000004" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="727.1" y="206.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">allowed</text>
+<path d="M1080,219.5 L1145,219.5 L1145,206 L1210,206" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="20" y="347" width="150" height="26" rx="5" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="26" y="364" font-family="Helvetica,Arial,sans-serif" font-size="10">API and entry</text>
+<rect x="180" y="347" width="150" height="26" rx="5" fill="#fff2cc" stroke="#d6b656"/>
+<text x="186" y="364" font-family="Helvetica,Arial,sans-serif" font-size="10">Decisions and validations</text>
+<rect x="340" y="347" width="150" height="26" rx="5" fill="#d5e8d4" stroke="#82b366"/>
+<text x="346" y="364" font-family="Helvetica,Arial,sans-serif" font-size="10">Processing and domain rules</text>
+<rect x="500" y="347" width="150" height="26" rx="5" fill="#ffffff" stroke="#333333"/>
+<text x="506" y="364" font-family="Helvetica,Arial,sans-serif" font-size="10">Results and outputs</text>
+<text x="20" y="395" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text></svg>

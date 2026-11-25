@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="873" viewBox="0 0 1120 873"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: Runtime and Environment</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">Names of settings only; values and secrets are never written here.</text>
+<rect x="20" y="96" width="300" height="512" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Browser app</text>
+<rect x="40" y="152" width="260" height="138" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Source, served by any static</text>
+<text x="48" y="186" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">server</text>
+<text x="48" y="204" font-family="Helvetica,Arial,sans-serif" font-size="11">scripts/serve.sh serves the folder on</text>
+<text x="48" y="218" font-family="Helvetica,Arial,sans-serif" font-size="11">port 8000; ES modules need http, not</text>
+<text x="48" y="232" font-family="Helvetica,Arial,sans-serif" font-size="11">file://.</text>
+<text x="48" y="248" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">scripts/serve.sh &gt; http.server</text>
+<text x="48" y="263" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="310" width="260" height="122" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="328" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Single-file build</text>
+<text x="48" y="346" font-family="Helvetica,Arial,sans-serif" font-size="11">npm run build bundles src/ into</text>
+<text x="48" y="360" font-family="Helvetica,Arial,sans-serif" font-size="11">dist/finance_goal_1300k.html (opens from</text>
+<text x="48" y="374" font-family="Helvetica,Arial,sans-serif" font-size="11">file://) and dist/index.html.</text>
+<text x="48" y="390" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">tools/module-graph.cjs &gt; moduleOrder</text>
+<text x="48" y="405" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="452" width="260" height="136" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="470" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Tests</text>
+<text x="48" y="488" font-family="Helvetica,Arial,sans-serif" font-size="11">npm run test:unit (plain Node), npm run</text>
+<text x="48" y="502" font-family="Helvetica,Arial,sans-serif" font-size="11">test:e2e (headless Chrome smokes), npm</text>
+<text x="48" y="516" font-family="Helvetica,Arial,sans-serif" font-size="11">run test:mobile (widths), npm run check</text>
+<text x="48" y="530" font-family="Helvetica,Arial,sans-serif" font-size="11">(everything).</text>
+<text x="48" y="546" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">tests/run-unit.js &gt; readdirSync</text>
+<text x="48" y="561" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="665" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Full local stack (Docker)</text>
+<rect x="430" y="152" width="260" height="122" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">npm run dev:up</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Starts db (127.0.0.1:5433), keycloak</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">(8081), migrate, api (3000) and loads</text>
+<text x="438" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">demo data.</text>
+<text x="438" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">scripts/dev.sh &gt; up</text>
+<text x="438" y="247" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="294" width="260" height="135" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="312" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">API entry point</text>
+<text x="438" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">backend/src/main.ts reads the</text>
+<text x="438" y="344" font-family="Helvetica,Arial,sans-serif" font-size="11">environment once, builds the app and</text>
+<text x="438" y="358" font-family="Helvetica,Arial,sans-serif" font-size="11">listens; shutdown on SIGTERM and SIGINT.</text>
+<text x="438" y="374" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/main.ts &gt;</text>
+<text x="438" y="387" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">registerGracefulShutdown</text>
+<text x="438" y="402" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="449" width="260" height="150" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="467" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Settings (names)</text>
+<text x="438" y="485" font-family="Helvetica,Arial,sans-serif" font-size="11">DATABASE_URL, MIGRATE_DATABASE_URL,</text>
+<text x="438" y="499" font-family="Helvetica,Arial,sans-serif" font-size="11">NODE_ENV, HOST, PORT, LOG_LEVEL,</text>
+<text x="438" y="513" font-family="Helvetica,Arial,sans-serif" font-size="11">HEALTH_CHECK_TIMEOUT_MS, APP_BASE_URL,</text>
+<text x="438" y="527" font-family="Helvetica,Arial,sans-serif" font-size="11">OIDC_ISSUER, OIDC_CLIENT_ID,</text>
+<text x="438" y="541" font-family="Helvetica,Arial,sans-serif" font-size="11">OIDC_CLIENT_SECRET.</text>
+<text x="438" y="557" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/.env.example &gt; DATABASE_URL</text>
+<text x="438" y="572" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="619" width="260" height="122" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="637" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Backend tests</text>
+<text x="438" y="655" font-family="Helvetica,Arial,sans-serif" font-size="11">npm test in backend/ with a real</text>
+<text x="438" y="669" font-family="Helvetica,Arial,sans-serif" font-size="11">PostgreSQL and a real Keycloak (the CI</text>
+<text x="438" y="683" font-family="Helvetica,Arial,sans-serif" font-size="11">job &quot;backend&quot;).</text>
+<text x="438" y="699" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/package.json &gt; test</text>
+<text x="438" y="714" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="800" y="96" width="300" height="495" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Android</text>
+<rect x="820" y="152" width="260" height="136" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="828" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">npm run mobile:apk</text>
+<text x="828" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Builds the page for the shell (own CSP),</text>
+<text x="828" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">copies it into android/, builds the</text>
+<text x="828" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">debug APK. ANDROID_HOME defaults to</text>
+<text x="828" y="230" font-family="Helvetica,Arial,sans-serif" font-size="11">~/Android/Sdk.</text>
+<text x="828" y="246" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">scripts/mobile.sh &gt; apk</text>
+<text x="828" y="261" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="308" width="260" height="122" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="828" y="326" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Emulator tests</text>
+<text x="828" y="344" font-family="Helvetica,Arial,sans-serif" font-size="11">npm run mobile:test and mobile:test-lock</text>
+<text x="828" y="358" font-family="Helvetica,Arial,sans-serif" font-size="11">drive the real app on a virtual phone</text>
+<text x="828" y="372" font-family="Helvetica,Arial,sans-serif" font-size="11">with adb and the DevTools protocol.</text>
+<text x="828" y="388" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">scripts/device-test.mjs &gt; step</text>
+<text x="828" y="403" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="450" width="260" height="121" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="828" y="468" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">npm run apk:send -- --build</text>
+<text x="828" y="486" font-family="Helvetica,Arial,sans-serif" font-size="11">Builds, then asks before sending the APK</text>
+<text x="828" y="500" font-family="Helvetica,Arial,sans-serif" font-size="11">to a Telegram chat.</text>
+<text x="828" y="516" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">services/telegram-apk/send-apk.mjs &gt;</text>
+<text x="828" y="529" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">main</text>
+<text x="828" y="544" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="20" y="785" width="150" height="26" rx="5" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="26" y="802" font-family="Helvetica,Arial,sans-serif" font-size="10">API and entry</text>
+<rect x="180" y="785" width="150" height="26" rx="5" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="186" y="802" font-family="Helvetica,Arial,sans-serif" font-size="10">Orchestration and services</text>
+<rect x="340" y="785" width="150" height="26" rx="5" fill="#f5f5f5" stroke="#666666"/>
+<text x="346" y="802" font-family="Helvetica,Arial,sans-serif" font-size="10">Infrastructure</text>
+<text x="20" y="833" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text>
+<text x="20" y="855" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">CI (.github/workflows/ci.yml) runs four jobs on every push: check, backend, stack, android.</text></svg>

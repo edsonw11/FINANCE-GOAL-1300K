@@ -1,0 +1,63 @@
+%% Everfox: High-Level Architecture
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_clients["Clients"]
+    direction TB
+    n_browser["BROWSER APP<br/>Plain ES modules (index.html + src/), or the single-file build in dist/. Keeps its data in the browser.<br/>src/app.js  bindNavigation<br/>IMPLEMENTED"]
+    n_android["ANDROID SHELL<br/>Capacitor 8 around the same page, with its own CSP, offline, app lock.<br/>android/app/src/main/java/com/everfox/app/MainActivity.java  MainActivity<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_api["API (NestJS 12 on Fastify 5)"]
+    direction TB
+    n_b_sec["SECURITY LAYER<br/>Rate limits, CSRF by origin, login check, plan and admin guards, security headers.<br/>backend/src/security/security.module.ts  SecurityModule<br/>IMPLEMENTED"]
+    n_b_web["WEB<br/>Serves the browser app files (an allow-list of src/ and vendor/).<br/>backend/src/web/web.module.ts  WebModule<br/>IMPLEMENTED"]
+    n_b_health["HEALTH<br/>Live and ready checks (ready asks the database).<br/>backend/src/health/health.module.ts  HealthModule<br/>IMPLEMENTED"]
+    n_b_auth["AUTH<br/>OIDC login, cookie sessions, who am I.<br/>backend/src/auth/auth.module.ts  AuthModule<br/>IMPLEMENTED"]
+    n_b_plans["PLANS<br/>Plan features per person and admin routes.<br/>backend/src/plans/plans.module.ts  PlansModule<br/>IMPLEMENTED"]
+    n_b_acc["ACCOUNTS<br/>Accounts of a person (REST).<br/>backend/src/accounts/accounts.module.ts  AccountsModule<br/>IMPLEMENTED"]
+    n_b_sync["SYNC<br/>Push of offline changes, pull of changes after a cursor.<br/>backend/src/sync/sync.module.ts  SyncModule<br/>IMPLEMENTED"]
+    n_b_rules["MONTH RULES AND IMPORT/EXPORT<br/>Month summary, result and report computed by the shared rules, import and export of the whole state.<br/>backend/src/legacy/legacy.module.ts  LegacyModule<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_data["Data and identity"]
+    direction TB
+    n_pg["POSTGRESQL 18<br/>Tables app_user, session, record, user_state, sync_*, plan, audit_log.<br/>backend/src/database/prisma.service.ts  PrismaService<br/>IMPLEMENTED"]
+    n_kc["KEYCLOAK 26<br/>OpenID Connect identity provider (development realm in Docker Compose).<br/>backend/src/auth/openid-client.provider.ts  OpenIdClientProvider<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_shared["Shared rules"]
+    direction TB
+    n_rules["SRC/CORE + SRC/DOMAIN<br/>The same plain JavaScript files, loaded by the API at start and run on one person's state.<br/>backend/src/domain/domain-runtime.ts  loadDomain<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_delivery["Build and delivery"]
+    direction TB
+    n_ci["CI (GITHUB ACTIONS)<br/>Jobs: check, backend, stack, android.<br/>.github/workflows/ci.yml  android:<br/>IMPLEMENTED"]
+    n_compose["DOCKER COMPOSE<br/>db, keycloak, migrate, api for the local full stack.<br/>docker-compose.yml  keycloak:<br/>IMPLEMENTED"]
+    n_tg["APK TO TELEGRAM<br/>Developer tool that sends the debug APK to a chat.<br/>services/telegram-apk/send-apk.mjs  main<br/>IMPLEMENTED"]
+  end
+  n_browser -->|"GET page"| n_b_web
+  n_browser -->|"login"| n_b_auth
+  n_browser -->|"push / changes"| n_b_sync
+  n_b_auth -->|"OIDC"| n_kc
+  n_b_sync -->|"Prisma"| n_pg
+  n_b_rules -->|"loads at start"| n_rules
+  class n_browser api
+  class n_android api
+  class n_b_sec svc
+  class n_b_web svc
+  class n_b_health svc
+  class n_b_auth svc
+  class n_b_plans svc
+  class n_b_acc svc
+  class n_b_sync svc
+  class n_b_rules svc
+  class n_pg infra
+  class n_kc ext
+  class n_rules dom
+  class n_ci infra
+  class n_compose infra
+  class n_tg infra

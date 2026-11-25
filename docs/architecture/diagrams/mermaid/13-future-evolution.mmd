@@ -1,0 +1,55 @@
+%% Everfox: Architectural Evolution
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_now["Current architecture"]
+    direction TB
+    n_v_now1["RULES SHARED BY BROWSER AND API<br/>One set of files runs in both places (ADR-0001, ADR-0006).<br/>backend/src/domain/domain-runtime.ts  loadDomain<br/>IMPLEMENTED"]
+    n_v_now2["OFFLINE-FIRST SYNC<br/>Outbox, cursor and idempotent mutations (ADR-0008, ADR-0010).<br/>backend/src/sync/sync.service.ts  SyncService<br/>IMPLEMENTED"]
+    n_v_now3["ANDROID SHELL<br/>Same page in a WebView, offline, app lock (ADR-0014).<br/>android/app/src/main/java/com/everfox/app/MainActivity.java  MainActivity<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_prob["Observed limits and risks"]
+    direction TB
+    n_v_p1["THE API IS NOT HOSTED<br/>It only runs in Docker on a developer machine, the web app has no production address.<br/>docker-compose.yml  api:<br/>IMPLEMENTED"]
+    n_v_p2["ANDROID HAS NO LOGIN OR SYNC<br/>The shell makes no network calls, the cookie login of the web app does not carry over to another origin.<br/>src/ui/views/sync-view.js  bindSync<br/>IMPLEMENTED"]
+    n_v_p3["RATE LIMITS ARE PER INSTANCE<br/>Counters live in memory, behind several instances the limits multiply.<br/>backend/src/security/rate-limiter.ts  RateLimiter<br/>IMPLEMENTED"]
+    n_v_p4["RECORDS ARE JSON BODIES<br/>Money and dates are not typed columns, SQL reports and constraints cannot use them.<br/>backend/prisma/schema.prisma  model Record<br/>IMPLEMENTED"]
+    n_v_p5["LITTLE TO OBSERVE<br/>Logs only, no metrics, traces or error reporting were found.<br/>backend/src/logging/nest-log-levels.ts  nestLogLevels<br/>NOT IDENTIFIED"]
+    n_v_p6["NO BILLING<br/>Plans and feature locks exist, nothing charges or changes a plan by itself.<br/>backend/src/plans/features.ts  FEATURES<br/>PARTIAL"]
+  end
+  subgraph n_l_opp["Proposals"]
+    direction TB
+    n_v_o1["HOST THE API AND THE WEB APP<br/>Run the container behind a proxy with trustProxy set on purpose (AWS, phases 9 and 10 of the plan).<br/>docs/architecture/00-current-state.md  Phase<br/>PROPOSAL"]
+    n_v_o2["PHONE SIGN-IN FOR ANDROID<br/>System browser, app link and a token in the Android Keystore, with its own threat model.<br/>docs/architecture/decisions/ADR-0014-android-shell.md  sign-in<br/>PROPOSAL"]
+    n_v_o3["SHARED RATE-LIMIT STORE<br/>Move the counters to a shared store when more than one instance runs.<br/>backend/src/security/rate-limiter.ts  RateLimiter<br/>PROPOSAL"]
+    n_v_o4["TYPED COLUMNS AND COMMAND ENDPOINTS<br/>Phase 4b-2: cents and dates as columns, endpoints that run one command each.<br/>docs/architecture/00-current-state.md  4b<br/>PROPOSAL"]
+    n_v_o5["METRICS AND ERROR REPORTING<br/>Request counts and latency, errors with context, a dashboard.<br/>backend/src/logging/nest-log-levels.ts  nestLogLevels<br/>PROPOSAL"]
+    n_v_o6["BILLING<br/>Web checkout and Play Billing mapped to plans (phase 8b).<br/>docs/architecture/00-current-state.md  8b<br/>PROPOSAL"]
+  end
+  n_v_p1 -.->|"addressed by"| n_v_o1
+  n_v_p2 -.->|"addressed by"| n_v_o2
+  n_v_p3 -.->|"addressed by"| n_v_o3
+  n_v_p4 -.->|"addressed by"| n_v_o4
+  n_v_p5 -.->|"addressed by"| n_v_o5
+  n_v_p6 -.->|"addressed by"| n_v_o6
+  class n_v_now1 dom
+  class n_v_now2 dom
+  class n_v_now3 dom
+  class n_v_p1 err
+  class n_v_p2 err
+  class n_v_p3 err
+  class n_v_p4 err
+  class n_v_p5 err
+  class n_v_p6 err
+  class n_v_o1 ext
+  class n_v_o2 ext
+  class n_v_o3 ext
+  class n_v_o4 ext
+  class n_v_o5 ext
+  class n_v_o6 ext

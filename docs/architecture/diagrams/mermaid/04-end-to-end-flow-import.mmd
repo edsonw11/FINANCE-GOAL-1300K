@@ -1,0 +1,54 @@
+%% Everfox: Flow of Importing a Bank File
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_s1["1. Pick the file"]
+    direction TB
+    n_i_pick["CHOOSE A FILE<br/>The file input of the Importar panel.<br/>src/ui/views/import-load.js  loadImportFile<br/>IMPLEMENTED"]
+    n_i_lim["SIZE AND TYPE CHECKS<br/>Up to 2 MB (PDF 10 MB, 40 pages, 3000 entries), csv, ofx, qfx, txt, pdf only.<br/>src/domain/import-reader.js  IMPORT_LIMITS<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_s2["2. Read"]
+    direction TB
+    n_i_pdf["PDF TEXT<br/>pdf.js (a vendored copy) extracts the text of a digital PDF, photos and scans are refused.<br/>src/ui/views/pdf-text.js  pdfText<br/>IMPLEMENTED"]
+    n_i_read["CHOOSE THE READER BY CONTENT<br/>OFX, CSV or PDF statement / card invoice become raw entries.<br/>src/domain/import-reader.js  readImportFile<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_s3["3. Classify"]
+    direction TB
+    n_i_class["WHAT IS EACH ENTRY?<br/>Balance lines dropped, income, expense, own transfer, aporte, or ignore (invoice payment, refund, redemption, yield).<br/>src/domain/import-classify.js  IMPORT_TYPE<br/>IMPLEMENTED"]
+    n_i_dup["POSSIBLE DUPLICATES<br/>Marks drafts that may already exist.<br/>src/domain/import-duplicates.js  markDuplicates<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_s4["4. Review"]
+    direction TB
+    n_i_review["REVIEW SCREEN<br/>Edit a row, remove one, divide across categories, select or deselect.<br/>src/ui/views/import-review.js  reviewHtml<br/>IMPLEMENTED"]
+    n_i_ok{"CONFIRM?<br/>The confirmation shows the totals first.<br/>src/ui/views/import-confirm.js<br/>IMPLEMENTED"}
+  end
+  subgraph n_l_s5["5. Commit"]
+    direction TB
+    n_i_commit["COMMITIMPORT<br/>The only place where reviewed drafts become transactions, inside transact().<br/>src/domain/import-commit.js  commitImport<br/>IMPLEMENTED"]
+    n_i_res["RESULT PER ITEM<br/>Saved, skipped and kept-unsaved items are listed, the same file again adds nothing.<br/>src/ui/views/import-result.js<br/>IMPLEMENTED"]
+  end
+  n_i_pick --> n_i_lim
+  n_i_lim -->|"pdf"| n_i_pdf
+  n_i_pdf --> n_i_read
+  n_i_read --> n_i_class
+  n_i_class --> n_i_dup
+  n_i_dup --> n_i_review
+  n_i_review --> n_i_ok
+  n_i_ok -->|"yes"| n_i_commit
+  n_i_commit --> n_i_res
+  class n_i_pick api
+  class n_i_lim api
+  class n_i_pdf dom
+  class n_i_read dom
+  class n_i_class dom
+  class n_i_dup dom
+  class n_i_review api
+  class n_i_ok dec
+  class n_i_commit out
+  class n_i_res out
