@@ -61,6 +61,8 @@ export const envSchema = z.object({
   SESSION_TTL_HOURS: digits(1, 24 * 90, 'SESSION_TTL_HOURS').default(168),
   /** A session ends after this long without a request. */
   SESSION_IDLE_MINUTES: digits(5, 60 * 24 * 30, 'SESSION_IDLE_MINUTES').default(4320),
+  /** Multiplies every request allowance. For development and tests that log in or sync far more than a person does; production must leave it at 1. */
+  RATE_LIMIT_FACTOR: digits(1, 100_000, 'RATE_LIMIT_FACTOR').default(1),
 });
 
 export type RawEnv = z.input<typeof envSchema>;

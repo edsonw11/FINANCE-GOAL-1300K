@@ -31,7 +31,15 @@ describe('loadConfig: defaults and valid values', () => {
       oidc: { issuer: OIDC_DEV.OIDC_ISSUER, internalUrl: null, clientId: 'everfox-web', clientSecret: OIDC_DEV.OIDC_CLIENT_SECRET },
       session: { ttlMs: 168 * 3_600_000, idleMs: 4320 * 60_000 },
       cookies: { secure: false, sessionName: 'everfox_session', flowName: 'everfox_login' },
+      rateLimitFactor: 1,
     });
+  });
+
+  it('RATE_LIMIT_FACTOR loosens the request limits outside production only, and only with a whole number from 1', () => {
+    expect(loadConfig(env({ RATE_LIMIT_FACTOR: '50' })).rateLimitFactor).toBe(50);
+    for (const bad of ['0', '-1', '1.5', 'abc', '', '100001']) expect(() => loadConfig(env({ RATE_LIMIT_FACTOR: bad })), bad).toThrow(/RATE_LIMIT_FACTOR/);
+    expect(() => loadConfig(env({ ...OIDC_PROD, NODE_ENV: 'production', RATE_LIMIT_FACTOR: '2' }))).toThrow(/RATE_LIMIT_FACTOR.*production/s);
+    expect(loadConfig(env({ ...OIDC_PROD, NODE_ENV: 'production', RATE_LIMIT_FACTOR: '1' })).rateLimitFactor).toBe(1);
   });
 
   it('reads every variable and turns the numbers into numbers', () => {

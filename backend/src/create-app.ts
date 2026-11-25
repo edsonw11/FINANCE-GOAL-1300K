@@ -2,9 +2,10 @@ import fastifyCookie from '@fastify/cookie';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
-import { type AppConfig } from './config/app-config';
+import { APP_CONFIG, type AppConfig } from './config/app-config';
 import { IMPORT_PATH } from './legacy/legacy.controller';
 import { nestLogLevels } from './logging/nest-log-levels';
+import { baseHeaders } from './security/security-headers';
 
 /** Requests larger than this are refused (413) before the application reads them. */
 export const BODY_LIMIT_BYTES = 1024 * 1024;
@@ -23,6 +24,7 @@ export function createAdapter(): FastifyAdapter {
  */
 export async function configureApp(app: NestFastifyApplication): Promise<void> {
   await app.register(fastifyCookie);
+  const headers = baseHeaders(app.get<AppConfig>(APP_CONFIG, { strict: false }).cookies.secure);
   app
     .getHttpAdapter()
     .getInstance()
@@ -33,7 +35,8 @@ export async function configureApp(app: NestFastifyApplication): Promise<void> {
     .getHttpAdapter()
     .getInstance()
     .addHook('onSend', async (_request, reply, payload) => {
-      reply.header('cache-control', 'no-store');
+      void reply.header('cache-control', 'no-store');
+      for (const [name, value] of Object.entries(headers)) if (!reply.hasHeader(name)) void reply.header(name, value);
       return payload;
     });
 }

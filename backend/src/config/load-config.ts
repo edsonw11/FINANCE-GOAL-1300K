@@ -25,6 +25,7 @@ function crossIssues(v: ParsedEnv): ConfigIssue[] {
     issues.push({ variable: 'SESSION_IDLE_MINUTES', problem: 'must not be longer than SESSION_TTL_HOURS' });
   }
   if (v.NODE_ENV !== 'production') return issues;
+  if (v.RATE_LIMIT_FACTOR !== 1) issues.push({ variable: 'RATE_LIMIT_FACTOR', problem: 'must be 1 in production (it loosens the request limits)' });
   if (passwordOf(v.DATABASE_URL) === DEV_DATABASE_PASSWORD) {
     issues.push({ variable: 'DATABASE_URL', problem: 'uses the local development password, which is not allowed in production' });
   }
@@ -65,6 +66,7 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>>): A
       clientId: v.OIDC_CLIENT_ID,
       clientSecret: v.OIDC_CLIENT_SECRET,
     }),
+    rateLimitFactor: v.RATE_LIMIT_FACTOR,
     session: Object.freeze({ ttlMs: v.SESSION_TTL_HOURS * HOUR_MS, idleMs: v.SESSION_IDLE_MINUTES * MINUTE_MS }),
     // "__Host-" cookies must be Secure, so they only exist where HTTPS is guaranteed
     cookies: Object.freeze({

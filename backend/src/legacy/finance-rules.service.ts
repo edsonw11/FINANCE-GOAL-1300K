@@ -1,11 +1,16 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, type OnModuleInit } from '@nestjs/common';
 import { type DomainApi, loadDomain, runWithState } from '../domain/domain-runtime';
 import { LegacyStateService } from './legacy-state.service';
 
 /** Runs the shared rules (the same files as the browser app) on one person's data. */
 @Injectable()
-export class FinanceRulesService {
+export class FinanceRulesService implements OnModuleInit {
   constructor(@Inject(LegacyStateService) private readonly state: LegacyStateService) {}
+
+  /** Loaded at start, not at the first request: the first person does not wait for a hundred modules, and a missing rules folder stops the start instead of failing later. */
+  async onModuleInit(): Promise<void> {
+    await loadDomain();
+  }
 
   /**
    * `fn` is synchronous (ADR-0006) and gets the rules by name. A person with nothing stored yet, or a sparse state, is completed from the blank state the app starts from.

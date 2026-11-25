@@ -38,6 +38,8 @@ export interface AppConfig {
   readonly oidc: OidcConfig;
   readonly session: SessionConfig;
   readonly cookies: CookieConfig;
+  /** 1 in production; larger only where people are not the ones asking (tests, local scripts). */
+  readonly rateLimitFactor: number;
 }
 
 /** Injection token (an interface has no runtime value). */

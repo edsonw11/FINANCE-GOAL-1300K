@@ -4,12 +4,14 @@ import { type AuthenticatedSession } from '../auth/session.service';
 import { parseInput } from '../http/parse-input';
 import { changesQuerySchema, pushBodySchema } from './sync.schemas';
 import { type ChangesPage, type PushResult, SyncService } from './sync.service';
+import { RateLimit } from '../security/rate-limit.decorator';
 
 /** Not @Public(): the login guard and the CSRF guard cover these routes like every other. */
 @Controller('api/v1/sync')
 export class SyncController {
   constructor(private readonly sync: SyncService) {}
 
+  @RateLimit({ name: 'push', limit: 120, windowMs: 60_000, by: 'person' })
   @Post('push')
   @HttpCode(200)
   async push(@CurrentUser() auth: AuthenticatedSession, @Body() body: unknown): Promise<{ results: PushResult[] }> {

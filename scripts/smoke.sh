@@ -17,7 +17,7 @@ open(d+'/tests/.smoke-sync.html','w').write(h.replace('<script type="module" src
 b=open(d+'/dist/finance_goal_1300k.html').read()
 open(t+'/dist-smoke.html','w').write(b.replace('</body>','<script>\n'+open(d+'/tests/fixtures/statement-pdf.js').read()+'</script><script>\n'+open(d+'/tests/smoke.js').read()+'</script>\n</body>'))
 PY
-python3 -m http.server 8767 --bind 127.0.0.1 --directory "$DIR" >/dev/null 2>&1 & SRV=$!
+python3 "$DIR/scripts/serve-csp.py" 8767 "$DIR" >/dev/null 2>&1 & SRV=$!
 trap 'kill $SRV 2>/dev/null; rm -rf "$TMP" "$DIR/tests/.smoke.html" "$DIR/tests/.smoke-sync.html"' EXIT
 sleep 0.6
 FAILED=0

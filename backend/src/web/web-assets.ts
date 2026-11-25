@@ -1,11 +1,14 @@
-import { readdirSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { extname, join, resolve } from 'node:path';
+import { pageCsp } from '../security/security-headers';
 
 export const WEB_ASSETS = Symbol('WEB_ASSETS');
 
 export interface WebAsset {
   readonly file: string;
   readonly type: string;
+  /** The page's content-security-policy (only for the page). */
+  readonly csp?: string;
 }
 
 const TYPES: Readonly<Record<string, string>> = {
@@ -45,13 +48,14 @@ function walk(dir: string, urlPrefix: string, out: Map<string, WebAsset>): void 
  */
 export function scanWebAssets(root: string): Map<string, WebAsset> {
   const assets = new Map<string, WebAsset>();
-  const index = { file: join(root, 'index.html'), type: TYPES['.html']! };
   try {
     readdirSync(root);
   } catch {
     return assets;
   }
   if (readdirSync(root).includes('index.html')) {
+    const file = join(root, 'index.html');
+    const index: WebAsset = { file, type: TYPES['.html']!, csp: pageCsp(readFileSync(file, 'utf8')) };
     assets.set('/', index);
     assets.set('/index.html', index);
   }

@@ -6,9 +6,13 @@ import { LoginFailedError } from './oidc-provider';
 import { CALLBACK_PATH } from './openid-client.provider';
 import { Public } from './public.decorator';
 import { SessionService } from './session.service';
+import { RateLimit } from '../security/rate-limit.decorator';
 
 /** Where the browser lands when the login failed for any reason. The reason stays in the server log. */
 export const LOGIN_FAILED_PATH = '/?login=failed';
+
+/** Starting and finishing a login share one allowance per address: 20 a minute is far more than a person needs and far less than a script. */
+const SIGN_IN_LIMIT = { name: 'sign-in', limit: 20, windowMs: 60_000, by: 'address' } as const;
 
 @Controller('auth')
 export class AuthController {
@@ -22,6 +26,7 @@ export class AuthController {
 
   /** Starts the login: remembers the attempt in a short cookie and sends the browser to the identity provider. */
   @Public()
+  @RateLimit(SIGN_IN_LIMIT)
   @Get('login')
   async start(@Query('returnTo') returnTo: unknown, @Res() reply: FastifyReply): Promise<void> {
     const { flowName, secure } = this.config.cookies;
@@ -39,6 +44,7 @@ export class AuthController {
 
   /** The identity provider sends the person back here with a code. */
   @Public()
+  @RateLimit(SIGN_IN_LIMIT)
   @Get('callback')
   async finish(@Req() request: FastifyRequest, @Res() reply: FastifyReply): Promise<void> {
     const { flowName, sessionName, secure } = this.config.cookies;

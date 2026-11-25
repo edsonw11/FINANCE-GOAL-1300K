@@ -9,7 +9,7 @@ describe('the shared rules inside the API', () => {
       expect(typeof api[name], name).toBe('function');
     }
     expect(Object.keys(api).length).toBeGreaterThan(200);
-  });
+  }, 30_000); // a cold load of every module can be slow on a busy machine
 
   it('runs a rule against the state it is given', async () => {
     const state = { v: 2, goal: 100, rate: 10, planned: 0, nid: 3, accounts: [], snaps: [], tx: [{ id: 1, type: 'receita', date: '2026-10-05', value: 1000, cat: 'Salário', desc: 'x', fonte: 'caixa' }] };

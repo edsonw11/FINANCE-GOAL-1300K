@@ -40,7 +40,7 @@ export interface TestApp {
 
 /** The whole HTTP application (real controllers, guards, services) with in-memory storage and a scripted identity provider. */
 export async function createTestApp(env: Record<string, string | undefined> = {}, extraControllers: Type<unknown>[] = []): Promise<TestApp> {
-  const config = loadConfig({ ...baseEnv(), NODE_ENV: 'test', LOG_LEVEL: 'silent', ...env } as NodeJS.ProcessEnv);
+  const config = loadConfig({ ...baseEnv(), NODE_ENV: 'test', LOG_LEVEL: 'silent', RATE_LIMIT_FACTOR: '1000', ...env } as NodeJS.ProcessEnv);
   const clock = new FakeClock();
   const provider = new FakeOidcProvider();
   const sessions = new InMemorySessionRepository();

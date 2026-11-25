@@ -13,7 +13,7 @@ export function databaseUrl(): string {
 }
 
 export const testConfig = (overrides: Record<string, string> = {}): AppConfig =>
-  loadConfig({ ...OIDC_DEV, DATABASE_URL: databaseUrl(), NODE_ENV: 'test', LOG_LEVEL: 'silent', ...overrides });
+  loadConfig({ ...OIDC_DEV, DATABASE_URL: databaseUrl(), NODE_ENV: 'test', LOG_LEVEL: 'silent', RATE_LIMIT_FACTOR: '1000', ...overrides });
 
 /** A URL for the same database with another password (the user exists, the password is wrong). */
 export function withPassword(url: string, password: string): string {
