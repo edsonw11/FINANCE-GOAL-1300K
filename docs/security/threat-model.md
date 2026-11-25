@@ -48,7 +48,7 @@ Method: assets → entry points → threats (STRIDE) → what stops each one (an
 |---|---|---|---|
 | R1 | Rate limits live in the memory of one API instance | one instance today; counters are not shared | Phase 9–10: shared store (Redis/WAF) before a second instance |
 | R2 | `style-src 'unsafe-inline'` in the CSP | the app sets inline `style=` attributes in many templates; scripts are the dangerous part and are locked | removing inline styles is a UI refactor, tracked as a finding (F-03) |
-| R3 | Data in `localStorage` is readable by any script in the page and by whoever has the unlocked device | offline-first needs a local copy; XSS is the way to read it, hence T6 | Phase 8: Capacitor secure storage option |
+| R3 | Data in `localStorage` is readable by any script in the page and by whoever has the unlocked device | offline-first needs a local copy; XSS is the way to read it, hence T6 | Android app lock (biometric / phone PIN) and `FLAG_SECURE` shipped (ADR-0014 §10); secure storage option still open |
 | R4 | A person's own device can send any data it wants about that person | by design the server does not trust it for shape and size, only for ownership | n/a |
 | R5 | The XSS browser scenario drives the main screens, not every sheet (import review, printable report) | those screens escape through the same helper; static scan found no gap | extend the scenario when those screens change |
 | R6 | No brute-force lock-out of the identity provider account | the provider (Keycloak) owns it; the API rate-limits the sign-in route | production IdP settings in Phase 9–10 |

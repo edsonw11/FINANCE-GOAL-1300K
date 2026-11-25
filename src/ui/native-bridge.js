@@ -28,8 +28,9 @@ export async function shareTextFile(text,name,cap=globalThis.Capacitor){
 // The Android WebView does not give a <dialog> the Back gesture, and Capacitor then leaves the app. So the app answers Back itself:
 // the innermost thing on screen closes first, then the tab goes back to the summary, and only then the app is left.
 const DIALOGS=['itemDlg','sugDlg','catDlg'];
-/** What Back should do for what is on screen: 'confirm-cancel' | 'dialog-close' | 'sheet-back' | 'sheet-close' | 'home' | 'exit'. s: {confirmOpen,dialogOpen,sheetOpen,sheetDepth,tab} */
+/** What Back should do for what is on screen: 'confirm-cancel' | 'dialog-close' | 'sheet-back' | 'sheet-close' | 'home' | 'exit'. s: {locked,confirmOpen,dialogOpen,sheetOpen,sheetDepth,tab} */
 export function backAction(s){
+  if(s.locked)return 'exit';
   if(s.confirmOpen)return 'confirm-cancel';
   if(s.dialogOpen)return 'dialog-close';
   if(s.sheetOpen)return s.sheetDepth>1?'sheet-back':'sheet-close';
@@ -40,7 +41,7 @@ export function backAction(s){
 export function readScreen(doc){
   const open=id=>{const d=doc.getElementById(id);return !!(d&&d.open);};
   const on=doc.querySelector('#nav button.on');
-  return {confirmOpen:open('confirmDlg'),dialogOpen:DIALOGS.some(open),sheetOpen:open('sheet'),
+  return {locked:open('lockDlg'),confirmOpen:open('confirmDlg'),dialogOpen:DIALOGS.some(open),sheetOpen:open('sheet'),
     sheetDepth:doc.getElementById('shBack')&&!doc.getElementById('shBack').hidden?2:1,tab:on?on.dataset.t:'resumo'};
 }
 /** Does what backAction said, through the app's own controls (so each screen cleans up the way it always does). */

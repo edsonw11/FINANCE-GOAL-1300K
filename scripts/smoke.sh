@@ -47,6 +47,7 @@ run "sync card, signed in (scripted API)" "http://127.0.0.1:8767/tests/.smoke-sy
 run "sync card, signed out" "http://127.0.0.1:8767/tests/.smoke-sync.html#signedout" "$TMP/p4"
 run "XSS: hostile text in every field, every screen (two loads)" "http://127.0.0.1:8767/tests/.smoke-xss.html" "$TMP/p5"
 run "Android shell: page with its own CSP and a scripted Capacitor" "http://127.0.0.1:8769/index.html" "$TMP/p6"
+run "Android shell, app lock on: starts locked (scripted AppLock)" "http://127.0.0.1:8769/index.html#locked" "$TMP/p7"
 run "built dist/ (file://)" "file://$TMP/dist-smoke.html" "$TMP/p2"
 if [ "$FAILED" = 1 ]; then echo "SMOKE FAILED"; exit 1; fi
 echo "SMOKE OK"

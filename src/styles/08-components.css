@@ -83,6 +83,15 @@ dialog.confirm h3{margin:0 0 10px;font-size:18px}
 .cf-check input{width:20px;height:20px;flex:none}
 .cf-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.cf-actions .btn{flex:1 1 30%;min-height:var(--tap)}
 button.dngf{background:var(--des);border-color:var(--des);color:#fff}
+/* app lock: covers the whole screen, above every other dialog */
+dialog.lock{position:fixed;inset:0;width:100vw;max-width:none;height:100dvh;max-height:none;margin:0;border:0;border-radius:0;background:var(--bg);color:var(--ink);padding:0}
+dialog.lock[open]{display:flex;align-items:center;justify-content:center}
+dialog.lock::backdrop{background:var(--bg)}
+.lock-box{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:24px;max-width:340px}
+.lock-ico{font-size:44px}
+.lock-box h3{margin:0;font-size:20px}
+#lockMsg{min-height:20px;font-size:14px;color:var(--muted)}
+.lock-box .btn{min-height:var(--tap);min-width:200px}
 /* date field: dd/mm/aaaa text + native calendar on top */
 .dp{position:relative;display:block}
 .dp .dp-text{cursor:pointer;padding-right:40px;caret-color:transparent}

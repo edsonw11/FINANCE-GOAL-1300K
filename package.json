@@ -20,6 +20,7 @@
     "test:services": "node --test services/telegram-apk/test/",
     "mobile:emulator": "bash scripts/mobile.sh emulator",
     "mobile:test": "bash scripts/mobile.sh test",
+    "mobile:test-lock": "bash scripts/mobile.sh test-lock",
     "mobile:apk": "bash scripts/mobile.sh apk",
     "dev:up": "bash scripts/dev.sh up",
     "dev:down": "bash scripts/dev.sh down",

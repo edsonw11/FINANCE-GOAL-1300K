@@ -5,6 +5,7 @@
 #   scripts/mobile.sh sync      web + copy it into the Android project (Capacitor 8 needs Node 22: it is fetched for this command only)
 #   scripts/mobile.sh emulator  start the virtual phone (AVD everfox_35, created once by `scripts/mobile.sh emulator create`) and wait for it to boot
 #   scripts/mobile.sh test      build the test APK (WebView debugging on), install it on the running device/emulator and run scripts/device-test.mjs
+#   scripts/mobile.sh test-lock the same for the app lock: sets a real phone PIN on the device (and removes it at the end), drives Android's own prompt
 #   scripts/mobile.sh apk       sync + build the debug APK  (needs JDK 21 and the Android SDK: ANDROID_HOME)
 #                               MOBILE_DEBUG=1 also turns WebView debugging on, for scripts/device-test.mjs (test build only)
 # Same through npm: npm run mobile:doctor | mobile:web | mobile:sync | mobile:apk
@@ -64,6 +65,13 @@ device_test() {
   if [ "$(node -p 'process.versions.node.split(".")[0]')" -ge 22 ]; then node scripts/device-test.mjs; else npm exec --yes --package=node@22 -- node scripts/device-test.mjs; fi
 }
 
+device_lock_test() {
+  local sdk="${ANDROID_HOME:-}"; [ -n "$sdk" ] || die "set ANDROID_HOME"
+  "$sdk/platform-tools/adb" get-state >/dev/null 2>&1 || die "no device or emulator connected (scripts/mobile.sh emulator)"
+  MOBILE_DEBUG=1 apk
+  if [ "$(node -p 'process.versions.node.split(".")[0]')" -ge 22 ]; then node scripts/device-test-lock.mjs; else npm exec --yes --package=node@22 -- node scripts/device-test-lock.mjs; fi
+}
+
 case "${1:-}" in
   doctor) doctor ;;
   web) web ;;
@@ -71,5 +79,6 @@ case "${1:-}" in
   apk) apk ;;
   emulator) shift; emulator "$@" ;;
   test) device_test ;;
+  test-lock) device_lock_test ;;
   *) sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'; [ -z "${1:-}" ] || exit 2 ;;
 esac

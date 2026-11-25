@@ -39,7 +39,7 @@ module.exports=async()=>{const {eq,ok,res}=suite('native-bridge');
   eq('a missing filesystem plugin is reported too',await N.shareTextFile('x','b.json',c),{ok:false,error:'sharing is not available here'});
 
   // ---- the Back button ----
-  const scr=(o={})=>Object.assign({confirmOpen:false,dialogOpen:false,sheetOpen:false,sheetDepth:1,tab:'resumo'},o);
+  const scr=(o={})=>Object.assign({locked:false,confirmOpen:false,dialogOpen:false,sheetOpen:false,sheetDepth:1,tab:'resumo'},o);
   eq('Back with nothing open on the summary leaves the app',N.backAction(scr()),'exit');
   eq('Back on another tab goes to the summary first',N.backAction(scr({tab:'lanc'})),'home');
   eq('Back with no tab known (nothing selected) leaves',N.backAction(scr({tab:''})),'exit');
@@ -47,17 +47,19 @@ module.exports=async()=>{const {eq,ok,res}=suite('native-bridge');
   eq('Back inside a sheet one level down goes up one level',N.backAction(scr({sheetOpen:true,sheetDepth:2})),'sheet-back');
   eq('Back closes another dialog before the sheet under it',N.backAction(scr({sheetOpen:true,dialogOpen:true})),'dialog-close');
   eq('Back answers the confirmation before anything else',N.backAction(scr({sheetOpen:true,dialogOpen:true,confirmOpen:true,tab:'cfg'})),'confirm-cancel');
+  eq('Back on the lock screen leaves the app, whatever is under it',N.backAction(scr({locked:true,sheetOpen:true,confirmOpen:true,tab:'cfg'})),'exit');
   eq('an open sheet beats the tab rule',N.backAction(scr({sheetOpen:true,tab:'cfg'})),'sheet-close');
 
   // a page made of plain objects: only what readScreen and doBack touch
   const page=(o={})=>{const clicks=[],closed=[];const els={};
-    for(const id of ['confirmDlg','itemDlg','sugDlg','catDlg','sheet'])els[id]={id,open:!!(o.open||[]).includes(id),close(){this.open=false;closed.push(id);}};
+    for(const id of ['confirmDlg','itemDlg','sugDlg','catDlg','sheet','lockDlg'])els[id]={id,open:!!(o.open||[]).includes(id),close(){this.open=false;closed.push(id);}};
     els.shBack={hidden:!o.deep};
     const sel={'#cfCancel':'cfCancel','#shBack':'shBack','#shClose':'shClose','#nav [data-t=resumo]':'home','#nav button.on':null};
     return {clicks,closed,els,getElementById:id=>els[id]||null,
       querySelector:q=>q==='#nav button.on'?(o.tab?{dataset:{t:o.tab}}:null):(q in sel?{click:()=>clicks.push(sel[q])}:null)};};
-  eq('readScreen: nothing open, no tab selected',N.readScreen(page()),{confirmOpen:false,dialogOpen:false,sheetOpen:false,sheetDepth:1,tab:'resumo'});
-  eq('readScreen: sheet open two levels deep on the Ajustes tab',N.readScreen(page({open:['sheet'],deep:true,tab:'cfg'})),{confirmOpen:false,dialogOpen:false,sheetOpen:true,sheetDepth:2,tab:'cfg'});
+  eq('readScreen: nothing open, no tab selected',N.readScreen(page()),{locked:false,confirmOpen:false,dialogOpen:false,sheetOpen:false,sheetDepth:1,tab:'resumo'});
+  eq('readScreen: sheet open two levels deep on the Ajustes tab',N.readScreen(page({open:['sheet'],deep:true,tab:'cfg'})),{locked:false,confirmOpen:false,dialogOpen:false,sheetOpen:true,sheetDepth:2,tab:'cfg'});
+  eq('readScreen: the lock screen is told apart from the other dialogs',[N.readScreen(page({open:['lockDlg']})).locked,N.readScreen(page({open:['lockDlg']})).dialogOpen],[true,false]);
   eq('readScreen: a confirmation over a sheet',N.readScreen(page({open:['sheet','confirmDlg']})).confirmOpen,true);
   eq('readScreen: any of the other dialogs counts',[ 'itemDlg','sugDlg','catDlg'].map(d=>N.readScreen(page({open:[d]})).dialogOpen),[true,true,true]);
   let pg=page();N.doBack('confirm-cancel',pg);N.doBack('sheet-back',pg);N.doBack('sheet-close',pg);N.doBack('home',pg);

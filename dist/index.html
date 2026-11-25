@@ -238,6 +238,15 @@ dialog.confirm h3{margin:0 0 10px;font-size:18px}
 .cf-check input{width:20px;height:20px;flex:none}
 .cf-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.cf-actions .btn{flex:1 1 30%;min-height:var(--tap)}
 button.dngf{background:var(--des);border-color:var(--des);color:#fff}
+/* app lock: covers the whole screen, above every other dialog */
+dialog.lock{position:fixed;inset:0;width:100vw;max-width:none;height:100dvh;max-height:none;margin:0;border:0;border-radius:0;background:var(--bg);color:var(--ink);padding:0}
+dialog.lock[open]{display:flex;align-items:center;justify-content:center}
+dialog.lock::backdrop{background:var(--bg)}
+.lock-box{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:24px;max-width:340px}
+.lock-ico{font-size:44px}
+.lock-box h3{margin:0;font-size:20px}
+#lockMsg{min-height:20px;font-size:14px;color:var(--muted)}
+.lock-box .btn{min-height:var(--tap);min-width:200px}
 /* date field: dd/mm/aaaa text + native calendar on top */
 .dp{position:relative;display:block}
 .dp .dp-text{cursor:pointer;padding-right:40px;caret-color:transparent}
@@ -1083,6 +1092,11 @@ dialog.dlg-wide{width:min(580px,94vw)}
   </div>
   <h2 id="syncTitle" hidden>☁️ Conta e sincronização</h2>
   <div class="card" id="syncCard" hidden><div id="syncBody"></div></div>
+  <h2 id="lockTitle" hidden>🔒 Bloqueio do app</h2>
+  <div class="card" id="lockCard" hidden>
+    <div class="row"><button class="btn" id="lockToggle" type="button"></button></div>
+    <div class="help" id="lockHelp"></div>
+  </div>
   <h2>🧰 Dados</h2>
   <div class="card"><div class="row">
     <button class="btn" id="exp">⬇️ Exportar backup</button><button class="btn" id="imp">⬆️ Importar backup</button>
@@ -1134,6 +1148,11 @@ dialog.dlg-wide{width:min(580px,94vw)}
   <h3 id="cfTitle"></h3><div id="cfText"></div>
   <label id="cfCheckW" class="cf-check" hidden><input type="checkbox" id="cfCheck"><span id="cfCheckL"></span></label>
   <div class="cf-actions"><button type="button" class="btn" id="cfCancel">Cancelar</button><button type="button" class="btn" id="cfAlt" hidden></button><button type="button" class="btn pri" id="cfOk">Confirmar</button></div>
+</dialog>
+<dialog id="lockDlg" class="lock" aria-labelledby="lockHead">
+  <div class="lock-box"><div class="lock-ico" aria-hidden="true">🔒</div><h3 id="lockHead">Everfox bloqueado</h3>
+    <div id="lockMsg" role="status" aria-live="polite"></div>
+    <button type="button" class="btn pri" id="lockRetry">Desbloquear</button></div>
 </dialog>
 <button type="button" id="fab" class="fab" aria-label="Novo lançamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 <nav id="bnav" class="bnav" aria-label="Menu principal">
@@ -6825,8 +6844,9 @@ async function shareTextFile(text,name,cap=globalThis.Capacitor){
 // The Android WebView does not give a <dialog> the Back gesture, and Capacitor then leaves the app. So the app answers Back itself:
 // the innermost thing on screen closes first, then the tab goes back to the summary, and only then the app is left.
 const DIALOGS=['itemDlg','sugDlg','catDlg'];
-/** What Back should do for what is on screen: 'confirm-cancel' | 'dialog-close' | 'sheet-back' | 'sheet-close' | 'home' | 'exit'. s: {confirmOpen,dialogOpen,sheetOpen,sheetDepth,tab} */
+/** What Back should do for what is on screen: 'confirm-cancel' | 'dialog-close' | 'sheet-back' | 'sheet-close' | 'home' | 'exit'. s: {locked,confirmOpen,dialogOpen,sheetOpen,sheetDepth,tab} */
 function backAction(s){
+  if(s.locked)return 'exit';
   if(s.confirmOpen)return 'confirm-cancel';
   if(s.dialogOpen)return 'dialog-close';
   if(s.sheetOpen)return s.sheetDepth>1?'sheet-back':'sheet-close';
@@ -6837,7 +6857,7 @@ function backAction(s){
 function readScreen(doc){
   const open=id=>{const d=doc.getElementById(id);return !!(d&&d.open);};
   const on=doc.querySelector('#nav button.on');
-  return {confirmOpen:open('confirmDlg'),dialogOpen:DIALOGS.some(open),sheetOpen:open('sheet'),
+  return {locked:open('lockDlg'),confirmOpen:open('confirmDlg'),dialogOpen:DIALOGS.some(open),sheetOpen:open('sheet'),
     sheetDepth:doc.getElementById('shBack')&&!doc.getElementById('shBack').hidden?2:1,tab:on?on.dataset.t:'resumo'};
 }
 /** Does what backAction said, through the app's own controls (so each screen cleans up the way it always does). */
@@ -7805,12 +7825,201 @@ function bindDescriptionSuggestions(){
   });
 }
 
+// ---- src/ui/app-lock/lock-policy.js
+/**
+ * ui/app-lock/lock-policy.js
+ * Responsibility: the rules of the app lock, with no screen and no phone in them: is it switched on (a flag in the device storage), and has the app been away long enough to lock again.
+ */
+const LOCK_KEY='metaapp.lock';
+/** Leaving the app for a moment (a notification, the share sheet) does not lock it; leaving it for this long does. */
+const GRACE_MS=30000;
+function lockEnabled(storage=globalThis.localStorage){
+  try{return storage.getItem(LOCK_KEY)==='1';}catch(e){return false;}
+}
+function setLockEnabled(on,storage=globalThis.localStorage){
+  try{if(on)storage.setItem(LOCK_KEY,'1');else storage.removeItem(LOCK_KEY);}catch(e){/* storage unavailable: the lock stays as it was */}
+}
+/** backgroundedAt: when the app left the screen (ms), or null when it did not. */
+function shouldLockOnResume(backgroundedAt,now,grace=GRACE_MS){
+  return typeof backgroundedAt==='number'&&now-backgroundedAt>=grace;
+}
+
+// ---- src/ui/app-lock/app-lock.js
+/**
+ * ui/app-lock/app-lock.js
+ * Responsibility: the lock's behaviour: when to lock (at start and after the app was away), how to unlock, how to switch it on and off.
+ * It is built from three parts it does not know the insides of: the gateway (the phone), the screen (the dialog) and the storage (the on/off flag).
+ * If the phone has no screen lock any more, the lock cannot work, so it switches itself off instead of shutting the person out.
+ */
+
+const TEXT={
+  title:'Desbloquear o Everfox',subtitle:'Use sua digital, seu rosto ou o PIN do celular',
+  cancelled:'Desbloqueio cancelado. Toque em “Desbloquear” para tentar de novo.',
+  lockout:'Muitas tentativas. Aguarde um pouco e tente de novo.',
+  failed:'Não foi possível desbloquear. Tente de novo.',
+  gone:'O celular ficou sem bloqueio de tela, então o bloqueio do app foi desligado.',
+  needDeviceLock:'Para usar o bloqueio do app, ative uma tela de bloqueio (PIN, padrão ou biometria) nas configurações do celular.',
+};
+const LOCK_TEXT=TEXT;
+function createAppLock({gateway,screen,storage,now=Date.now,notify=()=>{}}){
+  let locked=false,busy=false,awayAt=null;
+  const messageFor=code=>code==='cancelled'?TEXT.cancelled:code==='lockout'?TEXT.lockout:TEXT.failed;
+  function unlock(){locked=false;awayAt=null;screen.message('');screen.hide();}
+  async function turnOffBecauseUnavailable(){
+    setLockEnabled(false,storage);await gateway.setSecure(false);unlock();notify(TEXT.gone);
+  }
+  /** Asks the phone to confirm the person. Only one request at a time. */
+  async function prompt(){
+    if(busy||!locked)return;
+    busy=true;
+    try{
+      const st=await gateway.status();
+      if(!st.available){await turnOffBecauseUnavailable();return;}
+      const r=await gateway.authenticate({title:TEXT.title,subtitle:TEXT.subtitle});
+      if(r.ok)unlock();
+      else if(r.code==='unavailable')await turnOffBecauseUnavailable();
+      else screen.message(messageFor(r.code));
+    }finally{busy=false;}
+  }
+  function lock(){
+    if(locked||!lockEnabled(storage))return;
+    locked=true;screen.message('');screen.show();prompt();
+  }
+  return {
+    isLocked:()=>locked,
+    isEnabled:()=>lockEnabled(storage),
+    /** At app start: wire the button, then lock at once when the lock is on. */
+    start(){screen.bind(prompt);gateway.setSecure(lockEnabled(storage));lock();},
+    retry:prompt,
+    /** The app left the screen / came back. The system prompt also pauses the app, but then the app is locked already, and unlocking forgets the time away. */
+    onBackground(){awayAt=now();},
+    onForeground(){const was=awayAt;awayAt=null;if(shouldLockOnResume(was,now()))lock();},
+    /** Switching on needs a phone with a screen lock and one successful confirmation, so the person cannot lock themselves out. */
+    async enable(){
+      const st=await gateway.status();
+      if(!st.available)return {ok:false,message:TEXT.needDeviceLock};
+      const r=await gateway.authenticate({title:'Ativar o bloqueio do app',subtitle:TEXT.subtitle});
+      if(!r.ok)return {ok:false,message:r.code==='cancelled'?'':messageFor(r.code)};
+      setLockEnabled(true,storage);await gateway.setSecure(true);
+      return {ok:true};
+    },
+    /** Switching off also needs the confirmation: someone holding an unlocked phone cannot just remove the lock. */
+    async disable(){
+      const r=await gateway.authenticate({title:'Desativar o bloqueio do app',subtitle:TEXT.subtitle});
+      if(!r.ok)return {ok:false,message:r.code==='cancelled'?'':messageFor(r.code)};
+      setLockEnabled(false,storage);await gateway.setSecure(false);
+      return {ok:true};
+    },
+  };
+}
+
+// ---- src/ui/app-lock/lock-gateway.js
+/**
+ * ui/app-lock/lock-gateway.js
+ * Responsibility: the only place that talks to the native AppLock plugin (the Android biometric / device-credential prompt and the screen-capture flag).
+ * It turns every outcome into plain data, so the rest of the lock never sees an exception. Outside the Android shell it reports "not available".
+ * authenticate() answers {ok:true} or {ok:false,code}: code is 'cancelled' | 'lockout' | 'unavailable' | 'failed'.
+ */
+
+function lockGateway(cap=globalThis.Capacitor){
+  const P=cap&&cap.Plugins&&cap.Plugins.AppLock;
+  const present=isNative(cap)&&!!P;
+  return {
+    present,
+    async status(){
+      if(!present)return {available:false,reason:'unsupported'};
+      try{const s=await P.status();return {available:!!s.available,reason:s.reason||''};}
+      catch(e){return {available:false,reason:'error'};}
+    },
+    async authenticate(opts){
+      if(!present)return {ok:false,code:'unavailable'};
+      try{await P.authenticate(opts);return {ok:true};}
+      catch(e){return {ok:false,code:(e&&e.code)||'failed'};}
+    },
+    /** Hides the app from the recent-apps list and from screenshots while the lock is on. */
+    async setSecure(secure){
+      if(!present)return;
+      try{await P.setSecure({secure:!!secure});}catch(e){/* cosmetic protection: its failure must not block the lock */}
+    },
+  };
+}
+
+// ---- src/ui/app-lock/lock-screen.js
+/**
+ * ui/app-lock/lock-screen.js
+ * Responsibility: the lock screen itself, a full-screen modal dialog (#lockDlg): show it, hide it, put a message on it, and report the "Unlock" button.
+ * A modal dialog sits in the top layer, so it covers every other dialog and sheet; Back / Esc cannot close it.
+ */
+function lockScreen(doc=document){
+  const dlg=()=>doc.getElementById('lockDlg');
+  return {
+    isOpen(){const d=dlg();return !!(d&&d.open);},
+    show(){const d=dlg();if(d&&!d.open)d.showModal();},
+    hide(){const d=dlg();if(d&&d.open)d.close();},
+    message(text){const m=doc.getElementById('lockMsg');if(m)m.textContent=text||'';},
+    /** The dialog's cancel event (Esc, system Back) must not close it; the button runs `fn`. */
+    bind(fn){
+      const d=dlg(),b=doc.getElementById('lockRetry');
+      if(d)d.addEventListener('cancel',e=>e.preventDefault());
+      if(b)b.onclick=fn;
+    },
+  };
+}
+
+// ---- src/ui/app-lock/lock-events.js
+/**
+ * ui/app-lock/lock-events.js
+ * Responsibility: tells the lock when the app leaves and returns to the screen, from the Capacitor App plugin (appStateChange) or, in a browser, from the page's visibility.
+ */
+
+function bindLockEvents(lock,cap=globalThis.Capacitor){
+  const A=cap&&cap.Plugins&&cap.Plugins.App;
+  if(!isNative(cap)||!A||typeof A.addListener!=='function')return false;
+  A.addListener('appStateChange',s=>{if(s&&s.isActive)lock.onForeground();else lock.onBackground();});
+  return true;
+}
+
+// ---- src/ui/views/lock-settings.js
+/**
+ * ui/views/lock-settings.js
+ * Responsibility: the "Bloqueio do app" card in Ajustes: shown only inside the Android shell, one button that switches the lock on or off, and its explanation.
+ */
+
+
+function renderLockCard(lock,present){
+  $('lockTitle').hidden=!present;$('lockCard').hidden=!present;
+  if(!present)return;
+  const on=lock.isEnabled();
+  $('lockToggle').textContent=on?'🔓 Desativar o bloqueio':'🔒 Ativar o bloqueio';
+  $('lockHelp').textContent=on
+    ?'O app pede sua digital, seu rosto ou o PIN do celular ao abrir e depois de 30 segundos fora dele. A tela do app também some da lista de apps recentes.'
+    :'Peça sua digital, seu rosto ou o PIN do celular para abrir o app. Funciona sem internet e não cria uma senha nova.';
+}
+function bindLockSettings(lock,present){
+  renderLockCard(lock,present);
+  if(!present)return;
+  $('lockToggle').onclick=async()=>{
+    const b=$('lockToggle');b.disabled=true;
+    try{
+      const r=lock.isEnabled()?await lock.disable():await lock.enable();
+      if(!r.ok&&r.message)toast('⚠️ '+r.message);
+      else if(r.ok)toast(lock.isEnabled()?'Bloqueio do app ativado':'Bloqueio do app desativado');
+    }finally{b.disabled=false;renderLockCard(lock,present);}
+  };
+}
+
 // ---- src/app.js
 /**
  * app.js
  * Responsibility: bootstrap. Wires the pieces in the right order and renders the first time.
  * Contains no business rules and no HTML.
  */
+
+
+
+
+
+
 
 
 
@@ -7879,6 +8088,11 @@ bindBills();
 bindImport();
 bindQuickEntry();
 bindDescriptionSuggestions();
+const gateway=lockGateway();
+const appLock=createAppLock({gateway,screen:lockScreen(),storage:localStorage,notify:m=>{toast('⚠️ '+m);renderLockCard(appLock,gateway.present);}});
+appLock.start();
+bindLockEvents(appLock);
+bindLockSettings(appLock,gateway.present);
 render();
 announceRecovery();
 
