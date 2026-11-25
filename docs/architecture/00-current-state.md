@@ -223,7 +223,7 @@ Not in the original brief, required for this case:
 | 2 | Docker Compose with Postgres, backend skeleton, config validation, health, migrations, first vertical slice | ✅ backend + DB up, migrations and tests pass (ADR-0007) |
 | 3 | Auth (OIDC + PKCE), ownership on every endpoint, IDOR/BOLA tests | login works; user A cannot read user B |
 | 4 | Domain modules behind the API, import of your JSON, golden file reproduced through the API | totals and golden match the browser app |
-| 5 | Web app talks to the API (storage adapter already exists as an injection point), same UI | e2e + visual baseline unchanged |
+| 5 | Web app talks to the API (storage adapter already exists as an injection point), same UI; **offline first: local copy + outbox + "Sincronizar" (ADR-0008)** | e2e + visual baseline unchanged |
 | 6 | One command for the whole environment, seed, scripts | clean-machine start |
 | 7 | Threat model, OWASP checks, CSP, backup/restore test | critical/high closed |
 | 8 | Capacitor Android (can be moved to right after 1) | installs and runs on a device |
