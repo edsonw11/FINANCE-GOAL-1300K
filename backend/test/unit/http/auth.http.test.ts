@@ -148,7 +148,7 @@ describe('GET /api/v1/me', () => {
     const cookie = await t.login();
     const res = await t.app.inject({ method: 'GET', url: '/api/v1/me', headers: { cookie } });
     expect(res.statusCode).toBe(200);
-    expect(Object.keys(res.json()).sort()).toEqual(['displayName', 'email', 'id']);
+    expect(Object.keys(res.json()).sort()).toEqual(['displayName', 'email', 'features', 'id', 'plan']);
     expect(res.json()).toMatchObject({ email: 'alice@example.test', displayName: 'Alice' });
     expect(res.headers['cache-control']).toBe('no-store');
   });

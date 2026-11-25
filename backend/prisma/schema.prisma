@@ -21,13 +21,18 @@ model AppUser {
   displayName String?  @map("display_name")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   lastLoginAt DateTime @default(now()) @map("last_login_at") @db.Timestamptz(6)
+  planId      String   @default("free") @map("plan_id")
+  isAdmin     Boolean  @default(false) @map("is_admin")
 
   sessions     Session[]
   accounts     Account[]
   syncCursor   SyncCursor?
   syncMutation SyncMutation[]
+  plan         Plan           @relation(fields: [planId], references: [id])
+  auditLogs    AuditLog[]
 
   @@unique([oidcIssuer, oidcSubject])
+  @@index([planId])
   @@map("app_user")
 }
 
@@ -101,4 +106,39 @@ model SyncMutation {
   @@id([userId, mutationId])
   @@index([createdAt])
   @@map("sync_mutation")
+}
+
+// A plan a person can be on. Which features it has is in plan_feature; the catalogue of keys is in code (src/plans/features.ts).
+model Plan {
+  id       String        @id
+  name     String
+  features PlanFeature[]
+  users    AppUser[]
+
+  @@map("plan")
+}
+
+model PlanFeature {
+  planId     String @map("plan_id")
+  featureKey String @map("feature_key")
+
+  plan Plan @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  @@id([planId, featureKey])
+  @@map("plan_feature")
+}
+
+// Changes made through the admin routes: who, what, on what, when.
+model AuditLog {
+  id          String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  actorUserId String?  @map("actor_user_id") @db.Uuid
+  action      String
+  target      String
+  details     Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  actor AppUser? @relation(fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@map("audit_log")
 }

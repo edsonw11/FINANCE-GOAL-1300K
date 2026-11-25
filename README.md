@@ -53,6 +53,7 @@ npm run test:integration           real PostgreSQL + the built program (needs th
 ```
 
 Login (OIDC with Keycloak locally), sessions and per-person ownership: [ADR-0009](docs/architecture/decisions/ADR-0009-login-sessions-ownership.md).
+Sync (offline outbox, changes feed) and plans with locked PRO features: [ADR-0010](docs/architecture/decisions/ADR-0010-sync-and-plans.md).
 Skeleton decisions: [ADR-0007](docs/architecture/decisions/ADR-0007-backend-skeleton.md).
 
 For the login tests start the identity provider too: `docker compose up -d db keycloak` (users `alice` / `alice-dev-password`, `bob` / `bob-dev-password`, development only).

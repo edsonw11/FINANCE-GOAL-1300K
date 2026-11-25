@@ -4,11 +4,13 @@ import { PrismaAccountRepository } from '../../src/accounts/prisma-account.repos
 import { PrismaAuthFlowRepository } from '../../src/auth/prisma-auth-flow.repository';
 import { PrismaSessionRepository } from '../../src/auth/prisma-session.repository';
 import { PrismaService } from '../../src/database/prisma.service';
+import { PrismaPlanRepository } from '../../src/plans/prisma-plan.repository';
 import { PrismaMutationLog } from '../../src/sync/prisma-mutation-log';
 import { PrismaUserRepository } from '../../src/users/prisma-user.repository';
 import { accountRepositoryContract } from '../contracts/account-repository.contract';
 import { authFlowRepositoryContract } from '../contracts/auth-flow-repository.contract';
 import { mutationLogContract } from '../contracts/mutation-log.contract';
+import { planRepositoryContract } from '../contracts/plan-repository.contract';
 import { sessionRepositoryContract } from '../contracts/session-repository.contract';
 import { userRepositoryContract } from '../contracts/user-repository.contract';
 import { databaseUrl, withClient } from './support';
@@ -36,3 +38,8 @@ authFlowRepositoryContract('PostgreSQL', async () => new PrismaAuthFlowRepositor
 userRepositoryContract('PostgreSQL', async () => new PrismaUserRepository(prisma));
 accountRepositoryContract('PostgreSQL', async () => ({ repository: new PrismaAccountRepository(prisma), newUserId }));
 mutationLogContract('PostgreSQL', async () => ({ log: new PrismaMutationLog(prisma), newUserId }));
+planRepositoryContract('PostgreSQL', async () => ({
+  repository: new PrismaPlanRepository(prisma),
+  newUserId,
+  setAdmin: async (userId, isAdmin) => void (await prisma.appUser.update({ where: { id: userId }, data: { isAdmin } })),
+}));

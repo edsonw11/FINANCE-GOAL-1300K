@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { FEATURES } from '../../src/plans/features';
 import { withClient } from './support';
 
 // What the database refuses by itself, whatever the application does.
@@ -103,5 +104,48 @@ describe('sync tables', () => {
     await rejects(sql, [a, mutation], /duplicate key/);
     await withClient((c) => c.query(sql, [b, mutation]));
     await rejects(sql, [randomUUID(), randomUUID()], /foreign key/);
+  });
+});
+
+describe('plans', () => {
+  it('starts with free and pro, free having no gated feature and pro having every one the code knows', async () => {
+    const { rows } = await withClient((c) => c.query('SELECT plan_id, feature_key FROM plan_feature ORDER BY plan_id, feature_key'));
+    expect(rows.filter((r) => r.plan_id === 'free')).toEqual([]);
+    expect(rows.filter((r) => r.plan_id === 'pro').map((r) => r.feature_key)).toEqual(['budgets.advanced', 'import.bank-files', 'investments.projection', 'report.monthly']);
+  });
+
+  it('every feature the database gives to a plan is in the code catalogue (a typo in a migration would lock nobody out silently)', async () => {
+    const { rows } = await withClient((c) => c.query('SELECT DISTINCT feature_key FROM plan_feature'));
+    const known = new Set<string>(FEATURES);
+    expect(rows.map((r) => r.feature_key).filter((k: string) => !k.startsWith('contract.') && !known.has(k))).toEqual([]);
+  });
+
+  it('a new person is on free and is not an administrator', async () => {
+    const id = await newUser();
+    const { rows } = await withClient((c) => c.query('SELECT plan_id, is_admin FROM app_user WHERE id = $1', [id]));
+    expect(rows).toEqual([{ plan_id: 'free', is_admin: false }]);
+  });
+
+  it('a person cannot be put on a plan that does not exist, and a plan in use cannot be deleted', async () => {
+    const id = await newUser();
+    await rejects('UPDATE app_user SET plan_id = $2 WHERE id = $1', [id, 'ghost'], /foreign key/);
+    await withClient((c) => c.query("UPDATE app_user SET plan_id = 'pro' WHERE id = $1", [id]));
+    await rejects("DELETE FROM plan WHERE id = 'pro'", [], /foreign key/);
+  });
+
+  it('refuses malformed plan ids and feature keys', async () => {
+    await rejects("INSERT INTO plan (id, name) VALUES ('Bad Id', 'x')", [], /plan_id_format/);
+    await rejects("INSERT INTO plan (id, name) VALUES ('ok', '')", [], /plan_name_length/);
+    await rejects("INSERT INTO plan_feature (plan_id, feature_key) VALUES ('free', 'Has Spaces')", [], /plan_feature_key_format/);
+    await rejects("INSERT INTO plan_feature (plan_id, feature_key) VALUES ('ghost', 'ok.key')", [], /foreign key/);
+  });
+
+  it('keeps the audit history when the person who acted is deleted', async () => {
+    const id = await newUser();
+    const { rows } = await withClient((c) => c.query("INSERT INTO audit_log (actor_user_id, action, target) VALUES ($1, 'test.action', 'plan:free') RETURNING id", [id]));
+    await withClient((c) => c.query('DELETE FROM app_user WHERE id = $1', [id]));
+    const after = await withClient((c) => c.query('SELECT actor_user_id FROM audit_log WHERE id = $1', [rows[0].id]));
+    expect(after.rows).toEqual([{ actor_user_id: null }]);
+    await withClient((c) => c.query('DELETE FROM audit_log WHERE id = $1', [rows[0].id]));
   });
 });

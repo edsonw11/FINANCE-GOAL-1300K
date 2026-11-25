@@ -6,6 +6,7 @@ import { type AppConfig } from './config/app-config';
 import { ConfigModule } from './config/config.module';
 import { DatabaseModule } from './database/database.module';
 import { HealthModule } from './health/health.module';
+import { PlansModule } from './plans/plans.module';
 import { SyncModule } from './sync/sync.module';
 
 @Module({})
@@ -14,7 +15,7 @@ export class AppModule {
   static forRoot(config: AppConfig): DynamicModule {
     return {
       module: AppModule,
-      imports: [ConfigModule.forRoot(config), ClockModule, DatabaseModule, AuthModule, AccountsModule, SyncModule, HealthModule],
+      imports: [ConfigModule.forRoot(config), ClockModule, DatabaseModule, AuthModule, PlansModule, AccountsModule, SyncModule, HealthModule],
     };
   }
 }

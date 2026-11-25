@@ -1,3 +1,4 @@
+import { type Type } from '@nestjs/common';
 import { type TestingModule, Test } from '@nestjs/testing';
 import { type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { ACCOUNT_REPOSITORY } from '../../src/accounts/account.repository';
@@ -10,10 +11,12 @@ import { type AppConfig } from '../../src/config/app-config';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/database/prisma.service';
 import { configureApp, createAdapter } from '../../src/create-app';
+import { AUDIT_REPOSITORY } from '../../src/plans/audit.repository';
+import { PLAN_REPOSITORY } from '../../src/plans/plan.repository';
 import { MUTATION_LOG } from '../../src/sync/mutation-log';
 import { USER_REPOSITORY } from '../../src/users/user.repository';
 import { baseEnv } from './env';
-import { FakeClock, FakeOidcProvider, InMemoryAccountRepository, InMemoryAuthFlowRepository, InMemoryMutationLog, InMemorySessionRepository, InMemoryUserRepository } from './fakes';
+import { FakeClock, FakeOidcProvider, InMemoryAccountRepository, InMemoryAuditRepository, InMemoryAuthFlowRepository, InMemoryMutationLog, InMemoryPlanRepository, InMemorySessionRepository, InMemoryUserRepository } from './fakes';
 
 export const ORIGIN = 'http://localhost:3000';
 export const CSRF = { origin: ORIGIN, 'x-everfox-csrf': '1' } as const;
@@ -28,13 +31,15 @@ export interface TestApp {
   readonly users: InMemoryUserRepository;
   readonly accounts: InMemoryAccountRepository;
   readonly mutationLog: InMemoryMutationLog;
+  readonly plans: InMemoryPlanRepository;
+  readonly audit: InMemoryAuditRepository;
   /** Logs in through the real routes as the person the fake provider currently describes; returns the Cookie header value. */
   login(returnTo?: string): Promise<string>;
   close(): Promise<void>;
 }
 
 /** The whole HTTP application (real controllers, guards, services) with in-memory storage and a scripted identity provider. */
-export async function createTestApp(env: Record<string, string | undefined> = {}): Promise<TestApp> {
+export async function createTestApp(env: Record<string, string | undefined> = {}, extraControllers: Type<unknown>[] = []): Promise<TestApp> {
   const config = loadConfig({ ...baseEnv(), NODE_ENV: 'test', LOG_LEVEL: 'silent', ...env } as NodeJS.ProcessEnv);
   const clock = new FakeClock();
   const provider = new FakeOidcProvider();
@@ -43,7 +48,9 @@ export async function createTestApp(env: Record<string, string | undefined> = {}
   const users = new InMemoryUserRepository();
   const accounts = new InMemoryAccountRepository();
   const mutationLog = new InMemoryMutationLog();
-  const moduleRef: TestingModule = await Test.createTestingModule({ imports: [AppModule.forRoot(config)] })
+  const plans = new InMemoryPlanRepository();
+  const audit = new InMemoryAuditRepository();
+  const moduleRef: TestingModule = await Test.createTestingModule({ imports: [AppModule.forRoot(config)], controllers: extraControllers })
     .overrideProvider(PrismaService)
     .useValue({})
     .overrideProvider(CLOCK)
@@ -60,6 +67,10 @@ export async function createTestApp(env: Record<string, string | undefined> = {}
     .useValue(accounts)
     .overrideProvider(MUTATION_LOG)
     .useValue(mutationLog)
+    .overrideProvider(PLAN_REPOSITORY)
+    .useValue(plans)
+    .overrideProvider(AUDIT_REPOSITORY)
+    .useValue(audit)
     .compile();
   const app = moduleRef.createNestApplication<NestFastifyApplication>(createAdapter(), { logger: false });
   await configureApp(app);
@@ -82,6 +93,8 @@ export async function createTestApp(env: Record<string, string | undefined> = {}
     users,
     accounts,
     mutationLog,
+    plans,
+    audit,
     async login(returnTo = '/') {
       const start = await app.inject({ method: 'GET', url: `/auth/login?returnTo=${encodeURIComponent(returnTo)}` });
       const flow = cookieOf(start.headers['set-cookie'], config.cookies.flowName);

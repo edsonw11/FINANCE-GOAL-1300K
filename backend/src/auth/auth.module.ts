@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { DatabaseModule } from '../database/database.module';
+import { PlansModule } from '../plans/plans.module';
 import { PrismaUserRepository } from '../users/prisma-user.repository';
 import { USER_REPOSITORY } from '../users/user.repository';
 import { AUTH_FLOW_REPOSITORY } from './auth-flow.repository';
@@ -17,7 +18,7 @@ import { SESSION_REPOSITORY } from './session.repository';
 import { SessionService } from './session.service';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, PlansModule],
   controllers: [AuthController, MeController],
   providers: [
     SessionService,

@@ -4,6 +4,8 @@ import { type AuthFlowRecord, type AuthFlowRepository } from '../../src/auth/aut
 import { type AuthorizationRequest, type FlowSecrets, LoginFailedError, type OidcIdentity, type OidcProvider } from '../../src/auth/oidc-provider';
 import { type SessionRecord, type SessionRepository } from '../../src/auth/session.repository';
 import { type Clock } from '../../src/clock';
+import { type AuditEntry, type AuditRepository } from '../../src/plans/audit.repository';
+import { type ChangeResult, type PlanRepository, type PlanView, type UserPlan } from '../../src/plans/plan.repository';
 import { type MutationLog, type MutationOutcome } from '../../src/sync/mutation-log';
 import { type UserRecord, type UserRepository } from '../../src/users/user.repository';
 
@@ -187,5 +189,58 @@ export class FakeOidcProvider implements OidcProvider {
     const last = this.requests[this.requests.length - 1];
     if (!last) throw new Error('no login was started');
     return `/auth/callback?code=the-code&state=${encodeURIComponent(last.state)}${extra}`;
+  }
+}
+
+const DEFAULT_PLANS = (): Map<string, { name: string; features: Set<string> }> =>
+  new Map([
+    ['free', { name: 'Free', features: new Set<string>() }],
+    ['pro', { name: 'Pro', features: new Set(['budgets.advanced', 'import.bank-files', 'investments.projection', 'report.monthly']) }],
+  ]);
+
+/** The plans as the migration seeds them. */
+export class InMemoryPlanRepository implements PlanRepository {
+  readonly plans = DEFAULT_PLANS();
+  readonly userPlans = new Map<string, string>();
+  readonly admins = new Set<string>();
+  /** People that exist; setUserPlan on anybody else answers "no_user". Tests that do not care leave it empty and every id is accepted. */
+  readonly knownUsers = new Set<string>();
+
+  async planOf(userId: string): Promise<UserPlan | null> {
+    if (this.knownUsers.size > 0 && !this.knownUsers.has(userId)) return null;
+    const planId = this.userPlans.get(userId) ?? 'free';
+    return { planId, planName: this.plans.get(planId)!.name, isAdmin: this.admins.has(userId) };
+  }
+  async featuresOf(planId: string) {
+    return [...(this.plans.get(planId)?.features ?? [])].sort();
+  }
+  async listPlans(): Promise<PlanView[]> {
+    return [...this.plans.entries()].sort(([a], [b]) => a.localeCompare(b)).map(([id, p]) => ({ id, name: p.name, features: [...p.features].sort() }));
+  }
+  async addFeature(planId: string, key: string): Promise<ChangeResult> {
+    const plan = this.plans.get(planId);
+    if (!plan) return 'no_plan';
+    if (plan.features.has(key)) return 'unchanged';
+    plan.features.add(key);
+    return 'changed';
+  }
+  async removeFeature(planId: string, key: string): Promise<ChangeResult> {
+    const plan = this.plans.get(planId);
+    if (!plan) return 'no_plan';
+    return plan.features.delete(key) ? 'changed' : 'unchanged';
+  }
+  async setUserPlan(userId: string, planId: string): Promise<ChangeResult | 'no_user'> {
+    if (!this.plans.has(planId)) return 'no_plan';
+    if (this.knownUsers.size > 0 && !this.knownUsers.has(userId)) return 'no_user';
+    if ((this.userPlans.get(userId) ?? 'free') === planId) return 'unchanged';
+    this.userPlans.set(userId, planId);
+    return 'changed';
+  }
+}
+
+export class InMemoryAuditRepository implements AuditRepository {
+  readonly entries: (AuditEntry & { at: Date })[] = [];
+  async record(entry: AuditEntry, now: Date) {
+    this.entries.push({ ...entry, at: now });
   }
 }
