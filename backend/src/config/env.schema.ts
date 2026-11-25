@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 /** The password the local docker compose database starts with. It must never reach production. */
 export const DEV_DATABASE_PASSWORD = 'everfox_dev_only';
+/** The password of the local data-only role. Also never in production. */
+export const DEV_APP_DATABASE_PASSWORD = 'everfox_app_dev_only';
 /** The secret of the OIDC client in the local Keycloak realm file. It must never reach production. */
 export const DEV_OIDC_CLIENT_SECRET = 'everfox-dev-client-secret';
 

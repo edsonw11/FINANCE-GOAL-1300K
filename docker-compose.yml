@@ -13,10 +13,13 @@ services:
       POSTGRES_USER: everfox
       POSTGRES_DB: everfox
       POSTGRES_PASSWORD: ${DB_PASSWORD:-everfox_dev_only}
+      # the role the API connects with (data only); made on the first start by dev/postgres/init
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-everfox_app_dev_only}
     ports:
       - "127.0.0.1:${DB_PORT:-5433}:5432"
     volumes:
       - db-data:/var/lib/postgresql
+      - ./dev/postgres/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U everfox -d everfox"]
       interval: 3s
@@ -72,7 +75,8 @@ services:
       dockerfile: backend/Dockerfile
       target: runtime
     environment:
-      DATABASE_URL: postgresql://everfox:${DB_PASSWORD:-everfox_dev_only}@db:5432/everfox
+      # the data-only role: it cannot create, alter or drop anything (the owner is used by the migrate service only)
+      DATABASE_URL: postgresql://everfox_app:${APP_DB_PASSWORD:-everfox_app_dev_only}@db:5432/everfox
       NODE_ENV: ${API_NODE_ENV:-development}
       APP_BASE_URL: http://localhost:${API_PORT:-3000}
       OIDC_ISSUER: http://localhost:${KEYCLOAK_PORT:-8081}/realms/everfox

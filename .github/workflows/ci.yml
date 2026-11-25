@@ -51,7 +51,9 @@ jobs:
           --health-timeout 3s
           --health-retries 20
     env:
-      DATABASE_URL: postgresql://everfox:ci_only_password@127.0.0.1:5432/everfox
+      # the API and the tests connect as the data-only role; migrations (and the checks about the role) use the owner
+      DATABASE_URL: postgresql://everfox_app:ci_only_app_password@127.0.0.1:5432/everfox
+      MIGRATE_DATABASE_URL: postgresql://everfox:ci_only_password@127.0.0.1:5432/everfox
       # the throwaway Keycloak started below (same realm file as local development)
       APP_BASE_URL: http://localhost:3000
       OIDC_ISSUER: http://localhost:8081/realms/everfox
@@ -71,7 +73,10 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - name: apply the migrations to an empty database
+      - name: make the data-only role of the API (what infrastructure does once)
+        run: |
+          APP_DB_PASSWORD=ci_only_app_password ADMIN_URL="$MIGRATE_DATABASE_URL" ./scripts/db-app-role.sh
+      - name: apply the migrations to an empty database, then the role's grants
         run: npm run db:migrate
       - name: start Keycloak (the real identity provider, with the development realm)
         working-directory: .

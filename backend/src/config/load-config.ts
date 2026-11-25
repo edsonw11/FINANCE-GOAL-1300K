@@ -1,6 +1,6 @@
 import { type AppConfig } from './app-config';
 import { ConfigError, type ConfigIssue } from './config-error';
-import { DEV_DATABASE_PASSWORD, DEV_OIDC_CLIENT_SECRET, type ParsedEnv, envSchema } from './env.schema';
+import { DEV_APP_DATABASE_PASSWORD, DEV_DATABASE_PASSWORD, DEV_OIDC_CLIENT_SECRET, type ParsedEnv, envSchema } from './env.schema';
 
 const HOUR_MS = 60 * 60 * 1000;
 const MINUTE_MS = 60 * 1000;
@@ -26,7 +26,7 @@ function crossIssues(v: ParsedEnv): ConfigIssue[] {
   }
   if (v.NODE_ENV !== 'production') return issues;
   if (v.RATE_LIMIT_FACTOR !== 1) issues.push({ variable: 'RATE_LIMIT_FACTOR', problem: 'must be 1 in production (it loosens the request limits)' });
-  if (passwordOf(v.DATABASE_URL) === DEV_DATABASE_PASSWORD) {
+  if ([DEV_DATABASE_PASSWORD, DEV_APP_DATABASE_PASSWORD].includes(passwordOf(v.DATABASE_URL))) {
     issues.push({ variable: 'DATABASE_URL', problem: 'uses the local development password, which is not allowed in production' });
   }
   if (v.OIDC_CLIENT_SECRET === DEV_OIDC_CLIENT_SECRET) {

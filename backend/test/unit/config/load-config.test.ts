@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ConfigError } from '../../../src/config/config-error';
-import { DEV_DATABASE_PASSWORD } from '../../../src/config/env.schema';
+import { DEV_APP_DATABASE_PASSWORD, DEV_DATABASE_PASSWORD } from '../../../src/config/env.schema';
 import { loadConfig } from '../../../src/config/load-config';
 import { OIDC_DEV, OIDC_PROD } from '../../support/env';
 
@@ -166,6 +166,12 @@ describe('loadConfig: DATABASE_URL', () => {
 
 describe('loadConfig: production', () => {
   const prod = (url: string) => env({ ...OIDC_PROD, NODE_ENV: 'production', DATABASE_URL: url });
+
+  it('refuses the local password of the data-only role too', () => {
+    expect(problemsOf(prod(`postgresql://everfox_app:${DEV_APP_DATABASE_PASSWORD}@db/everfox`))).toEqual([
+      { variable: 'DATABASE_URL', problem: expect.stringContaining('development password') },
+    ]);
+  });
 
   it('refuses the local development database password', () => {
     expect(problemsOf(prod(`postgresql://everfox:${DEV_DATABASE_PASSWORD}@db/everfox`))).toEqual([

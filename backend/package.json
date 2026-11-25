@@ -12,7 +12,7 @@
     "test": "vitest run",
     "test:integration": "node scripts/with-env.mjs vitest run --config vitest.integration.config.mts",
     "db:generate": "prisma generate",
-    "db:migrate": "node scripts/with-env.mjs prisma migrate deploy",
+    "db:migrate": "node scripts/with-env.mjs sh -c \"prisma migrate deploy && prisma db execute --file prisma/roles/grants.sql\"",
     "start": "node dist/main.js",
     "start:local": "node scripts/with-env.mjs node dist/main.js",
     "check": "npm run typecheck && npm test && npm run build"

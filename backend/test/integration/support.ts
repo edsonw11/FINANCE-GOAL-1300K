@@ -12,6 +12,9 @@ export function databaseUrl(): string {
   return url;
 }
 
+/** The owner of the database (migrations, table lists, checks about the data-only role). Falls back to DATABASE_URL when no separate owner is set. */
+export const adminDatabaseUrl = (): string => process.env.MIGRATE_DATABASE_URL ?? databaseUrl();
+
 export const testConfig = (overrides: Record<string, string> = {}): AppConfig =>
   loadConfig({ ...OIDC_DEV, DATABASE_URL: databaseUrl(), NODE_ENV: 'test', LOG_LEVEL: 'silent', RATE_LIMIT_FACTOR: '1000', ...overrides });
 
@@ -30,8 +33,8 @@ export function withDatabase(url: string, name: string): string {
 }
 
 /** A plain pg connection, independent of Prisma, to look at the database the way an operator would. */
-export async function withClient<T>(fn: (client: Client) => Promise<T>): Promise<T> {
-  const client = new Client({ connectionString: databaseUrl() });
+export async function withClient<T>(fn: (client: Client) => Promise<T>, connectionString: string = databaseUrl()): Promise<T> {
+  const client = new Client({ connectionString });
   await client.connect();
   try {
     return await fn(client);
@@ -41,3 +44,6 @@ export async function withClient<T>(fn: (client: Client) => Promise<T>): Promise
 }
 
 export const UUID_V7 = /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+/** The same, as the database owner: for what the data-only role is not allowed to look at (the migration history, other roles, the table list). */
+export const withAdminClient = <T>(fn: (client: Client) => Promise<T>): Promise<T> => withClient(fn, adminDatabaseUrl());

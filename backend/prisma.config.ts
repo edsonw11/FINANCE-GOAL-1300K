@@ -5,5 +5,6 @@ import { defineConfig } from 'prisma/config';
 export default defineConfig({
   schema: 'prisma/schema.prisma',
   migrations: { path: 'prisma/migrations' },
-  datasource: { url: process.env.DATABASE_URL ?? '' },
+  // migrations run as the database owner (MIGRATE_DATABASE_URL); the API itself connects with DATABASE_URL, a role that can only read and write data
+  datasource: { url: process.env.MIGRATE_DATABASE_URL ?? process.env.DATABASE_URL ?? '' },
 });

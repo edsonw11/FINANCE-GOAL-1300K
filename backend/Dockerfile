@@ -24,7 +24,8 @@ RUN npm ci --omit=dev
 # one-shot job: needs the Prisma CLI, which is a development dependency
 FROM build AS migrate
 USER node
-CMD ["npx", "prisma", "migrate", "deploy"]
+# migrations as the owner, then the grants of the API's data-only role (idempotent)
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db execute --file prisma/roles/grants.sql"]
 
 FROM base AS runtime
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000

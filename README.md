@@ -61,6 +61,9 @@ Skeleton decisions: [ADR-0007](docs/architecture/decisions/ADR-0007-backend-skel
 For the login tests start the identity provider too: `docker compose up -d db keycloak` (users `alice` / `alice-dev-password`, `bob` / `bob-dev-password`, development only).
 The default database password is for this machine only: the API refuses it when `NODE_ENV=production`.
 
+Two database roles (Phase 7b): `everfox` owns the tables and runs the migrations (`MIGRATE_DATABASE_URL`); the API connects as `everfox_app` (`DATABASE_URL`, password `APP_DB_PASSWORD` in compose), which can only SELECT/INSERT/UPDATE/DELETE and cannot touch `_prisma_migrations`, so a SQL injection cannot drop or alter tables. `npm run db:migrate` applies the migrations and then `prisma/roles/grants.sql`.
+A fresh compose volume creates the role by itself. On a volume that already exists, make it once: `APP_DB_PASSWORD=... ADMIN_URL=postgresql://everfox:...@host/everfox ./backend/scripts/db-app-role.sh` (or set `PSQL_CMD="docker compose exec -T db psql -U everfox -d everfox"` when `psql` is not installed).
+
 ## Structure
 
 ```
