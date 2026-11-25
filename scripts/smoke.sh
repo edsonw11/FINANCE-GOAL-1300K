@@ -15,11 +15,22 @@ open(d+'/tests/.smoke.html','w').write(h.replace('</body>','<script src="fixture
 # the sync card: the same page with a scripted API in place of fetch (installed before the app starts)
 open(d+'/tests/.smoke-sync.html','w').write(h.replace('<script type="module" src="../src/app.js">','<script src="fixtures/fake-api.js"></script>\n<script type="module" src="../src/app.js">').replace('</body>','<script type="module" src="smoke-sync.js"></script>\n</body>'))
 open(d+'/tests/.smoke-xss.html','w').write(h.replace('</body>','<script type="module" src="smoke-xss.js"></script>\n</body>'))
+import os
+os.makedirs(t+'/native',exist_ok=True)
+sys.path.insert(0,d+'/scripts')
+import importlib.util
+sp=importlib.util.spec_from_file_location('bm',d+'/scripts/build-mobile.py');bm=importlib.util.module_from_spec(sp);sp.loader.exec_module(bm)
+page=bm.build(open(d+'/dist/index.html').read())
+open(t+'/native/index.html','w').write(page.replace('</title>','</title>\n<script src="fake-native.js"></script>',1).replace('</body>','<script src="smoke-native.js"></script>\n</body>'))
+import shutil
+for f in ('fake-native.js',):shutil.copy(d+'/tests/fixtures/'+f,t+'/native/'+f)
+shutil.copy(d+'/tests/smoke-native.js',t+'/native/smoke-native.js')
 b=open(d+'/dist/finance_goal_1300k.html').read()
 open(t+'/dist-smoke.html','w').write(b.replace('</body>','<script>\n'+open(d+'/tests/fixtures/statement-pdf.js').read()+'</script><script>\n'+open(d+'/tests/smoke.js').read()+'</script>\n</body>'))
 PY
 python3 "$DIR/scripts/serve-csp.py" 8767 "$DIR" >/dev/null 2>&1 & SRV=$!
-trap 'kill $SRV 2>/dev/null; rm -rf "$TMP" "$DIR/tests/.smoke.html" "$DIR/tests/.smoke-sync.html" "$DIR/tests/.smoke-xss.html"' EXIT
+python3 -m http.server 8769 --bind 127.0.0.1 --directory "$TMP/native" >/dev/null 2>&1 & SRV2=$!
+trap 'kill $SRV $SRV2 2>/dev/null; rm -rf "$TMP" "$DIR/tests/.smoke.html" "$DIR/tests/.smoke-sync.html" "$DIR/tests/.smoke-xss.html"' EXIT
 sleep 0.6
 FAILED=0
 run(){ # $1 label, $2 url, $3 profile dir
@@ -35,6 +46,7 @@ run "source (ES modules over http)" "http://127.0.0.1:8767/tests/.smoke.html" "$
 run "sync card, signed in (scripted API)" "http://127.0.0.1:8767/tests/.smoke-sync.html" "$TMP/p3"
 run "sync card, signed out" "http://127.0.0.1:8767/tests/.smoke-sync.html#signedout" "$TMP/p4"
 run "XSS: hostile text in every field, every screen (two loads)" "http://127.0.0.1:8767/tests/.smoke-xss.html" "$TMP/p5"
+run "Android shell: page with its own CSP and a scripted Capacitor" "http://127.0.0.1:8769/index.html" "$TMP/p6"
 run "built dist/ (file://)" "file://$TMP/dist-smoke.html" "$TMP/p2"
 if [ "$FAILED" = 1 ]; then echo "SMOKE FAILED"; exit 1; fi
 echo "SMOKE OK"

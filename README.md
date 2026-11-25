@@ -19,6 +19,18 @@ scripts/dev.sh up        # or: npm run dev:up   builds and starts database, logi
 Then open http://localhost:3000 and sign in as `alice` / `alice-dev-password` (or `bob` / `bob-dev-password`; development only, each has their own demo data).
 `scripts/dev.sh check` proves it works end to end, `down` stops it (data stays), `reset` deletes the local data and starts again from zero, `seed` reloads the demo data, `logs` and `status` show what is happening. If a port is taken: `API_PORT=3001 DB_PORT=5434 KEYCLOAK_PORT=8082 scripts/dev.sh up`. CI runs the same two commands (`up`, `check`) on an empty machine.
 
+## Android app
+
+The same app in a Capacitor shell (offline, data on the phone; backup through the share sheet; sync comes with the phone's own sign-in). Details: [ADR-0014](docs/architecture/decisions/ADR-0014-android-shell.md).
+
+```
+npm run mobile:doctor    what this machine has and lacks (JDK 17+, Android SDK with platform 36 and build-tools; ANDROID_HOME)
+npm run mobile:apk       build the web part, copy it into android/, build android/app/build/outputs/apk/debug/app-debug.apk
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk     on a phone with USB debugging, or drag the APK onto an emulator
+```
+
+CI builds the same APK on every push (job `android`, artifact `everfox-debug-apk`). The Capacitor CLI needs Node 22: `scripts/mobile.sh` fetches it for its own commands.
+
 ## How to use
 
 | I want to | Do this |

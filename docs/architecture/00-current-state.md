@@ -226,7 +226,7 @@ Not in the original brief, required for this case:
 | 5 | ✅ Web app talks to the API: sync layer (outbox, pull, first merge, review list), "Conta e sincronização" card and header badge, app served by the API (ADR-0012); e2e + visual baseline unchanged | e2e + visual baseline unchanged; two devices converge on PostgreSQL |
 | 6 | ✅ `scripts/dev.sh up` (preflight, build, start, wait healthy, demo data through the real login), `check` (end-to-end proof), `reset`, `seed`, `down`; CI job `stack` runs `up` + `check` on an empty runner | ✅ clean-machine start proven locally (reset → up → check) |
 | 7 | ✅ Headers, page CSP and rate limits (7a); data-only database role (7b); threat model, XSS browser scenario (found and closed a stored XSS), log redaction test, secret scan, backup/restore test, `scripts/test-security.sh` (7c); docs in `docs/security/`, ADR-0013 | ✅ no critical/high finding open |
-| 8 | Capacitor Android (can be moved to right after 1) | installs and runs on a device |
+| 8 | ✅ Capacitor Android shell: offline app with its own CSP, native-share backup, `scripts/mobile.sh`, debug APK built locally and in CI (ADR-0014); sync inside the shell waits for the phone's own sign-in | APK builds ✅; install and run on a device **not yet verified** (none available) |
 | 8b | **Billing** (web checkout + Play Billing), plans and feature gating | payment events idempotent, tested in sandbox |
 | 9–10 | iOS preparation, AWS reference, LGPD documents, docs | someone else can follow them |
 

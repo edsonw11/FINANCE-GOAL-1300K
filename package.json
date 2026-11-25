@@ -12,6 +12,10 @@
     "test:e2e": "bash scripts/smoke.sh",
     "test:mobile": "bash scripts/mobile-check.sh",
     "build": "python3 scripts/build.py",
+    "mobile:doctor": "bash scripts/mobile.sh doctor",
+    "mobile:web": "bash scripts/mobile.sh web",
+    "mobile:sync": "bash scripts/mobile.sh sync",
+    "mobile:apk": "bash scripts/mobile.sh apk",
     "dev:up": "bash scripts/dev.sh up",
     "dev:down": "bash scripts/dev.sh down",
     "dev:reset": "bash scripts/dev.sh reset",
@@ -21,9 +25,16 @@
     "check": "npm run lint && npm run typecheck && npm run test:unit && npm run build && npm run test:e2e && npm run test:mobile"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.6.2",
     "@eslint/js": "10.0.1",
     "eslint": "10.15.0",
     "globals": "17.14.0",
     "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/core": "8.6.2",
+    "@capacitor/filesystem": "8.1.5",
+    "@capacitor/share": "8.0.3"
   }
 }

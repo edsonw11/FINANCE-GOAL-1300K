@@ -10,6 +10,7 @@ import { createApiClient, loginUrl } from '../../sync/api-client.js';
 import { createSync, metaStore } from '../../sync/runner.js';
 import { toast } from '../toast.js';
 import { render } from '../render.js';
+import { isNative } from '../native-bridge.js';
 const DEBOUNCE_MS=400;
 const api=createApiClient((...a)=>fetch(...a));
 let sync=null;
@@ -75,7 +76,8 @@ const MESSAGES={
 async function signOut(){await api.logout();syncView.state='signed_out';syncView.user=null;renderSync();}
 
 export async function bindSync(){
-  if(typeof fetch!=='function'||location.protocol==='file:'){syncView.state='unavailable';return;}
+  // inside the Android shell there is no API on this origin (and the login is cookie based): the app works offline there until the phone has its own sign-in
+  if(typeof fetch!=='function'||location.protocol==='file:'||isNative()){syncView.state='unavailable';return;}
   const me=await api.me();
   syncView.state=me.state;syncView.user=me.user||null;
   if(me.state==='signed_in'){
