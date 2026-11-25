@@ -160,5 +160,112 @@ export function accountRepositoryContract(label: string, harness: () => Promise<
       await repository.save(userId, id, name, T0);
       expect((await repository.find(userId, id))?.name).toBe(name);
     });
+
+    describe('versions and the changes feed (sync)', () => {
+      it('gives each change of a person the next version, starting at 1', async () => {
+        const { repository, newUserId } = await harness();
+        const userId = await newUserId();
+        const [a, b] = [randomUUID(), randomUUID()];
+        const first = await repository.save(userId, a, 'A', T0);
+        const second = await repository.save(userId, b, 'B', at(1));
+        const renamed = await repository.save(userId, a, 'A2', at(2));
+        const versions = [first, second, renamed].map((r) => (r.status === 'saved' ? r.account.version : -1));
+        expect(versions).toEqual([1, 2, 3]);
+      });
+
+      it('saving what is already stored does not make a new version, and keeps the update time', async () => {
+        const { repository, newUserId } = await harness();
+        const userId = await newUserId();
+        const id = randomUUID();
+        await repository.save(userId, id, 'Same', T0);
+        const again = await repository.save(userId, id, 'Same', at(60_000));
+        expect(again.status === 'saved' && again.account.version).toBe(1);
+        expect(again.status === 'saved' && again.account.updatedAt.getTime()).toBe(T0.getTime());
+        expect(await repository.changesSince(userId, 0, 10)).toHaveLength(1);
+      });
+
+      it('versions are per person: another person starts at 1 too and never shifts the first', async () => {
+        const { repository, newUserId } = await harness();
+        const [alice, bob] = [await newUserId(), await newUserId()];
+        await repository.save(alice, randomUUID(), 'a1', T0);
+        await repository.save(alice, randomUUID(), 'a2', T0);
+        const b = await repository.save(bob, randomUUID(), 'b1', T0);
+        expect(b.status === 'saved' && b.account.version).toBe(1);
+      });
+
+      it('the feed lists what changed after a version, oldest first, and only the person\'s own', async () => {
+        const { repository, newUserId } = await harness();
+        const [alice, bob] = [await newUserId(), await newUserId()];
+        const [a1, a2] = [randomUUID(), randomUUID()];
+        await repository.save(alice, a1, 'one', T0);
+        await repository.save(bob, randomUUID(), 'bob secret', T0);
+        await repository.save(alice, a2, 'two', T0);
+        await repository.save(alice, a1, 'one again', T0);
+        const all = await repository.changesSince(alice, 0, 10);
+        expect(all.map((c) => [c.id, c.version, c.name])).toEqual([
+          [a2, 2, 'two'],
+          [a1, 3, 'one again'],
+        ]);
+        expect(JSON.stringify(all)).not.toContain('bob secret');
+        expect((await repository.changesSince(alice, 2, 10)).map((c) => c.id)).toEqual([a1]);
+        expect(await repository.changesSince(alice, 3, 10)).toEqual([]);
+        expect(await repository.changesSince(alice, 999, 10)).toEqual([]);
+      });
+
+      it('a delete is a change too: the tombstone reaches the feed with its own version', async () => {
+        const { repository, newUserId } = await harness();
+        const userId = await newUserId();
+        const id = randomUUID();
+        await repository.save(userId, id, 'Gone soon', T0);
+        await repository.remove(userId, id, at(1000));
+        const feed = await repository.changesSince(userId, 0, 10);
+        expect(feed).toHaveLength(1);
+        expect(feed[0]).toMatchObject({ id, deleted: true, version: 2 });
+      });
+
+      it('deleting twice, or something unknown, or someone else\'s, makes no new version', async () => {
+        const { repository, newUserId } = await harness();
+        const [alice, bob] = [await newUserId(), await newUserId()];
+        const id = randomUUID();
+        await repository.save(alice, id, 'x', T0);
+        await repository.remove(bob, id, at(1));
+        await repository.remove(alice, randomUUID(), at(2));
+        await repository.remove(alice, id, at(3));
+        await repository.remove(alice, id, at(4));
+        const feed = await repository.changesSince(alice, 0, 10);
+        expect(feed.map((c) => [c.version, c.deleted])).toEqual([[2, true]]);
+        expect(await repository.changesSince(bob, 0, 10)).toEqual([]);
+      });
+
+      it('a late edit of a deleted record changes nothing in the feed', async () => {
+        const { repository, newUserId } = await harness();
+        const userId = await newUserId();
+        const id = randomUUID();
+        await repository.save(userId, id, 'x', T0);
+        await repository.remove(userId, id, at(1));
+        expect((await repository.save(userId, id, 'late', at(2))).status).toBe('deleted');
+        expect((await repository.changesSince(userId, 0, 10)).map((c) => c.version)).toEqual([2]);
+      });
+
+      it('another person trying the same id changes nothing in either feed', async () => {
+        const { repository, newUserId } = await harness();
+        const [alice, bob] = [await newUserId(), await newUserId()];
+        const id = randomUUID();
+        await repository.save(alice, id, 'mine', T0);
+        expect((await repository.save(bob, id, 'taken', T0)).status).toBe('taken');
+        expect(await repository.changesSince(bob, 0, 10)).toEqual([]);
+        expect((await repository.changesSince(alice, 0, 10)).map((c) => c.name)).toEqual(['mine']);
+      });
+
+      it('the limit cuts the feed, and the next page starts after the last version', async () => {
+        const { repository, newUserId } = await harness();
+        const userId = await newUserId();
+        for (let i = 0; i < 5; i++) await repository.save(userId, randomUUID(), `n${i}`, T0);
+        const page1 = await repository.changesSince(userId, 0, 2);
+        const page2 = await repository.changesSince(userId, page1[1]!.version, 2);
+        const page3 = await repository.changesSince(userId, page2[1]!.version, 2);
+        expect([page1, page2, page3].map((p) => p.map((c) => c.name))).toEqual([['n0', 'n1'], ['n2', 'n3'], ['n4']]);
+      });
+    });
   });
 }

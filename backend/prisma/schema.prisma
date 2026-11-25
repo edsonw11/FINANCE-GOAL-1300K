@@ -22,8 +22,10 @@ model AppUser {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   lastLoginAt DateTime @default(now()) @map("last_login_at") @db.Timestamptz(6)
 
-  sessions Session[]
-  accounts Account[]
+  sessions     Session[]
+  accounts     Account[]
+  syncCursor   SyncCursor?
+  syncMutation SyncMutation[]
 
   @@unique([oidcIssuer, oidcSubject])
   @@map("app_user")
@@ -67,9 +69,36 @@ model Account {
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+  // from the person's own counter (sync_cursor): the cursor of the changes feed
+  version   BigInt
 
   user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, deletedAt])
+  @@index([userId, version])
   @@map("account")
+}
+
+// The last version handed out to a person. Writers lock the row, so the versions of one person come out, and commit, in order.
+model SyncCursor {
+  userId      String @id @map("user_id") @db.Uuid
+  lastVersion BigInt @map("last_version")
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sync_cursor")
+}
+
+// A mutation a device sent and the answer it got: sending it again returns the same answer and changes nothing.
+model SyncMutation {
+  userId     String   @map("user_id") @db.Uuid
+  mutationId String   @map("mutation_id") @db.Uuid
+  outcome    Json
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, mutationId])
+  @@index([createdAt])
+  @@map("sync_mutation")
 }

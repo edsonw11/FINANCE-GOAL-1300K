@@ -1,9 +1,10 @@
 import { randomUUID } from 'node:crypto';
-import { type AccountRecord, type AccountRepository, type SaveResult } from '../../src/accounts/account.repository';
+import { type AccountChange, type AccountRecord, type AccountRepository, type SaveResult } from '../../src/accounts/account.repository';
 import { type AuthFlowRecord, type AuthFlowRepository } from '../../src/auth/auth-flow.repository';
 import { type AuthorizationRequest, type FlowSecrets, LoginFailedError, type OidcIdentity, type OidcProvider } from '../../src/auth/oidc-provider';
 import { type SessionRecord, type SessionRepository } from '../../src/auth/session.repository';
 import { type Clock } from '../../src/clock';
+import { type MutationLog, type MutationOutcome } from '../../src/sync/mutation-log';
 import { type UserRecord, type UserRepository } from '../../src/users/user.repository';
 
 /** A clock the test moves by hand. */
@@ -93,8 +94,15 @@ interface StoredAccount extends AccountRecord {
 
 export class InMemoryAccountRepository implements AccountRepository {
   readonly rows = new Map<string, StoredAccount>();
+  /** The change counter of each person, like the sync_cursor table. */
+  readonly counters = new Map<string, number>();
+  private bump(userId: string): number {
+    const next = (this.counters.get(userId) ?? 0) + 1;
+    this.counters.set(userId, next);
+    return next;
+  }
   private visible(row: StoredAccount): AccountRecord {
-    return { id: row.id, name: row.name, createdAt: row.createdAt, updatedAt: row.updatedAt };
+    return { id: row.id, name: row.name, createdAt: row.createdAt, updatedAt: row.updatedAt, version: row.version };
   }
   async list(userId: string) {
     return [...this.rows.values()]
@@ -110,13 +118,32 @@ export class InMemoryAccountRepository implements AccountRepository {
     const row = this.rows.get(id);
     if (row && row.userId !== userId) return { status: 'taken' };
     if (row?.deletedAt) return { status: 'deleted' };
-    const saved: StoredAccount = { id, userId, name, createdAt: row?.createdAt ?? now, updatedAt: now, deletedAt: null };
+    if (row && row.name === name) return { status: 'saved', account: this.visible(row) };
+    const saved: StoredAccount = { id, userId, name, createdAt: row?.createdAt ?? now, updatedAt: now, deletedAt: null, version: this.bump(userId) };
     this.rows.set(id, saved);
     return { status: 'saved', account: this.visible(saved) };
   }
   async remove(userId: string, id: string, now: Date) {
     const row = this.rows.get(id);
-    if (row && row.userId === userId && !row.deletedAt) this.rows.set(id, { ...row, deletedAt: now, updatedAt: now });
+    if (row && row.userId === userId && !row.deletedAt) this.rows.set(id, { ...row, deletedAt: now, updatedAt: now, version: this.bump(userId) });
+  }
+  async changesSince(userId: string, afterVersion: number, limit: number): Promise<AccountChange[]> {
+    return [...this.rows.values()]
+      .filter((r) => r.userId === userId && r.version > afterVersion)
+      .sort((a, b) => a.version - b.version)
+      .slice(0, limit)
+      .map((r) => ({ ...this.visible(r), deleted: r.deletedAt !== null }));
+  }
+}
+
+export class InMemoryMutationLog implements MutationLog {
+  readonly rows = new Map<string, MutationOutcome>();
+  async find(userId: string, mutationId: string) {
+    return this.rows.get(`${userId}/${mutationId}`) ?? null;
+  }
+  async record(userId: string, mutationId: string, outcome: MutationOutcome) {
+    const key = `${userId}/${mutationId}`;
+    if (!this.rows.has(key)) this.rows.set(key, outcome);
   }
 }
 

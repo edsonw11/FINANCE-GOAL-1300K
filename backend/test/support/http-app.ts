@@ -10,9 +10,10 @@ import { type AppConfig } from '../../src/config/app-config';
 import { AppModule } from '../../src/app.module';
 import { PrismaService } from '../../src/database/prisma.service';
 import { configureApp, createAdapter } from '../../src/create-app';
+import { MUTATION_LOG } from '../../src/sync/mutation-log';
 import { USER_REPOSITORY } from '../../src/users/user.repository';
 import { baseEnv } from './env';
-import { FakeClock, FakeOidcProvider, InMemoryAccountRepository, InMemoryAuthFlowRepository, InMemorySessionRepository, InMemoryUserRepository } from './fakes';
+import { FakeClock, FakeOidcProvider, InMemoryAccountRepository, InMemoryAuthFlowRepository, InMemoryMutationLog, InMemorySessionRepository, InMemoryUserRepository } from './fakes';
 
 export const ORIGIN = 'http://localhost:3000';
 export const CSRF = { origin: ORIGIN, 'x-everfox-csrf': '1' } as const;
@@ -26,6 +27,7 @@ export interface TestApp {
   readonly flows: InMemoryAuthFlowRepository;
   readonly users: InMemoryUserRepository;
   readonly accounts: InMemoryAccountRepository;
+  readonly mutationLog: InMemoryMutationLog;
   /** Logs in through the real routes as the person the fake provider currently describes; returns the Cookie header value. */
   login(returnTo?: string): Promise<string>;
   close(): Promise<void>;
@@ -40,6 +42,7 @@ export async function createTestApp(env: Record<string, string | undefined> = {}
   const flows = new InMemoryAuthFlowRepository();
   const users = new InMemoryUserRepository();
   const accounts = new InMemoryAccountRepository();
+  const mutationLog = new InMemoryMutationLog();
   const moduleRef: TestingModule = await Test.createTestingModule({ imports: [AppModule.forRoot(config)] })
     .overrideProvider(PrismaService)
     .useValue({})
@@ -55,6 +58,8 @@ export async function createTestApp(env: Record<string, string | undefined> = {}
     .useValue(users)
     .overrideProvider(ACCOUNT_REPOSITORY)
     .useValue(accounts)
+    .overrideProvider(MUTATION_LOG)
+    .useValue(mutationLog)
     .compile();
   const app = moduleRef.createNestApplication<NestFastifyApplication>(createAdapter(), { logger: false });
   await configureApp(app);
@@ -76,6 +81,7 @@ export async function createTestApp(env: Record<string, string | undefined> = {}
     flows,
     users,
     accounts,
+    mutationLog,
     async login(returnTo = '/') {
       const start = await app.inject({ method: 'GET', url: `/auth/login?returnTo=${encodeURIComponent(returnTo)}` });
       const flow = cookieOf(start.headers['set-cookie'], config.cookies.flowName);

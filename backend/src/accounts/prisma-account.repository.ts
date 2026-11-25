@@ -1,19 +1,32 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../database/prisma.service';
-import { type AccountRecord, type AccountRepository, type SaveResult } from './account.repository';
+import { lockChangeCounter, nextVersion } from '../database/sync-version';
+import { type AccountChange, type AccountRecord, type AccountRepository, type SaveResult } from './account.repository';
 
 interface AccountRow {
+  user_id: string;
   id: string;
   name: string;
   created_at: Date;
   updated_at: Date;
+  deleted_at: Date | null;
+  version: bigint;
 }
 
-const toRecord = (row: { id: string; name: string; createdAt: Date; updatedAt: Date }): AccountRecord => ({
+const fromRow = (row: AccountRow): AccountRecord => ({
+  id: row.id,
+  name: row.name,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
+  version: Number(row.version),
+});
+
+const toRecord = (row: { id: string; name: string; createdAt: Date; updatedAt: Date; version: bigint }): AccountRecord => ({
   id: row.id,
   name: row.name,
   createdAt: row.createdAt,
   updatedAt: row.updatedAt,
+  version: Number(row.version),
 });
 
 @Injectable()
@@ -32,20 +45,51 @@ export class PrismaAccountRepository implements AccountRepository {
   }
 
   async save(userId: string, id: string, name: string, now: Date): Promise<SaveResult> {
-    // one statement, so two devices (or a retry) cannot interleave: it inserts, or updates only the person's own live row
-    const rows = await this.prisma.$queryRaw<AccountRow[]>`
-      INSERT INTO account (id, user_id, name, created_at, updated_at)
-      VALUES (${id}::uuid, ${userId}::uuid, ${name}, ${now}, ${now})
-      ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, updated_at = EXCLUDED.updated_at
-        WHERE account.user_id = EXCLUDED.user_id AND account.deleted_at IS NULL
-      RETURNING id, name, created_at, updated_at`;
-    const row = rows[0];
-    if (row) return { status: 'saved', account: { id: row.id, name: row.name, createdAt: row.created_at, updatedAt: row.updated_at } };
-    const existing = await this.prisma.account.findUnique({ where: { id }, select: { userId: true, deletedAt: true } });
-    return existing && existing.userId === userId && existing.deletedAt ? { status: 'deleted' } : { status: 'taken' };
+    // one transaction under the person's counter lock: two devices, or a retry, cannot interleave
+    return this.prisma.$transaction(async (tx): Promise<SaveResult> => {
+      await lockChangeCounter(tx, userId);
+      const found = await tx.$queryRaw<AccountRow[]>`
+        SELECT user_id, id, name, created_at, updated_at, deleted_at, version FROM account WHERE id = ${id}::uuid FOR UPDATE`;
+      const existing = found[0];
+      if (existing) {
+        if (existing.user_id !== userId) return { status: 'taken' };
+        if (existing.deleted_at) return { status: 'deleted' };
+        if (existing.name === name) return { status: 'saved', account: fromRow(existing) };
+        const version = await nextVersion(tx, userId);
+        const updated = await tx.$queryRaw<AccountRow[]>`
+          UPDATE account SET name = ${name}, updated_at = ${now}, version = ${version}
+          WHERE id = ${id}::uuid AND user_id = ${userId}::uuid
+          RETURNING user_id, id, name, created_at, updated_at, deleted_at, version`;
+        return { status: 'saved', account: fromRow(updated[0]!) };
+      }
+      const version = await nextVersion(tx, userId);
+      const inserted = await tx.$queryRaw<AccountRow[]>`
+        INSERT INTO account (id, user_id, name, created_at, updated_at, version)
+        VALUES (${id}::uuid, ${userId}::uuid, ${name}, ${now}, ${now}, ${version})
+        ON CONFLICT (id) DO NOTHING
+        RETURNING user_id, id, name, created_at, updated_at, deleted_at, version`;
+      // nothing inserted: another person created this id a moment ago (it cannot be ours, we hold our own lock)
+      return inserted[0] ? { status: 'saved', account: fromRow(inserted[0]) } : { status: 'taken' };
+    });
   }
 
   async remove(userId: string, id: string, now: Date): Promise<void> {
-    await this.prisma.account.updateMany({ where: { id, userId, deletedAt: null }, data: { deletedAt: now, updatedAt: now } });
+    await this.prisma.$transaction(async (tx) => {
+      await lockChangeCounter(tx, userId);
+      const live = await tx.$queryRaw<{ id: string }[]>`
+        SELECT id FROM account WHERE id = ${id}::uuid AND user_id = ${userId}::uuid AND deleted_at IS NULL FOR UPDATE`;
+      if (!live[0]) return;
+      const version = await nextVersion(tx, userId);
+      await tx.$queryRaw`UPDATE account SET deleted_at = ${now}, updated_at = ${now}, version = ${version} WHERE id = ${id}::uuid AND user_id = ${userId}::uuid`;
+    });
+  }
+
+  async changesSince(userId: string, afterVersion: number, limit: number): Promise<AccountChange[]> {
+    const rows = await this.prisma.account.findMany({
+      where: { userId, version: { gt: BigInt(afterVersion) } },
+      orderBy: { version: 'asc' },
+      take: limit,
+    });
+    return rows.map((row) => ({ ...toRecord(row), deleted: row.deletedAt !== null }));
   }
 }

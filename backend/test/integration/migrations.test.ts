@@ -14,7 +14,7 @@ describe('migrations', () => {
     const { rows } = await withClient((c) =>
       c.query('SELECT migration_name, finished_at, rolled_back_at FROM _prisma_migrations ORDER BY migration_name'),
     );
-    expect(rows.map((r) => r.migration_name)).toEqual(['20261124000000_create_app_user', '20261125000000_identity_sessions_accounts']);
+    expect(rows.map((r) => r.migration_name)).toEqual(['20261124000000_create_app_user', '20261125000000_identity_sessions_accounts', '20261126000000_sync_versions']);
     for (const row of rows) {
       expect(row.finished_at).not.toBeNull();
       expect(row.rolled_back_at).toBeNull();
@@ -30,7 +30,7 @@ describe('migrations', () => {
     const { rows } = await withClient((c) =>
       c.query("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name"),
     );
-    expect(rows.map((r) => r.table_name)).toEqual(['_prisma_migrations', 'account', 'app_user', 'auth_flow', 'session']);
+    expect(rows.map((r) => r.table_name)).toEqual(['_prisma_migrations', 'account', 'app_user', 'auth_flow', 'session', 'sync_cursor', 'sync_mutation']);
   });
 });
 

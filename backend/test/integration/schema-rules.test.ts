@@ -53,30 +53,55 @@ describe('session', () => {
 
 describe('account', () => {
   it('needs an existing owner', async () => {
-    await rejects("INSERT INTO account (id, user_id, name) VALUES ($1, $2, 'x')", [randomUUID(), randomUUID()], /foreign key/);
+    await rejects("INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, 'x', 1)", [randomUUID(), randomUUID()], /foreign key/);
   });
 
   it('refuses an empty or too long name', async () => {
     const user = await newUser();
-    await rejects("INSERT INTO account (id, user_id, name) VALUES ($1, $2, '')", [randomUUID(), user], /account_name_length/);
-    await rejects('INSERT INTO account (id, user_id, name) VALUES ($1, $2, $3)', [randomUUID(), user, 'a'.repeat(81)], /account_name_length/);
-    await withClient((c) => c.query('INSERT INTO account (id, user_id, name) VALUES ($1, $2, $3)', [randomUUID(), user, 'a'.repeat(80)]));
+    await rejects("INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, '', 1)", [randomUUID(), user], /account_name_length/);
+    await rejects('INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, $3, 1)', [randomUUID(), user, 'a'.repeat(81)], /account_name_length/);
+    await withClient((c) => c.query('INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, $3, 1)', [randomUUID(), user, 'a'.repeat(80)]));
   });
 
   it('refuses an id that is not a uuid, and a repeated id', async () => {
     const user = await newUser();
-    await rejects("INSERT INTO account (id, user_id, name) VALUES ('nope', $1, 'x')", [user], /invalid input syntax for type uuid/);
+    await rejects("INSERT INTO account (id, user_id, name, version) VALUES ('nope', $1, 'x', 1)", [user], /invalid input syntax for type uuid/);
     const id = randomUUID();
-    await withClient((c) => c.query("INSERT INTO account (id, user_id, name) VALUES ($1, $2, 'x')", [id, user]));
-    await rejects("INSERT INTO account (id, user_id, name) VALUES ($1, $2, 'y')", [id, user], /duplicate key/);
+    await withClient((c) => c.query("INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, 'x', 1)", [id, user]));
+    await rejects("INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, 'y', 1)", [id, user], /duplicate key/);
   });
 
   it('is deleted with its owner, and only with its owner', async () => {
     const [a, b] = [await newUser(), await newUser()];
     const [ida, idb] = [randomUUID(), randomUUID()];
-    await withClient((c) => c.query("INSERT INTO account (id, user_id, name) VALUES ($1, $2, 'a'), ($3, $4, 'b')", [ida, a, idb, b]));
+    await withClient((c) => c.query("INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, 'a', 1), ($3, $4, 'b', 1)", [ida, a, idb, b]));
     await withClient((c) => c.query('DELETE FROM app_user WHERE id = $1', [a]));
     const { rows } = await withClient((c) => c.query('SELECT id FROM account WHERE id = ANY($1::uuid[])', [[ida, idb]]));
     expect(rows.map((r) => r.id)).toEqual([idb]);
+  });
+});
+
+describe('sync tables', () => {
+  it('a record must have a positive version', async () => {
+    const user = await newUser();
+    await rejects("INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, 'x', 0)", [randomUUID(), user], /account_version_positive/);
+    await rejects("INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, 'x', -3)", [randomUUID(), user], /account_version_positive/);
+    await rejects("INSERT INTO account (id, user_id, name) VALUES ($1, $2, 'x')", [randomUUID(), user], /null value/);
+  });
+
+  it('the change counter cannot go negative and needs an existing person', async () => {
+    const user = await newUser();
+    await rejects('INSERT INTO sync_cursor (user_id, last_version) VALUES ($1, -1)', [user], /sync_cursor_not_negative/);
+    await rejects('INSERT INTO sync_cursor (user_id, last_version) VALUES ($1, 0)', [randomUUID()], /foreign key/);
+  });
+
+  it('a mutation is remembered once per person, and needs an existing person', async () => {
+    const [a, b] = [await newUser(), await newUser()];
+    const mutation = randomUUID();
+    const sql = "INSERT INTO sync_mutation (user_id, mutation_id, outcome) VALUES ($1, $2, '{}')";
+    await withClient((c) => c.query(sql, [a, mutation]));
+    await rejects(sql, [a, mutation], /duplicate key/);
+    await withClient((c) => c.query(sql, [b, mutation]));
+    await rejects(sql, [randomUUID(), randomUUID()], /foreign key/);
   });
 });
