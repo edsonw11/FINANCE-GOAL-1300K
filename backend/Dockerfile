@@ -1,4 +1,5 @@
 # syntax=docker/dockerfile:1
+# Build context is the REPOSITORY ROOT (the API runs the browser app's rules from src/core and src/domain).
 # Targets: `migrate` (applies the database migrations once) and `runtime` (the API, the last stage, the default).
 # Base image pinned by version; the registry for npm comes from .npmrc (public registry, exact versions in the lockfile).
 FROM node:20.20.2-alpine3.23 AS base
@@ -6,18 +7,18 @@ WORKDIR /app
 
 # all dependencies, to build
 FROM base AS deps
-COPY package.json package-lock.json .npmrc ./
+COPY backend/package.json backend/package-lock.json backend/.npmrc ./
 RUN npm ci
 
 FROM deps AS build
-COPY tsconfig.json tsconfig.build.json prisma.config.ts ./
-COPY prisma ./prisma
-COPY src ./src
+COPY backend/tsconfig.json backend/tsconfig.build.json backend/prisma.config.ts ./
+COPY backend/prisma ./prisma
+COPY backend/src ./src
 RUN npx prisma generate && npx tsc -p tsconfig.build.json
 
 # only what the API needs to run
 FROM base AS prod-deps
-COPY package.json package-lock.json .npmrc ./
+COPY backend/package.json backend/package-lock.json backend/.npmrc ./
 RUN npm ci --omit=dev
 
 # one-shot job: needs the Prisma CLI, which is a development dependency
@@ -27,9 +28,14 @@ CMD ["npx", "prisma", "migrate", "deploy"]
 
 FROM base AS runtime
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000
-COPY package.json ./
+COPY backend/package.json ./
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
+# the shared rules (plain ES modules), the same files the browser runs
+COPY src/package.json ./shared/package.json
+COPY src/core ./shared/core
+COPY src/domain ./shared/domain
+ENV DOMAIN_ROOT=/app/shared
 # not root
 USER node
 EXPOSE 3000

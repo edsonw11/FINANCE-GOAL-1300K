@@ -100,7 +100,7 @@ describe('person B against person A, on PostgreSQL', () => {
     const mine = await send(alice, 'GET', id);
     expect(mine.statusCode).toBe(200);
     expect(mine.json().name).toBe('Alice private');
-    const { rows } = await withClient((c) => c.query('SELECT name, deleted_at FROM account WHERE id = $1', [id]));
+    const { rows } = await withClient((c) => c.query("SELECT body->>'name' AS name, deleted_at FROM record WHERE id = $1", [id]));
     expect(rows).toEqual([{ name: 'Alice private', deleted_at: null }]);
   });
 
@@ -109,7 +109,7 @@ describe('person B against person A, on PostgreSQL', () => {
     const id = ID();
     const [a, b] = await Promise.all([send(alice, 'PUT', id, { name: 'A' }), send(bob, 'PUT', id, { name: 'B' })]);
     expect([a.statusCode, b.statusCode].sort()).toEqual([200, 404]);
-    const { rows } = await withClient((c) => c.query('SELECT count(*)::int AS n FROM account WHERE id = $1', [id]));
+    const { rows } = await withClient((c) => c.query('SELECT count(*)::int AS n FROM record WHERE id = $1', [id]));
     expect(rows[0].n).toBe(1);
   });
 
@@ -118,7 +118,7 @@ describe('person B against person A, on PostgreSQL', () => {
     const id = ID();
     const answers = await Promise.all(Array.from({ length: 10 }, () => send(alice, 'PUT', id, { name: 'Retry' })));
     expect(answers.every((r) => r.statusCode === 200)).toBe(true);
-    const { rows } = await withClient((c) => c.query('SELECT count(*)::int AS n FROM account WHERE id = $1', [id]));
+    const { rows } = await withClient((c) => c.query('SELECT count(*)::int AS n FROM record WHERE id = $1', [id]));
     expect(rows[0].n).toBe(1);
   });
 
@@ -129,7 +129,7 @@ describe('person B against person A, on PostgreSQL', () => {
     expect((await send(alice, 'DELETE', id)).statusCode).toBe(204);
     expect((await send(alice, 'PUT', id, { name: 'Late' })).statusCode).toBe(410);
     expect((await send(alice, 'GET', id)).statusCode).toBe(404);
-    const { rows } = await withClient((c) => c.query('SELECT name, deleted_at IS NOT NULL AS deleted FROM account WHERE id = $1', [id]));
+    const { rows } = await withClient((c) => c.query("SELECT body->>'name' AS name, deleted_at IS NOT NULL AS deleted FROM record WHERE id = $1", [id]));
     expect(rows).toEqual([{ name: 'Gone', deleted: true }]);
   });
 

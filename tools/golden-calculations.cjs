@@ -8,7 +8,7 @@
  */
 const {createContext}=require('../tests/unit/harness');
 const FROZEN='2026-11-20T12:00:00';
-function golden(){
+function setup(){
   const {ctx,run}=createContext();
   // the clock stands still: every "today" in the rules is 2026-11-20
   ctx.Date=class extends Date{constructor(...a){a.length?super(...a):super(FROZEN);}static now(){return new Date(FROZEN).getTime();}};
@@ -28,6 +28,14 @@ function golden(){
              {date:'2026-09-30',acc:'a1',value:11700},{date:'2026-09-30',acc:'a2',value:20150},
              {date:'2026-10-31',acc:'a1',value:11900,gross:11950},{date:'2026-10-31',acc:'a2',value:22400}];
     S.cats=undefined;delete S.catsV2;delete S.catsV3;delete S.catsV4;initCats();S.budgets={Alimentação:1000,Moradia:2100};S.nid=100;S.tx=[${rows}]`);
+  return {ctx,run};
+}
+/**
+ * compute(run): every result of the baseline, from expressions evaluated by `run` against a state that is already loaded.
+ * The browser rules run it in a vm (golden()); the server runs the same expressions on the shared modules (backend integration test).
+ */
+function compute(run){
+  const J=JSON.stringify;
   const out={frozenAt:FROZEN};
   const ms=['2026-08','2026-09','2026-10','2026-11'];
   out.money={float:[run('roundMoney(0.1+0.2)'),run('sumMoney([0.1,0.2,0.3])'),run('toCents(19.99)')],parse:['R$ 1.234,56','1500','1.500,5','12.3'].map(s=>run(`parseMoney(${J(s)})`))};
@@ -56,5 +64,8 @@ function golden(){
   out.report=run("buildReport('2026-10','2026-11-20')");
   return out;
 }
-module.exports={golden};
 if(require.main===module)process.stdout.write(JSON.stringify(golden(),null,1)+'\n');
+function golden(){const {run}=setup();return compute(run);}
+/** The invented state the baseline starts from (what the server must be able to import, store and rebuild). */
+function goldenState(){const {run}=setup();return JSON.parse(run('JSON.stringify(S)'));}
+module.exports={golden,compute,goldenState,FROZEN};

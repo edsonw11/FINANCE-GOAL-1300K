@@ -62,6 +62,26 @@ describe('dist/main.js: invalid configuration', () => {
   });
 });
 
+describe('dist: the shared rules load in real Node from the compiled program', () => {
+  it('loads the browser app\'s rules (ES modules) from the compiled CommonJS code and runs one', () => {
+    const script = `const d=require('./dist/domain/domain-runtime.js');
+      d.runWithState({v:2,goal:1,rate:1,planned:0,nid:2,accounts:[],snaps:[],tx:[{id:1,type:'receita',date:'2026-10-05',value:7,cat:'Salário',desc:'x',fonte:'caixa'}]},
+        api=>api.monthSummary('2026-10').income.total).then(r=>{console.log('TOTAL='+r.result+' FUNCTIONS='+Object.keys(r.state).length)}).catch(e=>{console.error(e);process.exit(1)})`;
+    const run = spawnSync('node', ['-e', script], { encoding: 'utf8', cwd: resolve(__dirname, '../..'), env: cleanEnv({}) });
+    expect(run.stderr).toBe('');
+    expect(run.stdout).toContain('TOTAL=7');
+  });
+
+  it('says where it looked when the rules cannot be found', () => {
+    const run = spawnSync('node', ['-e', "require('./dist/domain/domain-runtime.js').loadDomain().then(()=>console.log('LOADED')).catch(e=>{console.log('FAILED '+e.code);})"], {
+      encoding: 'utf8',
+      cwd: resolve(__dirname, '../..'),
+      env: cleanEnv({ DOMAIN_ROOT: '/nonexistent/path' }),
+    });
+    expect(run.stdout).toContain('FAILED');
+  });
+});
+
 describe('dist/main.js: running', () => {
   async function startServer() {
     const port = await freePort();

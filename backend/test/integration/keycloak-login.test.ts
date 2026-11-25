@@ -91,7 +91,7 @@ describe('login with the real Keycloak', () => {
     const id = '0190a1b2-0000-7000-8000-00000000abcd';
     expect((await app.inject({ method: 'PUT', url: `/api/v1/accounts/${id}`, headers: { cookie: alice, ...CSRF }, payload: { name: 'Alice only' } })).statusCode).toBe(200);
     expect((await app.inject({ method: 'GET', url: `/api/v1/accounts/${id}`, headers: { cookie: bob } })).statusCode).toBe(404);
-    await withClient((c) => c.query('DELETE FROM account WHERE id = $1', [id]));
+    await withClient((c) => c.query('DELETE FROM record WHERE id = $1', [id]));
   });
 
   it('a wrong password never reaches the API (Keycloak keeps the person on its own page)', async () => {

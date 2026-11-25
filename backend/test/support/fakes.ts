@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { type Body, type ImportItem, type ImportResult, type PutInput, type PutResult, type RecordKind, type RecordStore, type StoredRecord, type StoredState } from '../../src/records/record.store';
 import { type AccountChange, type AccountRecord, type AccountRepository, type SaveResult } from '../../src/accounts/account.repository';
 import { type AuthFlowRecord, type AuthFlowRepository } from '../../src/auth/auth-flow.repository';
 import { type AuthorizationRequest, type FlowSecrets, LoginFailedError, type OidcIdentity, type OidcProvider } from '../../src/auth/oidc-provider';
@@ -244,3 +245,80 @@ export class InMemoryAuditRepository implements AuditRepository {
     this.entries.push({ ...entry, at: now });
   }
 }
+
+interface MemRecord extends StoredRecord {
+  readonly userId: string;
+}
+
+/** The record store in memory: same rules as the PostgreSQL one, proven by the same contract. */
+export class InMemoryRecordStore implements RecordStore {
+  readonly rows = new Map<string, MemRecord>();
+  readonly states = new Map<string, StoredState>();
+  readonly counters = new Map<string, number>();
+  private take(userId: string, n = 1): number {
+    const first = (this.counters.get(userId) ?? 0) + 1;
+    this.counters.set(userId, first + n - 1);
+    return first;
+  }
+  private hasKey(userId: string, kind: RecordKind, key: string, exceptId: string) {
+    return [...this.rows.values()].some((r) => r.userId === userId && r.kind === kind && r.legacyKey === key && r.id !== exceptId);
+  }
+  private pub(r: MemRecord): StoredRecord {
+    const { userId: _u, ...rest } = r;
+    return rest;
+  }
+  async put(userId: string, kind: RecordKind, id: string, input: PutInput, now: Date): Promise<PutResult> {
+    const row = this.rows.get(id);
+    if (row && (row.userId !== userId || row.kind !== kind)) return { status: 'taken' };
+    if (row?.deleted) return { status: 'deleted' };
+    const body = input.merge && row ? { ...row.body, ...input.body } : input.body;
+    const key = input.legacyKey === undefined ? (row?.legacyKey ?? null) : input.legacyKey;
+    if (row && JSON.stringify(sortKeys(row.body)) === JSON.stringify(sortKeys(body)) && key === row.legacyKey) return { status: 'saved', record: this.pub(row) };
+    if (key !== null && key !== row?.legacyKey && this.hasKey(userId, kind, key, id)) return { status: 'key_taken' };
+    const version = this.take(userId);
+    const saved: MemRecord = { id, userId, kind, legacyKey: key, position: row?.position ?? version, body: structuredClone(body), createdAt: row?.createdAt ?? now, updatedAt: now, version, deleted: false };
+    this.rows.set(id, saved);
+    return { status: 'saved', record: this.pub(saved) };
+  }
+  async remove(userId: string, kind: RecordKind, id: string, now: Date) {
+    const row = this.rows.get(id);
+    if (row && row.userId === userId && row.kind === kind && !row.deleted) this.rows.set(id, { ...row, deleted: true, updatedAt: now, version: this.take(userId) });
+  }
+  async find(userId: string, kind: RecordKind, id: string) {
+    const row = this.rows.get(id);
+    return row && row.userId === userId && row.kind === kind && !row.deleted ? this.pub(row) : null;
+  }
+  async list(userId: string, kind: RecordKind) {
+    return [...this.rows.values()].filter((r) => r.userId === userId && r.kind === kind && !r.deleted).sort((a, b) => a.position - b.position || a.id.localeCompare(b.id)).map((r) => this.pub(r));
+  }
+  async changesSince(userId: string, kind: RecordKind, after: number, limit: number) {
+    return [...this.rows.values()].filter((r) => r.userId === userId && r.kind === kind && r.version > after).sort((a, b) => a.version - b.version).slice(0, limit).map((r) => this.pub(r));
+  }
+  async getState(userId: string) {
+    return this.states.get(userId) ?? null;
+  }
+  async putState(userId: string, body: Body, now: Date): Promise<StoredState> {
+    const current = this.states.get(userId);
+    if (current && JSON.stringify(sortKeys(current.body)) === JSON.stringify(sortKeys(body))) return current;
+    const next: StoredState = { body: structuredClone(body), version: this.take(userId), updatedAt: now };
+    this.states.set(userId, next);
+    return next;
+  }
+  async importAll(userId: string, items: readonly ImportItem[], state: Body, now: Date, replace: boolean): Promise<ImportResult> {
+    const live = [...this.rows.values()].filter((r) => r.userId === userId && !r.deleted);
+    if (live.length > 0 || this.states.has(userId)) {
+      if (!replace) return { status: 'not_empty' };
+      for (const r of live.sort((a, b) => a.position - b.position)) this.rows.set(r.id, { ...r, deleted: true, legacyKey: null, updatedAt: now, version: this.take(userId) });
+      this.states.delete(userId);
+    }
+    for (const item of items) {
+      const version = this.take(userId);
+      this.rows.set(item.id, { id: item.id, userId, kind: item.kind, legacyKey: item.legacyKey, position: version, body: structuredClone(item.body), createdAt: now, updatedAt: now, version, deleted: false });
+    }
+    this.states.set(userId, { body: structuredClone(state), version: this.take(userId), updatedAt: now });
+    return { status: 'imported', records: items.length };
+  }
+}
+
+const sortKeys = (v: unknown): unknown =>
+  Array.isArray(v) ? v.map(sortKeys) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b)).map(([k, x]) => [k, sortKeys(x)])) : v;

@@ -1,7 +1,7 @@
 import { type Type } from '@nestjs/common';
 import { type TestingModule, Test } from '@nestjs/testing';
 import { type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { ACCOUNT_REPOSITORY } from '../../src/accounts/account.repository';
+import { RECORD_STORE } from '../../src/records/record.store';
 import { AUTH_FLOW_REPOSITORY } from '../../src/auth/auth-flow.repository';
 import { OIDC_PROVIDER } from '../../src/auth/oidc-provider';
 import { SESSION_REPOSITORY } from '../../src/auth/session.repository';
@@ -16,7 +16,7 @@ import { PLAN_REPOSITORY } from '../../src/plans/plan.repository';
 import { MUTATION_LOG } from '../../src/sync/mutation-log';
 import { USER_REPOSITORY } from '../../src/users/user.repository';
 import { baseEnv } from './env';
-import { FakeClock, FakeOidcProvider, InMemoryAccountRepository, InMemoryAuditRepository, InMemoryAuthFlowRepository, InMemoryMutationLog, InMemoryPlanRepository, InMemorySessionRepository, InMemoryUserRepository } from './fakes';
+import { FakeClock, FakeOidcProvider, InMemoryRecordStore, InMemoryAuditRepository, InMemoryAuthFlowRepository, InMemoryMutationLog, InMemoryPlanRepository, InMemorySessionRepository, InMemoryUserRepository } from './fakes';
 
 export const ORIGIN = 'http://localhost:3000';
 export const CSRF = { origin: ORIGIN, 'x-everfox-csrf': '1' } as const;
@@ -29,7 +29,7 @@ export interface TestApp {
   readonly sessions: InMemorySessionRepository;
   readonly flows: InMemoryAuthFlowRepository;
   readonly users: InMemoryUserRepository;
-  readonly accounts: InMemoryAccountRepository;
+  readonly records: InMemoryRecordStore;
   readonly mutationLog: InMemoryMutationLog;
   readonly plans: InMemoryPlanRepository;
   readonly audit: InMemoryAuditRepository;
@@ -46,7 +46,7 @@ export async function createTestApp(env: Record<string, string | undefined> = {}
   const sessions = new InMemorySessionRepository();
   const flows = new InMemoryAuthFlowRepository();
   const users = new InMemoryUserRepository();
-  const accounts = new InMemoryAccountRepository();
+  const records = new InMemoryRecordStore();
   const mutationLog = new InMemoryMutationLog();
   const plans = new InMemoryPlanRepository();
   const audit = new InMemoryAuditRepository();
@@ -63,8 +63,8 @@ export async function createTestApp(env: Record<string, string | undefined> = {}
     .useValue(flows)
     .overrideProvider(USER_REPOSITORY)
     .useValue(users)
-    .overrideProvider(ACCOUNT_REPOSITORY)
-    .useValue(accounts)
+    .overrideProvider(RECORD_STORE)
+    .useValue(records)
     .overrideProvider(MUTATION_LOG)
     .useValue(mutationLog)
     .overrideProvider(PLAN_REPOSITORY)
@@ -91,7 +91,7 @@ export async function createTestApp(env: Record<string, string | undefined> = {}
     sessions,
     flows,
     users,
-    accounts,
+    records,
     mutationLog,
     plans,
     audit,

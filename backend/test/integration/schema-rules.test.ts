@@ -52,42 +52,76 @@ describe('session', () => {
   });
 });
 
-describe('account', () => {
+describe('record', () => {
+  const insert = "INSERT INTO record (id, user_id, kind, position, body, version) VALUES ($1, $2, $3, 1, $4::jsonb, 1)";
+  const ok = (user: string, over: { id?: string; kind?: string; body?: string } = {}) => [over.id ?? randomUUID(), user, over.kind ?? 'tx', over.body ?? '{}'];
+
   it('needs an existing owner', async () => {
-    await rejects("INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, 'x', 1)", [randomUUID(), randomUUID()], /foreign key/);
+    await rejects(insert, ok(randomUUID()), /foreign key/);
   });
 
-  it('refuses an empty or too long name', async () => {
+  it('refuses a kind with the wrong shape', async () => {
     const user = await newUser();
-    await rejects("INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, '', 1)", [randomUUID(), user], /account_name_length/);
-    await rejects('INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, $3, 1)', [randomUUID(), user, 'a'.repeat(81)], /account_name_length/);
-    await withClient((c) => c.query('INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, $3, 1)', [randomUUID(), user, 'a'.repeat(80)]));
+    await rejects(insert, ok(user, { kind: 'Has Space' }), /record_kind_format/);
+    await rejects(insert, ok(user, { kind: '' }), /record_kind_format/);
+  });
+
+  it('refuses a body that is not an object, or that is too big', async () => {
+    const user = await newUser();
+    await rejects(insert, ok(user, { body: '[]' }), /record_body_is_object/);
+    await rejects(insert, ok(user, { body: '"text"' }), /record_body_is_object/);
+    await rejects(insert, ok(user, { body: JSON.stringify({ a: 'x'.repeat(33_000) }) }), /record_body_size/);
+    await withClient((c) => c.query(insert, ok(user, { body: JSON.stringify({ a: 'x'.repeat(30_000) }) })));
   });
 
   it('refuses an id that is not a uuid, and a repeated id', async () => {
     const user = await newUser();
-    await rejects("INSERT INTO account (id, user_id, name, version) VALUES ('nope', $1, 'x', 1)", [user], /invalid input syntax for type uuid/);
+    await rejects(insert, ok(user, { id: 'nope' }), /invalid input syntax for type uuid/);
     const id = randomUUID();
-    await withClient((c) => c.query("INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, 'x', 1)", [id, user]));
-    await rejects("INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, 'y', 1)", [id, user], /duplicate key/);
+    await withClient((c) => c.query(insert, ok(user, { id })));
+    await rejects(insert, ok(user, { id }), /duplicate key/);
+  });
+
+  it('one legacy key per person and kind, but a key may repeat across kinds, persons, and when there is none', async () => {
+    const [a, b] = [await newUser(), await newUser()];
+    const sql = "INSERT INTO record (id, user_id, kind, legacy_key, position, body, version) VALUES ($1, $2, $3, $4, 1, '{}', 1)";
+    await withClient((c) => c.query(sql, [randomUUID(), a, 'tx', '7']));
+    await rejects(sql, [randomUUID(), a, 'tx', '7'], /record_user_id_kind_legacy_key_key/);
+    await withClient((c) => c.query(sql, [randomUUID(), a, 'snap', '7']));
+    await withClient((c) => c.query(sql, [randomUUID(), b, 'tx', '7']));
+    await withClient((c) => c.query(sql, [randomUUID(), a, 'tx', null]));
+    await withClient((c) => c.query(sql, [randomUUID(), a, 'tx', null]));
   });
 
   it('is deleted with its owner, and only with its owner', async () => {
     const [a, b] = [await newUser(), await newUser()];
     const [ida, idb] = [randomUUID(), randomUUID()];
-    await withClient((c) => c.query("INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, 'a', 1), ($3, $4, 'b', 1)", [ida, a, idb, b]));
+    await withClient((c) => c.query(insert, ok(a, { id: ida })));
+    await withClient((c) => c.query(insert, ok(b, { id: idb })));
     await withClient((c) => c.query('DELETE FROM app_user WHERE id = $1', [a]));
-    const { rows } = await withClient((c) => c.query('SELECT id FROM account WHERE id = ANY($1::uuid[])', [[ida, idb]]));
+    const { rows } = await withClient((c) => c.query('SELECT id FROM record WHERE id = ANY($1::uuid[])', [[ida, idb]]));
     expect(rows.map((r) => r.id)).toEqual([idb]);
   });
 });
 
-describe('sync tables', () => {
-  it('a record must have a positive version', async () => {
+describe('user_state', () => {
+  it('one document per person, an object, not too big, owned by an existing person', async () => {
     const user = await newUser();
-    await rejects("INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, 'x', 0)", [randomUUID(), user], /account_version_positive/);
-    await rejects("INSERT INTO account (id, user_id, name, version) VALUES ($1, $2, 'x', -3)", [randomUUID(), user], /account_version_positive/);
-    await rejects("INSERT INTO account (id, user_id, name) VALUES ($1, $2, 'x')", [randomUUID(), user], /null value/);
+    const sql = 'INSERT INTO user_state (user_id, body, version) VALUES ($1, $2::jsonb, 1)';
+    await rejects(sql, [randomUUID(), '{}'], /foreign key/);
+    await rejects(sql, [user, '[]'], /user_state_body_is_object/);
+    await rejects(sql, [user, JSON.stringify({ a: 'x'.repeat(263_000) })], /user_state_body_size/);
+    await withClient((c) => c.query(sql, [user, '{}']));
+    await rejects(sql, [user, '{}'], /duplicate key/);
+  });
+});
+
+describe('sync tables', () => {
+  it('a record must have a positive version and position', async () => {
+    const user = await newUser();
+    await rejects("INSERT INTO record (id, user_id, kind, position, body, version) VALUES ($1, $2, 'tx', 1, '{}', 0)", [randomUUID(), user], /record_version_positive/);
+    await rejects("INSERT INTO record (id, user_id, kind, position, body, version) VALUES ($1, $2, 'tx', 1, '{}', -3)", [randomUUID(), user], /record_version_positive/);
+    await rejects("INSERT INTO record (id, user_id, kind, position, body) VALUES ($1, $2, 'tx', 1, '{}')", [randomUUID(), user], /null value/);
   });
 
   it('the change counter cannot go negative and needs an existing person', async () => {

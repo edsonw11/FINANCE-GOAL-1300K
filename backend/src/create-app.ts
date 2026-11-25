@@ -3,10 +3,13 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
 import { type AppConfig } from './config/app-config';
+import { IMPORT_PATH } from './legacy/legacy.controller';
 import { nestLogLevels } from './logging/nest-log-levels';
 
 /** Requests larger than this are refused (413) before the application reads them. */
 export const BODY_LIMIT_BYTES = 1024 * 1024;
+/** The import of a whole history is the one route that may be larger (it also needs a login and the CSRF protections). */
+export const IMPORT_BODY_LIMIT_BYTES = 25 * 1024 * 1024;
 
 /** The HTTP server and its limits (a function of its own so the limits can be tested on their behaviour). */
 export function createAdapter(): FastifyAdapter {
@@ -20,6 +23,12 @@ export function createAdapter(): FastifyAdapter {
  */
 export async function configureApp(app: NestFastifyApplication): Promise<void> {
   await app.register(fastifyCookie);
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .addHook('onRoute', (route) => {
+      if (route.url === IMPORT_PATH) route.bodyLimit = IMPORT_BODY_LIMIT_BYTES;
+    });
   app
     .getHttpAdapter()
     .getInstance()

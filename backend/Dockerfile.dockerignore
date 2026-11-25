@@ -1,0 +1,14 @@
+# Build context is the repository root: keep everything out except what the Dockerfile copies.
+**
+!backend/package.json
+!backend/package-lock.json
+!backend/.npmrc
+!backend/tsconfig.json
+!backend/tsconfig.build.json
+!backend/prisma.config.ts
+!backend/prisma/**
+!backend/src/**
+backend/src/generated
+!src/package.json
+!src/core/**
+!src/domain/**

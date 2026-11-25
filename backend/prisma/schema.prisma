@@ -25,7 +25,8 @@ model AppUser {
   isAdmin     Boolean  @default(false) @map("is_admin")
 
   sessions     Session[]
-  accounts     Account[]
+  records      Record[]
+  userState    UserState?
   syncCursor   SyncCursor?
   syncMutation SyncMutation[]
   plan         Plan           @relation(fields: [planId], references: [id])
@@ -65,23 +66,37 @@ model AuthFlow {
   @@map("auth_flow")
 }
 
-// First table with an owner. The id is chosen by the device (ADR-0008) so creating it offline and retrying is safe.
-// A deleted row stays as a tombstone so the delete reaches every device.
-model Account {
+// Everything a person records: accounts, transactions, balances, trades, transfers, imports (one `kind` each). The id is chosen by the
+// device (ADR-0008); `body` keeps the shape the browser app uses (ADR-0011); a delete leaves a tombstone so it reaches every device.
+model Record {
   id        String    @id @db.Uuid
   userId    String    @map("user_id") @db.Uuid
-  name      String
+  kind      String
+  legacyKey String?   @map("legacy_key")
+  position  BigInt
+  body      Json
   createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
   deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
-  // from the person's own counter (sync_cursor): the cursor of the changes feed
   version   BigInt
 
   user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId, deletedAt])
   @@index([userId, version])
-  @@map("account")
+  @@index([userId, kind, position])
+  @@map("record")
+}
+
+// The person's settings, categories and groups as one document (goal, rate, card, budgets, ...).
+model UserState {
+  userId    String   @id @map("user_id") @db.Uuid
+  body      Json
+  version   BigInt
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_state")
 }
 
 // The last version handed out to a person. Writers lock the row, so the versions of one person come out, and commit, in order.
