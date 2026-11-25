@@ -15,6 +15,9 @@
     "mobile:doctor": "bash scripts/mobile.sh doctor",
     "mobile:web": "bash scripts/mobile.sh web",
     "mobile:sync": "bash scripts/mobile.sh sync",
+    "apk:check": "node services/telegram-apk/send-apk.mjs --check",
+    "apk:send": "node services/telegram-apk/send-apk.mjs",
+    "test:services": "node --test services/telegram-apk/test/",
     "mobile:emulator": "bash scripts/mobile.sh emulator",
     "mobile:test": "bash scripts/mobile.sh test",
     "mobile:apk": "bash scripts/mobile.sh apk",
@@ -24,7 +27,7 @@
     "dev:seed": "bash scripts/dev.sh seed",
     "dev:status": "bash scripts/dev.sh status",
     "dev:check": "bash scripts/dev.sh check",
-    "check": "npm run lint && npm run typecheck && npm run test:unit && npm run build && npm run test:e2e && npm run test:mobile"
+    "check": "npm run lint && npm run typecheck && npm run test:unit && npm run test:services && npm run build && npm run test:e2e && npm run test:mobile"
   },
   "devDependencies": {
     "@capacitor/cli": "8.6.2",

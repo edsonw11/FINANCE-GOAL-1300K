@@ -1,0 +1,171 @@
+{
+  "info": {
+    "name": "Everfox: Telegram APK delivery",
+    "description": "The calls services/telegram-apk makes, to try by hand. Variables: baseUrl, token (secret), chatId. Import everfox-telegram.postman_environment.json and fill token and chatId in YOUR copy only: never commit them.\n\n1. getMe and getChat post nothing. 2. sendMessage and sendDocument post to the chat: other members will see it.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Check (posts nothing)",
+      "item": [
+        {
+          "name": "getMe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bot{{token}}/getMe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bot{{token}}",
+                "getMe"
+              ]
+            },
+            "description": "Who the bot is. 200 with ok:true proves the token works."
+          }
+        },
+        {
+          "name": "getChat",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bot{{token}}/getChat",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bot{{token}}",
+                "getChat"
+              ]
+            },
+            "description": "The chat as the bot sees it (title, type). A 400 'chat not found' means the bot is not in the chat or the id is wrong.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chat_id\": \"{{chatId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "getUpdates (find a chat id)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bot{{token}}/getUpdates",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bot{{token}}",
+                "getUpdates"
+              ]
+            },
+            "description": "Recent messages the bot received: send a message in the group first, then look for message.chat.id (a supergroup id starts with -100). Does not work while a webhook is set."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Post (visible to the chat)",
+      "item": [
+        {
+          "name": "sendMessage",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bot{{token}}/sendMessage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bot{{token}}",
+                "sendMessage"
+              ]
+            },
+            "description": "Posts a text message to the chat.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chat_id\": \"{{chatId}}\",\n  \"text\": \"Everfox test message\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "sendDocument (the APK)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/bot{{token}}/sendDocument",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bot{{token}}",
+                "sendDocument"
+              ]
+            },
+            "description": "Posts a file as a document (up to 50 MB). Pick the APK in the 'document' field: android/app/build/outputs/apk/debug/app-debug.apk",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "chat_id",
+                  "value": "{{chatId}}",
+                  "type": "text"
+                },
+                {
+                  "key": "caption",
+                  "value": "Everfox: Android test build (debug)",
+                  "type": "text"
+                },
+                {
+                  "key": "document",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.telegram.org"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "chatId",
+      "value": ""
+    }
+  ]
+}

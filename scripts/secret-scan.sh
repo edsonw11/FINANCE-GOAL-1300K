@@ -6,7 +6,7 @@ set -euo pipefail
 DIR="${1:-$(cd "$(dirname "$0")/.." && pwd)}"
 cd "$DIR"
 # development-only values that are public on purpose (README says so); anything else is a finding
-ALLOWED='everfox_dev_only|everfox_app_dev_only|\$\{|everfox-dev-client-secret|ci_only_password|ci_only_app_password|alice-dev-password|bob-dev-password|DEV_APP_DATABASE_PASSWORD|change-me|example|placeholder'
+ALLOWED='AAFakeTokenForTestsOnly|everfox_dev_only|everfox_app_dev_only|\$\{|everfox-dev-client-secret|ci_only_password|ci_only_app_password|alice-dev-password|bob-dev-password|DEV_APP_DATABASE_PASSWORD|change-me|example|placeholder'
 PATTERNS=(
   'BEGIN (RSA |EC |OPENSSH |DSA |PGP )?PRIVATE KEY'
   'AKIA[0-9A-Z]{16}'
@@ -14,6 +14,7 @@ PATTERNS=(
   'gh[pousr]_[A-Za-z0-9]{30,}'
   'xox[abprs]-[A-Za-z0-9-]{10,}'
   'AIza[0-9A-Za-z_-]{35}'
+  '[0-9]{8,12}:AA[A-Za-z0-9_-]{32,}' # Telegram bot token
   'eyJ[A-Za-z0-9_-]{15,}\.eyJ[A-Za-z0-9_-]{15,}\.[A-Za-z0-9_-]{10,}'
   '(postgres(ql)?|mysql|mongodb(\+srv)?)://[^:/@ ]+:[^@ ]{6,}@'
   "(secret|password|passwd|token|api[_-]?key)[A-Za-z_]*[\"']?[ ]*[:=][ ]*[\"'][A-Za-z0-9/+_=.-]{16,}[\"']"
