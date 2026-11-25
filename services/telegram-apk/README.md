@@ -14,6 +14,23 @@ The bot must be a member of the group (for a supergroup, being a member is enoug
 
 ## Use
 
+Run the commands from the project folder (the one with `package.json`), not from a parent folder: npm looks for `package.json` in the current folder and fails with `ENOENT` otherwise.
+
+```
+cd ~/Documents/DowJones/ProjetosPollux/tasks/active/FINANCE-GOAL-1300K
+npm run apk:send
+```
+
+From any folder, point npm at the project instead:
+
+```
+npm --prefix ~/Documents/DowJones/ProjetosPollux/tasks/active/FINANCE-GOAL-1300K run apk:send
+```
+
+What you see: the bot and the chat, then the file and the caption, then the question `[y/N]`; answer `y` to send. If there is no APK yet (or it is old), build one first with `npm run mobile:apk`, or add `--build` to the command.
+
+All the options:
+
 ```
 npm run apk:send                       # shows the chat and the caption, asks "[y/N]", then sends app-debug.apk
 npm run apk:send -- --build --yes      # builds the APK first, sends without asking

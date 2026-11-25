@@ -31,6 +31,8 @@ npm run mobile:emulator  start the virtual phone (once: scripts/mobile.sh emulat
 npm run mobile:test      build the test APK, install it and run the device test (screens, Back, share, backup + restore, themes, rotation, random touches)
 ```
 
+To get the APK onto a phone without cables, send it to a Telegram chat: `npm run apk:send` (run it from the project folder; setup and options in [services/telegram-apk](services/telegram-apk/README.md)).
+
 CI builds the same APK on every push (job `android`, artifact `everfox-debug-apk`). The Capacitor CLI needs Node 22: `scripts/mobile.sh` fetches it for its own commands.
 
 ## How to use
