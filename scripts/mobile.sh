@@ -11,6 +11,8 @@
 # Same through npm: npm run mobile:doctor | mobile:web | mobile:sync | mobile:apk
 set -euo pipefail
 cd "$(dirname "$0")/.."
+# No need to export ANDROID_HOME by hand: the SDK installed by this project's setup (~/Android/Sdk) is used when the variable is not set.
+if [ -z "${ANDROID_HOME:-}" ] && [ -d "$HOME/Android/Sdk/platforms" ]; then export ANDROID_HOME="$HOME/Android/Sdk"; fi
 die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 
 cap() { # runs the Capacitor CLI with Node 22 whatever the node of this shell is

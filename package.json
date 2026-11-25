@@ -10,7 +10,7 @@
     "typecheck": "tsc -p tsconfig.json",
     "test:unit": "node tests/run-unit.js",
     "test:e2e": "bash scripts/smoke.sh",
-    "test:mobile": "bash scripts/mobile-check.sh",
+    "test:mobile": "bash scripts/mobile-check.sh && bash scripts/test-mobile-env.sh",
     "build": "python3 scripts/build.py",
     "mobile:doctor": "bash scripts/mobile.sh doctor",
     "mobile:web": "bash scripts/mobile.sh web",

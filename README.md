@@ -24,7 +24,7 @@ Then open http://localhost:3000 and sign in as `alice` / `alice-dev-password` (o
 The same app in a Capacitor shell (offline, data on the phone; backup through the share sheet; sync comes with the phone's own sign-in). Details: [ADR-0014](docs/architecture/decisions/ADR-0014-android-shell.md).
 
 ```
-npm run mobile:doctor    what this machine has and lacks (JDK 17+, Android SDK with platform 36 and build-tools; ANDROID_HOME)
+npm run mobile:doctor    what this machine has and lacks (JDK 17+, Android SDK with platform 36 and build-tools; ANDROID_HOME, which is optional when the SDK is at ~/Android/Sdk)
 npm run mobile:test-lock  the same for the app lock: sets a real PIN on the emulator, switches the lock on through the app, drives Android's own prompt (right and wrong PIN, Back, 30 seconds away, lost screen lock)
 npm run mobile:apk       build the web part, copy it into android/, build android/app/build/outputs/apk/debug/app-debug.apk
 adb install -r android/app/build/outputs/apk/debug/app-debug.apk     on a phone with USB debugging, or drag the APK onto an emulator
