@@ -3,10 +3,12 @@ import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { BODY_LIMIT_BYTES, createAdapter, createApp } from '../../src/create-app';
 import { PrismaService } from '../../src/database/prisma.service';
 import { loadConfig } from '../../src/config/load-config';
+import { OIDC_DEV } from '../support/env';
 
 // The whole application, with the database unreachable on purpose: what a client sees while it is down.
 const SECRET = 'Sup3rSecretPw';
 const config = loadConfig({
+  ...OIDC_DEV,
   DATABASE_URL: `postgresql://app:${SECRET}@127.0.0.1:1/everfox`,
   NODE_ENV: 'test',
   LOG_LEVEL: 'silent',

@@ -52,6 +52,11 @@ jobs:
           --health-retries 20
     env:
       DATABASE_URL: postgresql://everfox:ci_only_password@127.0.0.1:5432/everfox
+      # the throwaway Keycloak started below (same realm file as local development)
+      APP_BASE_URL: http://localhost:3000
+      OIDC_ISSUER: http://localhost:8081/realms/everfox
+      OIDC_CLIENT_ID: everfox-web
+      OIDC_CLIENT_SECRET: everfox-dev-client-secret
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -68,5 +73,8 @@ jobs:
       - run: npm run build
       - name: apply the migrations to an empty database
         run: npm run db:migrate
-      - name: integration tests (real PostgreSQL, built program)
+      - name: start Keycloak (the real identity provider, with the development realm)
+        working-directory: .
+        run: docker compose up -d --wait --wait-timeout 180 keycloak
+      - name: integration tests (real PostgreSQL, real Keycloak, built program)
         run: npm run test:integration

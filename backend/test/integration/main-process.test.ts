@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { resolve } from 'node:path';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { OIDC_DEV, OIDC_PROD } from '../support/env';
 import { databaseUrl } from './support';
 
 // The built program (dist/main.js) as a separate process, the way a container runs it.
@@ -46,12 +47,14 @@ describe('dist/main.js: invalid configuration', () => {
     const run = spawnSync('node', [MAIN], { encoding: 'utf8', env: cleanEnv({}) });
     expect(run.status).toBe(1);
     expect(run.stderr).toContain('DATABASE_URL is required');
+    expect(run.stderr).toContain('APP_BASE_URL');
+    expect(run.stderr).toContain('OIDC_ISSUER');
   });
 
   it('stops in production with the development password', () => {
     const run = spawnSync('node', [MAIN], {
       encoding: 'utf8',
-      env: cleanEnv({ NODE_ENV: 'production', DATABASE_URL: 'postgresql://everfox:everfox_dev_only@127.0.0.1:5433/everfox' }),
+      env: cleanEnv({ ...OIDC_PROD, NODE_ENV: 'production', DATABASE_URL: 'postgresql://everfox:everfox_dev_only@127.0.0.1:5433/everfox' }),
     });
     expect(run.status).toBe(1);
     expect(run.stderr).toContain('development password');
@@ -63,7 +66,7 @@ describe('dist/main.js: running', () => {
   async function startServer() {
     const port = await freePort();
     const child = spawn('node', [MAIN], {
-      env: cleanEnv({ DATABASE_URL: databaseUrl(), PORT: String(port), HOST: '127.0.0.1', LOG_LEVEL: 'info' }),
+      env: cleanEnv({ ...OIDC_DEV, DATABASE_URL: databaseUrl(), PORT: String(port), HOST: '127.0.0.1', LOG_LEVEL: 'info' }),
       stdio: ['ignore', 'pipe', 'pipe'],
     });
     children.push(child);
@@ -101,7 +104,7 @@ describe('dist/main.js: running', () => {
     const second = spawnSync('node', [MAIN], {
       encoding: 'utf8',
       timeout: 15_000,
-      env: cleanEnv({ DATABASE_URL: databaseUrl(), PORT: String(port), HOST: '127.0.0.1', LOG_LEVEL: 'error' }),
+      env: cleanEnv({ ...OIDC_DEV, DATABASE_URL: databaseUrl(), PORT: String(port), HOST: '127.0.0.1', LOG_LEVEL: 'error' }),
     });
     expect(second.status).not.toBe(0);
     expect(second.stderr).toMatch(/EADDRINUSE|address already in use/i);

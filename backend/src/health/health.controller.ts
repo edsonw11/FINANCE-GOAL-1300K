@@ -1,8 +1,10 @@
 import { Controller, Get, ServiceUnavailableException } from '@nestjs/common';
+import { Public } from '../auth/public.decorator';
 import { type HealthReport } from './health-check';
 import { HealthService } from './health.service';
 
-/** Unauthenticated, outside /api/v1 and free of user data: for the load balancer and docker. */
+/** Unauthenticated (on purpose), outside /api/v1 and free of user data: for the load balancer and docker. */
+@Public()
 @Controller('health')
 export class HealthController {
   constructor(private readonly health: HealthService) {}

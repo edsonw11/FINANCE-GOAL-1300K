@@ -1,6 +1,9 @@
 import { type AppConfig } from './app-config';
 import { ConfigError, type ConfigIssue } from './config-error';
-import { DEV_DATABASE_PASSWORD, envSchema } from './env.schema';
+import { DEV_DATABASE_PASSWORD, DEV_OIDC_CLIENT_SECRET, type ParsedEnv, envSchema } from './env.schema';
+
+const HOUR_MS = 60 * 60 * 1000;
+const MINUTE_MS = 60 * 1000;
 
 /** The password of a connection URL as the database sees it: "%5F" is "_", so an encoded copy cannot slip past a comparison. */
 function passwordOf(databaseUrl: string): string {
@@ -12,13 +15,24 @@ function passwordOf(databaseUrl: string): string {
   }
 }
 
+const isHttps = (url: string) => new URL(url).protocol === 'https:';
+
 /** Rules that depend on more than one variable, or on the environment the API runs in. */
-function productionIssues(env: { nodeEnv: string; databaseUrl: string }): ConfigIssue[] {
-  if (env.nodeEnv !== 'production') return [];
+function crossIssues(v: ParsedEnv): ConfigIssue[] {
   const issues: ConfigIssue[] = [];
-  if (passwordOf(env.databaseUrl) === DEV_DATABASE_PASSWORD) {
+  // an idle limit longer than the absolute one would never apply
+  if (v.SESSION_IDLE_MINUTES * MINUTE_MS > v.SESSION_TTL_HOURS * HOUR_MS) {
+    issues.push({ variable: 'SESSION_IDLE_MINUTES', problem: 'must not be longer than SESSION_TTL_HOURS' });
+  }
+  if (v.NODE_ENV !== 'production') return issues;
+  if (passwordOf(v.DATABASE_URL) === DEV_DATABASE_PASSWORD) {
     issues.push({ variable: 'DATABASE_URL', problem: 'uses the local development password, which is not allowed in production' });
   }
+  if (v.OIDC_CLIENT_SECRET === DEV_OIDC_CLIENT_SECRET) {
+    issues.push({ variable: 'OIDC_CLIENT_SECRET', problem: 'is the local development secret, which is not allowed in production' });
+  }
+  if (!isHttps(v.APP_BASE_URL)) issues.push({ variable: 'APP_BASE_URL', problem: 'must use https:// in production' });
+  if (!isHttps(v.OIDC_ISSUER)) issues.push({ variable: 'OIDC_ISSUER', problem: 'must use https:// in production' });
   return issues;
 }
 
@@ -34,8 +48,9 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>>): A
     );
   }
   const v = parsed.data;
-  const prodIssues = productionIssues({ nodeEnv: v.NODE_ENV, databaseUrl: v.DATABASE_URL });
-  if (prodIssues.length) throw new ConfigError(prodIssues);
+  const issues = crossIssues(v);
+  if (issues.length) throw new ConfigError(issues);
+  const production = v.NODE_ENV === 'production';
   return Object.freeze({
     nodeEnv: v.NODE_ENV,
     host: v.HOST,
@@ -43,5 +58,19 @@ export function loadConfig(env: Readonly<Record<string, string | undefined>>): A
     logLevel: v.LOG_LEVEL,
     healthCheckTimeoutMs: v.HEALTH_CHECK_TIMEOUT_MS,
     databaseUrl: v.DATABASE_URL,
+    appBaseUrl: new URL(v.APP_BASE_URL).origin,
+    oidc: Object.freeze({
+      issuer: v.OIDC_ISSUER,
+      internalUrl: v.OIDC_INTERNAL_URL ?? null,
+      clientId: v.OIDC_CLIENT_ID,
+      clientSecret: v.OIDC_CLIENT_SECRET,
+    }),
+    session: Object.freeze({ ttlMs: v.SESSION_TTL_HOURS * HOUR_MS, idleMs: v.SESSION_IDLE_MINUTES * MINUTE_MS }),
+    // "__Host-" cookies must be Secure, so they only exist where HTTPS is guaranteed
+    cookies: Object.freeze({
+      secure: production,
+      sessionName: production ? '__Host-everfox_session' : 'everfox_session',
+      flowName: production ? '__Host-everfox_login' : 'everfox_login',
+    }),
   });
 }

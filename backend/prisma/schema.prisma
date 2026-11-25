@@ -11,11 +11,65 @@ datasource db {
   provider = "postgresql"
 }
 
-// The owner of every other row. Identity columns (OIDC subject, e-mail) arrive with the login phase,
-// as their own migration.
+// The owner of every other row. A person is the pair (issuer, subject) of the identity provider: never the e-mail,
+// which can be changed or reused, so matching on it could hand one person's data to another.
 model AppUser {
-  id        String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id          String   @id @default(dbgenerated("uuidv7()")) @db.Uuid
+  oidcIssuer  String   @map("oidc_issuer")
+  oidcSubject String   @map("oidc_subject")
+  email       String?
+  displayName String?  @map("display_name")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastLoginAt DateTime @default(now()) @map("last_login_at") @db.Timestamptz(6)
 
+  sessions Session[]
+  accounts Account[]
+
+  @@unique([oidcIssuer, oidcSubject])
   @@map("app_user")
+}
+
+// A login. The browser holds a random value; only its SHA-256 is stored, so a copy of this table cannot be used to log in.
+model Session {
+  idHash     String   @id @map("id_hash")
+  userId     String   @map("user_id") @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastSeenAt DateTime @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz(6)
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("session")
+}
+
+// One login attempt in progress (state, nonce, PKCE verifier). Used once: it is deleted when the provider sends the user back.
+model AuthFlow {
+  idHash       String   @id @map("id_hash")
+  state        String
+  nonce        String
+  codeVerifier String   @map("code_verifier")
+  returnTo     String   @map("return_to")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz(6)
+
+  @@index([expiresAt])
+  @@map("auth_flow")
+}
+
+// First table with an owner. The id is chosen by the device (ADR-0008) so creating it offline and retrying is safe.
+// A deleted row stays as a tombstone so the delete reaches every device.
+model Account {
+  id        String    @id @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  name      String
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, deletedAt])
+  @@map("account")
 }

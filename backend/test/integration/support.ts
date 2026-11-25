@@ -1,6 +1,7 @@
 import { Client } from 'pg';
 import { type AppConfig } from '../../src/config/app-config';
 import { loadConfig } from '../../src/config/load-config';
+import { OIDC_DEV } from '../support/env';
 
 /** The database of the integration tests. Fails loudly (not "skipped") when it is not there: a green run must mean something. */
 export function databaseUrl(): string {
@@ -12,7 +13,7 @@ export function databaseUrl(): string {
 }
 
 export const testConfig = (overrides: Record<string, string> = {}): AppConfig =>
-  loadConfig({ DATABASE_URL: databaseUrl(), NODE_ENV: 'test', LOG_LEVEL: 'silent', ...overrides });
+  loadConfig({ ...OIDC_DEV, DATABASE_URL: databaseUrl(), NODE_ENV: 'test', LOG_LEVEL: 'silent', ...overrides });
 
 /** A URL for the same database with another password (the user exists, the password is wrong). */
 export function withPassword(url: string, password: string): string {

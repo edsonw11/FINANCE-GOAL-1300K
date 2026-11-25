@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { afterAll, afterEach, describe, expect, it } from 'vitest';
 import { PrismaService } from '../../src/database/prisma.service';
 import { UUID_V7, databaseUrl, withClient, withDatabase, withPassword } from './support';
@@ -13,6 +14,7 @@ afterAll(async () => {
 });
 
 const created: string[] = [];
+const newPerson = () => ({ oidcIssuer: 'http://idp.test/prisma-service', oidcSubject: randomUUID() });
 afterEach(async () => {
   if (!created.length) return;
   await withClient((c) => c.query('DELETE FROM app_user WHERE id = ANY($1::uuid[])', [created.splice(0)]));
@@ -30,7 +32,7 @@ describe('PrismaService with a real database', () => {
 
   it('creates and reads a user (id by the database, time by the database)', async () => {
     const service = open();
-    const user = await service.appUser.create({ data: {} });
+    const user = await service.appUser.create({ data: newPerson() });
     created.push(user.id);
     expect(user.id).toMatch(UUID_V7);
     expect(user.createdAt).toBeInstanceOf(Date);
@@ -51,8 +53,8 @@ describe('PrismaService with a real database', () => {
   it('counts the users it created', async () => {
     const service = open();
     const before = await service.appUser.count();
-    const a = await service.appUser.create({ data: {} });
-    const b = await service.appUser.create({ data: {} });
+    const a = await service.appUser.create({ data: newPerson() });
+    const b = await service.appUser.create({ data: newPerson() });
     created.push(a.id, b.id);
     expect(await service.appUser.count()).toBe(before + 2);
   });

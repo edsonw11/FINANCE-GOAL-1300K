@@ -28,6 +28,16 @@ Today the app saves on the device (localStorage) and works with no network. Movi
 | 5 | the web app: local store + outbox + status badge + "Sincronizar" button, storage adapter already exists as the injection point |
 | 8 | the phone app: Capacitor Network plugin (online/offline events) and sync when the app returns to the foreground. iOS does not allow reliable background sync, so sync on open and on the button is the guaranteed path |
 
+## Trust set up online, proof made offline
+Insurance and banking apps that issue a token with no signal work like this: the device receives a key while online, and later proves
+itself without the network; the other side checks the proof when it can. The same idea fits here in three steps, from cheapest to most optional:
+1. **Offline unlock (Phase 8):** a PIN or biometric opens the local copy with no server. The server session is only needed to sync.
+2. **An expired session never blocks recording:** the user keeps adding records; the outbox waits for the next login (decision 3 above).
+3. **Device-signed mutations (evaluate in Phases 4 and 7, optional hardening):** the device registers once while online (a key pair kept in the
+   Keystore/Secure Enclave), and signs each outbox entry. The server checks the signature on sync, so it knows the entry came from that registered
+   device and was not changed in transit or in the queue. It also lets one lost device be revoked without logging out the others.
+   It is not needed to make the feature work, and adds key handling and recovery cases, so it is decided with the threat model, not before.
+
 ## Limits to be honest about
 - A device that is offline for a very long time may find its session expired: it logs in again; the outbox is kept.
 - Two devices editing the **same** record offline resolve by the rules above, not by magic; the "to review" list exists for the cases the rules cannot decide.
