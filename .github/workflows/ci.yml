@@ -85,3 +85,22 @@ jobs:
         run: docker compose up -d --wait --wait-timeout 180 keycloak
       - name: integration tests (real PostgreSQL, real Keycloak, built program)
         run: npm run test:integration
+
+  # What a new developer does on a clean machine: one command, then the proof that it all works (images are built from nothing).
+  stack:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 20
+      - name: one command for the whole environment, with demo data
+        run: bash scripts/dev.sh up
+      - name: the stack works end to end
+        run: bash scripts/dev.sh check
+      - name: logs when it did not
+        if: failure()
+        run: docker compose logs --no-color --tail=200

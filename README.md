@@ -8,6 +8,17 @@ Personal app (plain HTML + CSS + JavaScript, no build required) to track:
 
 Data lives only in the browser (`localStorage`, key `metaapp.v2`). Export a backup in Settings → Data from time to time.
 
+## Run everything (one command)
+
+Needs Docker (with `docker compose`) and Node 20+. Nothing else.
+
+```
+scripts/dev.sh up        # or: npm run dev:up   builds and starts database, login server, migrations and API; loads demo data
+```
+
+Then open http://localhost:3000 and sign in as `alice` / `alice-dev-password` (or `bob` / `bob-dev-password`; development only, each has their own demo data).
+`scripts/dev.sh check` proves it works end to end, `down` stops it (data stays), `reset` deletes the local data and starts again from zero, `seed` reloads the demo data, `logs` and `status` show what is happening. If a port is taken: `API_PORT=3001 DB_PORT=5434 KEYCLOAK_PORT=8082 scripts/dev.sh up`. CI runs the same two commands (`up`, `check`) on an empty machine.
+
 ## How to use
 
 | I want to | Do this |
