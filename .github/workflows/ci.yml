@@ -22,6 +22,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm audit --audit-level=high
+      - name: secret scan of the tracked files
+        run: bash scripts/secret-scan.sh
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test:unit

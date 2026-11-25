@@ -56,6 +56,7 @@ Login (OIDC with Keycloak locally), sessions and per-person ownership: [ADR-0009
 Sync (offline outbox, changes feed) and plans with locked PRO features: [ADR-0010](docs/architecture/decisions/ADR-0010-sync-and-plans.md).
 Records, import of your JSON and the shared rules on the server: [ADR-0011](docs/architecture/decisions/ADR-0011-records-and-shared-rules.md).
 Web app syncing with the API (outbox, "Sincronizar", same-origin serving): [ADR-0012](docs/architecture/decisions/ADR-0012-web-sync.md).
+Security (headers, CSP, rate limits, database roles, tests): [ADR-0013](docs/architecture/decisions/ADR-0013-security-hardening.md), [threat model, test plan, findings](docs/security/). Run `scripts/test-security.sh`.
 Skeleton decisions: [ADR-0007](docs/architecture/decisions/ADR-0007-backend-skeleton.md).
 
 For the login tests start the identity provider too: `docker compose up -d db keycloak` (users `alice` / `alice-dev-password`, `bob` / `bob-dev-password`, development only).

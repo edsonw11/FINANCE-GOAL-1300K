@@ -6220,7 +6220,8 @@ function renderTransactions(){
   rows.forEach(({t,value})=>{
     if(all&&mOf(t.date)!==month){month=mOf(t.date);h+=`<div class="li-month">${mLabel(month)}</div>`;}
     if(t.date!==day){day=t.date;h+=`<div class="li-day">${new Date(day+'T12:00').toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'})}</div>`;}
-    const sub=[t.type==='fatura'?invoiceItems(t).length+' compra(s) identificada(s)'+(invoiceUndetailed(t)>0?' · '+f2(invoiceUndetailed(t))+' sem detalhe':''):t.desc&&t.cat?(t.splits&&t.splits.length?catParts(t).map(p=>p.cat).join(' + '):t.cat):'',paymentLabel(t)].filter(Boolean).join(' · ');
+    // the category is the person's text: the line goes into HTML escaped
+    const sub=esc([t.type==='fatura'?invoiceItems(t).length+' compra(s) identificada(s)'+(invoiceUndetailed(t)>0?' · '+f2(invoiceUndetailed(t))+' sem detalhe':''):t.desc&&t.cat?(t.splits&&t.splits.length?catParts(t).map(p=>p.cat).join(' + '):t.cat):'',paymentLabel(t)].filter(Boolean).join(' · '));
     h+=txRow(t,{sub,value:ui.group?value:undefined,actions:`<span class="li-act"><button type="button" class="btn sm" data-edit="${t.id}" aria-label="Editar">Editar</button></span>`});
   });
   const tot=listTotal(rows),signed=ui.filt===ALL_TYPES&&!ui.group;

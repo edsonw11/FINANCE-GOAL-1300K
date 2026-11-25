@@ -225,7 +225,7 @@ Not in the original brief, required for this case:
 | 4 | ✅ 4a sync engine + plans and locked PRO features (ADR-0010); 4b-1 ✅ records + import/export of your JSON, shared rules on the server, golden file reproduced through import → PostgreSQL → rules (ADR-0011); 4b-2 typed columns and command endpoints pending | totals and golden match the browser app |
 | 5 | ✅ Web app talks to the API: sync layer (outbox, pull, first merge, review list), "Conta e sincronização" card and header badge, app served by the API (ADR-0012); e2e + visual baseline unchanged | e2e + visual baseline unchanged; two devices converge on PostgreSQL |
 | 6 | One command for the whole environment, seed, scripts | clean-machine start |
-| 7 | Threat model, OWASP checks, CSP, backup/restore test | critical/high closed |
+| 7 | ✅ Headers, page CSP and rate limits (7a); data-only database role (7b); threat model, XSS browser scenario (found and closed a stored XSS), log redaction test, secret scan, backup/restore test, `scripts/test-security.sh` (7c); docs in `docs/security/`, ADR-0013 | ✅ no critical/high finding open |
 | 8 | Capacitor Android (can be moved to right after 1) | installs and runs on a device |
 | 8b | **Billing** (web checkout + Play Billing), plans and feature gating | payment events idempotent, tested in sandbox |
 | 9–10 | iOS preparation, AWS reference, LGPD documents, docs | someone else can follow them |
