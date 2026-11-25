@@ -19,7 +19,7 @@ afterAll(async () => {
 const push = (cookie: string, body: unknown, headers: Record<string, string> = {}) =>
   t.app.inject({ method: 'POST', url: '/api/v1/sync/push', headers: { cookie, ...CSRF, ...headers }, payload: body as object });
 const changes = (cookie: string, query = '') => t.app.inject({ method: 'GET', url: `/api/v1/sync/changes${query}`, headers: { cookie } });
-const mut = (over: Record<string, unknown> = {}) => ({ mutationId: randomUUID(), resource: 'account', op: 'put', id: randomUUID(), data: { name: 'Nubank' }, ...over });
+const mut = (over: Record<string, unknown> = {}) => ({ mutationId: randomUUID(), resource: 'account', op: 'put', id: randomUUID(), data: { body: { name: 'Nubank' } }, ...over });
 
 describe('protections', () => {
   it('needs a login', async () => {
@@ -57,7 +57,7 @@ describe('POST /api/v1/sync/push', () => {
   });
 
   it('per-record problems are answered per record, with the same 200', async () => {
-    const res = await push(alice, { mutations: [mut(), mut({ data: { name: '' } }), mut()] });
+    const res = await push(alice, { mutations: [mut(), mut({ data: { body: { name: '' } } }), mut()] });
     expect(res.statusCode).toBe(200);
     expect(res.json().results.map((r: { status: string }) => r.status)).toEqual(['applied', 'rejected', 'skipped']);
     expect(res.json().results[1].reason).toBe('invalid_data');
@@ -128,15 +128,15 @@ describe('GET /api/v1/sync/changes', () => {
 describe('person B against person A through the sync', () => {
   it('B never sees A\'s changes, cannot overwrite A\'s record, and cannot delete it', async () => {
     const id = randomUUID();
-    await push(alice, { mutations: [mut({ id, data: { name: 'Alice private' } })] });
+    await push(alice, { mutations: [mut({ id, data: { body: { name: 'Alice private' } } })] });
 
     expect(JSON.stringify((await changes(bob)).json())).not.toContain('Alice private');
-    const hijack = await push(bob, { mutations: [mut({ id, data: { name: 'hacked' } })] });
+    const hijack = await push(bob, { mutations: [mut({ id, data: { body: { name: 'hacked' } } })] });
     expect(hijack.json().results[0]).toMatchObject({ status: 'rejected', reason: 'not_found' });
     await push(bob, { mutations: [mut({ id, op: 'delete', data: undefined })] });
 
     const mine = (await changes(alice)).json().changes.find((c: { id: string }) => c.id === id);
-    expect(mine).toMatchObject({ deleted: false, data: { name: 'Alice private' } });
+    expect(mine).toMatchObject({ deleted: false, data: { body: { name: 'Alice private' } } });
   });
 
   it('B replaying A\'s mutation id does not get A\'s answer', async () => {
@@ -155,7 +155,7 @@ describe('REST and sync see the same data', () => {
     expect((await changes(alice)).json().changes.map((c: { id: string }) => c.id)).toContain(viaRest);
 
     const viaSync = randomUUID();
-    await push(alice, { mutations: [mut({ id: viaSync, data: { name: 'Sync made' } })] });
+    await push(alice, { mutations: [mut({ id: viaSync, data: { body: { name: 'Sync made' } } })] });
     const res = await t.app.inject({ method: 'GET', url: `/api/v1/accounts/${viaSync}`, headers: { cookie: alice } });
     expect(res.json().name).toBe('Sync made');
   });

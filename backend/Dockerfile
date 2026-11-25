@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# Build context is the REPOSITORY ROOT (the API runs the browser app's rules from src/core and src/domain).
+# Build context is the REPOSITORY ROOT (the API serves the browser app and runs its rules from src/core and src/domain).
 # Targets: `migrate` (applies the database migrations once) and `runtime` (the API, the last stage, the default).
 # Base image pinned by version; the registry for npm comes from .npmrc (public registry, exact versions in the lockfile).
 FROM node:20.20.2-alpine3.23 AS base
@@ -31,11 +31,11 @@ ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000
 COPY backend/package.json ./
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
-# the shared rules (plain ES modules), the same files the browser runs
-COPY src/package.json ./shared/package.json
-COPY src/core ./shared/core
-COPY src/domain ./shared/domain
-ENV DOMAIN_ROOT=/app/shared
+# the browser app, served by the API (same origin as the API), and its rules (plain ES modules), which the server also runs
+COPY index.html ./web/index.html
+COPY src ./web/src
+COPY vendor ./web/vendor
+ENV WEB_ROOT=/app/web DOMAIN_ROOT=/app/web/src
 # not root
 USER node
 EXPOSE 3000

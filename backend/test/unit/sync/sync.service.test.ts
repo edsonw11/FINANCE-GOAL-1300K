@@ -1,13 +1,15 @@
 import { randomUUID } from 'node:crypto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { AccountSyncResource } from '../../../src/accounts/account-sync.resource';
+import { accountSyncResource } from '../../../src/accounts/account-sync.resource';
+import { RecordAccountRepository } from '../../../src/accounts/record-account.repository';
 import { type PushMutation } from '../../../src/sync/sync.schemas';
 import { SyncService } from '../../../src/sync/sync.service';
 import { type ApplyOutcome, type SyncChange, type SyncResource } from '../../../src/sync/sync-resource';
-import { FakeClock, InMemoryAccountRepository, InMemoryMutationLog } from '../../support/fakes';
+import { FakeClock, InMemoryMutationLog, InMemoryRecordStore } from '../../support/fakes';
 
 let clock: FakeClock;
-let accounts: InMemoryAccountRepository;
+let accounts: RecordAccountRepository;
+let records: InMemoryRecordStore;
 let log: InMemoryMutationLog;
 let sync: SyncService;
 const alice = 'user-alice';
@@ -15,12 +17,13 @@ const bob = 'user-bob';
 
 beforeEach(() => {
   clock = new FakeClock();
-  accounts = new InMemoryAccountRepository();
+  records = new InMemoryRecordStore();
+  accounts = new RecordAccountRepository(records);
   log = new InMemoryMutationLog();
-  sync = new SyncService([new AccountSyncResource(accounts)], log, clock);
+  sync = new SyncService([accountSyncResource(records)], log, clock);
 });
 
-const put = (id: string, name: unknown, mutationId = randomUUID()): PushMutation => ({ mutationId, resource: 'account', op: 'put', id, data: { name } });
+const put = (id: string, name: unknown, mutationId = randomUUID()): PushMutation => ({ mutationId, resource: 'account', op: 'put', id, data: { body: { name } } });
 const del = (id: string, mutationId = randomUUID()): PushMutation => ({ mutationId, resource: 'account', op: 'delete', id });
 
 describe('push: a device sends its outbox', () => {
@@ -135,10 +138,12 @@ describe('push: a device sends its outbox', () => {
 
     it.each([
       ['no data', undefined],
-      ['an empty name', { name: '' }],
-      ['a name that is too long', { name: 'a'.repeat(81) }],
-      ['an unknown field', { name: 'x', admin: true }],
-      ['a name that is not text', { name: 5 }],
+      ['an empty name', { body: { name: '' } }],
+      ['a name that is too long', { body: { name: 'a'.repeat(81) } }],
+      ['a name with a control character', { body: { name: 'a\u0000b' } }],
+      ['a name that is not text', { body: { name: 5 } }],
+      ['the old name-only shape (no body)', { name: 'x' }],
+      ['an extra field outside the body', { body: { name: 'x' }, admin: true }],
       ['data that is not an object', 'hello'],
     ])('rejects %s as invalid data', async (_label, data) => {
       const m: PushMutation = { mutationId: randomUUID(), resource: 'account', op: 'put', id: randomUUID(), data };
@@ -185,7 +190,7 @@ describe('changes: a device asks what happened since its cursor', () => {
     const page = await sync.changes(alice, 0, 10);
     expect(page.changes.map((c) => c.version)).toEqual([1, 2]);
     expect(page).toMatchObject({ cursor: '2', hasMore: false });
-    expect(page.changes[0]).toMatchObject({ resource: 'account', deleted: false, data: { name: 'A' } });
+    expect(page.changes[0]).toMatchObject({ resource: 'account', deleted: false, data: { body: { name: 'A' } } });
   });
 
   it('with nothing new it keeps the cursor it was given', async () => {
@@ -231,7 +236,7 @@ describe('changes: a device asks what happened since its cursor', () => {
         return this.versions.filter((v) => v > after).slice(0, limit).map((v) => ({ resource: 'note', id: `n${v}`, version: v, deleted: false, data: {} }));
       }
     }
-    const two = new SyncService([new AccountSyncResource(accounts), new Notes([2, 4, 6])], log, clock);
+    const two = new SyncService([accountSyncResource(records), new Notes([2, 4, 6])], log, clock);
     await accounts.save(alice, randomUUID(), 'a', clock.now()); // version 1
     await accounts.save(alice, randomUUID(), 'b', clock.now()); // version 2 too (separate fake counters): ordering is by version, then stable
     const page = await two.changes(alice, 0, 3);
@@ -258,7 +263,7 @@ describe('two devices of the same person', () => {
     const forPhone = await sync.changes(alice, Number(phone.cursor), 100);
     phone.cursor = forPhone.cursor;
     const latest = new Map(forPhone.changes.map((c) => [c.id, c]));
-    expect(latest.get(x)).toMatchObject({ deleted: false, data: { name: 'coffee (tablet)' } });
+    expect(latest.get(x)).toMatchObject({ deleted: false, data: { body: { name: 'coffee (tablet)' } } });
     expect(latest.get(y)).toMatchObject({ deleted: true });
 
     // nothing is repeated afterwards

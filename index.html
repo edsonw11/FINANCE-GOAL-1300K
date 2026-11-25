@@ -36,6 +36,7 @@
     <button data-t="cad" data-i="tag">Categorias</button>
     <button data-t="cfg" data-i="sliders">Ajustes</button>
   </nav>
+  <span class="sync-badge" id="syncBadge" hidden></span>
   <div class="today" id="todayLbl"></div>
   <button class="btn sm" id="printBtn" title="Imprimir ou salvar como PDF">Imprimir / PDF</button>
   <button class="btn sm" id="mailBtn" title="Abrir o e-mail com o resumo do relatório">Enviar por e-mail</button>
@@ -218,6 +219,8 @@
     <div class="mt-10" id="ownNames"></div>
     <div class="help">Pode cadastrar variações (ex.: “Maria S Lima”). Salário no seu nome continua sendo receita.</div>
   </div>
+  <h2 id="syncTitle" hidden>☁️ Conta e sincronização</h2>
+  <div class="card" id="syncCard" hidden><div id="syncBody"></div></div>
   <h2>🧰 Dados</h2>
   <div class="card"><div class="row">
     <button class="btn" id="exp">⬇️ Exportar backup</button><button class="btn" id="imp">⬆️ Importar backup</button>

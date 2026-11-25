@@ -168,6 +168,20 @@ export function recordStoreContract(label: string, harness: () => Promise<Record
         expect(feed.map((c) => [c.version, c.deleted])).toEqual([[2, true]]);
       });
 
+      it('a deleted record gives its key back: a new record can use it, and the delete is still in the feed', async () => {
+        const { store, newUserId } = await harness();
+        const user = await newUserId();
+        const first = randomUUID();
+        const second = randomUUID();
+        await store.put(user, 'tx', first, { body: { id: 7, v: 'old' }, legacyKey: '7' }, T0);
+        await store.remove(user, 'tx', first, at(1000));
+        expect((await store.put(user, 'tx', second, { body: { id: 7, v: 'new' }, legacyKey: '7' }, at(2000))).status).toBe('saved');
+        expect((await store.list(user, 'tx')).map((r) => [r.id, r.legacyKey])).toEqual([[second, '7']]);
+        expect((await store.put(user, 'tx', first, { body: { id: 7, v: 'late' }, legacyKey: '7' }, at(3000))).status).toBe('deleted');
+        const feed = await store.changesSince(user, 'tx', 0, 10);
+        expect(feed.map((c) => [c.id, c.deleted])).toEqual([[first, true], [second, false]]);
+      });
+
       it('deleting twice, an unknown id, or someone else\'s makes no new version', async () => {
         const { store, newUserId } = await harness();
         const [alice, bob] = [await newUserId(), await newUserId()];

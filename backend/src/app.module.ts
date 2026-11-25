@@ -9,6 +9,7 @@ import { HealthModule } from './health/health.module';
 import { LegacyModule } from './legacy/legacy.module';
 import { PlansModule } from './plans/plans.module';
 import { SyncModule } from './sync/sync.module';
+import { WebModule } from './web/web.module';
 
 @Module({})
 export class AppModule {
@@ -16,7 +17,7 @@ export class AppModule {
   static forRoot(config: AppConfig): DynamicModule {
     return {
       module: AppModule,
-      imports: [ConfigModule.forRoot(config), ClockModule, DatabaseModule, AuthModule, PlansModule, AccountsModule, LegacyModule, SyncModule, HealthModule],
+      imports: [ConfigModule.forRoot(config), ClockModule, DatabaseModule, AuthModule, PlansModule, AccountsModule, LegacyModule, SyncModule, HealthModule, WebModule],
     };
   }
 }

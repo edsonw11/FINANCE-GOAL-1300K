@@ -40,7 +40,7 @@ decisions: [docs/architecture/decisions/](docs/architecture/decisions/). The fin
 `backend/` is the API (NestJS on Fastify, PostgreSQL through Prisma). It is separate from the browser app and not used by it yet.
 
 ```
-docker compose up -d --wait        database + login server (Keycloak) + migrations + API on 127.0.0.1 (curl localhost:3000/health/ready)
+docker compose up -d --wait        database + login server (Keycloak) + migrations + API on 127.0.0.1; open http://localhost:3000 for the app (curl localhost:3000/health/ready)
 docker compose down                stop (the data volume stays)
 
 cd backend
@@ -55,6 +55,7 @@ npm run test:integration           real PostgreSQL + the built program (needs th
 Login (OIDC with Keycloak locally), sessions and per-person ownership: [ADR-0009](docs/architecture/decisions/ADR-0009-login-sessions-ownership.md).
 Sync (offline outbox, changes feed) and plans with locked PRO features: [ADR-0010](docs/architecture/decisions/ADR-0010-sync-and-plans.md).
 Records, import of your JSON and the shared rules on the server: [ADR-0011](docs/architecture/decisions/ADR-0011-records-and-shared-rules.md).
+Web app syncing with the API (outbox, "Sincronizar", same-origin serving): [ADR-0012](docs/architecture/decisions/ADR-0012-web-sync.md).
 Skeleton decisions: [ADR-0007](docs/architecture/decisions/ADR-0007-backend-skeleton.md).
 
 For the login tests start the identity provider too: `docker compose up -d db keycloak` (users `alice` / `alice-dev-password`, `bob` / `bob-dev-password`, development only).

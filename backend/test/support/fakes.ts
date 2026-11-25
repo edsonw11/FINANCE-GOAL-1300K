@@ -282,7 +282,7 @@ export class InMemoryRecordStore implements RecordStore {
   }
   async remove(userId: string, kind: RecordKind, id: string, now: Date) {
     const row = this.rows.get(id);
-    if (row && row.userId === userId && row.kind === kind && !row.deleted) this.rows.set(id, { ...row, deleted: true, updatedAt: now, version: this.take(userId) });
+    if (row && row.userId === userId && row.kind === kind && !row.deleted) this.rows.set(id, { ...row, deleted: true, legacyKey: null, updatedAt: now, version: this.take(userId) });
   }
   async find(userId: string, kind: RecordKind, id: string) {
     const row = this.rows.get(id);

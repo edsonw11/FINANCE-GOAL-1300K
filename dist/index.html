@@ -577,6 +577,11 @@ dialog.dlg-wide{width:min(580px,94vw)}
 .hero-split{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:14px}
 .hero-line{margin-top:8px;font-size:14px;color:var(--ink2)}
 .bill-more>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600;color:var(--brand)}
+
+/* sync status in the header: only shown when signed in (the app works without it) */
+.sync-badge{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--surface-2,#eef2f6);color:var(--muted,#566);white-space:nowrap}
+.sync-badge.warn{background:#fff3d6;color:#7a5200}
+@media(max-width:480px){.sync-badge{font-size:11px;padding:2px 7px}}
 </style>
 <style>
 /* Import panel, quick entry and history suggestion (mobile first; the sheet is a bottom sheet on phones) */
@@ -893,6 +898,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
     <button data-t="cad" data-i="tag">Categorias</button>
     <button data-t="cfg" data-i="sliders">Ajustes</button>
   </nav>
+  <span class="sync-badge" id="syncBadge" hidden></span>
   <div class="today" id="todayLbl"></div>
   <button class="btn sm" id="printBtn" title="Imprimir ou salvar como PDF">Imprimir / PDF</button>
   <button class="btn sm" id="mailBtn" title="Abrir o e-mail com o resumo do relatório">Enviar por e-mail</button>
@@ -1075,6 +1081,8 @@ dialog.dlg-wide{width:min(580px,94vw)}
     <div class="mt-10" id="ownNames"></div>
     <div class="help">Pode cadastrar variações (ex.: “Maria S Lima”). Salário no seu nome continua sendo receita.</div>
   </div>
+  <h2 id="syncTitle" hidden>☁️ Conta e sincronização</h2>
+  <div class="card" id="syncCard" hidden><div id="syncBody"></div></div>
   <h2>🧰 Dados</h2>
   <div class="card"><div class="row">
     <button class="btn" id="exp">⬇️ Exportar backup</button><button class="btn" id="imp">⬆️ Importar backup</button>
@@ -1405,7 +1413,12 @@ const bootNotice={recovered:false};
 // a first visit opens an empty app (the example data is on demand); unreadable data is kept aside, never overwritten
 function load(){const r=readState(storage,STORAGE_KEY,()=>blankState());bootNotice.recovered=r.recovered;return r.state;}
 const autoBackup=()=>readBackup(storage,STORAGE_KEY);
-function save(){invalidateAllocation();rollBackup(storage,STORAGE_KEY,today());storage.setItem(STORAGE_KEY,JSON.stringify(S));}
+function save(){invalidateAllocation();rollBackup(storage,STORAGE_KEY,today());storage.setItem(STORAGE_KEY,JSON.stringify(S));saveListeners.forEach(f=>{try{f();}catch(e){/* a listener must never break saving */}});}
+// who wants to know when the state was saved (the sync looks for changes to send); each listener is called after the data is stored
+const saveListeners=[];
+const onSave=fn=>{saveListeners.push(fn);};
+// the state as the sync has merged it from the server: stored like any other change
+function adoptRemoteState(next){S=next;save();}
 // swaps the whole state (backup import, reset); the caller saves it through transact()
 function replaceState(next){S=next;invalidateAllocation();}
 /**
@@ -6811,6 +6824,405 @@ $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileR
   rd.readAsText(f);e.target.value='';};
 }
 
+// ---- src/sync/api-client.js
+/**
+ * sync/api-client.js
+ * Responsibility: talks to the API (push, changes, who am I) and turns every failure into the few kinds the sync understands. fetch is injected.
+ */
+const JSON_HEADERS={'content-type':'application/json','x-everfox-csrf':'1'};
+/** @param {typeof fetch} fetchFn @param {string} [base] */
+function createApiClient(fetchFn,base=''){
+  async function call(method,path,body){
+    let res;
+    try{res=await fetchFn(base+path,{method,credentials:'same-origin',headers:JSON_HEADERS,body:body===undefined?undefined:JSON.stringify(body)});}
+    catch(e){throw {kind:'offline'};}
+    if(res.status===401)throw {kind:'unauthorized'};
+    if(!res.ok)throw {kind:'server',status:res.status};
+    try{return await res.json();}catch(e){throw {kind:'server',status:res.status};}
+  }
+  return {
+    push:mutations=>call('POST','/api/v1/sync/push',{mutations}),
+    changes:cursor=>call('GET','/api/v1/sync/changes?cursor='+encodeURIComponent(cursor)+'&limit=1000'),
+    /** {state:'signed_in',user} | {state:'signed_out'} | {state:'unavailable'}: unavailable = no API here (a file, a static server, no network). */
+    async me(){
+      try{const user=await call('GET','/api/v1/me');return user&&typeof user.id==='string'?{state:'signed_in',user}:{state:'unavailable'};}
+      catch(e){return e&&e.kind==='unauthorized'?{state:'signed_out'}:{state:'unavailable'};}
+    },
+    async logout(){try{await call('POST','/auth/logout');return true;}catch(e){return false;}},
+  };
+}
+const loginUrl=(returnTo='/')=>'/auth/login?returnTo='+encodeURIComponent(returnTo);
+
+// ---- src/sync/records.js
+/**
+ * sync/records.js
+ * Responsibility: how the app's state maps to synced records (the same split the server makes) and a stable fingerprint to see what changed. Pure functions.
+ */
+// the lists of the state and the kind each becomes; everything else is the settings document (same table as the server: legacy-state.ts)
+const LISTS={accounts:'account',snaps:'snap',tx:'tx',trades:'trade',transfers:'transfer',imports:'import'};
+const LISTS_MARK='_lists';
+const LIST_NAMES=Object.keys(LISTS);
+const listOfKind=kind=>LIST_NAMES.find(n=>LISTS[n]===kind);
+
+/** The key a record has in the app ('nu', 12, 't7', the hash of an imported file); a balance has none of its own, so it is identified by day and account. */
+function keyOf(kind,body){
+  if(!body||typeof body!=='object')return null;
+  if(kind==='snap')return body.date==null||body.acc==null?null:body.date+'|'+body.acc;
+  const raw=kind==='import'?body.hash:body.id;
+  return raw==null?null:String(raw);
+}
+/** What the server stores as the legacy key: a balance has none. */
+const legacyKeyOf=(kind,body)=>kind==='snap'?null:keyOf(kind,body);
+const refOf=(kind,key)=>kind+':'+key;
+
+function stable(v){
+  if(v===null||typeof v!=='object')return JSON.stringify(v);
+  if(Array.isArray(v))return '['+v.map(stable).join(',')+']';
+  return '{'+Object.keys(v).sort().filter(k=>v[k]!==undefined).map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}';
+}
+/** A 53-bit fingerprint of a value, the same for the same content whatever the order of its keys (cyrb53). */
+function fingerprint(value){
+  const s=stable(value);let h1=0xdeadbeef,h2=0x41c6ce57;
+  for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+  h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return (4294967296*(2097151&h2)+(h1>>>0)).toString(36)+'.'+s.length;
+}
+
+/** The settings document: the state without its lists, plus which lists exist (an absent list is not an empty one for the rules). */
+function settingsOf(state){
+  const out={};
+  for(const k of Object.keys(state))if(!Object.hasOwn(LISTS,k))out[k]=state[k];
+  out[LISTS_MARK]=LIST_NAMES.filter(n=>Array.isArray(state[n]));
+  return out;
+}
+
+/** The state as records: ref -> {kind,key,body,fp}, and the settings. A record with no key cannot be synced and is left out (listed in `skipped`). */
+function splitState(state){
+  const records=new Map();let skipped=0;
+  for(const name of LIST_NAMES){
+    const list=state[name];if(!Array.isArray(list))continue;
+    const kind=LISTS[name];
+    for(const body of list){
+      const key=keyOf(kind,body);
+      if(key===null){skipped++;continue;}
+      records.set(refOf(kind,key),{kind,key,body,fp:fingerprint(body)});
+    }
+  }
+  const settings=settingsOf(state);
+  return {records,settings,settingsFp:fingerprint(settings),skipped};
+}
+
+// ---- src/sync/apply.js
+/**
+ * sync/apply.js
+ * Responsibility: puts what the server reports (changes pulled from it) into the local state and bookkeeping, without echoing it back. Pure functions.
+ */
+
+
+const clone=v=>JSON.parse(JSON.stringify(v));
+// 'a12', 't7', 'tr3' and plain numbers come from the counter `nid`: a device must not hand out a number another device already used
+const counterOf=key=>{const m=/^(?:a|t|tr)?(\d+)$/.exec(String(key));return m?+m[1]:0;};
+
+/**
+ * Applies a page of changes. Returns {state, meta, conflicts}; neither input is changed.
+ * - a record waiting to be sent here wins over the server's version (the last writer by arrival decides when it is sent);
+ * - a delete wins over a waiting edit (ADR-0008);
+ * - the same key under another id: on the first merge on this device it is the same record (adopted); later it is a clash, kept for the person to review.
+ */
+function applyChanges(state,meta,changes){
+  const next=clone(state),m={...meta,ids:{...meta.ids},known:{...meta.known},outbox:meta.outbox.map(e=>({...e})),review:[...meta.review]};
+  const firstMerge=!meta.merged;
+  const touched=new Set();
+  const byId=new Map(Object.entries(m.ids).map(([ref,id])=>[id,ref]));
+  const waiting=id=>m.outbox.findIndex(e=>e.id===id);
+  for(const c of changes){
+    if(c.resource==='state'){
+      if(c.deleted||!c.data)continue;
+      const waitingAt=m.outbox.findIndex(e=>e.resource==='state');
+      // settings waiting to be sent win, except on the first merge: a new device must never overwrite the account's settings with its blank ones
+      if(waitingAt>=0){if(!firstMerge)continue;m.outbox.splice(waitingAt,1);}
+      const body=c.data.body,keep={},counter=+next.nid||1;
+      for(const n of Object.keys(LISTS))if(Array.isArray(next[n]))keep[n]=next[n];
+      for(const k of Object.keys(next))delete next[k];
+      for(const [k,v] of Object.entries(body))if(k!==LISTS_MARK)next[k]=clone(v);
+      Object.assign(next,keep);
+      if(body.nid!==undefined||counter>1)next.nid=Math.max(+body.nid||1,counter); // the counter only goes up
+      for(const n of Array.isArray(body[LISTS_MARK])?body[LISTS_MARK]:[])if(Object.hasOwn(LISTS,n)&&!Array.isArray(next[n]))next[n]=[];
+      m.settingsFp=splitState(next).settingsFp;
+      continue;
+    }
+    const kind=c.resource,name=listOfKind(kind);
+    if(!name)continue;
+    if(c.deleted){
+      const ref=byId.get(c.id);if(!ref)continue;
+      const at=waiting(c.id);if(at>=0)m.outbox.splice(at,1);
+      const key=ref.slice(ref.indexOf(':')+1);
+      next[name]=(next[name]||[]).filter(b=>keyOf(kind,b)!==key);
+      delete m.ids[ref];delete m.known[ref];byId.delete(c.id);
+      continue;
+    }
+    const body=c.data&&c.data.body,key=keyOf(kind,body);
+    if(key===null)continue;
+    const ref=refOf(kind,key),fp=fingerprint(body),localId=m.ids[ref];
+    if(localId&&localId!==c.id){
+      if(!firstMerge){m.review.push({reason:'key_conflict',ref,resource:kind,id:c.id,body:clone(body)});continue;}
+      // the same record this device already had: adopt the server's id; what was waiting for the old id now goes under the new one
+      for(const e of m.outbox)if(e.id===localId)e.id=c.id;
+      byId.delete(localId);m.ids[ref]=c.id;byId.set(c.id,ref);
+      const at=waiting(c.id);
+      if(at>=0&&m.outbox[at].data&&fingerprint(m.outbox[at].data.body)===fp){m.outbox.splice(at,1);m.known[ref]=fp;}
+      continue;
+    }
+    if(waiting(c.id)>=0){m.ids[ref]=c.id;byId.set(c.id,ref);continue;}
+    const list=next[name]||(next[name]=[]);
+    const at=list.findIndex(b=>keyOf(kind,b)===key);
+    if(at>=0)list[at]=clone(body);else list.push(clone(body));
+    m.ids[ref]=c.id;m.known[ref]=fp;byId.set(c.id,ref);touched.add(ref);
+    if(kind!=='snap'&&kind!=='import')next.nid=Math.max(+next.nid||1,counterOf(key)+1);
+  }
+  return {state:next,meta:m,conflicts:m.review.length-meta.review.length};
+}
+
+// ---- src/sync/outbox.js
+/**
+ * sync/outbox.js
+ * Responsibility: the sync bookkeeping (what the server knows, what is waiting to be sent) and the step that turns a changed state into outbox entries. Pure functions.
+ */
+
+
+/** meta: {userId, cursor, merged, ids: ref->uuid, known: ref->fingerprint, settingsFp, outbox: [entry], review: [item], lastSyncAt} */
+const emptyMeta=()=>({v:1,userId:null,cursor:'0',merged:false,ids:{},known:{},settingsFp:null,outbox:[],review:[],lastSyncAt:null});
+// an entry: {mutationId, resource, op:'put'|'delete', id, data, attempted}; `attempted` = a send started, so the server may have it
+const wireEntry=e=>({mutationId:e.mutationId,resource:e.resource,op:e.op,id:e.id,...(e.data!==undefined?{data:e.data}:{})});
+
+/**
+ * Compares the state with what is known and queues the difference. Returns a new meta (the old one is not changed).
+ * ids = {newId(), newMutationId()}. Editing a record that was never sent updates its waiting entry; deleting one that was never sent cancels it.
+ */
+function queueChanges(meta,state,ids){
+  const next={...meta,ids:{...meta.ids},known:{...meta.known},outbox:meta.outbox.map(e=>({...e}))};
+  const {records,settings,settingsFp}=splitState(state);
+  const waiting=id=>next.outbox.findIndex(e=>e.id===id&&!e.attempted);
+  const push=(resource,op,id,data)=>{
+    const at=op==='put'?waiting(id):-1;
+    if(at>=0&&next.outbox[at].op==='put'){next.outbox[at].data=data;return;}
+    next.outbox.push({mutationId:ids.newMutationId(),resource,op,id,...(data!==undefined?{data}:{}),attempted:false});
+  };
+  for(const [ref,r] of records){
+    if(next.known[ref]===r.fp)continue;
+    const id=next.ids[ref]??(next.ids[ref]=ids.newId());
+    push(r.kind,'put',id,{body:r.body,legacyKey:legacyKeyOf(r.kind,r.body)});
+    next.known[ref]=r.fp;
+  }
+  for(const ref of Object.keys(next.known)){
+    if(records.has(ref))continue;
+    const id=next.ids[ref];
+    delete next.known[ref];delete next.ids[ref];
+    if(!id)continue;
+    const at=waiting(id);
+    if(at>=0&&next.outbox[at].op==='put'){next.outbox.splice(at,1);continue;} // never sent: nothing to tell the server
+    push(ref.slice(0,ref.indexOf(':')),'delete',id);
+  }
+  if(next.userId&&next.settingsFp!==settingsFp){
+    const at=next.outbox.findIndex(e=>e.resource==='state'&&!e.attempted);
+    if(at>=0)next.outbox[at].data={body:settings};
+    else next.outbox.push({mutationId:ids.newMutationId(),resource:'state',op:'put',id:next.userId,data:{body:settings},attempted:false});
+    next.settingsFp=settingsFp;
+  }
+  return next;
+}
+const pendingCount=meta=>meta.outbox.length;
+
+// ---- src/sync/runner.js
+/**
+ * sync/runner.js
+ * Responsibility: one sync run: send the outbox, then pull what changed; keeps the outbox safe when the network or the login fails. No DOM, no storage of its own.
+ */
+
+
+
+const BATCH=100;
+/** The sync bookkeeping lives under one storage key, next to the app's own data. */
+function metaStore(storage,key){
+  return {
+    load(){try{const m=JSON.parse(storage.getItem(key));return m&&m.v===1?{...emptyMeta(),...m}:emptyMeta();}catch(e){return emptyMeta();}},
+    save(meta){storage.setItem(key,JSON.stringify(meta));},
+  };
+}
+
+/**
+ * deps: {api:{push(mutations), changes(cursor)}, store, getState(), setState(state), newId(), newMutationId(), now()}
+ * The api throws an object {kind:'offline'|'unauthorized'|'server'} when it cannot answer; the outbox is then kept as it is.
+ */
+function createSync(deps){
+  const {api,store,getState,setState,newId,newMutationId,now}=deps;
+  let running=null;
+  const ids={newId,newMutationId};
+  const capture=()=>{const before=store.load(),after=queueChanges(before,getState(),ids);store.save(after);return after;};
+
+  // The app can save (and so queue changes) while a request is in flight, so the bookkeeping is read again after every wait, never kept across one.
+  async function pull(){
+    for(;;){
+      const cursor=store.load().cursor;
+      const page=await api.changes(cursor);
+      const applied=applyChanges(getState(),store.load(),page.changes);
+      const m=applied.meta;m.cursor=page.cursor;
+      if(page.changes.length>0)setState(applied.state);
+      store.save(m);
+      if(!page.hasMore)break;
+    }
+    store.save({...store.load(),merged:true});
+  }
+
+  async function push(){
+    for(;;){
+      const before=store.load();
+      if(before.outbox.length===0)return;
+      const batch=before.outbox.slice(0,BATCH);
+      for(const e of batch)e.attempted=true;
+      store.save(before); // a send is starting: from now on the server may have these
+      const {results}=await api.push(batch.map(wireEntry));
+      const byId=new Map(results.map(r=>[r.mutationId,r]));
+      const m=store.load();let done=0;
+      for(const e of batch){
+        const r=byId.get(e.mutationId);
+        if(!r||r.status==='skipped')continue;
+        m.outbox=m.outbox.filter(x=>x.mutationId!==e.mutationId);done++;
+        if(r.status==='rejected')m.review.push({reason:r.reason,resource:e.resource,id:e.id,op:e.op,data:e.data});
+      }
+      store.save(m);
+      if(done===0)throw {kind:'server'}; // an answer that settles nothing: stop, the outbox stays
+    }
+  }
+
+  async function runOnce(){
+    let m=capture();
+    if(!m.userId)return {ok:false,reason:'not_signed_in'};
+    try{
+      if(!m.merged)await pull();       // the first time: look at what the server has before sending, so the same record is not made twice
+      capture();
+      await push();
+      await pull();
+      m=capture();
+      m.lastSyncAt=now();store.save(m);
+      return {ok:true,pending:m.outbox.length,review:m.review.length};
+    }catch(e){
+      return {ok:false,reason:(e&&e.kind)||'error',pending:store.load().outbox.length};
+    }
+  }
+  return {
+    capture,
+    /** Binds the bookkeeping to the signed-in person. Another person on the same device is refused: their data must not go to this account. */
+    bind(userId){
+      const m=store.load();
+      if(m.userId&&m.userId!==userId)return {ok:false,reason:'other_account'};
+      if(!m.userId)store.save({...m,userId});
+      return {ok:true};
+    },
+    reviewItems(){return store.load().review;},
+    clearReview(){store.save({...store.load(),review:[]});},
+    run(){return running??=runOnce().finally(()=>{running=null;});},
+    status(){const m=store.load();return {pending:m.outbox.length,pendingItems:m.outbox.filter(e=>e.resource!=='state').length,review:m.review.length,lastSyncAt:m.lastSyncAt,signedIn:!!m.userId};},
+  };
+}
+
+// ---- src/ui/views/sync-view.js
+/**
+ * ui/views/sync-view.js
+ * Responsibility: Settings → "Conta e sincronização": sign-in, the pending count, the "Sincronizar" button and the review list. Connects the sync to the app's state.
+ * Hidden when there is no API to talk to (the page opened as a file or from a plain static server): the app then works exactly as before.
+ */
+
+
+
+
+
+
+
+const DEBOUNCE_MS=400;
+const api=createApiClient((...a)=>fetch(...a));
+let sync=null;
+// checking | unavailable | signed_out | signed_in | other_account
+const syncView={state:'checking',user:null,busy:false};
+const uuid=()=>crypto.randomUUID();
+const when=ms=>ms?new Date(ms).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'ainda não';
+const REASONS={key_conflict:'o mesmo número foi usado em outro aparelho',invalid_data:'o servidor não aceitou este item',not_found:'o item pertence a outra conta',unknown_resource:'tipo desconhecido'};
+
+function renderSync(){
+  const card=$('syncCard');if(!card)return;
+  const hide=syncView.state==='checking'||syncView.state==='unavailable';
+  card.hidden=$('syncTitle').hidden=hide;
+  const badge=$('syncBadge');
+  if(hide){badge.hidden=true;return;}
+  const st=sync?sync.status():{pending:0,pendingItems:0,review:0,lastSyncAt:null};
+  // what the person sees is records (an expense), not the settings entry that carries the id counter along with it
+  const n=st.pendingItems||(st.pending?1:0);
+  let html;
+  if(syncView.state==='signed_out'){
+    html=`<div class="help m0">Entre para guardar seus dados na sua conta e usar em outros aparelhos. O que já está neste aparelho continua aqui e sobe na primeira sincronização.</div>
+      <div class="row mt-10"><a class="btn pri" id="syncLogin" href="${loginUrl(location.pathname)}">Entrar</a></div>`;
+  }else if(syncView.state==='other_account'){
+    html=`<div class="banner"><span>⚠️ Este aparelho já está ligado a outra conta (${esc(syncView.user.email||'sem e-mail')} acabou de entrar). Para não misturar dados, nada foi enviado nem recebido.</span></div>
+      <div class="row mt-10"><button class="btn" id="syncLogout">Sair</button></div>`;
+  }else{
+    const plan=syncView.user.plan==='pro'?'PRO':'Gratuito';
+    html=`<div class="help m0">Conectado como <b>${esc(syncView.user.email||syncView.user.displayName||'sua conta')}</b> · plano ${esc(plan)}</div>
+      <div class="row mt-10"><button class="btn pri" id="syncNow"${syncView.busy?' disabled':''}>${syncView.busy?'Sincronizando…':'🔄 Sincronizar'}</button><button class="btn" id="syncLogout">Sair</button></div>
+      <div class="help" id="syncStatus">${n?`<b>${n}</b> pendente${n>1?'s':''} · `:'Tudo enviado · '}última sincronização: ${when(st.lastSyncAt)}</div>`;
+    if(st.review){
+      const items=sync.reviewItems().slice(0,20).map(i=>`<li>${esc(i.resource||i.ref||'item')}: ${esc(REASONS[i.reason]||i.reason)}</li>`).join('');
+      html+=`<div class="banner mt-10"><span>⚠️ ${st.review} ${st.review>1?'itens precisam':'item precisa'} de revisão. Seus dados neste aparelho não foram alterados.<ul>${items}</ul></span><button class="btn sm" id="syncClear">Entendi</button></div>`;
+    }
+  }
+  $('syncBody').innerHTML=html;
+  badge.hidden=syncView.state!=='signed_in';
+  if(!badge.hidden){badge.textContent=syncView.busy?'☁️ sincronizando…':n?`☁️ ${n} pendente${n>1?'s':''}`:'☁️ em dia';badge.classList.toggle('warn',!!n||!!st.review);}
+  const now=$('syncNow');if(now)now.onclick=()=>syncView.go(true);
+  const out=$('syncLogout');if(out)out.onclick=signOut;
+  const clr=$('syncClear');if(clr)clr.onclick=()=>{sync.clearReview();renderSync();};
+}
+
+async function runSync(manual){
+  if(!sync||syncView.busy||syncView.state!=='signed_in')return;
+  syncView.busy=true;renderSync();
+  const r=await sync.run();
+  syncView.busy=false;
+  if(r.reason==='unauthorized'){syncView.state='signed_out';}
+  renderSync();
+  if(manual||!r.ok&&r.reason==='unauthorized')toast(r.ok?'✅ Sincronizado':MESSAGES[r.reason]||MESSAGES.error);
+}
+const MESSAGES={
+  offline:'⚠️ Sem conexão. Suas alterações ficam guardadas e serão enviadas depois.',
+  unauthorized:'⚠️ Sua sessão terminou. Entre de novo; nada foi perdido.',
+  server:'⚠️ O servidor não respondeu direito. Tente de novo em instantes.',
+  error:'⚠️ Não foi possível sincronizar agora.',
+  not_signed_in:'⚠️ Entre na sua conta para sincronizar.',
+};
+async function signOut(){await api.logout();syncView.state='signed_out';syncView.user=null;renderSync();}
+
+async function bindSync(){
+  if(typeof fetch!=='function'||location.protocol==='file:'){syncView.state='unavailable';return;}
+  const me=await api.me();
+  syncView.state=me.state;syncView.user=me.user||null;
+  if(me.state==='signed_in'){
+    let changed=false;
+    sync=createSync({api,store:metaStore(localStorage,STORAGE_KEY+'.sync'),getState:()=>S,
+      setState:next=>{changed=true;adoptRemoteState(next);},newId:uuid,newMutationId:uuid,now:()=>Date.now()});
+    const bound=sync.bind(me.user.id);
+    if(!bound.ok){syncView.state='other_account';sync=null;}
+    else{
+      let timer=null;
+      onSave(()=>{clearTimeout(timer);timer=setTimeout(()=>{sync.capture();renderSync();},DEBOUNCE_MS);});
+      const go=async manual=>{changed=false;await runSync(manual);if(changed)render();};
+      window.addEventListener('online',()=>go(false));
+      document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')go(false);});
+      syncView.go=go;go(false);
+    }
+  }
+  renderSync();
+}
+
 // ---- src/ui/render.js
 /**
  * ui/render.js
@@ -6836,7 +7248,8 @@ $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileR
 
 
 
-function render(){initCats();renderMeta();renderFlow();renderStart();renderTodo();renderHero();renderBudgets();renderBills();renderTrend();renderCycles();renderTransactions();renderInvestments();renderSettings();renderOwnNames();renderBackup();renderCategories();
+
+function render(){initCats();renderMeta();renderFlow();renderStart();renderTodo();renderHero();renderBudgets();renderBills();renderTrend();renderCycles();renderTransactions();renderInvestments();renderSettings();renderOwnNames();renderBackup();renderSync();renderCategories();
   fillInvoiceMonths();stackTables();prepareMoneyInputs();Sheet.refresh();}
 
 // ---- src/ui/components/command.js
@@ -7356,6 +7769,7 @@ function bindDescriptionSuggestions(){
 
 
 
+
 bindMoneyInputs();
 bindDateFields();
 bindInvoiceMonthField();
@@ -7381,6 +7795,7 @@ bindOwnNames();
 bindStart();
 bindReportPrint();
 bindBackup();
+bindSync();
 bindAdvanced();
 bindInvestments();
 bindBills();

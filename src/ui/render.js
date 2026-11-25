@@ -22,5 +22,6 @@ import { renderCategories } from './views/categories.js';
 import { renderSettings } from './views/settings.js';
 import { renderOwnNames } from './views/own-names-view.js';
 import { renderBackup } from './views/backup.js';
-export function render(){initCats();renderMeta();renderFlow();renderStart();renderTodo();renderHero();renderBudgets();renderBills();renderTrend();renderCycles();renderTransactions();renderInvestments();renderSettings();renderOwnNames();renderBackup();renderCategories();
+import { renderSync } from './views/sync-view.js';
+export function render(){initCats();renderMeta();renderFlow();renderStart();renderTodo();renderHero();renderBudgets();renderBills();renderTrend();renderCycles();renderTransactions();renderInvestments();renderSettings();renderOwnNames();renderBackup();renderSync();renderCategories();
   fillInvoiceMonths();stackTables();prepareMoneyInputs();Sheet.refresh();}

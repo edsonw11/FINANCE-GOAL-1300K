@@ -223,7 +223,7 @@ Not in the original brief, required for this case:
 | 2 | Docker Compose with Postgres, backend skeleton, config validation, health, migrations, first vertical slice | ✅ backend + DB up, migrations and tests pass (ADR-0007) |
 | 3 | Auth (OIDC + PKCE), ownership on every endpoint, IDOR/BOLA tests | ✅ login works against a real Keycloak; user A cannot read user B (ADR-0009) |
 | 4 | ✅ 4a sync engine + plans and locked PRO features (ADR-0010); 4b-1 ✅ records + import/export of your JSON, shared rules on the server, golden file reproduced through import → PostgreSQL → rules (ADR-0011); 4b-2 typed columns and command endpoints pending | totals and golden match the browser app |
-| 5 | Web app talks to the API (storage adapter already exists as an injection point), same UI; **offline first: local copy + outbox + "Sincronizar" (ADR-0008)** | e2e + visual baseline unchanged |
+| 5 | ✅ Web app talks to the API: sync layer (outbox, pull, first merge, review list), "Conta e sincronização" card and header badge, app served by the API (ADR-0012); e2e + visual baseline unchanged | e2e + visual baseline unchanged; two devices converge on PostgreSQL |
 | 6 | One command for the whole environment, seed, scripts | clean-machine start |
 | 7 | Threat model, OWASP checks, CSP, backup/restore test | critical/high closed |
 | 8 | Capacitor Android (can be moved to right after 1) | installs and runs on a device |

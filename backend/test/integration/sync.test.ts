@@ -49,11 +49,11 @@ async function loginNow(subject: string): Promise<string> {
   return cookieOf(back.headers, config.cookies.sessionName)!;
 }
 
-const mut = (over: Record<string, unknown> = {}) => ({ mutationId: randomUUID(), resource: 'account', op: 'put', id: randomUUID(), data: { name: 'x' }, ...over });
+const mut = (over: Record<string, unknown> = {}) => ({ mutationId: randomUUID(), resource: 'account', op: 'put', id: randomUUID(), data: { body: { name: 'x' } }, ...over });
 const push = (cookie: string, mutations: unknown[]) => app.inject({ method: 'POST', url: '/api/v1/sync/push', headers: { cookie, ...CSRF }, payload: { mutations } });
 const feed = async (cookie: string, cursor = '0', limit = 1000) =>
   (await app.inject({ method: 'GET', url: `/api/v1/sync/changes?cursor=${cursor}&limit=${limit}`, headers: { cookie } })).json() as {
-    changes: { id: string; version: number; deleted: boolean; data: { name: string } | null }[];
+    changes: { id: string; version: number; deleted: boolean; data: { body: { name: string } } | null }[];
     cursor: string;
     hasMore: boolean;
   };
@@ -63,14 +63,14 @@ describe('sync on PostgreSQL', () => {
     const subject = `dev-${randomUUID()}`;
     const [phone, tablet] = [await loginAs(subject), await loginAs(subject)];
     const [x, y] = [randomUUID(), randomUUID()];
-    expect((await push(phone, [mut({ id: x, data: { name: 'coffee' } }), mut({ id: y, data: { name: 'bus' } })])).statusCode).toBe(200);
+    expect((await push(phone, [mut({ id: x, data: { body: { name: 'coffee' } } }), mut({ id: y, data: { body: { name: 'bus' } } })])).statusCode).toBe(200);
 
     const tabletView = await feed(tablet);
     expect(tabletView.changes.map((c) => c.id)).toEqual([x, y]);
-    await push(tablet, [mut({ id: x, data: { name: 'coffee (edited)' } }), mut({ id: y, op: 'delete', data: undefined })]);
+    await push(tablet, [mut({ id: x, data: { body: { name: 'coffee (edited)' } } }), mut({ id: y, op: 'delete', data: undefined })]);
 
     const phoneView = await feed(phone, '2');
-    expect(phoneView.changes.map((c) => [c.id, c.deleted, c.data?.name ?? null])).toEqual([
+    expect(phoneView.changes.map((c) => [c.id, c.deleted, c.data?.body.name ?? null])).toEqual([
       [x, false, 'coffee (edited)'],
       [y, true, null],
     ]);
@@ -138,7 +138,7 @@ describe('sync on PostgreSQL', () => {
   it('two people pushing the same record id at once: one wins, the other is told not_found, both feeds stay clean', async () => {
     const [a, b] = [await loginAs(`same-a-${randomUUID()}`), await loginAs(`same-b-${randomUUID()}`)];
     const id = randomUUID();
-    const [ra, rb] = await Promise.all([push(a, [mut({ id, data: { name: 'A' } })]), push(b, [mut({ id, data: { name: 'B' } })])]);
+    const [ra, rb] = await Promise.all([push(a, [mut({ id, data: { body: { name: 'A' } } })]), push(b, [mut({ id, data: { body: { name: 'B' } } })])]);
     const statuses = [ra, rb].map((r) => r.json().results[0].status).sort();
     expect(statuses).toEqual(['applied', 'rejected']);
     const owners = [(await feed(a)).changes.length, (await feed(b)).changes.length].sort();
@@ -149,18 +149,18 @@ describe('sync on PostgreSQL', () => {
     const cookie = await loginAs(`dw-${randomUUID()}`);
     const id = randomUUID();
     await push(cookie, [mut({ id })]);
-    await Promise.all([push(cookie, [mut({ id, data: { name: 'late edit' } })]), push(cookie, [mut({ id, op: 'delete', data: undefined })])]);
+    await Promise.all([push(cookie, [mut({ id, data: { body: { name: 'late edit' } } })]), push(cookie, [mut({ id, op: 'delete', data: undefined })])]);
     const view = await feed(cookie);
     expect(view.changes.find((c) => c.id === id)).toMatchObject({ deleted: true });
-    await push(cookie, [mut({ id, data: { name: 'later still' } })]);
+    await push(cookie, [mut({ id, data: { body: { name: 'later still' } } })]);
     expect((await feed(cookie)).changes.find((c) => c.id === id)).toMatchObject({ deleted: true });
   });
 
   it('an edit to the same name changes no version, so a retry makes no noise in other devices', async () => {
     const cookie = await loginAs(`noop-${randomUUID()}`);
     const id = randomUUID();
-    await push(cookie, [mut({ id, data: { name: 'Same' } })]);
-    await push(cookie, [mut({ id, data: { name: 'Same' } })]);
+    await push(cookie, [mut({ id, data: { body: { name: 'Same' } } })]);
+    await push(cookie, [mut({ id, data: { body: { name: 'Same' } } })]);
     expect((await feed(cookie, '1')).changes).toEqual([]);
   });
 

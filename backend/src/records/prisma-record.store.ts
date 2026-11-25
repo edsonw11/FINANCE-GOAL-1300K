@@ -85,7 +85,7 @@ export class PrismaRecordStore implements RecordStore {
         SELECT id FROM record WHERE id = ${id}::uuid AND user_id = ${userId}::uuid AND kind = ${kind} AND deleted_at IS NULL FOR UPDATE`;
       if (!live[0]) return;
       const version = await nextVersion(tx, userId);
-      await tx.$queryRaw`UPDATE record SET deleted_at = ${now}, updated_at = ${now}, version = ${version} WHERE id = ${id}::uuid AND user_id = ${userId}::uuid`;
+      await tx.$queryRaw`UPDATE record SET deleted_at = ${now}, updated_at = ${now}, version = ${version}, legacy_key = NULL WHERE id = ${id}::uuid AND user_id = ${userId}::uuid`;
     });
   }
 

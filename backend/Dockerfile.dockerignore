@@ -9,6 +9,6 @@
 !backend/prisma/**
 !backend/src/**
 backend/src/generated
-!src/package.json
-!src/core/**
-!src/domain/**
+!index.html
+!src/**
+!vendor/**

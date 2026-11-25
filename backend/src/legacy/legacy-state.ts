@@ -31,6 +31,9 @@ const RECORD_SCHEMAS = {
   import: z.looseObject({ hash: z.string().min(1).max(200) }),
 } as const satisfies Record<RecordKind, z.ZodType>;
 
+/** The same check an import applies to each record, for a record arriving by sync. */
+export const isValidRecordBody = (kind: RecordKind, body: Body): boolean => RECORD_SCHEMAS[kind].safeParse(body).success;
+
 /** The key a record had in the browser app ('nu', 12, 't7', the hash of an imported file), as text. Balances had none. */
 const legacyKeyOf = (kind: RecordKind, body: Body): string | null => {
   if (kind === 'snap') return null;

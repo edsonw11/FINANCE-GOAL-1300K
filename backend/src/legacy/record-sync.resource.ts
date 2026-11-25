@@ -37,6 +37,12 @@ export class RecordSyncResource implements SyncResource {
     return { status: 'applied', version: null };
   }
 
+  /** A record made through REST has no app id inside: a device gets its key (or the record id) so it can find it again. */
+  private withId(body: Body, id: string, legacyKey: string | null): Body {
+    if (this.kind === 'snap' || this.kind === 'import' || body.id !== undefined) return body;
+    return { ...body, id: legacyKey ?? id };
+  }
+
   async changesSince(userId: string, afterVersion: number, limit: number): Promise<SyncChange[]> {
     const changes = await this.store.changesSince(userId, this.kind, afterVersion, limit);
     return changes.map((c) => ({
@@ -44,7 +50,7 @@ export class RecordSyncResource implements SyncResource {
       id: c.id,
       version: c.version,
       deleted: c.deleted,
-      data: c.deleted ? null : { body: c.body, legacyKey: c.legacyKey },
+      data: c.deleted ? null : { body: this.withId(c.body, c.id, c.legacyKey), legacyKey: c.legacyKey },
     }));
   }
 }

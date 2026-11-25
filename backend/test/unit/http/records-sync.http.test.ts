@@ -24,6 +24,34 @@ const mut = (resource: string, over: Record<string, unknown> = {}) => ({ mutatio
 const tx = (extra: Record<string, unknown> = {}) => ({ id: 7, type: 'despesa', date: '2026-11-20', value: 12.5, cat: 'Mercado', ...extra });
 const first = (res: { json: () => { results: { status: string; reason?: string }[] } }) => res.json().results[0]!;
 
+describe('what a device finds in the feed', () => {
+  it('a balance and an imported file keep exactly the body they were sent (they have no id of their own)', async () => {
+    const snap = randomUUID();
+    const imp = randomUUID();
+    await push(alice, [mut('snap', { id: snap, data: { body: { date: '2026-11-21', acc: 'nu', value: 5 } } }), mut('import', { id: imp, data: { body: { hash: 'h-1' }, legacyKey: 'h-1' } })]);
+    const changes = (await feed(alice)).changes as { id: string; data: { body: Record<string, unknown> } }[];
+    expect(changes.find((c) => c.id === snap)!.data.body).toEqual({ date: '2026-11-21', acc: 'nu', value: 5 });
+    expect(changes.find((c) => c.id === imp)!.data.body).toEqual({ hash: 'h-1' });
+  });
+
+  it('an account made through REST reaches a device with an id inside (its record id), so the device can find it again', async () => {
+    const id = randomUUID();
+    await t.app.inject({ method: 'PUT', url: `/api/v1/accounts/${id}`, headers: { cookie: alice, ...CSRF }, payload: { name: 'From REST' } });
+    const change = (await feed(alice)).changes.find((c: { id: string }) => c.id === id);
+    expect(change.data.body).toEqual({ name: 'From REST', id });
+  });
+
+  it('an account the device named keeps its own id', async () => {
+    const id = randomUUID();
+    await push(alice, [mut('account', { id, data: { body: { id: 'nu', name: 'Nubank', archived: true }, legacyKey: 'nu' } })]);
+    expect((await feed(alice)).changes.find((c: { id: string }) => c.id === id).data.body).toEqual({ id: 'nu', name: 'Nubank', archived: true });
+  });
+
+  it('sync applies the same rules as an import: a bad date is refused', async () => {
+    expect(first(await push(alice, [mut('tx', { data: { body: tx({ id: 800, date: 'yesterday' }), legacyKey: '800' } })]))).toMatchObject({ status: 'rejected', reason: 'invalid_data' });
+  });
+});
+
 describe('transactions and the other lists through the sync', () => {
   it('a phone with no signal adds an expense, pushes it later, and the tablet gets it', async () => {
     const id = randomUUID();

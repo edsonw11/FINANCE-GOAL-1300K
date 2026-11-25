@@ -31,7 +31,12 @@ export const bootNotice={recovered:false};
 // a first visit opens an empty app (the example data is on demand); unreadable data is kept aside, never overwritten
 function load(){const r=readState(storage,STORAGE_KEY,()=>blankState());bootNotice.recovered=r.recovered;return r.state;}
 export const autoBackup=()=>readBackup(storage,STORAGE_KEY);
-export function save(){invalidateAllocation();rollBackup(storage,STORAGE_KEY,today());storage.setItem(STORAGE_KEY,JSON.stringify(S));}
+export function save(){invalidateAllocation();rollBackup(storage,STORAGE_KEY,today());storage.setItem(STORAGE_KEY,JSON.stringify(S));saveListeners.forEach(f=>{try{f();}catch(e){/* a listener must never break saving */}});}
+// who wants to know when the state was saved (the sync looks for changes to send); each listener is called after the data is stored
+const saveListeners=[];
+export const onSave=fn=>{saveListeners.push(fn);};
+// the state as the sync has merged it from the server: stored like any other change
+export function adoptRemoteState(next){S=next;save();}
 // swaps the whole state (backup import, reset); the caller saves it through transact()
 export function replaceState(next){S=next;invalidateAllocation();}
 /**

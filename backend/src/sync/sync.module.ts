@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
-import { AccountsModule } from '../accounts/accounts.module';
-import { AccountSyncResource } from '../accounts/account-sync.resource';
+import { accountSyncResource } from '../accounts/account-sync.resource';
 import { DatabaseModule } from '../database/database.module';
+import { isValidRecordBody } from '../legacy/legacy-state';
 import { RecordSyncResource, StateSyncResource } from '../legacy/record-sync.resource';
 import { RECORD_STORE, type RecordStore } from '../records/record.store';
 import { RecordsModule } from '../records/records.module';
@@ -12,7 +12,7 @@ import { SyncService } from './sync.service';
 import { SYNC_RESOURCES } from './sync-resource';
 
 @Module({
-  imports: [DatabaseModule, AccountsModule, RecordsModule],
+  imports: [DatabaseModule, RecordsModule],
   controllers: [SyncController],
   providers: [
     SyncService,
@@ -20,16 +20,16 @@ import { SYNC_RESOURCES } from './sync-resource';
     // one line per kind of record that syncs
     {
       provide: SYNC_RESOURCES,
-      useFactory: (accounts: AccountSyncResource, store: RecordStore) => [
-        accounts,
-        new RecordSyncResource('tx', store, (b) => typeof b.type === 'string' && typeof b.date === 'string'),
-        new RecordSyncResource('snap', store, (b) => typeof b.date === 'string' && b.acc !== undefined),
-        new RecordSyncResource('trade', store, () => true),
-        new RecordSyncResource('transfer', store, () => true),
-        new RecordSyncResource('import', store, (b) => typeof b.hash === 'string'),
+      useFactory: (store: RecordStore) => [
+        accountSyncResource(store),
+        new RecordSyncResource('tx', store, (b) => isValidRecordBody('tx', b)),
+        new RecordSyncResource('snap', store, (b) => isValidRecordBody('snap', b)),
+        new RecordSyncResource('trade', store, (b) => isValidRecordBody('trade', b)),
+        new RecordSyncResource('transfer', store, (b) => isValidRecordBody('transfer', b)),
+        new RecordSyncResource('import', store, (b) => isValidRecordBody('import', b)),
         new StateSyncResource(store),
       ],
-      inject: [AccountSyncResource, RECORD_STORE],
+      inject: [RECORD_STORE],
     },
   ],
 })
