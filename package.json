@@ -15,6 +15,8 @@
     "mobile:doctor": "bash scripts/mobile.sh doctor",
     "mobile:web": "bash scripts/mobile.sh web",
     "mobile:sync": "bash scripts/mobile.sh sync",
+    "mobile:emulator": "bash scripts/mobile.sh emulator",
+    "mobile:test": "bash scripts/mobile.sh test",
     "mobile:apk": "bash scripts/mobile.sh apk",
     "dev:up": "bash scripts/dev.sh up",
     "dev:down": "bash scripts/dev.sh down",
@@ -33,6 +35,7 @@
   },
   "dependencies": {
     "@capacitor/android": "8.6.2",
+    "@capacitor/app": "8.1.2",
     "@capacitor/core": "8.6.2",
     "@capacitor/filesystem": "8.1.5",
     "@capacitor/share": "8.0.3"

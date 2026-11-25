@@ -13,6 +13,11 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- behind the system bars: the page's own background, light or dark, and icons that can be read on it -->
+        <item name="android:windowBackground">@color/everfox_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">@bool/everfox_light_bars</item>
     </style>
 
 

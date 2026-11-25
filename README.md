@@ -27,6 +27,8 @@ The same app in a Capacitor shell (offline, data on the phone; backup through th
 npm run mobile:doctor    what this machine has and lacks (JDK 17+, Android SDK with platform 36 and build-tools; ANDROID_HOME)
 npm run mobile:apk       build the web part, copy it into android/, build android/app/build/outputs/apk/debug/app-debug.apk
 adb install -r android/app/build/outputs/apk/debug/app-debug.apk     on a phone with USB debugging, or drag the APK onto an emulator
+npm run mobile:emulator  start the virtual phone (once: scripts/mobile.sh emulator create; needs KVM)
+npm run mobile:test      build the test APK, install it and run the device test (screens, Back, share, backup + restore, themes, rotation, random touches)
 ```
 
 CI builds the same APK on every push (job `android`, artifact `everfox-debug-apk`). The Capacitor CLI needs Node 22: `scripts/mobile.sh` fetches it for its own commands.

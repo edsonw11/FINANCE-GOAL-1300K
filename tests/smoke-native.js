@@ -31,6 +31,18 @@
   await step('a write failure is told to the person and does not count as a backup',async()=>{
     localStorage.removeItem(LAST);N.failWrite=true;$('exp').click();await wait(200);N.failWrite=false;
     need(!localStorage.getItem(LAST),'a failed backup was recorded');need(/Não foi possível salvar o backup: disk full/.test($('toast').textContent),'no message: '+$('toast').textContent);});
+  const back=async()=>{N.backHandlers.forEach(f=>f());await wait(80);};
+  await step('the Back button: listener is registered once',async()=>{need(N.backHandlers.length===1,'listeners: '+N.backHandlers.length);});
+  await step('Back closes a sheet, and cancels a confirmation without confirming it',async()=>{
+    q('#nav [data-t=lanc]').click();await wait(100);q('[data-tx]').click();await wait(200);need($('sheet').open,'sheet did not open');
+    const exits=N.exits;await back();need(!$('sheet').open,'Back did not close the sheet');need(N.exits===exits,'Back left the app with a sheet open');
+    // a confirmation of the app (test data already exist, so it asks before replacing them) is answered by Back, and nothing is replaced
+    const before=localStorage.getItem('metaapp.v2');$('demoOn').click();await wait(200);need($('confirmDlg').open,'confirmation not shown');
+    await back();need(!$('confirmDlg').open,'Back should close the confirmation');need(localStorage.getItem('metaapp.v2')===before,'Back confirmed instead of cancelling');});
+  await step('Back from another tab goes to the summary, and from the summary leaves the app',async()=>{
+    q('#nav [data-t=cfg]').click();await wait(100);const exits=N.exits;
+    await back();need(q('#nav button.on').dataset.t==='resumo','Back did not go to the summary: '+q('#nav button.on').dataset.t);need(N.exits===exits,'left too early');
+    await back();need(N.exits===exits+1,'Back on the summary did not leave the app');});
   await step('still no violation after all of that',async()=>{need(N.violations.length===0,N.violations.join(', '));});
   document.documentElement.setAttribute('data-smoke',out.concat(errs).join(' | '));
 })();

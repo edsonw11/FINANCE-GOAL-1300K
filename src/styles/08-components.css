@@ -170,7 +170,7 @@ table.tl tr.rowclick{cursor:pointer}
 .bud-in input{width:130px}
 .cat-gh .bud-in+.mut,.cat-gh .mut{margin-left:0}
 .cat-gh .mut{margin-right:auto}
-@media (max-width:480px){.bud-in{width:100%;margin-left:0}.bud-in input{flex:1;width:auto}}
+@media (max-width:480px){.bud-in{width:100%;margin-left:0}.bud-in input{flex:1;width:auto;min-width:0}}
 
 /* bills */
 #billsCard>.pbar{margin:6px 0 4px}
