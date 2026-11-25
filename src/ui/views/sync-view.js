@@ -46,8 +46,11 @@ export function renderSync(){
     }
   }
   $('syncBody').innerHTML=html;
-  badge.hidden=syncView.state!=='signed_in';
-  if(!badge.hidden){badge.textContent=syncView.busy?'☁️ sincronizando…':n?`☁️ ${n} pendente${n>1?'s':''}`:'☁️ em dia';badge.classList.toggle('warn',!!n||!!st.review);}
+  // signed in: the sync state; signed out: a shortcut to sign in (a link, so it also works when the script is slow)
+  badge.hidden=syncView.state!=='signed_in'&&syncView.state!=='signed_out';
+  badge.classList.toggle('warn',syncView.state==='signed_in'&&(!!n||!!st.review));
+  if(syncView.state==='signed_out'){badge.textContent='☁️ Entrar';badge.href=loginUrl(location.pathname);badge.title='Entrar para sincronizar seus dados';}
+  else if(!badge.hidden){badge.removeAttribute('href');badge.removeAttribute('title');badge.textContent=syncView.busy?'☁️ sincronizando…':n?`☁️ ${n} pendente${n>1?'s':''}`:'☁️ em dia';}
   const now=$('syncNow');if(now)now.onclick=()=>syncView.go(true);
   const out=$('syncLogout');if(out)out.onclick=signOut;
   const clr=$('syncClear');if(clr)clr.onclick=()=>{sync.clearReview();renderSync();};

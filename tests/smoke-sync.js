@@ -21,7 +21,7 @@
     await step('signed out: the card offers "Entrar" and nothing else',async()=>{
       await until(()=>!$('syncCard').hidden,'card shown');
       need(/Entrar/.test($('syncBody').textContent),'no sign-in button');need(!$('syncNow'),'sync button shown while signed out');
-      need($('syncBadge').hidden,'badge shown while signed out');need(q('#syncLogin').getAttribute('href').startsWith('/auth/login?returnTo='),'wrong login address');});
+      need(!$('syncBadge').hidden&&/Entrar/.test($('syncBadge').textContent)&&$('syncBadge').getAttribute('href').startsWith('/auth/login?returnTo='),'header shortcut missing: '+$('syncBadge').textContent);need(q('#syncLogin').getAttribute('href').startsWith('/auth/login?returnTo='),'wrong login address');});
   }else{
     await step('signed in: shows who, the plan, and that everything is sent',async()=>{
       await until(()=>$('syncStatus')&&/Tudo enviado/.test($('syncStatus').textContent),'first sync done');
@@ -42,7 +42,7 @@
       q('#nav [data-t=cfg]').click();});
     await step('signing out hides the sync and keeps the data',async()=>{
       q('#nav [data-t=cfg]').click();$('syncLogout').click();await until(()=>$('syncLogin'),'login button');
-      need(fake.logouts===1,'logout not sent');need($('syncBadge').hidden,'badge still shown');need(/from the tablet/.test(document.body.textContent),'data gone after logout');});
+      need(fake.logouts===1,'logout not sent');need(/Entrar/.test($('syncBadge').textContent),'header does not offer sign-in after logout');need(/from the tablet/.test(document.body.textContent),'data gone after logout');});
   }
   document.documentElement.setAttribute('data-smoke',out.concat(errs).join(' | '));
 })();

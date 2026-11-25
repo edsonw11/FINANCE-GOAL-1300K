@@ -579,7 +579,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
 .bill-more>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600;color:var(--brand)}
 
 /* sync status in the header: only shown when signed in (the app works without it) */
-.sync-badge{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--surface-2,#eef2f6);color:var(--muted,#566);white-space:nowrap}
+.sync-badge{text-decoration:none;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--surface-2,#eef2f6);color:var(--muted,#566);white-space:nowrap}
 .sync-badge.warn{background:#fff3d6;color:#7a5200}
 @media(max-width:480px){.sync-badge{font-size:11px;padding:2px 7px}}
 </style>
@@ -898,7 +898,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
     <button data-t="cad" data-i="tag">Categorias</button>
     <button data-t="cfg" data-i="sliders">Ajustes</button>
   </nav>
-  <span class="sync-badge" id="syncBadge" hidden></span>
+  <a class="sync-badge" id="syncBadge" hidden></a>
   <div class="today" id="todayLbl"></div>
   <button class="btn sm" id="printBtn" title="Imprimir ou salvar como PDF">Imprimir / PDF</button>
   <button class="btn sm" id="mailBtn" title="Abrir o e-mail com o resumo do relatório">Enviar por e-mail</button>
@@ -7176,8 +7176,11 @@ function renderSync(){
     }
   }
   $('syncBody').innerHTML=html;
-  badge.hidden=syncView.state!=='signed_in';
-  if(!badge.hidden){badge.textContent=syncView.busy?'☁️ sincronizando…':n?`☁️ ${n} pendente${n>1?'s':''}`:'☁️ em dia';badge.classList.toggle('warn',!!n||!!st.review);}
+  // signed in: the sync state; signed out: a shortcut to sign in (a link, so it also works when the script is slow)
+  badge.hidden=syncView.state!=='signed_in'&&syncView.state!=='signed_out';
+  badge.classList.toggle('warn',syncView.state==='signed_in'&&(!!n||!!st.review));
+  if(syncView.state==='signed_out'){badge.textContent='☁️ Entrar';badge.href=loginUrl(location.pathname);badge.title='Entrar para sincronizar seus dados';}
+  else if(!badge.hidden){badge.removeAttribute('href');badge.removeAttribute('title');badge.textContent=syncView.busy?'☁️ sincronizando…':n?`☁️ ${n} pendente${n>1?'s':''}`:'☁️ em dia';}
   const now=$('syncNow');if(now)now.onclick=()=>syncView.go(true);
   const out=$('syncLogout');if(out)out.onclick=signOut;
   const clr=$('syncClear');if(clr)clr.onclick=()=>{sync.clearReview();renderSync();};

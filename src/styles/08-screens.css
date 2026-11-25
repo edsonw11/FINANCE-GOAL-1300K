@@ -224,6 +224,6 @@ dialog.dlg-wide{width:min(580px,94vw)}
 .bill-more>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600;color:var(--brand)}
 
 /* sync status in the header: only shown when signed in (the app works without it) */
-.sync-badge{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--surface-2,#eef2f6);color:var(--muted,#566);white-space:nowrap}
+.sync-badge{text-decoration:none;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--surface-2,#eef2f6);color:var(--muted,#566);white-space:nowrap}
 .sync-badge.warn{background:#fff3d6;color:#7a5200}
 @media(max-width:480px){.sync-badge{font-size:11px;padding:2px 7px}}
