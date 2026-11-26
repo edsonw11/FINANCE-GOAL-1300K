@@ -4,6 +4,7 @@
  */
 import { STORAGE_KEY } from '../core/config.js';
 import { today } from '../core/dates.js';
+import { repairIdCounter } from '../core/id-counter.js';
 import { balance } from './accounts.js';
 import { invalidateAllocation } from './card-invoices.js';
 import { readBackup, readState, rollBackup } from './state-recovery.js';
@@ -36,7 +37,7 @@ export function save(){invalidateAllocation();rollBackup(storage,STORAGE_KEY,tod
 const saveListeners=[];
 export const onSave=fn=>{saveListeners.push(fn);};
 // the state as the sync has merged it from the server: stored like any other change
-export function adoptRemoteState(next){S=next;save();}
+export function adoptRemoteState(next){S=repairIdCounter(next);save();}
 // swaps the whole state (backup import, reset); the caller saves it through transact()
 export function replaceState(next){S=next;invalidateAllocation();}
 /**

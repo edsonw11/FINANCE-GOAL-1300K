@@ -31,7 +31,7 @@ export function applyChanges(state,meta,changes){
       for(const k of Object.keys(next))delete next[k];
       for(const [k,v] of Object.entries(body))if(k!==LISTS_MARK)next[k]=clone(v);
       Object.assign(next,keep);
-      if(body.nid!==undefined||counter>1)next.nid=Math.max(+body.nid||1,counter); // the counter only goes up
+      next.nid=Math.max(+body.nid||1,counter); // the counter only goes up and is never missing (the app lifts it past the ids in use when it adopts the state)
       for(const n of Array.isArray(body[LISTS_MARK])?body[LISTS_MARK]:[])if(Object.hasOwn(LISTS,n)&&!Array.isArray(next[n]))next[n]=[];
       m.settingsFp=splitState(next).settingsFp;
       continue;

@@ -5,6 +5,7 @@
  */
 import { monthEnd } from '../core/dates.js';
 import { roundMoney } from '../core/money.js';
+import { repairIdCounter } from '../core/id-counter.js';
 import { S, seed, autoBackup, replaceState } from './store.js';
 import { CARD, ruleClosing } from './card-cycle.js';
 const DEFAULT_GOAL=1300000;
@@ -18,7 +19,7 @@ export function setCardSettings({best,due,biz}){
 // a different closing date for one invoice; equal to the rule means "no override"
 export function setClosingOverride(fm,date){const c=CARD();c.over=c.over||{};if(date&&date!==ruleClosing(fm))c.over[fm]=date;else delete c.over[fm];S.card=c;}
 export function importBackup(d){
-  if(d&&d.v===2&&Array.isArray(d.tx))return {state:d,converted:false};
+  if(d&&d.v===2&&Array.isArray(d.tx))return {state:repairIdCounter(d),converted:false};
   if(!d||!d.entries)return {error:'Arquivo inválido'};
   // old format (goal tracker): month entries with balances and contributions per account
   const n=seed();n.goal=d.goal||n.goal;n.rate=d.rate||n.rate;n.planned=d.planned||0;n.snaps=[];n.tx=[];

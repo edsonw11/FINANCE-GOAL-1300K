@@ -1241,6 +1241,46 @@ const isWeekend=d=>{const w=new Date(d+'T12:00:00').getDay();return w===0||w===6
 const addDay=(d,n)=>{const dt=new Date(d+'T12:00:00');dt.setDate(dt.getDate()+n);return formatISODate(dt);};
 const daysBetween=(a,b)=>Math.round((new Date(b+'T12:00:00').getTime()-new Date(a+'T12:00:00').getTime())/864e5);
 
+// ---- src/core/id-counter.js
+/**
+ * core/id-counter.js
+ * Responsibility: keeps the id counter `nid` usable. The counter hands out ids (numbers for transactions, 'a7' accounts, 't7' trades, 'tr7' transfers, and the series
+ * number of repeated records). Data that comes from outside (browser storage, a backup file, the server's settings document) may carry a counter that is missing,
+ * null, NaN, zero, negative, fractional, too large, or behind the ids already in use; any of those would hand out an id that is NaN, falsy or already taken.
+ * Pure: a state with a good counter is returned exactly as it is.
+ */
+const OWN_LISTS=['accounts','tx','trades','transfers'];
+const ID_NUMBER=/^(?:a|t|tr)?(\d+)$/;
+const ROOM=100; // a counter closer than this to the largest safe integer would soon stop counting (n+1 === n)
+const SAFE_TOP=Number.MAX_SAFE_INTEGER-ROOM;
+
+/** The number inside an id ('a12' -> 12, 7 -> 7); 0 for ids that are not numbered ('nu', 'sa'). */
+const numberOfId=id=>{const m=ID_NUMBER.exec(String(id));const n=m?+m[1]:0;return Number.isSafeInteger(n)&&n<=SAFE_TOP?n:0;};
+const usableCounter=n=>typeof n==='number'&&Number.isSafeInteger(n)&&n>=1&&n<=SAFE_TOP;
+
+/** The smallest counter that cannot collide with any id in the state. */
+function counterFloor(state){
+  let top=0;
+  for(const name of OWN_LISTS){
+    const list=state&&state[name];if(!Array.isArray(list))continue;
+    for(const item of list){
+      if(!item||typeof item!=='object')continue;
+      top=Math.max(top,numberOfId(item.id));
+      if(name==='tx'&&item.serie!==undefined)top=Math.max(top,numberOfId(item.serie));
+    }
+  }
+  return top+1;
+}
+
+/** Makes `state.nid` a safe integer of at least 1 that is past every id in use. Changes the object it is given and returns it. */
+function repairIdCounter(state){
+  if(!state||typeof state!=='object')return state;
+  const floor=counterFloor(state);
+  if(!usableCounter(state.nid))state.nid=floor;
+  else if(state.nid<floor)state.nid=floor;
+  return state;
+}
+
 // ---- src/core/format.js
 /**
  * core/format.js
@@ -1377,8 +1417,9 @@ function payableItems(fm){return openCard(null,null).filter(t=>dueMonth(t.date)=
  * cannot be read, it is copied aside (never overwritten) and a blank state is used instead; and once a day it
  * keeps the previous good copy, so yesterday's data can be restored. Pure functions over a storage adapter.
  */
+
 const BACKUP_SUFFIX='.bak',BROKEN_SUFFIX='.broken';
-const parseState=raw=>{try{const r=JSON.parse(raw);return r&&r.v===2?r:null;}catch(e){return null;}};
+const parseState=raw=>{try{const r=JSON.parse(raw);return r&&r.v===2?repairIdCounter(r):null;}catch(e){return null;}};
 // -> {state, recovered}: recovered=true when something was stored but could not be read (a copy was kept aside)
 function readState(storage,key,blank){
   const raw=storage.getItem(key);
@@ -1403,6 +1444,7 @@ function readBackup(storage,key){const b=readBackupRaw(storage,key),s=b&&parseSt
  * domain/store.js
  * Responsibility: Application state (S) and localStorage persistence: seed, load, save, migrations.
  */
+
 
 
 
@@ -1437,7 +1479,7 @@ function save(){invalidateAllocation();rollBackup(storage,STORAGE_KEY,today());s
 const saveListeners=[];
 const onSave=fn=>{saveListeners.push(fn);};
 // the state as the sync has merged it from the server: stored like any other change
-function adoptRemoteState(next){S=next;save();}
+function adoptRemoteState(next){S=repairIdCounter(next);save();}
 // swaps the whole state (backup import, reset); the caller saves it through transact()
 function replaceState(next){S=next;invalidateAllocation();}
 /**
@@ -1492,6 +1534,7 @@ let S=load();
 
 
 
+
 const DEFAULT_GOAL=1300000;
 function setGoalSettings({goal,rate,planned}){S.goal=goal>0?goal:DEFAULT_GOAL;S.rate=rate>0?rate:0;S.planned=planned>0?roundMoney(planned):0;}
 function setPlannedContribution(v){S.planned=Math.round(v);}
@@ -1503,7 +1546,7 @@ function setCardSettings({best,due,biz}){
 // a different closing date for one invoice; equal to the rule means "no override"
 function setClosingOverride(fm,date){const c=CARD();c.over=c.over||{};if(date&&date!==ruleClosing(fm))c.over[fm]=date;else delete c.over[fm];S.card=c;}
 function importBackup(d){
-  if(d&&d.v===2&&Array.isArray(d.tx))return {state:d,converted:false};
+  if(d&&d.v===2&&Array.isArray(d.tx))return {state:repairIdCounter(d),converted:false};
   if(!d||!d.entries)return {error:'Arquivo inválido'};
   // old format (goal tracker): month entries with balances and contributions per account
   const n=seed();n.goal=d.goal||n.goal;n.rate=d.rate||n.rate;n.planned=d.planned||0;n.snaps=[];n.tx=[];
@@ -7037,7 +7080,7 @@ function applyChanges(state,meta,changes){
       for(const k of Object.keys(next))delete next[k];
       for(const [k,v] of Object.entries(body))if(k!==LISTS_MARK)next[k]=clone(v);
       Object.assign(next,keep);
-      if(body.nid!==undefined||counter>1)next.nid=Math.max(+body.nid||1,counter); // the counter only goes up
+      next.nid=Math.max(+body.nid||1,counter); // the counter only goes up and is never missing (the app lifts it past the ids in use when it adopts the state)
       for(const n of Array.isArray(body[LISTS_MARK])?body[LISTS_MARK]:[])if(Object.hasOwn(LISTS,n)&&!Array.isArray(next[n]))next[n]=[];
       m.settingsFp=splitState(next).settingsFp;
       continue;
