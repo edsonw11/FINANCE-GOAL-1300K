@@ -32,7 +32,7 @@ android/ , capacitor.config.json , mobile/www/ (generated)   the Android shell
 services/telegram-apk/     developer tool: sends the debug APK to a Telegram chat (not part of the app)
 scripts/                   dev.sh, mobile.sh, build.py, smoke.sh, secret-scan.sh, device tests, lib/device.mjs
 dev/                       local Keycloak realm and PostgreSQL setup for docker compose
-tests/                     unit/ (46 files), fixtures/, smoke*.js (end to end), mobile-check.js
+tests/                     unit/ (68 files), fixtures/, smoke*.js (end to end), mobile-check.js
 docs/architecture/         00-current-state.md, decisions/ADR-0001..0014, diagrams/ (section 11)
 docs/security/             threat-model.md, security-test-plan.md, security-findings.md
 ```
@@ -114,7 +114,7 @@ Not done on Android: sign-in and sync (needs a system-browser login, an app link
 
 | Layer | Where | Run |
 |---|---|---|
-| Browser unit tests | `tests/unit/*.test.js` (46 files; architecture, golden calculations, app lock, sync, imports) | `npm run test:unit` |
+| Browser unit tests | `tests/unit/*.test.js` (67 files; architecture, golden calculations, app lock, sync, imports) | `npm run test:unit` |
 | End to end (headless Chrome) | `tests/smoke.js`, `smoke-sync.js`, `smoke-xss.js`, `smoke-native.js` (fake native layer in `tests/fixtures/fake-native.js`) | `npm run test:e2e` |
 | Phone widths | `tests/mobile-check.js` | `npm run test:mobile` |
 | Backend unit | `backend/test/unit` | `cd backend && npm test` |
@@ -125,6 +125,8 @@ Not done on Android: sign-in and sync (needs a system-browser login, an app link
 CI (`.github/workflows/ci.yml`), jobs `check`, `backend`, `stack`, `android`: `npm audit --audit-level=high`, secret scan, lint, typecheck, unit tests, **build then `git diff --exit-code -- dist/`** (so a change in `src/` needs the rebuilt `dist/` committed), e2e and phone widths; backend typecheck, tests, build, migrations on an empty database, integration tests; the whole stack with `scripts/dev.sh up` and `check`; the debug APK (checked to hold the app, its own policy and no cloud backup).
 
 Testing standard from the owner: many tests, SOLID and SRP in the tests too, and **mutation proof**: after writing a test, break the code on purpose and confirm the test fails. A surviving mutation means the test or the code is redundant (it happened with a redundant guard in the app lock: the guard was removed and tests for the real event orders were added).
+
+**Test audit (2026-11-26, two rounds):** see `docs/testing/README.md` (index of 15 documents). Tools: `tools/mutation-lite.cjs` (`--lines` for exact lines), `tools/coverage.cjs` (line and branch coverage of the unit suite), `tools/fake-clock-preload.cjs` (run the suite on another day), `scripts/send-apk.sh` (build and send the APK). Harness: `createContext({today:'YYYY-MM-DD'})` fixes the clock of a test. Statement fixtures: drop files in `tests/fixtures/statements/`. Open owner decisions: items 1 to 7 of `docs/testing/critical-business-rules.md`.
 
 ## 9. Commands
 
