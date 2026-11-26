@@ -23,8 +23,12 @@ sp=importlib.util.spec_from_file_location('bm',d+'/scripts/build-mobile.py');bm=
 page=bm.build(open(d+'/dist/index.html').read())
 open(t+'/native/index.html','w').write(page.replace('</title>','</title>\n<script src="fake-native.js"></script>',1).replace('</body>','<script src="smoke-native.js"></script>\n</body>'))
 import shutil
-for f in ('fake-native.js',):shutil.copy(d+'/tests/fixtures/'+f,t+'/native/'+f)
+for f in ('fake-native.js','statement-pdf.js','import-samples.js'):shutil.copy(d+'/tests/fixtures/'+f,t+'/native/'+f)
 shutil.copy(d+'/tests/smoke-native.js',t+'/native/smoke-native.js')
+shutil.copy(d+'/tests/smoke-native-import.js',t+'/native/smoke-native-import.js')
+bm.copy_pdfjs(__import__('pathlib').Path(t+'/native'))
+# the same Android page with the file formats scenario instead of the lock one
+open(t+'/native/import.html','w').write(open(t+'/native/index.html').read().replace('<script src="smoke-native.js"></script>','<script src="statement-pdf.js"></script><script src="import-samples.js"></script><script src="smoke-native-import.js"></script>'))
 b=open(d+'/dist/finance_goal_1300k.html').read()
 open(t+'/dist-smoke.html','w').write(b.replace('</body>','<script>\n'+open(d+'/tests/fixtures/statement-pdf.js').read()+'</script><script>\n'+open(d+'/tests/smoke.js').read()+'</script>\n</body>'))
 PY
@@ -48,6 +52,7 @@ run "sync card, signed out" "http://127.0.0.1:8767/tests/.smoke-sync.html#signed
 run "XSS: hostile text in every field, every screen (two loads)" "http://127.0.0.1:8767/tests/.smoke-xss.html" "$TMP/p5"
 run "Android shell: page with its own CSP and a scripted Capacitor" "http://127.0.0.1:8769/index.html" "$TMP/p6"
 run "Android shell, app lock on: starts locked (scripted AppLock)" "http://127.0.0.1:8769/index.html#locked" "$TMP/p7"
+run "Android shell: CSV, OFX and PDF imports under its CSP" "http://127.0.0.1:8769/import.html" "$TMP/p8"
 run "built dist/ (file://)" "file://$TMP/dist-smoke.html" "$TMP/p2"
 if [ "$FAILED" = 1 ]; then echo "SMOKE FAILED"; exit 1; fi
 echo "SMOKE OK"
