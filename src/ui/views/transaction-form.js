@@ -28,7 +28,7 @@ export function startEdit(id){
   const sib=futureSiblings(t);$('wApply').hidden=!(sib.length);$('fApply').checked=true;$('applyN').textContent=sib.length;
   ui.editId=id;$('fCancel').hidden=false;$('fRep').disabled=true;fillCategoryOptions();
 }
-export function endEdit(){resetSplit();ui.invoiceSelection=new Set();$('wApply').hidden=true;ui.editId=null;$('fCancel').hidden=true;$('fRep').disabled=false;ui.payAdvanced=false;fillCategoryOptions();}
+export function endEdit(){resetSplit();ui.invoiceSelection=new Set();$('wApply').hidden=true;ui.editId=null;$('fCancel').hidden=true;$('fRep').disabled=false;$('fRep').value='1';ui.payAdvanced=false;fillCategoryOptions();}
 const SAVE_LABEL={despesa:'Adicionar despesa',receita:'Adicionar receita',aporte:'Registrar aporte',fatura:'Registrar pagamento'};
 export function updateSaveLabel(){
   $('fSave').textContent=ui.editId!==null?'Salvar alterações':SAVE_LABEL[ui.type]||'Adicionar';

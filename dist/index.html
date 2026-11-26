@@ -2788,6 +2788,8 @@ function planPayment(fm,selectedIds,mode,partialValue){
   else{value=all?inv.rest:sumMoney(chosen.map(t=>t.value));if(!(value>0))return {error:'Marque pelo menos uma compra'};}
   return {value,full:value>=inv.rest-0.004,remaining:Math.max(0,roundMoney(inv.rest-value)),items:mode!=='part'&&!all?chosen.map(t=>t.id):null};
 }
+// what a payment pays above what is open on the invoice (0 when it does not): the app counts it as an expense "Cartão (sem detalhe)", it is not a credit for later invoices
+const paymentExcess=(value,open)=>{const x=roundMoney(value-open);return x>0.004?x:0;};
 function payInvoice(fm,plan,date){
   if(!plan||plan.error)return plan||{error:'Pagamento inválido'};
   const tx={id:S.nid++,type:'fatura',date,value:roundMoney(plan.value),desc:'',cat:INVOICE_CATEGORY,fm};
@@ -2892,7 +2894,8 @@ function renderPay(){
   $('payGo').onclick=async()=>{
     const partial=payMode==='part',plan=planPayment(f.fm,[...payIds],payMode,partial?parseMoney($('payVal').value):0);
     if(plan.error)return partial?fieldError($('payVal'),plan.error):toast('⚠️ '+plan.error);
-    const html=`${plan.full?'Pagar a fatura':'Pagar <b>parcialmente</b> a fatura'} que vence em <b>${formatDateBR(dueDateOf(f.fm))}</b>?<dl class="dl mt-10"><div class="dl-r"><dt>Valor</dt><dd><b>${f2(plan.value)}</b></dd></div>${plan.full?'':`<div class="dl-r"><dt>Falta depois</dt><dd>${f2(plan.remaining)}</dd></div>`}<div class="dl-r"><dt>Data</dt><dd>hoje, ${formatDateBR(t0)}</dd></div></dl>${plan.value>f.rest+0.004?`<div class="bd-note">⚠️ O valor é maior que o da fatura (${f2(f.rest)}).</div>`:''}`;
+    const excess=paymentExcess(plan.value,f.rest);
+    const html=`${plan.full?'Pagar a fatura':'Pagar <b>parcialmente</b> a fatura'} que vence em <b>${formatDateBR(dueDateOf(f.fm))}</b>?<dl class="dl mt-10"><div class="dl-r"><dt>Valor</dt><dd><b>${f2(plan.value)}</b></dd></div>${plan.full?'':`<div class="dl-r"><dt>Falta depois</dt><dd>${f2(plan.remaining)}</dd></div>`}<div class="dl-r"><dt>Data</dt><dd>hoje, ${formatDateBR(t0)}</dd></div></dl>${excess>0?`<div class="bd-note">⚠️ <b>O valor é maior que o em aberto.</b> Em aberto: ${f2(f.rest)}. Você vai pagar: ${f2(plan.value)}. Diferença: <b>${f2(excess)}</b>.<br>A diferença será registrada como <b>despesa “Cartão (sem detalhe)”</b> neste mês; não vira crédito para as próximas faturas.</div>`:''}`;
     if(!await askConfirm({title:'Confirmar pagamento',html,ok:'💳 Pagar '+f2(plan.value)}))return;
     if(!runCommand(()=>payInvoice(f.fm,plan,t0),{render:false}))return;
     payMode='total';payIds=null;ui.cur=mOf(t0);render();
@@ -3066,8 +3069,12 @@ function bindInvoiceMonthField(){
     set(v){if(v&&![...sel.options].some(o=>o.value===v)){sel.insertAdjacentHTML('beforeend',`<option value="${v}">${formatDateBR(dueDateOf(v))}</option>`);}_selectValue.set.call(sel,v);}});
   fillInvoiceMonths();
 }
-function initInvoiceForm(){if(ui.editId===null)$('fFm').value=nearestDueMonth($('fDate').value||today());
+// marks the open purchases of the invoice that is chosen (or all of them when "any date" is on); never changes the chosen invoice
+function selectInvoicePurchases(){
   ui.invoiceSelection=new Set(openCard(null,ui.editId).filter(t=>$('fAll').checked||dueMonth(t.date)===$('fFm').value).map(t=>t.id));}
+// a new payment starts on the invoice of its date; choosing another invoice (or ticking "any date") must keep that choice
+function initInvoiceForm(){if(ui.editId===null)$('fFm').value=nearestDueMonth($('fDate').value||today());
+  selectInvoicePurchases();}
 function drawInvoiceForm(ex){
   ex=ex===undefined?ui.editId:ex;
   const fmSel=$('fFm').value||nearestDueMonth($('fDate').value||today());
@@ -3117,7 +3124,7 @@ function startEdit(id){
   const sib=futureSiblings(t);$('wApply').hidden=!(sib.length);$('fApply').checked=true;$('applyN').textContent=sib.length;
   ui.editId=id;$('fCancel').hidden=false;$('fRep').disabled=true;fillCategoryOptions();
 }
-function endEdit(){resetSplit();ui.invoiceSelection=new Set();$('wApply').hidden=true;ui.editId=null;$('fCancel').hidden=true;$('fRep').disabled=false;ui.payAdvanced=false;fillCategoryOptions();}
+function endEdit(){resetSplit();ui.invoiceSelection=new Set();$('wApply').hidden=true;ui.editId=null;$('fCancel').hidden=true;$('fRep').disabled=false;$('fRep').value='1';ui.payAdvanced=false;fillCategoryOptions();}
 const SAVE_LABEL={despesa:'Adicionar despesa',receita:'Adicionar receita',aporte:'Registrar aporte',fatura:'Registrar pagamento'};
 function updateSaveLabel(){
   $('fSave').textContent=ui.editId!==null?'Salvar alterações':SAVE_LABEL[ui.type]||'Adicionar';
@@ -7570,8 +7577,8 @@ function bindTransactionFormEvents(){
 document.querySelectorAll('input[name=tp]').forEach(r=>r.onchange=()=>{ui.type=r.value;ui.payAdvanced=false;if(ui.type==='fatura')initInvoiceForm();fillCategoryOptions();$('fCat').value='';});
 $('fDate').value=today();
 $('fDate').onchange=()=>{updateFormHelp();if(ui.type!=='fatura')return;initInvoiceForm();drawInvoiceForm();};
-$('fFm').onchange=()=>{initInvoiceForm();drawInvoiceForm();};
-$('fAll').onchange=()=>{initInvoiceForm();drawInvoiceForm();};
+$('fFm').onchange=()=>{selectInvoicePurchases();drawInvoiceForm();};
+$('fAll').onchange=()=>{selectInvoicePurchases();drawInvoiceForm();};
 $('fCancel').onclick=()=>{endEdit();$('fVal').value='';$('fDesc').value='';};
 $('chips').onclick=e=>{const c=e.target.closest('.chip');if(!c)return;ui.filt=c.dataset.f;renderTransactions();};
 $('qBox').oninput=e=>{ui.q=e.target.value.trim();renderTransactions();};
