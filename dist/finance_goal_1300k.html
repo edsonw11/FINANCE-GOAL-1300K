@@ -1348,10 +1348,14 @@ const parseMoney=s=>roundMoney(parse(s));
 // ---- card invoice: checked purchases + whatever is left undetailed ----
 // ---- invoice cycle: best purchase day and due date ----
 // "Best purchase day" = day the new invoice starts; the previous invoice closes the day before.
+const DEFAULT_BEST_DAY=29,DEFAULT_DUE_DAY=7;
+const isCardDay=n=>Number.isInteger(n)&&n>=1&&n<=31;
 const CARD=()=>{
   if(!S.card)S.card={best:29,due:7,biz:true,over:{},v3:true};
   if(S.card.best===undefined){S.card={best:Math.min((S.card.close||0)+1,31),due:S.card.due||7};}
   if(!S.card.v3){S.card={best:29,due:S.card.due||7,biz:true,over:S.card.over||{},v3:true};}
+  // defensive: the days are whole numbers from 1 to 31 (the form guarantees it; a backup edited by hand or damaged may not). A bad one is replaced by the default, a good one is never touched.
+  const c=S.card;if(!isCardDay(c.best)||!isCardDay(c.due))S.card={...c,best:isCardDay(c.best)?c.best:DEFAULT_BEST_DAY,due:isCardDay(c.due)?c.due:DEFAULT_DUE_DAY};
   return S.card;};
 // closing date of cycle "j" (month j, day best-1; if best=1, the last day of month j)
 const closingIn=(y,mi)=>{const B=CARD().best;return B===1?formatISODate(new Date(y,mi+1,0)):formatISODate(new Date(y,mi,Math.min(B-1,daysInMonth(y,mi))));};
@@ -1456,15 +1460,19 @@ const seed=()=>({v:2,goal:1300000,rate:12.5,planned:0,nid:1,
   tx:[]});
 // nothing at all: no accounts, balances or records (what "Apagar tudo" leaves; the goal and the rate are settings and are kept)
 const blankState=prev=>({v:2,goal:prev?prev.goal:1300000,rate:prev?prev.rate:12.5,planned:0,nid:1,accounts:[],snaps:[],tx:[],...(prev&&prev.ownNames?{ownNames:prev.ownNames}:{})});
-// Santander was emptied: moves the balance to Nubank and archives the account (once)
+// Santander was emptied: moves the balance to Nubank and archives the account, once.
+// The "done" mark lives in the state (S.migrated.sa), so the move is never repeated, even if the account shows up again unarchived
+// (a state without the mark, such as a backup taken before the move, is migrated on its next open). States without a Santander account are left untouched.
 function migrate(){
+  if(S.migrated&&S.migrated.sa)return;
   const sa=S.accounts.find(a=>a.id==='sa'),nu=S.accounts.find(a=>a.id==='nu');
-  if(!sa||sa.archived||!nu)return;
+  if(!sa||!nu)return;
+  if(sa.archived){S.migrated={...S.migrated,sa:true};return;} // already moved by an earlier version: only the mark is added (stored with the next save)
   const d=today(),vSa=balance('sa',d).v,vNu=balance('nu',d).v;
   S.snaps=S.snaps.filter(s=>!(s.date===d&&(s.acc==='sa'||(vSa>0.005&&s.acc==='nu'))));
   if(vSa>0.005)S.snaps.push({date:d,acc:'nu',value:vNu+vSa,est:false});
   S.snaps.push({date:d,acc:'sa',value:0,est:false});
-  sa.archived=true;save();
+  sa.archived=true;S.migrated={...S.migrated,sa:true};save();
 }
 // storage is injected (DIP): the browser uses localStorage; tests pass an in-memory one
 let storage=typeof localStorage!=='undefined'?localStorage:{getItem:()=>null,setItem:()=>{}};
@@ -1537,7 +1545,7 @@ let S=load();
 
 const DEFAULT_GOAL=1300000;
 function setGoalSettings({goal,rate,planned}){S.goal=goal>0?goal:DEFAULT_GOAL;S.rate=rate>0?rate:0;S.planned=planned>0?roundMoney(planned):0;}
-function setPlannedContribution(v){S.planned=Math.round(v);}
+function setPlannedContribution(v){S.planned=roundMoney(v);} // cents, like the settings field: "use my average" must not lose them
 const clampDay=(v,def)=>Math.min(Math.max(Math.round(v)||def,1),31);
 function setCardSettings({best,due,biz}){
   S.card={best:clampDay(best,1),due:clampDay(due,7),biz:!!biz,over:CARD().over||{},v3:true};
@@ -3676,6 +3684,7 @@ const FLAG_TEXT={
   'check-aporte':'Parece um aporte (dinheiro indo para um investimento). Escolha o investimento de destino ou mude o tipo.',
   'sign-guess':'O PDF não mostra se é entrada ou saída: deduzi pelo texto. Confirme.',
   'two-amounts':'A linha do PDF tinha dois valores: usei o primeiro (o segundo costuma ser o saldo).',
+  'possible-transfer':'Entrada com palavra de investimento ou resgate (aplicação, tesouro, resgate…): pode ser uma transferência sua, então não entrou nos totais. Se for renda de verdade, mude o tipo para receita.',
   'transfer-pair':'O outro lado desta transferência parece já estar salvo como receita ou despesa.'};
 const OWN_TRANSFER_TEXT='Transferência entre suas contas: não é receita nem despesa. Fica guardada para o app reconhecer o outro lado quando você importar o outro banco.';
 const BALANCE=/^(saldo|total|subtotal|sub total)\b|\bsaldo (anterior|final|inicial|do dia|disponivel|parcial|em conta|total)\b/;
@@ -3714,7 +3723,9 @@ function classifyEntry(entry,flow,kind,ctx){
     r.type=IMPORT_TYPE.contribution;return r;
   }
   if(OWN_TRANSFER.test(n)&&kind==='bank'){r.type=IMPORT_TYPE.ownTransfer;return r;}
-  if(OWN_TRANSFER.test(n)||(flow==='in'&&(REDEMPTION.test(n)||(INVEST_WORDS.test(n)&&kind==='bank')))){r.type=IMPORT_TYPE.ignore;r.reason=IGNORE_REASON.transfer;return r;}
+  if(OWN_TRANSFER.test(n)){r.type=IMPORT_TYPE.ignore;r.reason=IGNORE_REASON.transfer;return r;}
+  // money in with an investment or redemption word is not counted as income or expense on its own, but it is flagged for review (a shop can have such a word in its name): owner decision Q5
+  if(flow==='in'&&(REDEMPTION.test(n)||(INVEST_WORDS.test(n)&&kind==='bank'))){r.type=IMPORT_TYPE.ignore;r.reason=IGNORE_REASON.transfer;r.flags.push('possible-transfer');return r;}
   if(flow==='out'&&kind==='bank'&&INVEST_WORDS.test(n)){r.type=IMPORT_TYPE.contribution;r.flags.push('check-aporte');return r;}
   // a salary credited in the user's name is still income ("TED CONTA SALARIO MARIA SOUZA")
   if(kind==='bank'&&!SALARY_WORDS.test(n)&&mentionsOwnName(entry.desc,(ctx||{}).ownNames)){r.type=IMPORT_TYPE.ownTransfer;return r;}
@@ -3889,6 +3900,8 @@ function selectionSummary(drafts){
 }
 // transfers between own accounts that confirming will keep (not the ones already kept by an earlier import)
 const keptTransfers=drafts=>drafts.filter(d=>d.type===IMPORT_TYPE.ownTransfer&&!(d.dup&&d.dup.level==='confirmed')&&d.date&&d.value>0);
+// lines left out of the totals because they look like a transfer of the person's own money, but that the person must look at (Q5)
+const possibleTransfers=drafts=>drafts.filter(d=>d.type===IMPORT_TYPE.ignore&&d.flags.includes('possible-transfer'));
 // what the review screen shows on top (a preview: nothing here is saved)
 function importOverview(drafts){
   const sel=selectionSummary(drafts),saveable=drafts.filter(isSaveable);
@@ -3903,7 +3916,8 @@ function importOverview(drafts){
     contributions:saveable.filter(d=>d.type===IMPORT_TYPE.contribution).length,
     contributionTotal:sumMoney(saveable.filter(d=>d.type===IMPORT_TYPE.contribution).map(d=>d.value)),
     expenseTotal:sumMoney(saveable.filter(d=>d.type===IMPORT_TYPE.expense).map(d=>d.value)),
-    review:saveable.filter(d=>needsReview(d)||draftProblems(d).length).length,
+    possibleTransfers:possibleTransfers(drafts).length,
+    review:saveable.filter(d=>needsReview(d)||draftProblems(d).length).length+possibleTransfers(drafts).length,
     confirmedDup:drafts.filter(d=>d.dup&&d.dup.level==='confirmed').length,
     possibleDup:drafts.filter(d=>d.dup&&d.dup.level==='possible').length,
     months:[...new Set(saveable.map(targetMonth).filter(Boolean))].sort(),

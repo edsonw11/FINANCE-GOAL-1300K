@@ -7,10 +7,14 @@ import { S } from './store.js';
 // ---- card invoice: checked purchases + whatever is left undetailed ----
 // ---- invoice cycle: best purchase day and due date ----
 // "Best purchase day" = day the new invoice starts; the previous invoice closes the day before.
+const DEFAULT_BEST_DAY=29,DEFAULT_DUE_DAY=7;
+const isCardDay=n=>Number.isInteger(n)&&n>=1&&n<=31;
 export const CARD=()=>{
   if(!S.card)S.card={best:29,due:7,biz:true,over:{},v3:true};
   if(S.card.best===undefined){S.card={best:Math.min((S.card.close||0)+1,31),due:S.card.due||7};}
   if(!S.card.v3){S.card={best:29,due:S.card.due||7,biz:true,over:S.card.over||{},v3:true};}
+  // defensive: the days are whole numbers from 1 to 31 (the form guarantees it; a backup edited by hand or damaged may not). A bad one is replaced by the default, a good one is never touched.
+  const c=S.card;if(!isCardDay(c.best)||!isCardDay(c.due))S.card={...c,best:isCardDay(c.best)?c.best:DEFAULT_BEST_DAY,due:isCardDay(c.due)?c.due:DEFAULT_DUE_DAY};
   return S.card;};
 // closing date of cycle "j" (month j, day best-1; if best=1, the last day of month j)
 const closingIn=(y,mi)=>{const B=CARD().best;return B===1?formatISODate(new Date(y,mi+1,0)):formatISODate(new Date(y,mi,Math.min(B-1,daysInMonth(y,mi))));};

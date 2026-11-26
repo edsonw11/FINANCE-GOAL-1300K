@@ -14,15 +14,19 @@ export const seed=()=>({v:2,goal:1300000,rate:12.5,planned:0,nid:1,
   tx:[]});
 // nothing at all: no accounts, balances or records (what "Apagar tudo" leaves; the goal and the rate are settings and are kept)
 export const blankState=prev=>({v:2,goal:prev?prev.goal:1300000,rate:prev?prev.rate:12.5,planned:0,nid:1,accounts:[],snaps:[],tx:[],...(prev&&prev.ownNames?{ownNames:prev.ownNames}:{})});
-// Santander was emptied: moves the balance to Nubank and archives the account (once)
+// Santander was emptied: moves the balance to Nubank and archives the account, once.
+// The "done" mark lives in the state (S.migrated.sa), so the move is never repeated, even if the account shows up again unarchived
+// (a state without the mark, such as a backup taken before the move, is migrated on its next open). States without a Santander account are left untouched.
 export function migrate(){
+  if(S.migrated&&S.migrated.sa)return;
   const sa=S.accounts.find(a=>a.id==='sa'),nu=S.accounts.find(a=>a.id==='nu');
-  if(!sa||sa.archived||!nu)return;
+  if(!sa||!nu)return;
+  if(sa.archived){S.migrated={...S.migrated,sa:true};return;} // already moved by an earlier version: only the mark is added (stored with the next save)
   const d=today(),vSa=balance('sa',d).v,vNu=balance('nu',d).v;
   S.snaps=S.snaps.filter(s=>!(s.date===d&&(s.acc==='sa'||(vSa>0.005&&s.acc==='nu'))));
   if(vSa>0.005)S.snaps.push({date:d,acc:'nu',value:vNu+vSa,est:false});
   S.snaps.push({date:d,acc:'sa',value:0,est:false});
-  sa.archived=true;save();
+  sa.archived=true;S.migrated={...S.migrated,sa:true};save();
 }
 // storage is injected (DIP): the browser uses localStorage; tests pass an in-memory one
 let storage=typeof localStorage!=='undefined'?localStorage:{getItem:()=>null,setItem:()=>{}};

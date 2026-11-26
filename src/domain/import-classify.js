@@ -22,6 +22,7 @@ export const FLAG_TEXT={
   'check-aporte':'Parece um aporte (dinheiro indo para um investimento). Escolha o investimento de destino ou mude o tipo.',
   'sign-guess':'O PDF não mostra se é entrada ou saída: deduzi pelo texto. Confirme.',
   'two-amounts':'A linha do PDF tinha dois valores: usei o primeiro (o segundo costuma ser o saldo).',
+  'possible-transfer':'Entrada com palavra de investimento ou resgate (aplicação, tesouro, resgate…): pode ser uma transferência sua, então não entrou nos totais. Se for renda de verdade, mude o tipo para receita.',
   'transfer-pair':'O outro lado desta transferência parece já estar salvo como receita ou despesa.'};
 export const OWN_TRANSFER_TEXT='Transferência entre suas contas: não é receita nem despesa. Fica guardada para o app reconhecer o outro lado quando você importar o outro banco.';
 const BALANCE=/^(saldo|total|subtotal|sub total)\b|\bsaldo (anterior|final|inicial|do dia|disponivel|parcial|em conta|total)\b/;
@@ -60,7 +61,9 @@ export function classifyEntry(entry,flow,kind,ctx){
     r.type=IMPORT_TYPE.contribution;return r;
   }
   if(OWN_TRANSFER.test(n)&&kind==='bank'){r.type=IMPORT_TYPE.ownTransfer;return r;}
-  if(OWN_TRANSFER.test(n)||(flow==='in'&&(REDEMPTION.test(n)||(INVEST_WORDS.test(n)&&kind==='bank')))){r.type=IMPORT_TYPE.ignore;r.reason=IGNORE_REASON.transfer;return r;}
+  if(OWN_TRANSFER.test(n)){r.type=IMPORT_TYPE.ignore;r.reason=IGNORE_REASON.transfer;return r;}
+  // money in with an investment or redemption word is not counted as income or expense on its own, but it is flagged for review (a shop can have such a word in its name): owner decision Q5
+  if(flow==='in'&&(REDEMPTION.test(n)||(INVEST_WORDS.test(n)&&kind==='bank'))){r.type=IMPORT_TYPE.ignore;r.reason=IGNORE_REASON.transfer;r.flags.push('possible-transfer');return r;}
   if(flow==='out'&&kind==='bank'&&INVEST_WORDS.test(n)){r.type=IMPORT_TYPE.contribution;r.flags.push('check-aporte');return r;}
   // a salary credited in the user's name is still income ("TED CONTA SALARIO MARIA SOUZA")
   if(kind==='bank'&&!SALARY_WORDS.test(n)&&mentionsOwnName(entry.desc,(ctx||{}).ownNames)){r.type=IMPORT_TYPE.ownTransfer;return r;}

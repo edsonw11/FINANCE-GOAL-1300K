@@ -10,7 +10,7 @@ import { S, seed, autoBackup, replaceState } from './store.js';
 import { CARD, ruleClosing } from './card-cycle.js';
 const DEFAULT_GOAL=1300000;
 export function setGoalSettings({goal,rate,planned}){S.goal=goal>0?goal:DEFAULT_GOAL;S.rate=rate>0?rate:0;S.planned=planned>0?roundMoney(planned):0;}
-export function setPlannedContribution(v){S.planned=Math.round(v);}
+export function setPlannedContribution(v){S.planned=roundMoney(v);} // cents, like the settings field: "use my average" must not lose them
 const clampDay=(v,def)=>Math.min(Math.max(Math.round(v)||def,1),31);
 export function setCardSettings({best,due,biz}){
   S.card={best:clampDay(best,1),due:clampDay(due,7),biz:!!biz,over:CARD().over||{},v3:true};
