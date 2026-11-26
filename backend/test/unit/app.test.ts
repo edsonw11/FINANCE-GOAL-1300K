@@ -1,5 +1,5 @@
 import { type NestFastifyApplication } from '@nestjs/platform-fastify';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { BODY_LIMIT_BYTES, createAdapter, createApp } from '../../src/create-app';
 import { PrismaService } from '../../src/database/prisma.service';
 import { loadConfig } from '../../src/config/load-config';
@@ -17,12 +17,13 @@ const config = loadConfig({
 
 let app: NestFastifyApplication;
 
-beforeAll(async () => {
+// A new application for every test: the last test closes it, so it cannot be shared.
+beforeEach(async () => {
   app = await createApp(config);
   await app.init();
   await app.getHttpAdapter().getInstance().ready();
 });
-afterAll(async () => {
+afterEach(async () => {
   await app.close().catch(() => undefined);
 });
 
@@ -71,8 +72,7 @@ describe('the application in general', () => {
     expect(Object.isFrozen(config)).toBe(true);
   });
 
-  // keep this one last: it closes the application. The spy is made here, not in beforeAll, because restoreMocks
-  // removes spies between tests.
+  // The spy is made here, not in a hook, because restoreMocks removes spies between tests.
   it('closes the database pool when it shuts down', async () => {
     const disconnect = vi.spyOn(app.get(PrismaService), '$disconnect');
     await app.close();

@@ -51,4 +51,13 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('import-reader
   const unk=rd('a.csv','foo;bar\nbaz;qux\n');
   eq('unknown columns ask for a mapping',[unk.ok,unk.needsMapping],[false,true]);
   eq('OFX without transactions',rd('a.ofx','<OFX></OFX>').error,'Não encontrei lançamentos neste OFX.');
+  eq('OFX: each entry carries its 1-based position among the transactions',o.entries.map(x=>x.line),[1,2]);
+  // ---- OFX detection reads only the start of the file (4000 characters), and an entry stops at its closing tag
+  const pad=n=>' '.repeat(n);
+  eq('<OFX> inside the first 4000 characters is detected; one that starts later is not',[run(`looksLikeOfx(${J(pad(3995)+'<OFX>')})`),run(`looksLikeOfx(${J(pad(3996)+'<OFX>')})`)],[true,false]);
+  const leak='<MEMO>LEAK</MEMO>',entry=(end)=>`<STMTTRN><DTPOSTED>20261105<TRNAMT>-5.00<NAME>LOJA${end}${leak}`;
+  const closers=['</STMTTRN>','</BANKTRANLIST>','</CCSTMTRS>','</STMTRS>'];
+  closers.forEach(end=>eq(`text after ${end} does not leak into the entry`,run(`parseOfx(${J('<OFX><BANKTRANLIST>'+entry(end))})`).entries.map(e=>e.desc),['LOJA']));
+  eq('name and memo that are equal are shown once; different ones are joined; a memo alone is the description',
+    [['A','A'],['A','B'],['','B']].map(([n,m])=>run(`parseOfx(${J('<OFX><BANKTRANLIST><STMTTRN><DTPOSTED>20261105<TRNAMT>-5.00'+(n?'<NAME>'+n:'')+(m?'<MEMO>'+m:'')+'</STMTTRN>')})`).entries[0].desc),['A','A - B','B']);
   return res;};

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { GOLDEN_FILE, goldenState } from '../../contracts/golden.contract';
 import { CSRF, type TestApp, createTestApp } from '../../support/http-app';
 
@@ -12,7 +12,7 @@ const idOf = async (cookie: string) => (await t.app.inject({ method: 'GET', url:
 const importState = (cookie: string, body: unknown, query = '') =>
   t.app.inject({ method: 'POST', url: `/api/v1/import/legacy-state${query}`, headers: { cookie, ...CSRF, 'content-type': 'application/json' }, payload: typeof body === 'string' ? body : JSON.stringify(body) });
 const exportState = (cookie: string) => t.app.inject({ method: 'GET', url: '/api/v1/export/legacy-state', headers: { cookie } });
-/** A person nobody has used yet (the earlier tests leave data behind for the others). */
+/** A person nobody has used yet. Every test also gets its own application and its own storage, so nothing is left behind by another test. */
 let extra = 0;
 const newPerson = async () => {
   t.provider.identity = { ...t.provider.identity, subject: `sub-fresh-${++extra}`, email: null, displayName: null };
@@ -20,14 +20,15 @@ const newPerson = async () => {
 };
 const month = (cookie: string, m: string, what: string, query = '') => t.app.inject({ method: 'GET', url: `/api/v1/months/${m}/${what}${query}`, headers: { cookie } });
 
-beforeAll(async () => {
+// A new application, storage and people for EVERY test: no test depends on what another one stored.
+beforeEach(async () => {
   t = await createTestApp();
   alice = await t.login();
   t.provider.identity = { ...t.provider.identity, subject: 'sub-bob', email: 'bob@example.test', displayName: 'Bob' };
   bob = await t.login();
   aliceId = await idOf(alice);
 });
-afterAll(async () => {
+afterEach(async () => {
   await t.close();
 });
 beforeEach(() => {
@@ -68,6 +69,7 @@ describe('import and export', () => {
   });
 
   it('a second import is 409 and changes nothing; with replace=true it works', async () => {
+    expect((await importState(alice, goldenState())).statusCode).toBe(200);
     const again = await importState(alice, goldenState());
     expect(again.statusCode).toBe(409);
     expect(again.json()).toMatchObject({ code: 'not_empty' });
@@ -81,6 +83,7 @@ describe('import and export', () => {
   });
 
   it('another person never sees it, and importing theirs does not touch it', async () => {
+    await importState(alice, goldenState());
     expect((await exportState(bob)).statusCode).toBe(404);
     const theirs = goldenState();
     (theirs.accounts as { name: string }[])[0]!.name = 'Bob account';
@@ -133,6 +136,11 @@ describe('import and export', () => {
 });
 
 describe('the months, calculated by the shared rules on the person\'s data', () => {
+  // each test starts from alice holding the baseline state (the outer beforeEach has made a fresh application)
+  beforeEach(async () => {
+    expect((await importState(alice, goldenState())).statusCode).toBe(200);
+  });
+
   it('month results are the baseline\'s numbers (through HTTP)', async () => {
     const golden = GOLDEN_FILE as { monthResult: { m: string }[]; report: unknown };
     for (const expected of golden.monthResult) {

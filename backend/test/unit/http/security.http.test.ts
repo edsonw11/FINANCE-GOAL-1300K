@@ -190,7 +190,8 @@ describe('rate limits', () => {
     expect((await get('/api/v1/me')).statusCode).toBe(401);
   });
 
-  it('the app files and the health checks are never counted', async () => {
+  // 2,600 requests: the default 5 s budget is too tight when the machine is busy (it timed out at a load average of 25 on 14 cores, and passes alone)
+  it('the app files and the health checks are never counted', { timeout: 60_000 }, async () => {
     t.clock.advance(3_600_001);
     for (let i = 0; i < 1300; i++) expect((await get('/src/app.js')).statusCode).toBe(200);
     for (let i = 0; i < 1300; i++) expect((await get('/health/live')).statusCode).toBe(200);

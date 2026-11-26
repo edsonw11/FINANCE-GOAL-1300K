@@ -1,18 +1,19 @@
 import { randomUUID } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CSRF, type TestApp, createTestApp } from '../../support/http-app';
 
 let t: TestApp;
 let alice: string;
 let bob: string;
 
-beforeAll(async () => {
+// A new application, storage and people for EVERY test: no test depends on what another one pushed.
+beforeEach(async () => {
   t = await createTestApp();
   alice = await t.login();
   t.provider.identity = { ...t.provider.identity, subject: 'sub-bob', email: 'bob@example.test', displayName: 'Bob' };
   bob = await t.login();
 });
-afterAll(async () => {
+afterEach(async () => {
   await t.close();
 });
 

@@ -6,7 +6,7 @@
  * Names, banks and values are made up.
  */
 const {createContext,suite}=require('./harness');
-module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('transfers');
+module.exports=()=>{const {run}=createContext(),{eq,res}=suite('transfers');
   const J=JSON.stringify;
   const fresh=()=>run(`S=seed();S.tx=[];S.imports=[];S.transfers=[];S.ownNames=[];S.cats=undefined;delete S.catsV2;delete S.catsV3;delete S.catsV4;initCats();`);
   const read=(name,lines)=>run(`globalThis.R=readImportFile({name:${J(name)},text:${J(['Data;Descrição;Valor'].concat(lines).join('\n'))}},{today:'2026-11-20'});R`);
@@ -14,9 +14,9 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('transfers');
   const commit=()=>run("commitImport(R.drafts,{fileHash:'h'+Math.random(),fileName:'x.csv',at:'2026-11-20'})");
   fresh();
   // ---- names
-  ok('a single word is refused (too many false matches)',!!run("addOwnName('Maria')").error);
+  eq('a single word is refused (too many false matches)',run("addOwnName('Maria')").error,'Digite nome e sobrenome, como aparece no extrato (ex.: Maria Souza)');
   eq('name saved',run("addOwnName('Maria Souza Lima')"),{name:'Maria Souza Lima'});
-  ok('same name twice is refused (accents and case ignored)',!!run("addOwnName('MARIA SOUZA LIMA')").error);
+  eq('same name twice is refused (accents and case ignored)',run("addOwnName('MARIA SOUZA LIMA')").error,'Este nome já está na lista');
   const m=d=>run(`mentionsOwnName(${J(d)},ownNames())`);
   eq('matches the name as banks print it',[m('PIX ENVIADO Maria Souza Lima'),m('PIX RECEBIDO MARIA S LIMA'),m('TED MARIA DE SOUZA LIMA'),m('Transferência para maria lima')],[true,true,true,true]);
   eq('does not match other people',[m('PIX ENVIADO Maria Oliveira'),m('PIX ENVIADO Joao Lima'),m('LIMA MARIA')],[false,false,false]);
@@ -87,7 +87,7 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('transfers');
   eq('imported Pix/TED with my name, salary and hand-typed records left alone',run('savedOwnTransfers().map(t=>t.id)'),[901,902]);
   eq('fix: moved to transfers with their direction',[run('convertSavedTransfers()'),run('S.tx.map(t=>t.id)'),run("S.transfers.map(t=>[t.dir,t.value])")],
     [{count:2,total:10750},[903,904,905],[['out',750],['in',10000]]]);
-  ok('nothing left to fix',!!run('convertSavedTransfers()').error);
+  eq('nothing left to fix',run('convertSavedTransfers()').error,'Nenhum lançamento para corrigir');
   // ---- a transfer kept before, re-imported and saved as an expense (the money was spent): it stops being a transfer
   fresh();run("addOwnName('Zuleica Pimentel Tavares')");
   const line=['17/11/2026;PIX ENVIADO ZULEICA PIMENTEL TAVARES;-1.176,00'];
@@ -99,4 +99,6 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('transfers');
   eq('saved as an expense with its parts',[commit().saved,run("S.tx.map(t=>[t.cat,t.value,t.splits])")],[1,[['Saúde',1176,[{cat:'Presente',value:750}]]]]);
   eq('the transfer is gone, the other side is no longer paired',run("S.transfers.map(t=>[t.dir,t.pair])"),[['in',null]]);
   eq('nothing to drop',run("dropTransfersOf(['nope',''])"),0);
+  eq('pairText: the other side was kept as a transfer',run("pairText({kind:PAIR_KIND.transfer,desc:'TED CONTA SAMPLE',date:'2026-10-12'})"),'Outro lado “TED CONTA SAMPLE” de 12/10/2026');
+  eq('pairText: it only looks like a saved record, so it says "parece"',run("pairText({kind:PAIR_KIND.record,desc:'PIX SAMPLE',date:'2026-10-13'})"),'Parece o outro lado de “PIX SAMPLE” de 13/10/2026');
   return res;};

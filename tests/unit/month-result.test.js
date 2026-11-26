@@ -13,4 +13,6 @@ module.exports=()=>{const {run}=createContext(),{eq,res}=suite('month-result');
   run(`S.tx=[${tx(1,'despesa','2026-10-06',50)}]`);
   eq('no income: no rate',run("(r=>[r.left,r.rate,r.level])(monthResult('2026-10'))"),[-50,null,'none']);
   eq('agrees with savingsRate',run("monthResult('2026-10').left===savingsRate('2026-10').saved"),true);
+  run(`S.tx=[${tx(1,'receita','2026-10-05',0.5)},${tx(2,'despesa','2026-10-06',0.25)}]`);
+  eq('a tiny income still gives a rate (only zero income means "no rate")',run("(r=>[r.left,r.rate])(monthResult('2026-10'))"),[0.25,0.5]);
   return res;};

@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { FEATURES } from '../../../src/plans/features';
 import { RequiresFeature } from '../../../src/plans/guards';
 import { CSRF, type TestApp, createTestApp } from '../../support/http-app';
@@ -29,7 +29,8 @@ const gated = (cookie?: string) => t.app.inject({ method: 'GET', url: '/test-gat
 const admin = (cookie: string, method: 'GET' | 'PUT' | 'DELETE', url: string, payload?: object, headers: Record<string, string> = {}) =>
   t.app.inject({ method, url: `/api/v1/admin${url}`, headers: { cookie, ...(method === 'GET' ? {} : CSRF), ...headers }, payload });
 
-beforeAll(async () => {
+// A new application, storage and people for EVERY test: no test depends on what another one changed.
+beforeEach(async () => {
   t = await createTestApp({}, [GatedController]);
   alice = await t.login();
   t.provider.identity = { ...t.provider.identity, subject: 'sub-bob', email: 'bob@example.test', displayName: 'Bob' };
@@ -37,7 +38,7 @@ beforeAll(async () => {
   [aliceId, bobId] = [await idOf(alice), await idOf(bob)];
   t.plans.admins.add(aliceId); // made administrator outside the API, like an operator would
 });
-afterAll(async () => {
+afterEach(async () => {
   await t.close();
 });
 
@@ -137,12 +138,16 @@ describe('admin routes', () => {
   });
 
   it('turning it on again says unchanged and writes nothing more to the audit log', async () => {
+    await admin(alice, 'PUT', '/plans/free/features/report.monthly');
+    expect(t.audit.entries).toHaveLength(1);
     const res = await admin(alice, 'PUT', '/plans/free/features/report.monthly');
     expect(res.json()).toMatchObject({ enabled: true, changed: false });
     expect(t.audit.entries).toHaveLength(1);
   });
 
   it('turns it off again, audited, and the person is locked out on the next request', async () => {
+    await admin(alice, 'PUT', '/plans/free/features/report.monthly');
+    expect((await gated(bob)).statusCode).toBe(200);
     const res = await admin(alice, 'DELETE', '/plans/free/features/report.monthly');
     expect(res.json()).toEqual({ planId: 'free', feature: 'report.monthly', enabled: false, changed: true });
     expect((await gated(bob)).statusCode).toBe(403);

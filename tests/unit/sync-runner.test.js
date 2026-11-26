@@ -6,7 +6,7 @@ const {suite,root}=require('./harness');
 const {createServer}=require('./sync-fake-server');
 const load=f=>import(pathToFileURL(path.join(root,'src','sync',f)).href);
 module.exports=async()=>{const {eq,res}=suite('sync-runner');
-  const Run=await load('runner.js');
+  const Run=await load('runner.js'),Outbox=await load('outbox.js');
   let seq=0;
   const mem=()=>{const o={};return {getItem:k=>o[k]??null,setItem:(k,v)=>{o[k]=String(v);},o};};
   const device=(server,user='u1',initial)=>{
@@ -72,6 +72,11 @@ module.exports=async()=>{const {eq,res}=suite('sync-runner');
   eq('and the outbox is empty, nothing loops',a.sync.status().pending,0);
   eq('the local data is untouched',txIds(a),[1,2,3]);
   eq('the review item keeps what was sent',Run.metaStore(a.storage,'meta').load().review[0].data.body.value,2);
+  eq('reviewItems hands the screen what was refused, with the reason',a.sync.reviewItems().map(i=>[i.reason,i.resource,i.op,i.data.body.value]),[['invalid_data','tx','put',2]]);
+  a.sync.clearReview();
+  eq('clearReview empties the list and nothing else',[a.sync.reviewItems().length,a.sync.status().review,txIds(a),srv.live('tx').length],[0,0,[1,2,3],2]);
+  eq('a cleared review stays cleared after the next run',(await a.sync.run(),a.sync.reviewItems().length),0);
+  eq('pendingCount is the number of waiting entries',(()=>{const x=device(createServer());x.add({value:1});x.sync.capture();return [x.sync.status().pending,Outbox.pendingCount({outbox:[{},{},{}]}),Outbox.pendingCount({outbox:[]})];})(),[2,3,0]);
 
   // batches
   srv=createServer();a=device(srv);

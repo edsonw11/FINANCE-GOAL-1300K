@@ -30,5 +30,8 @@ module.exports=async()=>{const {eq,ok,res}=suite('app-lock-settings');
   eq('a cancelled confirmation says nothing',els.toast.textContent,'before');
   els.lockToggle.onclick=null;V.bindLockSettings(lock,false);
   eq('outside the shell nothing is bound',els.lockToggle.onclick,null);
+  // the toast schedules its own hiding a few seconds later: stop those timers before the fake page goes away, or the runner crashes when it is still busy
+  const T=await import(pathToFileURL(path.join(root,'src','ui','toast.js')).href);
+  clearTimeout(T.toast.h);clearTimeout(T.toast.h2);
   delete globalThis.document;delete globalThis.requestAnimationFrame;
   return res;};

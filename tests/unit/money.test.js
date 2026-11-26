@@ -18,4 +18,5 @@ module.exports=()=>{const {run}=createContext(),{eq,res}=suite('money');
   eq('sum 0.1+0.2',run("sumMoney([0.1,0.2])"),0.3);
   eq('sum ten 0.1',run("sumMoney(Array(10).fill(0.1))"),1);
   eq('sum with negatives',run("sumMoney([100,-33.33,-33.33,-33.34])"),0);
+  eq('the mask keeps at most 13 digits (the 14th is dropped)',[run("formatMoneyDigits('12345678901234')"),run("formatMoneyDigits('1234567890123')")],['R$ 12.345.678.901,23','R$ 12.345.678.901,23']);
   return res;};

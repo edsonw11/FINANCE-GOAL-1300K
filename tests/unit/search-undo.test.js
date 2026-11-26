@@ -3,7 +3,7 @@
  * an invoice payment listed).
  */
 const {createContext,suite}=require('./harness');
-module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('search-undo');
+module.exports=()=>{const {run}=createContext(),{eq,res}=suite('search-undo');
   const tx=(id,type,date,value,extra)=>JSON.stringify({id,type,date,value,cat:'Outros',desc:'x',fonte:'caixa',...extra});
   run(`S=blankState();S.tx=[${tx(1,'despesa','2025-03-10',80,{desc:'Crédito celular',cat:'Telefone'})},${tx(2,'despesa','2026-11-02',30,{desc:'Padaria'})},${tx(3,'receita','2026-06-05',100,{desc:'Reembolso crédito'})}]`);
   eq('no search: only the month',run("filterTransactions('2026-11',{}).map(r=>r.t.id)"),[2]);
@@ -17,6 +17,8 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('search-undo')
   run("globalThis.U=deleteTransactions([4,2])");
   eq('deleted, and the invoice no longer lists the purchase',[run("S.tx.map(t=>t.id).sort()"),run("S.tx.find(t=>t.id===5).items")],[[1,3,5],[]]);
   eq('undo puts everything back as it was',(run("restoreTransactions(U)"),run("JSON.stringify(S.tx.slice().sort((a,b)=>a.id-b.id))")),JSON.stringify(JSON.parse(before).sort((a,b)=>a.id-b.id)));
-  ok('undo twice is refused (no duplicates)',!!run("restoreTransactions(U)").error);
-  ok('nothing to undo',!!run("restoreTransactions(null)").error);
+  const afterUndo=run("JSON.stringify(S.tx)");
+  eq('undo twice is refused and changes nothing (no duplicates)',[run("restoreTransactions(U)").error,run("JSON.stringify(S.tx)")===afterUndo],['Esses lançamentos já existem',true]);
+  eq('nothing to undo',run("restoreTransactions(null)").error,'Nada para desfazer');
+  eq('an undo record without a list, or with an empty one, is also "nothing to undo" (no crash)',[run("restoreTransactions({})").error,run("restoreTransactions({removed:[]})").error],['Nada para desfazer','Nada para desfazer']);
   return res;};

@@ -1,6 +1,6 @@
 /** Expense groups: default setup, suggestion by name, totals by group and the group commands. */
 const {createContext,suite}=require('./harness');
-module.exports=()=>{const {run}=createContext(),{eq,ok,near,res}=suite('category-groups');
+module.exports=()=>{const {run}=createContext({today:'2026-11-20'}),{eq,ok,near,res}=suite('category-groups');
   // a user that already has categories, one of them unknown to the defaults
   run(`S=seed();S.tx=[];delete S.cats;delete S.catsV2;delete S.catsV3;delete S.catsV4;delete S.groups;initCats();
     S.cats.despesa.push({name:'Wellhub',icon:'🏋️'},{name:'Coisas aleatórias',icon:'🎲'});delete S.catsV4;

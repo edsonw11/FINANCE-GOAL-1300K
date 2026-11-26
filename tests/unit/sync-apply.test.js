@@ -82,4 +82,19 @@ module.exports=async()=>{const {eq,res}=suite('sync-apply');
   r=A.applyChanges(base(),later,[put('tx','OTHER',{id:1,type:'receita',date:'2026-10-09',value:1})]);
   eq('after the first merge the same key under another id is a clash: kept for review, nothing overwritten',[r.state.tx[0].type,r.meta.review.length,r.conflicts],['despesa',1,1]);
   eq('the clash keeps what the server sent',r.meta.review[0].body.type,'receita');
+  // ---- the settings document and the id counter: it only goes up, and never below 1
+  const settingsDoc=body=>[{resource:'state',id:'u1',version:9,deleted:false,data:{body:{v:2,goal:9,rate:2,planned:0,_lists:['accounts','snaps','tx'],...body}}}];
+  const withCounter=n=>({...base(),nid:n});
+  eq('settings from the server without a counter keep the local counter (7)',A.applyChanges(withCounter(7),synced(withCounter(7)),settingsDoc({})).state.nid,7);
+  eq('also when the local counter is 2',A.applyChanges(withCounter(2),synced(withCounter(2)),settingsDoc({})).state.nid,2);
+  eq('a server counter above the local one wins',A.applyChanges(withCounter(3),synced(withCounter(3)),settingsDoc({nid:50})).state.nid,50);
+  eq('a server counter below the local one does not lower it',A.applyChanges(withCounter(30),synced(withCounter(30)),settingsDoc({nid:4})).state.nid,30);
+  eq('a counter of 0 from the server is raised to 1',A.applyChanges(withCounter(1),synced(withCounter(1)),settingsDoc({nid:0})).state.nid,1);
+  // ---- an entry waiting at index 0 of the outbox is found too
+  const txEntryFirst={...first,outbox:[...first.outbox.filter(e=>e.resource==='tx'),...first.outbox.filter(e=>e.resource!=='tx')]};
+  r=A.applyChanges(base(),txEntryFirst,[put('tx','SRV1',same)]);
+  eq('first merge with the record entry at index 0: the identical waiting entry is dropped',[r.meta.outbox.some(e=>e.resource==='tx'),r.meta.known['tx:1']!==undefined,r.meta.outbox.length],[false,true,first.outbox.length-1]);
+  const withReview=synced(base());withReview.ids['tx:1']='LOCAL';withReview.outbox=[];withReview.review=[{reason:'key_conflict',ref:'tx:9',resource:'tx',id:'OLD',body:{}}];
+  r=A.applyChanges(base(),withReview,[put('tx','OTHER',{id:1,type:'receita',date:'2026-10-09',value:1})]);
+  eq('the number of conflicts counts only the new ones, not the ones already waiting for review',[r.meta.review.length,r.conflicts],[2,1]);
   return res;};

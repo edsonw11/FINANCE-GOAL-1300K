@@ -89,4 +89,29 @@ module.exports=async()=>{const {eq,ok,res}=suite('sync-records');
   eq('5000 records are queued',bigMeta.outbox.filter(e=>e.resource==='tx').length,5000);
   ok('and a second capture of the same state is fast',(()=>{const t=Date.now();O.queueChanges(bigMeta,big,counter());return Date.now()-t<1000;})());
   ok('the first capture of 5000 records is fast',Date.now()-t0<3000);
+  // ---- fingerprints are a stored contract: each device keeps the fingerprint of what it already sent (meta.known). If the function changed, every record would look
+  // changed and be sent again. The values below were captured from the implementation when this test was written (a compatibility pin, not an independent source).
+  eq('fingerprint golden values (compatibility with stored meta.known)',
+    [{a:1},{a:1,b:{c:2,d:[1,2,3]}},'texto com acento: ação',[],{tx:{id:1,type:'despesa',value:12.5,desc:'PADARIA'}},'x'.repeat(200)].map(R.fingerprint),
+    ['18wxssjtft2.7','oyjf0fosu0.31','r0sieh8jou.24','1mjsfpb3rfi.2','29vx2fpa0s7.62','1d4mwbtue66.202']);
+  // ---- the outbox: a record that was never sentQ
+  const ob=()=>{const m0={...O.emptyMeta(),userId:'u1',merged:true};return O.queueChanges(m0,base(),counter());};
+  const firstQ=ob();
+  eq('the firstQ queueing sends the settings and each record',firstQ.outbox.map(e=>e.resource).sort(),['account','snap','state','tx']);
+  const noTx={...base(),tx:[]};
+  const cxl=O.queueChanges(firstQ,noTx,counter());
+  eq('deleting a record that was never sentQ cancels exactly its waiting entry, even when it is the firstQ one (the others stay)',
+    [cxl.outbox.some(e=>e.resource==='tx'),cxl.outbox.length,cxl.outbox.filter(e=>e.op==='delete').length],[false,firstQ.outbox.length-1,0]);
+  const txFirstQ={...firstQ,outbox:[...firstQ.outbox.filter(e=>e.resource==='tx'),...firstQ.outbox.filter(e=>e.resource!=='tx')]};
+  const cxlFirst=O.queueChanges(txFirstQ,noTx,counter());
+  eq('same with the record entry at index 0 of the outbox',[cxlFirst.outbox.length,cxlFirst.outbox.some(e=>e.resource==='tx'||e.op==='delete')],[txFirstQ.outbox.length-1,false]);
+  const stFirst={...firstQ,outbox:[...firstQ.outbox.filter(e=>e.resource==='state'),...firstQ.outbox.filter(e=>e.resource!=='state')]};
+  const editedQ=O.queueChanges(stFirst,{...base(),goal:2000000},counter());
+  eq('editing the settings while their entry waits at index 0 updates it in place (no second entry)',
+    [editedQ.outbox.filter(e=>e.resource==='state').length,editedQ.outbox.length,editedQ.outbox[0].data.body.goal],[1,stFirst.outbox.length,2000000]);
+  const sentQ={...firstQ,outbox:firstQ.outbox.map(e=>({...e,attempted:true}))};
+  eq('deleting a record whose entry was already sentQ queues a delete',O.queueChanges(sentQ,noTx,counter()).outbox.filter(e=>e.op==='delete').length,1);
+  eq('editing a record that was never sentQ updates its waiting entry; the others keep their number',(m=>[m.outbox.length,m.outbox.find(e=>e.resource==='tx').data.body.value])(O.queueChanges(firstQ,{...base(),tx:[{...base().tx[0],value:99}]},counter())),[firstQ.outbox.length,99]);
+  const edit0=O.queueChanges(txFirstQ,{...base(),tx:[{...base().tx[0],value:77}]},counter());
+  eq('editing a never-sent record whose entry is at index 0 updates that entry (no second entry)',[edit0.outbox.length,edit0.outbox[0].data.body.value],[txFirstQ.outbox.length,77]);
   return res;};

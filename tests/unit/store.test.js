@@ -20,4 +20,5 @@ module.exports=()=>{const {run,storage}=createContext(),{eq,ok,res}=suite('store
   ok('injected storage receives the save',JSON.parse(run('globalThis.__saved')).goal===123);
   run("replaceState(seed())");
   eq('replaceState swaps the state',run('S.goal'),1300000);
+  eq('an empty state keeps no planned contribution, starts the id counter at 1 and has no accounts, balances or records',run("(b=>[b.planned,b.nid,b.accounts.length,b.snaps.length,b.tx.length])(blankState())"),[0,1,0,0,0]);
   return res;};
