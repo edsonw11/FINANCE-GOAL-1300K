@@ -8,6 +8,34 @@ Personal app (plain HTML + CSS + JavaScript, no build required) to track:
 
 Data lives only in the browser (`localStorage`, key `metaapp.v2`). Export a backup in Settings → Data from time to time.
 
+## Run everything (one command)
+
+Needs Docker (with `docker compose`) and Node 20+. Nothing else.
+
+```
+scripts/dev.sh up        # or: npm run dev:up   builds and starts database, login server, migrations and API; loads demo data
+```
+
+Then open http://localhost:3000 and sign in as `alice` / `alice-dev-password` (or `bob` / `bob-dev-password`; development only, each has their own demo data).
+`scripts/dev.sh check` proves it works end to end, `down` stops it (data stays), `reset` deletes the local data and starts again from zero, `seed` reloads the demo data, `logs` and `status` show what is happening. If a port is taken: `API_PORT=3001 DB_PORT=5434 KEYCLOAK_PORT=8082 scripts/dev.sh up`. CI runs the same two commands (`up`, `check`) on an empty machine.
+
+## Android app
+
+The same app in a Capacitor shell (offline, data on the phone; backup through the share sheet; sync comes with the phone's own sign-in). Details: [ADR-0014](docs/architecture/decisions/ADR-0014-android-shell.md).
+
+```
+npm run mobile:doctor    what this machine has and lacks (JDK 17+, Android SDK with platform 36 and build-tools; ANDROID_HOME, which is optional when the SDK is at ~/Android/Sdk)
+npm run mobile:test-lock  the same for the app lock: sets a real PIN on the emulator, switches the lock on through the app, drives Android's own prompt (right and wrong PIN, Back, 30 seconds away, lost screen lock)
+npm run mobile:apk       build the web part, copy it into android/, build android/app/build/outputs/apk/debug/app-debug.apk
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk     on a phone with USB debugging, or drag the APK onto an emulator
+npm run mobile:emulator  start the virtual phone (once: scripts/mobile.sh emulator create; needs KVM)
+npm run mobile:test      build the test APK, install it and run the device test (screens, Back, share, backup + restore, themes, rotation, random touches)
+```
+
+To get the APK onto a phone without cables, send it to a Telegram chat: `npm run apk:send` (run it from the project folder; setup and options in [services/telegram-apk](services/telegram-apk/README.md)).
+
+CI builds the same APK on every push (job `android`, artifact `everfox-debug-apk`). The Capacitor CLI needs Node 22: `scripts/mobile.sh` fetches it for its own commands.
+
 ## How to use
 
 | I want to | Do this |
@@ -16,6 +44,8 @@ Data lives only in the browser (`localStorage`, key `metaapp.v2`). Export a back
 | Open the app without a server | open `index.html` (it forwards to `dist/finance_goal_1300k.html`, same data) or the dist file itself; run `python3 scripts/build.py` after changing `src/` |
 | Build a single file to keep or share | `python3 scripts/build.py` → `dist/finance_goal_1300k.html` |
 | Open on the phone (same Wi-Fi) | `scripts/serve-phone.sh` (serves dist/ with caching disabled) and open the printed `http://<pc-ip>:8080/` (today `http://192.168.15.13:8080/`); on the phone, "Add to Home screen" makes it an app icon |
+| Install the dev tools (once) | `npm ci` (lint and type checker only; the app itself has no dependencies) |
+| Run every check (same as CI) | `npm run check` = lint + typecheck + unit + build + e2e + phone widths; one by one: `npm run lint`, `npm run typecheck`, … |
 | Run the unit tests | `node tests/run-unit.js` (one file per module in `tests/unit/`, plus the architecture and module-graph rules) |
 | Run the end-to-end test | `scripts/smoke.sh` (headless Chrome; use `CHROME=chromium` if needed) |
 | Check phone widths | `scripts/mobile-check.sh` (320, 360, 375, 390, 430, 768 px: no horizontal scroll, readable charts, 44 px targets) |
@@ -26,6 +56,42 @@ Data lives only in the browser (`localStorage`, key `metaapp.v2`). Export a back
 > uses it to bundle everything into one classic script for `dist/` (so the built file still opens from
 > `file://`), and the unit tests use it to load core + domain in evaluation order.
 > `src/package.json` (`"type": "module"`) lets Node import the core/domain modules directly.
+
+## Architecture and roadmap
+
+Working name of the product: **Everfox** (public, paid). Current state, risks and the incremental plan: [docs/architecture/00-current-state.md](docs/architecture/00-current-state.md);
+decisions: [docs/architecture/decisions/](docs/architecture/decisions/). The financial rules are pinned by `tests/unit/golden.test.js`
+(`docs/architecture/baseline/golden-calculations.json`): if a rule changes on purpose, regenerate it with `node tools/golden-calculations.cjs` and say so in the review.
+
+## Backend (Phases 2 and 3: API, login, sessions)
+
+`backend/` is the API (NestJS on Fastify, PostgreSQL through Prisma). It is separate from the browser app and not used by it yet.
+
+```
+docker compose up -d --wait        database + login server (Keycloak) + migrations + API on 127.0.0.1; open http://localhost:3000 for the app (curl localhost:3000/health/ready)
+docker compose down                stop (the data volume stays)
+
+cd backend
+cp .env.example .env               local settings (git ignores it)
+docker compose -f ../docker-compose.yml up -d db
+npm ci
+npm run db:migrate                 apply prisma/migrations
+npm run check                      typecheck + unit tests + build
+npm run test:integration           real PostgreSQL + the built program (needs the db above and `npm run build`)
+```
+
+Login (OIDC with Keycloak locally), sessions and per-person ownership: [ADR-0009](docs/architecture/decisions/ADR-0009-login-sessions-ownership.md).
+Sync (offline outbox, changes feed) and plans with locked PRO features: [ADR-0010](docs/architecture/decisions/ADR-0010-sync-and-plans.md).
+Records, import of your JSON and the shared rules on the server: [ADR-0011](docs/architecture/decisions/ADR-0011-records-and-shared-rules.md).
+Web app syncing with the API (outbox, "Sincronizar", same-origin serving): [ADR-0012](docs/architecture/decisions/ADR-0012-web-sync.md).
+Security (headers, CSP, rate limits, database roles, tests): [ADR-0013](docs/architecture/decisions/ADR-0013-security-hardening.md), [threat model, test plan, findings](docs/security/). Run `scripts/test-security.sh`.
+Skeleton decisions: [ADR-0007](docs/architecture/decisions/ADR-0007-backend-skeleton.md).
+
+For the login tests start the identity provider too: `docker compose up -d db keycloak` (users `alice` / `alice-dev-password`, `bob` / `bob-dev-password`, development only).
+The default database password is for this machine only: the API refuses it when `NODE_ENV=production`.
+
+Two database roles (Phase 7b): `everfox` owns the tables and runs the migrations (`MIGRATE_DATABASE_URL`); the API connects as `everfox_app` (`DATABASE_URL`, password `APP_DB_PASSWORD` in compose), which can only SELECT/INSERT/UPDATE/DELETE and cannot touch `_prisma_migrations`, so a SQL injection cannot drop or alter tables. `npm run db:migrate` applies the migrations and then `prisma/roles/grants.sql`.
+A fresh compose volume creates the role by itself. On a volume that already exists, make it once: `APP_DB_PASSWORD=... ADMIN_URL=postgresql://everfox:...@host/everfox ./backend/scripts/db-app-role.sh` (or set `PSQL_CMD="docker compose exec -T db psql -U everfox -d everfox"` when `psql` is not installed).
 
 ## Structure
 

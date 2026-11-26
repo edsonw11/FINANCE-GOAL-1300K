@@ -1,0 +1,103 @@
+# Local stack: PostgreSQL, Keycloak (the identity provider), the migrations and the API.
+#   docker compose up -d db          only the database (for `npm run test:integration` in backend/)
+#   docker compose up -d db keycloak database + login server (for the login tests)
+#   docker compose up --build        everything
+# Log in at http://localhost:3000/auth/login with alice / alice-dev-password or bob / bob-dev-password (development only).
+# Everything listens on 127.0.0.1 only. The default password is for this machine only: the API refuses it in production.
+name: everfox
+
+services:
+  db:
+    image: postgres:18.7-alpine3.24
+    environment:
+      POSTGRES_USER: everfox
+      POSTGRES_DB: everfox
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-everfox_dev_only}
+      # the role the API connects with (data only); made on the first start by dev/postgres/init
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:-everfox_app_dev_only}
+    ports:
+      - "127.0.0.1:${DB_PORT:-5433}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql
+      - ./dev/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U everfox -d everfox"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.8.2
+    command: ["start-dev", "--import-realm"]
+    environment:
+      # the browser reaches Keycloak on localhost:8081; the API container reaches it as keycloak:8080 (same issuer either way)
+      KC_HOSTNAME: http://localhost:${KEYCLOAK_PORT:-8081}
+      KC_HOSTNAME_BACKCHANNEL_DYNAMIC: "true"
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin_dev_only}
+    ports:
+      - "127.0.0.1:${KEYCLOAK_PORT:-8081}:8080"
+    volumes:
+      - ./dev/keycloak/everfox-realm.json:/opt/keycloak/data/import/everfox-realm.json:ro
+    healthcheck:
+      # no curl in the image: ask the management port with plain bash
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q '\"UP\"' <&3"]
+      interval: 5s
+      timeout: 5s
+      retries: 40
+      start_period: 20s
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  migrate:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://everfox:${DB_PASSWORD:-everfox_dev_only}@db:5432/everfox
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    security_opt:
+      - no-new-privileges:true
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: runtime
+    environment:
+      # the data-only role: it cannot create, alter or drop anything (the owner is used by the migrate service only)
+      DATABASE_URL: postgresql://everfox_app:${APP_DB_PASSWORD:-everfox_app_dev_only}@db:5432/everfox
+      NODE_ENV: ${API_NODE_ENV:-development}
+      APP_BASE_URL: http://localhost:${API_PORT:-3000}
+      OIDC_ISSUER: http://localhost:${KEYCLOAK_PORT:-8081}/realms/everfox
+      OIDC_INTERNAL_URL: http://keycloak:8080/realms/everfox
+      OIDC_CLIENT_ID: everfox-web
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-everfox-dev-client-secret}
+    ports:
+      - "127.0.0.1:${API_PORT:-3000}:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+volumes:
+  db-data:

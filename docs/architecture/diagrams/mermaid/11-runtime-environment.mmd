@@ -1,0 +1,39 @@
+%% Everfox: Runtime and Environment
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_web["Browser app"]
+    direction TB
+    n_e_src["SOURCE, SERVED BY ANY STATIC SERVER<br/>scripts/serve.sh serves the folder on port 8000, ES modules need http, not file://.<br/>scripts/serve.sh  http.server<br/>IMPLEMENTED"]
+    n_e_dist["SINGLE-FILE BUILD<br/>npm run build bundles src/ into dist/finance_goal_1300k.html (opens from file://) and dist/index.html.<br/>tools/module-graph.cjs  moduleOrder<br/>IMPLEMENTED"]
+    n_e_test["TESTS<br/>npm run test:unit (plain Node), npm run test:e2e (headless Chrome smokes), npm run test:mobile (widths), npm run check (everything).<br/>tests/run-unit.js  readdirSync<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_stack["Full local stack (Docker)"]
+    direction TB
+    n_e_up["NPM RUN DEV:UP<br/>Starts db (127.0.0.1:5433), keycloak (8081), migrate, api (3000) and loads demo data.<br/>scripts/dev.sh  up<br/>IMPLEMENTED"]
+    n_e_api["API ENTRY POINT<br/>backend/src/main.ts reads the environment once, builds the app and listens, shutdown on SIGTERM and SIGINT.<br/>backend/src/main.ts  registerGracefulShutdown<br/>IMPLEMENTED"]
+    n_e_env["SETTINGS (NAMES)<br/>DATABASE_URL, MIGRATE_DATABASE_URL, NODE_ENV, HOST, PORT, LOG_LEVEL, HEALTH_CHECK_TIMEOUT_MS, APP_BASE_URL, OIDC_ISSUER, OIDC_CLIENT_ID, OIDC_CLIENT_SECRET.<br/>backend/.env.example  DATABASE_URL<br/>IMPLEMENTED"]
+    n_e_be["BACKEND TESTS<br/>npm test in backend/ with a real PostgreSQL and a real Keycloak (the CI job 'backend').<br/>backend/package.json  test<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_and["Android"]
+    direction TB
+    n_e_apk["NPM RUN MOBILE:APK<br/>Builds the page for the shell (own CSP), copies it into android/, builds the debug APK. ANDROID_HOME defaults to ~/Android/Sdk.<br/>scripts/mobile.sh  apk<br/>IMPLEMENTED"]
+    n_e_emu["EMULATOR TESTS<br/>npm run mobile:test and mobile:test-lock drive the real app on a virtual phone with adb and the DevTools protocol.<br/>scripts/device-test.mjs  step<br/>IMPLEMENTED"]
+    n_e_send["NPM RUN APK:SEND -- --BUILD<br/>Builds, then asks before sending the APK to a Telegram chat.<br/>services/telegram-apk/send-apk.mjs  main<br/>IMPLEMENTED"]
+  end
+  class n_e_src api
+  class n_e_dist api
+  class n_e_test api
+  class n_e_up svc
+  class n_e_api svc
+  class n_e_env svc
+  class n_e_be svc
+  class n_e_apk infra
+  class n_e_emu infra
+  class n_e_send infra

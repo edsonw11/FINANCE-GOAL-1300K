@@ -26,7 +26,7 @@ export function parseCsv(text){
   return rows;
 }
 const NAMES={
-  date:/^(data|date|dt|data (da |de )?(transacao|lancamento|compra|movimentacao|operacao|pagamento))$/,
+  date:/^(data|date|dt|data (d[aeo] )?(transacao|lancamento|compra|movimentacao|operacao|pagamento))$/,
   desc:/(descri|historico|titulo|title|estabelecimento|memo|detalhe|beneficiario|favorecido|lancamento|nome)/,
   value:/^(valor|value|amount|quantia|montante|valor \(?r\$?\)?)$/,
   debit:/(debito|saida|saidas|despesa|debit)/,

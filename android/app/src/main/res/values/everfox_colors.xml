@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The page background (the bg token of src/styles/01-tokens.css): what shows behind the system bars while the page is inset. -->
+    <color name="everfox_bg">#f3f5f9</color>
+    <!-- true: dark icons on the status bar (light theme) -->
+    <bool name="everfox_light_bars">true</bool>
+</resources>

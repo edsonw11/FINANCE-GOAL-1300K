@@ -49,7 +49,7 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('import-flow')
   eq('and says why',run("commitImport(R.drafts,{}).items.filter(i=>i.status==='skipped').length"),8);
   eq('still 8 records',run('S.tx.length'),8);
   // ---- overlapping statement: same rows, other file, new row
-  const overlap=read('extrato-2.csv',bank.replace('09/11/2026;CAFE CENTRAL;-7,00\n09/11/2026;CAFE CENTRAL;-7,00','10/11/2026;LIVRARIA;-45,00'));
+  read('extrato-2.csv',bank.replace('09/11/2026;CAFE CENTRAL;-7,00\n09/11/2026;CAFE CENTRAL;-7,00','10/11/2026;LIVRARIA;-45,00'));
   eq('overlap: old rows are duplicates, the new one is not',run("R.drafts.filter(d=>!d.dup&&d.type!=='ignorar').map(d=>d.desc)"),['LIVRARIA']);
   // ---- possible duplicate of a manual record
   fresh();run(`S.tx.push({id:S.nid++,type:'despesa',date:'2026-11-05',value:12.5,desc:'Padaria',cat:'Restaurantes',fonte:'caixa'})`);
@@ -128,7 +128,14 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('import-flow')
   const ov=run('importOverview(R.drafts)');
   eq('overview counts',[ov.total,ov.incomes,ov.expenses,ov.others],[10,1,7,2]);
   eq('overview totals',[ov.incomeTotal,ov.expenseTotal],[5000,12.5+80+29.9+100+50+14]);
-  eq('overview: items to review (no category or flagged)',ov.review,6);
+  eq('overview: items to review (no category or flagged) now include the possible transfer (the "RESGATE RDB" line, Q5)',[ov.review,ov.possibleTransfers],[7,1]);
+  // owner decision Q5: money in with an investment word is a possible transfer: visible, flagged, not selected, in no total until the person changes its type
+  const sumBefore=run('selectionSummary(R.drafts)'),pt=by('RESGATE');
+  eq('Q5: the possible transfer is flagged, ignored, not selected and not an income',[pt.type,pt.reason,pt.flags,pt.selected],['ignorar','transferencia',['possible-transfer'],false]);
+  eq('Q5: it is in no total: income stays 5000 and the selection has no 500',[ov.incomeTotal,sumBefore.income,sumBefore.count],[5000,5000,run('R.drafts.filter(d=>d.selected).length')]);
+  eq('Q5: changing its type to income by hand counts it (and only then)',run("(()=>{const d=R.drafts.find(x=>/RESGATE/.test(x.desc));d.type='receita';d.selected=true;d.cat='Outros';return selectionSummary(R.drafts).income;})()"),5500);
+  fresh();read('o.csv',bank);
+  eq('Q5: saving the untouched review does not create a record for the possible transfer',run("(()=>{commitImport(R.drafts,{fileHash:R.fileHash,fileName:R.fileName,at:'2026-11-10'});return S.tx.some(t=>/RESGATE/.test(t.desc||''));})()"),false);
   eq('overview: selected totals follow the selection',run("(R.drafts.forEach(d=>d.selected=false),R.drafts[0].selected=true,importOverview(R.drafts).selected)"),{count:1,income:0,expense:12.5,contribution:0,months:['2026-11']});
   // ---- validation
   eq('draftProblems: type, value, date',run("draftProblems({type:'ignorar',value:0,date:''})"),['Tipo: escolha despesa, receita ou aporte','Valor inválido','Data inválida']);

@@ -1,0 +1,75 @@
+%% Everfox: Components of the Browser App
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_sync["Sync client (src/sync)"]
+    direction TB
+    n_s_run["RUNNER.JS<br/>One sync run: send the outbox, then pull changes.<br/>src/sync/runner.js  createSync<br/>IMPLEMENTED"]
+    n_s_out["OUTBOX.JS<br/>What waits to be sent, turns a changed state into entries.<br/>src/sync/outbox.js  queueChanges<br/>IMPLEMENTED"]
+    n_s_rec["RECORDS.JS<br/>How the state splits into records, and the fingerprint of each.<br/>src/sync/records.js  splitState<br/>IMPLEMENTED"]
+    n_s_app["APPLY.JS<br/>Puts pulled changes into the local state.<br/>src/sync/apply.js  applyChanges<br/>IMPLEMENTED"]
+    n_s_api["API-CLIENT.JS<br/>The calls to the API, failures become offline, unauthorized or server.<br/>src/sync/api-client.js  createApiClient<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_ui["Screens (src/ui)"]
+    direction TB
+    n_u_app["APP.JS<br/>Starts everything in order and draws the first time.<br/>src/app.js  bindNavigation<br/>IMPLEMENTED"]
+    n_u_nav["NAVIGATION AND RENDER<br/>Tabs and the one render() that redraws the page.<br/>src/ui/render.js  render<br/>IMPLEMENTED"]
+    n_u_views["VIEWS/<br/>One module per screen or card (summary, list, card, goal, import, backup...).<br/>src/ui/views/kpi.js  kpi<br/>IMPLEMENTED"]
+    n_u_comp["COMPONENTS/<br/>Sheet, confirmation, money and date inputs, command runner.<br/>src/ui/components/command.js  runCommand<br/>IMPLEMENTED"]
+    n_u_native["NATIVE-BRIDGE AND APP-LOCK<br/>Android only: share sheet, Back button, app lock.<br/>src/ui/native-bridge.js  bindNativeBack<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_dom["Domain (src/domain)"]
+    direction TB
+    n_d_store["STORE.JS<br/>The state S, its saving, transact(), withState().<br/>src/domain/store.js  transact<br/>IMPLEMENTED"]
+    n_d_tx["TRANSACTIONS<br/>Create and edit a transaction, month queries.<br/>src/domain/transaction-builder.js  saveTransaction<br/>IMPLEMENTED"]
+    n_d_month["MONTH NUMBERS<br/>Income, expenses, left, savings level.<br/>src/domain/month-result.js  monthResult<br/>IMPLEMENTED"]
+    n_d_card["CREDIT CARD<br/>Cycle, closing, due date, invoices, payment.<br/>src/domain/card-cycle.js  dueMonth<br/>IMPLEMENTED"]
+    n_d_goal["GOAL AND WEALTH<br/>Projection, real series, reserve, allocation.<br/>src/domain/goal-projection.js  projectionPlan<br/>IMPLEMENTED"]
+    n_d_port["PORTFOLIO<br/>Positions with average cost from the trades.<br/>src/domain/portfolio.js  positions<br/>IMPLEMENTED"]
+    n_d_imp["IMPORT PIPELINE<br/>Read OFX/CSV/PDF, classify, find duplicates, commit.<br/>src/domain/import-commit.js  commitImport<br/>IMPLEMENTED"]
+    n_d_rep["REPORT<br/>Every number of the monthly report.<br/>src/domain/report.js  buildReport<br/>IMPLEMENTED"]
+    n_d_rec["STATE RECOVERY<br/>Unreadable data is kept aside, one copy per day.<br/>src/domain/state-recovery.js  readState<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_core["Core (src/core)"]
+    direction TB
+    n_c_money["MONEY.JS<br/>Amounts as numbers rounded to cents.<br/>src/core/money.js  roundMoney<br/>IMPLEMENTED"]
+    n_c_dates["DATES.JS<br/>Dates and month keys (yyyy-mm).<br/>src/core/dates.js  mKey<br/>IMPLEMENTED"]
+    n_c_fmt["FORMAT.JS<br/>Brazilian number format and parsing.<br/>src/core/format.js  m2<br/>IMPLEMENTED"]
+    n_c_text["TEXT-NORMALIZE.JS<br/>Lowercase, no accents, for matching descriptions.<br/>src/core/text-normalize.js  normalizeText<br/>IMPLEMENTED"]
+    n_c_cfg["CONFIG.JS<br/>Constants: storage key, month names, default categories.<br/>src/core/config.js  STORAGE_KEY<br/>IMPLEMENTED"]
+  end
+  n_s_run -->|"bindSync wires it"| n_u_app
+  n_u_views -->|"reads"| n_d_month
+  n_u_comp -->|"transact"| n_d_store
+  n_d_month -->|"uses"| n_c_money
+  n_d_card -->|"uses"| n_c_dates
+  class n_s_run svc
+  class n_s_out svc
+  class n_s_rec svc
+  class n_s_app svc
+  class n_s_api svc
+  class n_u_app api
+  class n_u_nav api
+  class n_u_views api
+  class n_u_comp api
+  class n_u_native api
+  class n_d_store dom
+  class n_d_tx dom
+  class n_d_month dom
+  class n_d_card dom
+  class n_d_goal dom
+  class n_d_port dom
+  class n_d_imp dom
+  class n_d_rep dom
+  class n_d_rec dom
+  class n_c_money infra
+  class n_c_dates infra
+  class n_c_fmt infra
+  class n_c_text infra
+  class n_c_cfg infra

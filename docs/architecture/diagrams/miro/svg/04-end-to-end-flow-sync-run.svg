@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1900" height="518" viewBox="0 0 1900 518"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: Flow of One Sync Run (web app)</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">Offline first: the outbox keeps what was not confirmed. Not part of the Android app yet.</text>
+<rect x="20" y="96" width="300" height="170" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">1. A change is saved</text>
+<rect x="40" y="152" width="260" height="94" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Saved state</text>
+<text x="48" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Every save tells its listeners.</text>
+<text x="48" y="204" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/store.js &gt; onSave</text>
+<text x="48" y="219" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="312" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">2. Queue</text>
+<rect x="430" y="152" width="260" height="108" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Split into records</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">The state is split like the server does,</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">each record with a fingerprint.</text>
+<text x="438" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/records.js &gt; splitState</text>
+<text x="438" y="233" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="280" width="260" height="108" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="298" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Outbox entries</text>
+<text x="438" y="316" font-family="Helvetica,Arial,sans-serif" font-size="11">Only what changed since the last run</text>
+<text x="438" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">becomes an entry.</text>
+<text x="438" y="346" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/outbox.js &gt; queueChanges</text>
+<text x="438" y="361" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="800" y="96" width="300" height="312" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">3. Push</text>
+<rect x="820" y="152" width="260" height="108" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="828" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Send in batches of 100</text>
+<text x="828" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">POST /api/v1/sync/push; entries are</text>
+<text x="828" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">marked as attempted first.</text>
+<text x="828" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/runner.js &gt; BATCH</text>
+<text x="828" y="233" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="280" width="260" height="108" rx="8" fill="#fff2cc" stroke="#d6b656" stroke-dasharray="5 3"/>
+<text x="828" y="298" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Rejected?</text>
+<text x="828" y="316" font-family="Helvetica,Arial,sans-serif" font-size="11">A rejected mutation goes to the review</text>
+<text x="828" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">list; the batch stops there.</text>
+<text x="828" y="346" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/runner.js &gt; review</text>
+<text x="828" y="361" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1190" y="96" width="300" height="328" fill="#fff" stroke="#9aa4b2"/><rect x="1190" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="1340" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">4. Pull</text>
+<rect x="1210" y="152" width="260" height="124" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="1218" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Ask for changes after the</text>
+<text x="1218" y="186" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">cursor</text>
+<text x="1218" y="204" font-family="Helvetica,Arial,sans-serif" font-size="11">GET /api/v1/sync/changes, page by page</text>
+<text x="1218" y="218" font-family="Helvetica,Arial,sans-serif" font-size="11">until no more.</text>
+<text x="1218" y="234" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/api-client.js &gt; createApiClient</text>
+<text x="1218" y="249" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1210" y="296" width="260" height="108" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="1218" y="314" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Merge into the state</text>
+<text x="1218" y="332" font-family="Helvetica,Arial,sans-serif" font-size="11">applyChanges puts them in without</text>
+<text x="1218" y="346" font-family="Helvetica,Arial,sans-serif" font-size="11">echoing them back.</text>
+<text x="1218" y="362" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/apply.js &gt; applyChanges</text>
+<text x="1218" y="377" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1580" y="96" width="300" height="214" fill="#fff" stroke="#9aa4b2"/><rect x="1580" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="1730" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">5. Failure</text>
+<rect x="1600" y="152" width="260" height="138" rx="8" fill="#f8cecc" stroke="#b85450"/>
+<text x="1608" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">offline, unauthorized or</text>
+<text x="1608" y="186" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">server</text>
+<text x="1608" y="204" font-family="Helvetica,Arial,sans-serif" font-size="11">During the push or the pull. The outbox</text>
+<text x="1608" y="218" font-family="Helvetica,Arial,sans-serif" font-size="11">stays as it is; the person sees the</text>
+<text x="1608" y="232" font-family="Helvetica,Arial,sans-serif" font-size="11">state on the sync card.</text>
+<text x="1608" y="248" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/sync-view.js &gt; renderSync</text>
+<text x="1608" y="263" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<path d="M300,199 L347,199 L347,206 L430,206" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M560,260 L560,280" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M690,334 L755,334 L755,206 L820,206" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M950,260 L950,280" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1080,334 L1163,334 L1163,214 L1210,214" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="1126.6" y="317" width="72.80000000000001" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="1130.6" y="328" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">no / handled</text>
+<path d="M1340,276 L1340,296" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1470,214 L1526,214 L1526,221 L1600,221" fill="none" stroke="#b85450" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<rect x="1484.2" y="197" width="83.60000000000001" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="1488.2" y="208" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">any step fails</text>
+<rect x="20" y="448" width="150" height="26" rx="5" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="26" y="465" font-family="Helvetica,Arial,sans-serif" font-size="10">API and entry</text>
+<rect x="180" y="448" width="150" height="26" rx="5" fill="#d5e8d4" stroke="#82b366"/>
+<text x="186" y="465" font-family="Helvetica,Arial,sans-serif" font-size="10">Processing and domain rules</text>
+<rect x="340" y="448" width="150" height="26" rx="5" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="346" y="465" font-family="Helvetica,Arial,sans-serif" font-size="10">Orchestration and services</text>
+<rect x="500" y="448" width="150" height="26" rx="5" fill="#fff2cc" stroke="#d6b656"/>
+<text x="506" y="465" font-family="Helvetica,Arial,sans-serif" font-size="10">Decisions and validations</text>
+<rect x="660" y="448" width="150" height="26" rx="5" fill="#f8cecc" stroke="#b85450"/>
+<text x="666" y="465" font-family="Helvetica,Arial,sans-serif" font-size="10">Errors and attention points</text>
+<text x="20" y="496" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text></svg>

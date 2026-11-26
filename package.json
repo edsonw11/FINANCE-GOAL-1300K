@@ -1,0 +1,47 @@
+{
+  "name": "everfox",
+  "private": true,
+  "description": "Personal finance (goal, cash flow, card, investments). Working name: Everfox.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "typecheck": "tsc -p tsconfig.json",
+    "test:unit": "node tests/run-unit.js",
+    "test:e2e": "bash scripts/smoke.sh",
+    "test:mobile": "bash scripts/mobile-check.sh && bash scripts/test-mobile-env.sh",
+    "build": "python3 scripts/build.py",
+    "mobile:doctor": "bash scripts/mobile.sh doctor",
+    "mobile:web": "bash scripts/mobile.sh web",
+    "mobile:sync": "bash scripts/mobile.sh sync",
+    "apk:check": "node services/telegram-apk/send-apk.mjs --check",
+    "apk:send": "node services/telegram-apk/send-apk.mjs",
+    "test:services": "node --test services/telegram-apk/test/",
+    "mobile:emulator": "bash scripts/mobile.sh emulator",
+    "mobile:test": "bash scripts/mobile.sh test",
+    "mobile:test-lock": "bash scripts/mobile.sh test-lock",
+    "mobile:apk": "bash scripts/mobile.sh apk",
+    "dev:up": "bash scripts/dev.sh up",
+    "dev:down": "bash scripts/dev.sh down",
+    "dev:reset": "bash scripts/dev.sh reset",
+    "dev:seed": "bash scripts/dev.sh seed",
+    "dev:status": "bash scripts/dev.sh status",
+    "dev:check": "bash scripts/dev.sh check",
+    "check": "npm run lint && npm run typecheck && npm run test:unit && npm run test:services && npm run build && npm run test:e2e && npm run test:mobile"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.2",
+    "@eslint/js": "10.0.1",
+    "eslint": "10.15.0",
+    "globals": "17.14.0",
+    "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.6.2",
+    "@capacitor/filesystem": "8.1.5",
+    "@capacitor/share": "8.0.3"
+  }
+}

@@ -1,0 +1,43 @@
+%% Everfox: Tables of the API Database
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_id["Identity and sessions"]
+    direction TB
+    n_t_user["APP_USER<br/>id, oidc_issuer + oidc_subject (unique), email, display_name, plan_id, is_admin, last_login_at.<br/>backend/prisma/schema.prisma  model AppUser<br/>IMPLEMENTED"]
+    n_t_sess["SESSION<br/>id_hash (the cookie value is never stored), user_id, last_seen_at, expires_at.<br/>backend/prisma/schema.prisma  model Session<br/>IMPLEMENTED"]
+    n_t_flow["AUTH_FLOW<br/>One login attempt: state, nonce, code_verifier, return_to, expires_at.<br/>backend/prisma/schema.prisma  model AuthFlow<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_data["A person's data"]
+    direction TB
+    n_t_rec["RECORD<br/>id, user_id, kind (account, tx, snap, trade, transfer, import), position, body (JSON), version, deleted_at.<br/>backend/prisma/schema.prisma  model Record<br/>IMPLEMENTED"]
+    n_t_state["USER_STATE<br/>The settings part of the state as one JSON, with a version.<br/>backend/prisma/schema.prisma  model UserState<br/>IMPLEMENTED"]
+    n_t_cur["SYNC_CURSOR<br/>last_version: the person's change counter.<br/>backend/prisma/schema.prisma  model SyncCursor<br/>IMPLEMENTED"]
+    n_t_mut["SYNC_MUTATION<br/>(user_id, mutation_id) and its outcome: a retry gets the first answer.<br/>backend/prisma/schema.prisma  model SyncMutation<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_plan["Plans"]
+    direction TB
+    n_t_plan["PLAN<br/>id, name.<br/>backend/prisma/schema.prisma  model Plan<br/>IMPLEMENTED"]
+    n_t_feat["PLAN_FEATURE<br/>(plan_id, feature_key): what each plan can use.<br/>backend/prisma/schema.prisma  model PlanFeature<br/>IMPLEMENTED"]
+    n_t_audit["AUDIT_LOG<br/>actor, action, target, details of admin changes.<br/>backend/prisma/schema.prisma  model AuditLog<br/>IMPLEMENTED"]
+  end
+  n_t_user -->|"owns"| n_t_rec
+  n_t_user -->|"has"| n_t_sess
+  n_t_user -->|"on a plan"| n_t_plan
+  n_t_plan -->|"has"| n_t_feat
+  class n_t_user infra
+  class n_t_sess infra
+  class n_t_flow infra
+  class n_t_rec dom
+  class n_t_state dom
+  class n_t_cur dom
+  class n_t_mut dom
+  class n_t_plan svc
+  class n_t_feat svc
+  class n_t_audit svc

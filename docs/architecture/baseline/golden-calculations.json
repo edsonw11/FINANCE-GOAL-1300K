@@ -1,0 +1,646 @@
+{
+ "frozenAt": "2026-11-20T12:00:00",
+ "money": {
+  "float": [
+   0.3,
+   0.6,
+   1999
+  ],
+  "parse": [
+   1234.56,
+   1500,
+   1500.5,
+   12.3
+  ]
+ },
+ "months": [
+  {
+   "m": "2026-08",
+   "income": 7900,
+   "expenses": 2000,
+   "contributions": 0,
+   "cashTotal": 5900,
+   "cardBought": 0,
+   "invoicesPaid": 0,
+   "openCard": 0,
+   "undetailed": []
+  },
+  {
+   "m": "2026-09",
+   "income": 8000,
+   "expenses": 2850.55,
+   "contributions": 1500,
+   "cashTotal": 3799.45,
+   "cardBought": 150,
+   "invoicesPaid": 0,
+   "openCard": 150,
+   "undetailed": []
+  },
+  {
+   "m": "2026-10",
+   "income": 8200,
+   "expenses": 3662.4,
+   "contributions": 2000,
+   "cashTotal": 3387.6,
+   "cardBought": 850,
+   "invoicesPaid": 0,
+   "openCard": 600.1,
+   "undetailed": []
+  },
+  {
+   "m": "2026-11",
+   "income": 8200,
+   "expenses": 2830.2,
+   "contributions": 1800,
+   "cashTotal": 3259.8,
+   "cardBought": 89.9,
+   "invoicesPaid": 500,
+   "openCard": 690,
+   "undetailed": [
+    100.1
+   ]
+  }
+ ],
+ "monthResult": [
+  {
+   "m": "2026-08",
+   "income": 7900,
+   "expenses": 2000,
+   "left": 5900,
+   "rate": 0.7468354430379747,
+   "level": "good",
+   "invested": 0,
+   "kept": 5900
+  },
+  {
+   "m": "2026-09",
+   "income": 8000,
+   "expenses": 2850.55,
+   "left": 5149.45,
+   "rate": 0.64368125,
+   "level": "good",
+   "invested": 1500,
+   "kept": 3649.45
+  },
+  {
+   "m": "2026-10",
+   "income": 8200,
+   "expenses": 3662.4,
+   "left": 4537.6,
+   "rate": 0.5533658536585366,
+   "level": "good",
+   "invested": 2000,
+   "kept": 2537.6
+  },
+  {
+   "m": "2026-11",
+   "income": 8200,
+   "expenses": 2830.2,
+   "left": 5369.8,
+   "rate": 0.6548536585365854,
+   "level": "good",
+   "invested": 1800,
+   "kept": 3569.8
+  }
+ ],
+ "categories": [
+  {
+   "m": "2026-09",
+   "cats": {
+    "Aluguel": 2000,
+    "Mercado": 700.55,
+    "Uber e transporte por app": 150
+   },
+   "groups": {
+    "Aluguel": 2000,
+    "Alimentação": 700.55,
+    "Transporte": 150
+   }
+  },
+  {
+   "m": "2026-10",
+   "cats": {
+    "Aluguel": 2000,
+    "Mercado": 812.4,
+    "Lazer": 99.9,
+    "Restaurantes": 300,
+    "Farmácia": 120.1,
+    "Saúde": 330
+   },
+   "groups": {
+    "Aluguel": 2000,
+    "Alimentação": 1112.4,
+    "Lazer e compras": 99.9,
+    "Saúde": 450.1
+   }
+  },
+  {
+   "m": "2026-11",
+   "cats": {
+    "Aluguel": 2000,
+    "Mercado": 640.2,
+    "Lazer": 89.9,
+    "Cartão (sem detalhe)": 100.1
+   },
+   "groups": {
+    "Aluguel": 2000,
+    "Alimentação": 640.2,
+    "Lazer e compras": 89.9,
+    "Cartão (sem detalhe)": 100.1
+   }
+  }
+ ],
+ "budgets": {
+  "rows": [
+   {
+    "group": "Alimentação",
+    "budget": 1000,
+    "spent": 1112.4,
+    "remaining": -112.4,
+    "share": 1.1124,
+    "level": "over",
+    "projected": null,
+    "onPaceToExceed": false
+   },
+   {
+    "group": "Moradia",
+    "budget": 2100,
+    "spent": 0,
+    "remaining": 2100,
+    "share": 0,
+    "level": "ok",
+    "projected": null,
+    "onPaceToExceed": false
+   }
+  ],
+  "budget": 3100,
+  "spent": 1112.4,
+  "remaining": 1987.6
+ },
+ "card": {
+  "best": 25,
+  "due": 5,
+  "dueMonthOf": [
+   [
+    "2026-10-24",
+    "2026-11"
+   ],
+   [
+    "2026-10-25",
+    "2026-11"
+   ],
+   [
+    "2026-10-26",
+    "2026-11"
+   ],
+   [
+    "2026-11-15",
+    "2026-12"
+   ],
+   [
+    "2026-11-30",
+    "2027-01"
+   ],
+   [
+    "2026-12-31",
+    "2027-02"
+   ]
+  ],
+  "cycle": [
+   {
+    "fm": "2026-11",
+    "close": "2026-10-26",
+    "due": "2026-11-05",
+    "totals": {
+     "bought": 850,
+     "paid": 500
+    }
+   },
+   {
+    "fm": "2026-12",
+    "close": "2026-11-24",
+    "due": "2026-12-05",
+    "totals": {
+     "bought": 89.9,
+     "paid": 0
+    }
+   },
+   {
+    "fm": "2027-01",
+    "close": "2026-12-24",
+    "due": "2027-01-05",
+    "totals": {
+     "bought": 0,
+     "paid": 0
+    }
+   }
+  ],
+  "payable": [
+   {
+    "fm": "2026-10",
+    "n": 1,
+    "total": 150,
+    "paid": 0,
+    "rest": 150
+   },
+   {
+    "fm": "2026-11",
+    "n": 3,
+    "total": 850,
+    "paid": 500,
+    "rest": 350
+   },
+   {
+    "fm": "2026-12",
+    "n": 1,
+    "total": 89.9,
+    "paid": 0,
+    "rest": 89.9
+   }
+  ]
+ },
+ "investments": {
+  "net": [
+   [
+    "2026-08",
+    30000
+   ],
+   [
+    "2026-09",
+    31850
+   ],
+   [
+    "2026-10",
+    34300
+   ],
+   [
+    "2026-11",
+    36100
+   ]
+  ],
+  "real": [
+   {
+    "m": "2026-08",
+    "t": 30000,
+    "ap": 0,
+    "y": null
+   },
+   {
+    "m": "2026-09",
+    "t": 31850,
+    "ap": 1500,
+    "y": 350
+   },
+   {
+    "m": "2026-10",
+    "t": 34300,
+    "ap": 2000,
+    "y": 450
+   },
+   {
+    "m": "2026-11",
+    "t": 36100,
+    "ap": 1800,
+    "y": null
+   }
+  ],
+  "project": {
+   "hit": 32,
+   "first": [
+    {
+     "m": "2026-12",
+     "t": 37887.86646948342
+    },
+    {
+     "m": "2027-01",
+     "t": 39689.98963726264
+    },
+    {
+     "m": "2027-02",
+     "t": 41506.48318825191
+    }
+   ],
+   "last": {
+    "m": "2029-08",
+    "t": 103286.27221275639
+   }
+  },
+  "distribution": {
+   "total": 36100,
+   "items": [
+    {
+     "id": "a2",
+     "name": "Tesouro Teste",
+     "value": 22400,
+     "count": 1,
+     "share": 0.6204986149584487
+    },
+    {
+     "id": "a1",
+     "name": "CDB Teste",
+     "value": 13700,
+     "count": 1,
+     "share": 0.37950138504155123
+    }
+   ]
+  }
+ },
+ "reserve": {
+  "accounts": [],
+  "balance": 0,
+  "monthlyExpense": 2837.65,
+  "months": null,
+  "target": 6,
+  "level": "none"
+ },
+ "todo": [
+  [
+   "invoice-late",
+   {
+    "count": 1,
+    "fm": "2026-10",
+    "rest": 150
+   }
+  ],
+  [
+   "no-reserve",
+   {}
+  ]
+ ],
+ "trend": [
+  {
+   "slope": 10.8,
+   "intercept": 100.3,
+   "avg": 116.5
+  },
+  {
+   "slope": 0,
+   "intercept": 5,
+   "avg": 5
+  }
+ ],
+ "quickEntry": [
+  {
+   "type": "despesa",
+   "value": 85.9,
+   "date": "2026-11-20",
+   "desc": "Mercado",
+   "cat": "Mercado",
+   "fonte": "",
+   "acc": "",
+   "missing": [],
+   "notes": [],
+   "summary": "despesa · R$ 85,90 · Mercado · hoje"
+  },
+  {
+   "type": "receita",
+   "value": 5000,
+   "date": "2026-11-20",
+   "desc": "Salário",
+   "cat": "Salário",
+   "fonte": "",
+   "acc": "",
+   "missing": [],
+   "notes": [],
+   "summary": "receita · R$ 5.000,00 · Salário · hoje"
+  },
+  {
+   "type": "despesa",
+   "value": 120,
+   "date": "2026-11-19",
+   "desc": "Luz",
+   "cat": "Luz",
+   "fonte": "",
+   "acc": "",
+   "missing": [],
+   "notes": [],
+   "summary": "despesa · R$ 120,00 · Luz · 19/11/2026"
+  }
+ ],
+ "importCsv": [
+  [
+   "2026-11-04",
+   "PADARIA TESTE",
+   13.37,
+   "despesa",
+   null,
+   [],
+   null
+  ],
+  [
+   "2026-11-05",
+   "EMPRESA TESTE SA SALARIO",
+   4321.09,
+   "receita",
+   null,
+   [],
+   null
+  ],
+  [
+   "2026-11-06",
+   "PAGAMENTO FATURA CARTAO",
+   900,
+   "ignorar",
+   "pagamento_fatura",
+   [],
+   null
+  ],
+  [
+   "2026-11-07",
+   "LOJA TESTE PARC 02/03",
+   77.77,
+   "despesa",
+   null,
+   [],
+   {
+    "n": 2,
+    "of": 3,
+    "sure": true
+   }
+  ]
+ ],
+ "importPdf": [
+  [
+   "2026-11-02",
+   "Total de entradas",
+   1000,
+   []
+  ],
+  [
+   "2026-11-02",
+   "Transferência recebida pelo Pix FULANO",
+   1000,
+   []
+  ],
+  [
+   "2026-11-02",
+   "Total de saídas",
+   -80,
+   []
+  ],
+  [
+   "2026-11-02",
+   "Pagamento de boleto efetuado LOJA X",
+   -80,
+   []
+  ]
+ ],
+ "report": {
+  "m": "2026-10",
+  "day": "2026-11-20",
+  "current": false,
+  "hasData": true,
+  "month": {
+   "income": 8200,
+   "expenses": 3662.4,
+   "left": 4537.6,
+   "rate": 0.5533658536585366,
+   "level": "good",
+   "invested": 2000,
+   "kept": 2537.6
+  },
+  "compare": {
+   "m": "2026-09",
+   "expenses": 2850.55,
+   "delta": 811.85,
+   "pct": 0.2848046868148252
+  },
+  "attention": [],
+  "goal": {
+   "target": 100000,
+   "networth": 34300,
+   "progress": 0.343,
+   "remaining": 65700,
+   "planned": 1500,
+   "rate": 10,
+   "monthsLeft": 32,
+   "reached": false,
+   "etaMonth": "2029-07"
+  },
+  "spending": [
+   {
+    "name": "Aluguel",
+    "value": 2000,
+    "share": 0.54608999563128
+   },
+   {
+    "name": "Alimentação",
+    "value": 1112.4,
+    "share": 0.303735255570118
+   },
+   {
+    "name": "Saúde",
+    "value": 450.1,
+    "share": 0.12289755351681958
+   },
+   {
+    "name": "Lazer e compras",
+    "value": 99.9,
+    "share": 0.02727719528178244
+   }
+  ],
+  "trend": {
+   "rows": [
+    {
+     "m": "2026-08",
+     "income": 7900,
+     "expenses": 2000,
+     "left": 5900
+    },
+    {
+     "m": "2026-09",
+     "income": 8000,
+     "expenses": 2850.55,
+     "left": 5149.45
+    },
+    {
+     "m": "2026-10",
+     "income": 8200,
+     "expenses": 3662.4,
+     "left": 4537.6
+    }
+   ],
+   "averageLeft": 5195.68
+  },
+  "biggest": [
+   {
+    "date": "2026-10-06",
+    "desc": "Aluguel 7",
+    "cat": "Aluguel",
+    "value": 2000
+   },
+   {
+    "date": "2026-10-09",
+    "desc": "Mercado 8",
+    "cat": "Mercado",
+    "value": 812.4
+   },
+   {
+    "date": "2026-10-26",
+    "desc": "Saúde 11",
+    "cat": "Saúde",
+    "value": 450.1
+   },
+   {
+    "date": "2026-10-24",
+    "desc": "Restaurantes 10",
+    "cat": "Restaurantes",
+    "value": 300
+   },
+   {
+    "date": "2026-10-14",
+    "desc": "Lazer 9",
+    "cat": "Lazer",
+    "value": 99.9
+   }
+  ],
+  "investments": {
+   "total": 34300,
+   "items": [
+    {
+     "id": "a2",
+     "name": "Tesouro Teste",
+     "value": 22400,
+     "count": 1,
+     "share": 0.6530612244897959
+    },
+    {
+     "id": "a1",
+     "name": "CDB Teste",
+     "value": 11900,
+     "count": 1,
+     "share": 0.3469387755102041
+    }
+   ]
+  },
+  "card": null,
+  "budgets": {
+   "rows": [
+    {
+     "group": "Alimentação",
+     "budget": 1000,
+     "spent": 1112.4,
+     "remaining": -112.4,
+     "share": 1.1124,
+     "level": "over",
+     "projected": null,
+     "onPaceToExceed": false
+    },
+    {
+     "group": "Moradia",
+     "budget": 2100,
+     "spent": 0,
+     "remaining": 2100,
+     "share": 0,
+     "level": "ok",
+     "projected": null,
+     "onPaceToExceed": false
+    }
+   ],
+   "budget": 3100,
+   "spent": 1112.4,
+   "remaining": 1987.6
+  },
+  "reserve": null
+ }
+}

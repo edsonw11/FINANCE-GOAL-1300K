@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="668" viewBox="0 0 1300 668"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: Sequence of the Monthly Report on the API</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">The one route locked behind a plan feature (report.monthly). The rules are the same files the browser uses.</text>
+<rect x="20" y="96" width="150" height="40" rx="6" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="95" y="120" font-family="Helvetica,Arial,sans-serif" font-size="11" font-weight="bold" text-anchor="middle">Client</text>
+<line x1="95" y1="136" x2="95" y2="574" stroke="#999" stroke-dasharray="4 3"/>
+<rect x="230" y="96" width="150" height="40" rx="6" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="305" y="120" font-family="Helvetica,Arial,sans-serif" font-size="11" font-weight="bold" text-anchor="middle">FeatureGuard</text>
+<line x1="305" y1="136" x2="305" y2="574" stroke="#999" stroke-dasharray="4 3"/>
+<rect x="440" y="96" width="150" height="40" rx="6" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="515" y="120" font-family="Helvetica,Arial,sans-serif" font-size="11" font-weight="bold" text-anchor="middle">EntitlementsService</text>
+<line x1="515" y1="136" x2="515" y2="574" stroke="#999" stroke-dasharray="4 3"/>
+<rect x="650" y="96" width="150" height="40" rx="6" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="725" y="120" font-family="Helvetica,Arial,sans-serif" font-size="11" font-weight="bold" text-anchor="middle">FinanceRulesService</text>
+<line x1="725" y1="136" x2="725" y2="574" stroke="#999" stroke-dasharray="4 3"/>
+<rect x="860" y="96" width="150" height="40" rx="6" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="935" y="120" font-family="Helvetica,Arial,sans-serif" font-size="11" font-weight="bold" text-anchor="middle">LegacyStateService</text>
+<line x1="935" y1="136" x2="935" y2="574" stroke="#999" stroke-dasharray="4 3"/>
+<rect x="1070" y="96" width="150" height="40" rx="6" fill="#d5e8d4" stroke="#82b366"/>
+<text x="1145" y="120" font-family="Helvetica,Arial,sans-serif" font-size="11" font-weight="bold" text-anchor="middle">Shared rules (buildReport)</text>
+<line x1="1145" y1="136" x2="1145" y2="574" stroke="#999" stroke-dasharray="4 3"/>
+<line x1="95" y1="186" x2="305" y2="186" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="101" y="181" font-family="Helvetica,Arial,sans-serif" font-size="10">1. GET /api/v1/months/2026-11/report</text>
+<line x1="305" y1="232" x2="515" y2="232" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="311" y="227" font-family="Helvetica,Arial,sans-serif" font-size="10">2. has(userId, report.monthly)?</text>
+<line x1="515" y1="278" x2="305" y2="278" stroke="#4a5568" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<text x="311" y="273" font-family="Helvetica,Arial,sans-serif" font-size="10">3. plan features read from the database</text>
+<line x1="305" y1="324" x2="95" y2="324" stroke="#b85450" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<text x="101" y="319" font-family="Helvetica,Arial,sans-serif" font-size="10">4. 403 feature_locked (the app shows the PRO screen)</text>
+<line x1="95" y1="370" x2="725" y2="370" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="101" y="365" font-family="Helvetica,Arial,sans-serif" font-size="10">5. compute(userId, fn)</text>
+<line x1="725" y1="416" x2="935" y2="416" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="731" y="411" font-family="Helvetica,Arial,sans-serif" font-size="10">6. loadState(userId)</text>
+<line x1="725" y1="462" x2="1145" y2="462" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="731" y="457" font-family="Helvetica,Arial,sans-serif" font-size="10">7. runWithState(blank + stored state, buildReport(month))</text>
+<line x1="725" y1="508" x2="95" y2="508" stroke="#4a5568" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<text x="101" y="503" font-family="Helvetica,Arial,sans-serif" font-size="10">8. the report data (JSON), nothing saved</text>
+<rect x="20" y="598" width="150" height="26" rx="5" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="26" y="615" font-family="Helvetica,Arial,sans-serif" font-size="10">API and entry</text>
+<rect x="180" y="598" width="150" height="26" rx="5" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="186" y="615" font-family="Helvetica,Arial,sans-serif" font-size="10">Orchestration and services</text>
+<rect x="340" y="598" width="150" height="26" rx="5" fill="#d5e8d4" stroke="#82b366"/>
+<text x="346" y="615" font-family="Helvetica,Arial,sans-serif" font-size="10">Processing and domain rules</text>
+<text x="20" y="646" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text></svg>

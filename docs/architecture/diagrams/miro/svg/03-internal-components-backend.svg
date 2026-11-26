@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1106" viewBox="0 0 1120 1106"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: Components of the API</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">backend/src: NestJS modules over ports (interfaces) with Prisma adapters. Controllers only translate HTTP; services hold the behaviour.</text>
+<rect x="20" y="96" width="300" height="466" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">HTTP layer</text>
+<rect x="40" y="152" width="260" height="108" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">main.ts and create-app.ts</text>
+<text x="48" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Builds the Fastify app, cookies, body</text>
+<text x="48" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">limits, headers on every answer.</text>
+<text x="48" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/create-app.ts &gt; createApp</text>
+<text x="48" y="233" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="280" width="260" height="121" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="298" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Global guards, in order</text>
+<text x="48" y="316" font-family="Helvetica,Arial,sans-serif" font-size="11">Address rate limit, CSRF, login check,</text>
+<text x="48" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">person rate limit, admin, plan feature.</text>
+<text x="48" y="346" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/auth/auth.module.ts &gt;</text>
+<text x="48" y="359" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">APP_GUARD</text>
+<text x="48" y="374" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="421" width="260" height="121" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="439" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Input checking</text>
+<text x="48" y="457" font-family="Helvetica,Arial,sans-serif" font-size="11">Every body and parameter is checked</text>
+<text x="48" y="471" font-family="Helvetica,Arial,sans-serif" font-size="11">against a schema; 400 names the field.</text>
+<text x="48" y="487" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/http/parse-input.ts &gt;</text>
+<text x="48" y="500" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">parseInput</text>
+<text x="48" y="515" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="916" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Feature modules</text>
+<rect x="430" y="152" width="260" height="137" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Auth: LoginService,</text>
+<text x="438" y="186" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">SessionService</text>
+<text x="438" y="204" font-family="Helvetica,Arial,sans-serif" font-size="11">Two-step OIDC login; opaque cookie</text>
+<text x="438" y="218" font-family="Helvetica,Arial,sans-serif" font-size="11">sessions kept as a hash.</text>
+<text x="438" y="234" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/auth/login.service.ts &gt;</text>
+<text x="438" y="247" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">LoginService</text>
+<text x="438" y="262" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="309" width="260" height="121" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="327" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Sync: SyncService</text>
+<text x="438" y="345" font-family="Helvetica,Arial,sans-serif" font-size="11">Applies pushed mutations once, answers</text>
+<text x="438" y="359" font-family="Helvetica,Arial,sans-serif" font-size="11">changes after a cursor.</text>
+<text x="438" y="375" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/sync/sync.service.ts &gt;</text>
+<text x="438" y="388" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">SyncService</text>
+<text x="438" y="403" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="450" width="260" height="107" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="468" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Accounts: AccountsService</text>
+<text x="438" y="486" font-family="Helvetica,Arial,sans-serif" font-size="11">Account rules over the record store.</text>
+<text x="438" y="502" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/accounts/accounts.service.ts</text>
+<text x="438" y="515" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">&gt; AccountsService</text>
+<text x="438" y="530" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="577" width="260" height="134" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="595" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Legacy: FinanceRulesService</text>
+<text x="438" y="613" font-family="Helvetica,Arial,sans-serif" font-size="11">Runs the shared rules on one person's</text>
+<text x="438" y="627" font-family="Helvetica,Arial,sans-serif" font-size="11">stored state.</text>
+<text x="438" y="643" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/legacy/</text>
+<text x="438" y="656" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">finance-rules.service.ts &gt;</text>
+<text x="438" y="669" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">FinanceRulesService</text>
+<text x="438" y="684" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="731" width="260" height="120" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="749" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Plans: EntitlementsService</text>
+<text x="438" y="767" font-family="Helvetica,Arial,sans-serif" font-size="11">Which features a person's plan has.</text>
+<text x="438" y="783" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/plans/</text>
+<text x="438" y="796" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">entitlements.service.ts &gt;</text>
+<text x="438" y="809" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">EntitlementsService</text>
+<text x="438" y="824" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="871" width="260" height="121" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="889" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Health: HealthService</text>
+<text x="438" y="907" font-family="Helvetica,Arial,sans-serif" font-size="11">Live always; ready when the database</text>
+<text x="438" y="921" font-family="Helvetica,Arial,sans-serif" font-size="11">answers.</text>
+<text x="438" y="937" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/health/health.service.ts &gt;</text>
+<text x="438" y="950" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">HealthService</text>
+<text x="438" y="965" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="800" y="96" width="300" height="747" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Ports and adapters</text>
+<rect x="820" y="152" width="260" height="121" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="828" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">RecordStore</text>
+<text x="828" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Records with versions, soft delete and a</text>
+<text x="828" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">per-person change counter.</text>
+<text x="828" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/records/record.store.ts &gt;</text>
+<text x="828" y="231" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">RecordStore</text>
+<text x="828" y="246" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="293" width="260" height="121" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="828" y="311" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">SessionRepository</text>
+<text x="828" y="329" font-family="Helvetica,Arial,sans-serif" font-size="11">Session rows (only the hash of the</text>
+<text x="828" y="343" font-family="Helvetica,Arial,sans-serif" font-size="11">cookie value).</text>
+<text x="828" y="359" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/auth/session.repository.ts &gt;</text>
+<text x="828" y="372" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">SessionRepository</text>
+<text x="828" y="387" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="434" width="260" height="121" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="828" y="452" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">MutationLog</text>
+<text x="828" y="470" font-family="Helvetica,Arial,sans-serif" font-size="11">The answer to every mutation seen, so a</text>
+<text x="828" y="484" font-family="Helvetica,Arial,sans-serif" font-size="11">retry changes nothing.</text>
+<text x="828" y="500" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/sync/mutation-log.ts &gt;</text>
+<text x="828" y="513" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">MutationLog</text>
+<text x="828" y="528" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="575" width="260" height="107" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="828" y="593" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">PlanRepository</text>
+<text x="828" y="611" font-family="Helvetica,Arial,sans-serif" font-size="11">Plans and their features.</text>
+<text x="828" y="627" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/plans/plan.repository.ts &gt;</text>
+<text x="828" y="640" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">PlanRepository</text>
+<text x="828" y="655" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="702" width="260" height="121" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="828" y="720" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">PrismaService</text>
+<text x="828" y="738" font-family="Helvetica,Arial,sans-serif" font-size="11">The one database client (pool),</text>
+<text x="828" y="752" font-family="Helvetica,Arial,sans-serif" font-size="11">connected on first use.</text>
+<text x="828" y="768" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/database/prisma.service.ts &gt;</text>
+<text x="828" y="781" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">PrismaService</text>
+<text x="828" y="796" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<path d="M300,340.5 L347,340.5 L347,220.5 L430,220.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="307.9" y="323.5" width="78.2" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="311.9" y="334.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">every request</text>
+<path d="M690,369.5 L746,369.5 L746,494.5 L820,494.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="701.5" y="352.5" width="89" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="705.5" y="363.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">records outcome</text>
+<path d="M690,503.5 L755,503.5 L755,212.5 L820,212.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="707.8" y="486.5" width="94.4" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="711.8" y="497.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">reads and writes</text>
+<path d="M690,220.5 L764,220.5 L764,353.5 L820,353.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="738.4" y="203.5" width="51.2" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="742.4" y="214.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">sessions</text>
+<path d="M690,791 L773,791 L773,628.5 L820,628.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="747.4" y="774" width="51.2" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="751.4" y="785" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">features</text>
+<path d="M690,931.5 L737,931.5 L737,762.5 L820,762.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="703.3" y="914.5" width="67.4" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="707.3" y="925.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">ready check</text>
+<rect x="20" y="1036" width="150" height="26" rx="5" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="26" y="1053" font-family="Helvetica,Arial,sans-serif" font-size="10">API and entry</text>
+<rect x="180" y="1036" width="150" height="26" rx="5" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="186" y="1053" font-family="Helvetica,Arial,sans-serif" font-size="10">Orchestration and services</text>
+<rect x="340" y="1036" width="150" height="26" rx="5" fill="#f5f5f5" stroke="#666666"/>
+<text x="346" y="1053" font-family="Helvetica,Arial,sans-serif" font-size="10">Infrastructure</text>
+<text x="20" y="1084" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text></svg>

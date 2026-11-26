@@ -1,0 +1,13 @@
+{
+  "appId": "com.everfox.app",
+  "appName": "Everfox",
+  "webDir": "mobile/www",
+  "server": {
+    "androidScheme": "https",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  }
+}

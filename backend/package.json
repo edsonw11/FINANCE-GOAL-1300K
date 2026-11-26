@@ -1,0 +1,47 @@
+{
+  "name": "everfox-backend",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Everfox API: modular monolith (NestJS on Fastify) that runs the shared domain rules per user.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "prisma generate && tsc -p tsconfig.build.json",
+    "typecheck": "prisma generate && tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:integration": "node scripts/with-env.mjs vitest run --config vitest.integration.config.mts",
+    "db:generate": "prisma generate",
+    "db:migrate": "node scripts/with-env.mjs sh -c \"prisma migrate deploy && prisma db execute --file prisma/roles/grants.sql\"",
+    "start": "node dist/main.js",
+    "start:local": "node scripts/with-env.mjs node dist/main.js",
+    "check": "npm run typecheck && npm test && npm run build"
+  },
+  "dependencies": {
+    "@fastify/cookie": "11.1.5",
+    "@nestjs/common": "12.6.0",
+    "@nestjs/core": "12.6.0",
+    "@nestjs/platform-fastify": "12.6.0",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "fastify": "5.12.8",
+    "openid-client": "6.9.1",
+    "pg": "8.23.1",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.2",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@nestjs/testing": "12.6.0",
+    "@swc/core": "1.16.22",
+    "@types/node": "20.19.43",
+    "@types/pg": "8.23.1",
+    "prisma": "7.10.1",
+    "typescript": "7.0.2",
+    "unplugin-swc": "2.0.0",
+    "vitest": "4.1.12"
+  },
+  "overrides": {
+    "effect": "3.22.5"
+  }
+}

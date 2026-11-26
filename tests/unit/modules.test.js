@@ -1,6 +1,6 @@
 /**
  * Module rules (checked on the import graph of src/):
- * 1. Layers only point down: core imports only core; domain imports core and domain;
+ * 1. Layers only point down: core imports only core; domain imports core and domain; sync (no DOM, no state) imports only sync;
  *    ui imports core, domain and ui; nothing imports app.js.
  * 2. Every source file is reachable from src/app.js (no forgotten module).
  * 3. Every import resolves to a real export: core + domain modules are imported by Node itself
@@ -17,7 +17,7 @@ const vm=require('vm');
 const src=path.join(root,'src');
 const walk=d=>fs.readdirSync(d,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(d,e.name)):e.name.endsWith('.js')?[path.join(d,e.name)]:[]);
 const layer=f=>{const r=path.relative(src,f);return r==='app.js'?'app':r.split(path.sep)[0];};
-const ALLOWED={core:['core'],domain:['core','domain'],ui:['core','domain','ui'],app:['core','domain','ui']};
+const ALLOWED={core:['core'],domain:['core','domain'],sync:['sync'],ui:['core','domain','ui','sync'],app:['core','domain','ui','sync']};
 // names a ui module exports (export function a / export const a=..., b=... on one line)
 const exported=code=>new Set([...code.matchAll(/^export\s+(?:async\s+)?(?:function\*?|class)\s+([\w$]+)/gm)].map(m=>m[1])
   .concat([...code.matchAll(/^export\s+(?:const|let|var)\s+(.*)$/gm)].flatMap(m=>{

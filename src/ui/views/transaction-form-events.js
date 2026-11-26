@@ -9,13 +9,13 @@ import { ui } from '../ui-state.js';
 import { renderTransactions } from './transaction-list.js';
 import { endEdit, fillCategoryOptions, updateFormHelp } from './transaction-form.js';
 import { drawSplit, openSplit, resetSplit, updateSplitSum } from './transaction-split.js';
-import { drawInvoiceForm, initInvoiceForm, selectedInvoiceTotal, updateInvoiceSummary } from './invoice-form.js';
+import { drawInvoiceForm, initInvoiceForm, selectInvoicePurchases, selectedInvoiceTotal, updateInvoiceSummary } from './invoice-form.js';
 export function bindTransactionFormEvents(){
 document.querySelectorAll('input[name=tp]').forEach(r=>r.onchange=()=>{ui.type=r.value;ui.payAdvanced=false;if(ui.type==='fatura')initInvoiceForm();fillCategoryOptions();$('fCat').value='';});
 $('fDate').value=today();
 $('fDate').onchange=()=>{updateFormHelp();if(ui.type!=='fatura')return;initInvoiceForm();drawInvoiceForm();};
-$('fFm').onchange=()=>{initInvoiceForm();drawInvoiceForm();};
-$('fAll').onchange=()=>{initInvoiceForm();drawInvoiceForm();};
+$('fFm').onchange=()=>{selectInvoicePurchases();drawInvoiceForm();};
+$('fAll').onchange=()=>{selectInvoicePurchases();drawInvoiceForm();};
 $('fCancel').onclick=()=>{endEdit();$('fVal').value='';$('fDesc').value='';};
 $('chips').onclick=e=>{const c=e.target.closest('.chip');if(!c)return;ui.filt=c.dataset.f;renderTransactions();};
 $('qBox').oninput=e=>{ui.q=e.target.value.trim();renderTransactions();};

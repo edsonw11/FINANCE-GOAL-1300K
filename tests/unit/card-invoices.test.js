@@ -26,7 +26,7 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('card invoices
   eq('partial value',run("planPayment('2026-11',[1,2,3],'part',40)"),{value:40,full:false,remaining:140,items:null});
   eq('partial needs a value',run("planPayment('2026-11',[1,2,3],'part',0)"),{error:'Digite o valor que vai pagar'});
   eq('nothing checked',run("planPayment('2026-11',[],'total',0)"),{error:'Marque pelo menos uma compra'});
-  const id=run("transact(()=>payInvoice('2026-11',planPayment('2026-11',[1,2,3],'part',40),'2026-11-05'))");
+  run("transact(()=>payInvoice('2026-11',planPayment('2026-11',[1,2,3],'part',40),'2026-11-05'))");
   ok('payment created',run(`S.tx.some(t=>t.type==='fatura'&&t.value===40&&t.fm==='2026-11'&&t.date==='2026-11-05')`));
   eq('status paid',run("invoiceStatus('2026-11','2026-11-10').code"),'paid');
   // classify the undetailed part of a paid invoice

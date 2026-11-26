@@ -4,7 +4,7 @@
  */
 const fs=require('fs'),path=require('path');
 const {suite}=require('./harness');
-module.exports=()=>{const {eq,ok,res}=suite('contrast');
+module.exports=()=>{const {eq,res}=suite('contrast');
   const css=fs.readFileSync(path.join(__dirname,'../../src/styles/01-tokens.css'),'utf8');
   const dark=css.indexOf('prefers-color-scheme: dark'),blocks={light:css.slice(0,dark),dark:css.slice(dark)};
   const tok=(b,n)=>{const m=b.match(new RegExp('--'+n+':\\s*(#[0-9a-fA-F]{6})'));return m&&m[1];};

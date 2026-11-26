@@ -18,4 +18,4 @@ export const daysInMonth=(y,mi)=>new Date(y,mi+1,0).getDate();                 /
 export const formatISODate=dt=>dt.getFullYear()+'-'+pad2(dt.getMonth()+1)+'-'+pad2(dt.getDate());
 export const isWeekend=d=>{const w=new Date(d+'T12:00:00').getDay();return w===0||w===6;};
 export const addDay=(d,n)=>{const dt=new Date(d+'T12:00:00');dt.setDate(dt.getDate()+n);return formatISODate(dt);};
-export const daysBetween=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5);
+export const daysBetween=(a,b)=>Math.round((new Date(b+'T12:00:00').getTime()-new Date(a+'T12:00:00').getTime())/864e5);

@@ -1,0 +1,179 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1510" height="1409" viewBox="0 0 1510 1409"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: Components of the Browser App</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">src/ in four layers. Core and domain never touch the page (checked by tests/unit/architecture.test.js); the screens call domain commands.</text>
+<rect x="20" y="96" width="300" height="696" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Sync client (src/sync)</text>
+<rect x="40" y="152" width="260" height="108" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">runner.js</text>
+<text x="48" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">One sync run: send the outbox, then pull</text>
+<text x="48" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">changes.</text>
+<text x="48" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/runner.js &gt; createSync</text>
+<text x="48" y="233" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="280" width="260" height="108" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="48" y="298" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">outbox.js</text>
+<text x="48" y="316" font-family="Helvetica,Arial,sans-serif" font-size="11">What waits to be sent; turns a changed</text>
+<text x="48" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">state into entries.</text>
+<text x="48" y="346" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/outbox.js &gt; queueChanges</text>
+<text x="48" y="361" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="408" width="260" height="108" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="48" y="426" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">records.js</text>
+<text x="48" y="444" font-family="Helvetica,Arial,sans-serif" font-size="11">How the state splits into records, and</text>
+<text x="48" y="458" font-family="Helvetica,Arial,sans-serif" font-size="11">the fingerprint of each.</text>
+<text x="48" y="474" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/records.js &gt; splitState</text>
+<text x="48" y="489" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="536" width="260" height="108" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="48" y="554" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">apply.js</text>
+<text x="48" y="572" font-family="Helvetica,Arial,sans-serif" font-size="11">Puts pulled changes into the local</text>
+<text x="48" y="586" font-family="Helvetica,Arial,sans-serif" font-size="11">state.</text>
+<text x="48" y="602" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/apply.js &gt; applyChanges</text>
+<text x="48" y="617" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="664" width="260" height="108" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="48" y="682" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">api-client.js</text>
+<text x="48" y="700" font-family="Helvetica,Arial,sans-serif" font-size="11">The calls to the API; failures become</text>
+<text x="48" y="714" font-family="Helvetica,Arial,sans-serif" font-size="11">offline, unauthorized or server.</text>
+<text x="48" y="730" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/api-client.js &gt; createApiClient</text>
+<text x="48" y="745" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="709" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Screens (src/ui)</text>
+<rect x="430" y="152" width="260" height="108" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">app.js</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Starts everything in order and draws the</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">first time.</text>
+<text x="438" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/app.js &gt; bindNavigation</text>
+<text x="438" y="233" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="280" width="260" height="108" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="438" y="298" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">navigation and render</text>
+<text x="438" y="316" font-family="Helvetica,Arial,sans-serif" font-size="11">Tabs and the one render() that redraws</text>
+<text x="438" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">the page.</text>
+<text x="438" y="346" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/render.js &gt; render</text>
+<text x="438" y="361" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="408" width="260" height="108" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="438" y="426" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">views/</text>
+<text x="438" y="444" font-family="Helvetica,Arial,sans-serif" font-size="11">One module per screen or card (summary,</text>
+<text x="438" y="458" font-family="Helvetica,Arial,sans-serif" font-size="11">list, card, goal, import, backup...).</text>
+<text x="438" y="474" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/kpi.js &gt; kpi</text>
+<text x="438" y="489" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="536" width="260" height="121" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="438" y="554" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">components/</text>
+<text x="438" y="572" font-family="Helvetica,Arial,sans-serif" font-size="11">Sheet, confirmation, money and date</text>
+<text x="438" y="586" font-family="Helvetica,Arial,sans-serif" font-size="11">inputs, command runner.</text>
+<text x="438" y="602" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/components/command.js &gt;</text>
+<text x="438" y="615" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">runCommand</text>
+<text x="438" y="630" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="677" width="260" height="108" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="438" y="695" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">native-bridge and app-lock</text>
+<text x="438" y="713" font-family="Helvetica,Arial,sans-serif" font-size="11">Android only: share sheet, Back button,</text>
+<text x="438" y="727" font-family="Helvetica,Arial,sans-serif" font-size="11">app lock.</text>
+<text x="438" y="743" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/native-bridge.js &gt; bindNativeBack</text>
+<text x="438" y="758" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="800" y="96" width="300" height="1219" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Domain (src/domain)</text>
+<rect x="820" y="152" width="260" height="108" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">store.js</text>
+<text x="828" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">The state S, its saving, transact(),</text>
+<text x="828" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">withState().</text>
+<text x="828" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/store.js &gt; transact</text>
+<text x="828" y="233" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="280" width="260" height="121" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="298" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Transactions</text>
+<text x="828" y="316" font-family="Helvetica,Arial,sans-serif" font-size="11">Create and edit a transaction; month</text>
+<text x="828" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">queries.</text>
+<text x="828" y="346" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/transaction-builder.js &gt;</text>
+<text x="828" y="359" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">saveTransaction</text>
+<text x="828" y="374" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="421" width="260" height="94" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="439" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Month numbers</text>
+<text x="828" y="457" font-family="Helvetica,Arial,sans-serif" font-size="11">Income, expenses, left, savings level.</text>
+<text x="828" y="473" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/month-result.js &gt; monthResult</text>
+<text x="828" y="488" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="535" width="260" height="108" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="553" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Credit card</text>
+<text x="828" y="571" font-family="Helvetica,Arial,sans-serif" font-size="11">Cycle, closing, due date, invoices,</text>
+<text x="828" y="585" font-family="Helvetica,Arial,sans-serif" font-size="11">payment.</text>
+<text x="828" y="601" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/card-cycle.js &gt; dueMonth</text>
+<text x="828" y="616" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="663" width="260" height="121" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="681" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Goal and wealth</text>
+<text x="828" y="699" font-family="Helvetica,Arial,sans-serif" font-size="11">Projection, real series, reserve,</text>
+<text x="828" y="713" font-family="Helvetica,Arial,sans-serif" font-size="11">allocation.</text>
+<text x="828" y="729" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/goal-projection.js &gt;</text>
+<text x="828" y="742" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">projectionPlan</text>
+<text x="828" y="757" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="804" width="260" height="108" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="822" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Portfolio</text>
+<text x="828" y="840" font-family="Helvetica,Arial,sans-serif" font-size="11">Positions with average cost from the</text>
+<text x="828" y="854" font-family="Helvetica,Arial,sans-serif" font-size="11">trades.</text>
+<text x="828" y="870" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/portfolio.js &gt; positions</text>
+<text x="828" y="885" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="932" width="260" height="121" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="950" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Import pipeline</text>
+<text x="828" y="968" font-family="Helvetica,Arial,sans-serif" font-size="11">Read OFX/CSV/PDF, classify, find</text>
+<text x="828" y="982" font-family="Helvetica,Arial,sans-serif" font-size="11">duplicates, commit.</text>
+<text x="828" y="998" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/import-commit.js &gt;</text>
+<text x="828" y="1011" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">commitImport</text>
+<text x="828" y="1026" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="1073" width="260" height="94" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="1091" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Report</text>
+<text x="828" y="1109" font-family="Helvetica,Arial,sans-serif" font-size="11">Every number of the monthly report.</text>
+<text x="828" y="1125" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/report.js &gt; buildReport</text>
+<text x="828" y="1140" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="1187" width="260" height="108" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="828" y="1205" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">State recovery</text>
+<text x="828" y="1223" font-family="Helvetica,Arial,sans-serif" font-size="11">Unreadable data is kept aside; one copy</text>
+<text x="828" y="1237" font-family="Helvetica,Arial,sans-serif" font-size="11">per day.</text>
+<text x="828" y="1253" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/state-recovery.js &gt; readState</text>
+<text x="828" y="1268" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1190" y="96" width="300" height="667" fill="#fff" stroke="#9aa4b2"/><rect x="1190" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="1340" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Core (src/core)</text>
+<rect x="1210" y="152" width="260" height="94" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="1218" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">money.js</text>
+<text x="1218" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Amounts as numbers rounded to cents.</text>
+<text x="1218" y="204" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/core/money.js &gt; roundMoney</text>
+<text x="1218" y="219" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1210" y="266" width="260" height="94" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="1218" y="284" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">dates.js</text>
+<text x="1218" y="302" font-family="Helvetica,Arial,sans-serif" font-size="11">Dates and month keys (yyyy-mm).</text>
+<text x="1218" y="318" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/core/dates.js &gt; mKey</text>
+<text x="1218" y="333" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1210" y="380" width="260" height="94" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="1218" y="398" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">format.js</text>
+<text x="1218" y="416" font-family="Helvetica,Arial,sans-serif" font-size="11">Brazilian number format and parsing.</text>
+<text x="1218" y="432" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/core/format.js &gt; m2</text>
+<text x="1218" y="447" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1210" y="494" width="260" height="121" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="1218" y="512" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">text-normalize.js</text>
+<text x="1218" y="530" font-family="Helvetica,Arial,sans-serif" font-size="11">Lowercase, no accents, for matching</text>
+<text x="1218" y="544" font-family="Helvetica,Arial,sans-serif" font-size="11">descriptions.</text>
+<text x="1218" y="560" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/core/text-normalize.js &gt;</text>
+<text x="1218" y="573" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">normalizeText</text>
+<text x="1218" y="588" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="1210" y="635" width="260" height="108" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="1218" y="653" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">config.js</text>
+<text x="1218" y="671" font-family="Helvetica,Arial,sans-serif" font-size="11">Constants: storage key, month names,</text>
+<text x="1218" y="685" font-family="Helvetica,Arial,sans-serif" font-size="11">default categories.</text>
+<text x="1218" y="701" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/core/config.js &gt; STORAGE_KEY</text>
+<text x="1218" y="716" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<path d="M300,206 L347,206 L347,206 L430,206" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="297.1" y="189" width="99.80000000000001" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="301.1" y="200" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">bindSync wires it</text>
+<path d="M690,462 L746,462 L746,468 L820,468" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="728.5" y="445" width="35" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="732.5" y="456" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">reads</text>
+<path d="M690,596.5 L755,596.5 L755,206 L820,206" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="729.4" y="579.5" width="51.2" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="733.4" y="590.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">transact</text>
+<path d="M1080,468 L1154,468 L1154,199 L1210,199" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="1139.2" y="451" width="29.6" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="1143.2" y="462" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">uses</text>
+<path d="M1080,589 L1163,589 L1163,313 L1210,313" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="1148.2" y="572" width="29.6" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="1152.2" y="583" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">uses</text>
+<rect x="20" y="1339" width="150" height="26" rx="5" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="26" y="1356" font-family="Helvetica,Arial,sans-serif" font-size="10">Orchestration and services</text>
+<rect x="180" y="1339" width="150" height="26" rx="5" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="186" y="1356" font-family="Helvetica,Arial,sans-serif" font-size="10">API and entry</text>
+<rect x="340" y="1339" width="150" height="26" rx="5" fill="#d5e8d4" stroke="#82b366"/>
+<text x="346" y="1356" font-family="Helvetica,Arial,sans-serif" font-size="10">Processing and domain rules</text>
+<rect x="500" y="1339" width="150" height="26" rx="5" fill="#f5f5f5" stroke="#666666"/>
+<text x="506" y="1356" font-family="Helvetica,Arial,sans-serif" font-size="10">Infrastructure</text>
+<text x="20" y="1387" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text></svg>

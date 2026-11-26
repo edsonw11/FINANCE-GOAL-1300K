@@ -26,12 +26,12 @@ async function loadPdfjs(){
 }
 export async function pdfText(file){
   let lib;
-  try{lib=await loadPdfjs();}catch(e){throw new Error('Não consegui carregar o leitor de PDF. Use CSV ou OFX por enquanto.');}
+  try{lib=await loadPdfjs();}catch(e){throw new Error('Não consegui carregar o leitor de PDF. Use CSV ou OFX por enquanto.',{cause:e});}
   // pdf.js takes ownership of the bytes it is given: always hand it a copy, so the same file can be read again
   const data=new Uint8Array((await file.arrayBuffer()).slice(0));
   let doc;
   try{doc=await lib.getDocument({data,isEvalSupported:false}).promise;}
-  catch(e){throw new Error(e&&e.name==='PasswordException'?'Este PDF tem senha. Baixe uma versão sem senha ou exporte CSV/OFX.':'Não consegui abrir este PDF (arquivo corrompido ou protegido).');}
+  catch(e){throw new Error(e&&e.name==='PasswordException'?'Este PDF tem senha. Baixe uma versão sem senha ou exporte CSV/OFX.':'Não consegui abrir este PDF (arquivo corrompido ou protegido).',{cause:e});}
   if(doc.numPages>IMPORT_LIMITS.maxPdfPages){await doc.destroy();throw new Error(`PDF com ${doc.numPages} páginas (máximo ${IMPORT_LIMITS.maxPdfPages}). Baixe um período menor.`);}
   const lines=[];
   for(let i=1;i<=doc.numPages;i++){

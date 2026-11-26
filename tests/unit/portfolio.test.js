@@ -17,7 +17,7 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('portfolio');
   eq('trades read',n.trades.map(t=>[t.side,t.ticker,t.cls,t.qty,t.price]),
     [['C','PETR4','acao',100,38.2],['C','HGLG11','fii',40,158],['C','IVVB11','etf',20,310],['V','VALE3','acao',10,60]]);
   eq('costs are shared and add up exactly',Math.round(n.trades.reduce((s,t)=>s+t.fees,0)*100)/100,10);
-  ok('missing date is reported',!!run(`parseBrokerageNote('Nota de negociação 1-BOVESPA C VISTA PETR4 PN 1 1,00 1,00')`).error);
+  eq('missing date is reported',run(`parseBrokerageNote('Nota de negociação 1-BOVESPA C VISTA PETR4 PN 1 1,00 1,00')`).error,'Reconheci uma nota de corretagem, mas não achei a data do pregão.');
   const header=run(`parseBrokerageNote(${J('NOTA DE NEGOCIAÇÃO\nNr. nota Folha Data pregão\n1234567 1 05/11/2026\n1-BOVESPA C VISTA PETR4 PN N2 100 38,20 3.820,00 D')})`);
   eq('date after other header cells (label and value on different lines)',header.date,'2026-11-05');
   // positions: average cost with costs, partial sell

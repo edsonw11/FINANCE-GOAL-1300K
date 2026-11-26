@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="everfox_bg">#0e121a</color>
+    <!-- light icons on the status bar (dark theme) -->
+    <bool name="everfox_light_bars">false</bool>
+</resources>

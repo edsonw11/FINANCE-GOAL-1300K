@@ -1,0 +1,33 @@
+%% Everfox: Monthly Report on the API (Pro)
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_s1["1. Request"]
+    direction TB
+    n_q_route["GET /API/V1/MONTHS/:MONTH/REPORT<br/>Month as yyyy-mm, optional today=yyyy-mm-dd for a person whose day differs from the server's.<br/>backend/src/legacy/months.controller.ts  report<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_s2["2. Check"]
+    direction TB
+    n_q_guard{"FEATUREGUARD<br/>The plan must have report.monthly, read from the database on every call.<br/>backend/src/plans/guards.ts  FeatureGuard<br/>IMPLEMENTED"}
+  end
+  subgraph n_l_s3["3. Compute"]
+    direction TB
+    n_q_rules["FINANCERULESSERVICE.COMPUTE<br/>Loads the stored state, completes it from the blank state, runs the shared buildReport. Nothing is saved.<br/>backend/src/legacy/finance-rules.service.ts  compute<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_s4["4. Answer"]
+    direction TB
+    n_q_json["REPORT DATA (JSON)<br/>The same numbers the page prints, no file is generated.<br/>src/domain/report.js  buildReport<br/>IMPLEMENTED"]
+  end
+  n_q_route --> n_q_guard
+  n_q_guard -->|"allowed"| n_q_rules
+  n_q_rules --> n_q_json
+  class n_q_route api
+  class n_q_guard dec
+  class n_q_rules dom
+  class n_q_json out

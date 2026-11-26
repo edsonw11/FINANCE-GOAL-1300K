@@ -238,6 +238,15 @@ dialog.confirm h3{margin:0 0 10px;font-size:18px}
 .cf-check input{width:20px;height:20px;flex:none}
 .cf-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.cf-actions .btn{flex:1 1 30%;min-height:var(--tap)}
 button.dngf{background:var(--des);border-color:var(--des);color:#fff}
+/* app lock: covers the whole screen, above every other dialog */
+dialog.lock{position:fixed;inset:0;width:100vw;max-width:none;height:100dvh;max-height:none;margin:0;border:0;border-radius:0;background:var(--bg);color:var(--ink);padding:0}
+dialog.lock[open]{display:flex;align-items:center;justify-content:center}
+dialog.lock::backdrop{background:var(--bg)}
+.lock-box{display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;padding:24px;max-width:340px}
+.lock-ico{font-size:44px}
+.lock-box h3{margin:0;font-size:20px}
+#lockMsg{min-height:20px;font-size:14px;color:var(--muted)}
+.lock-box .btn{min-height:var(--tap);min-width:200px}
 /* date field: dd/mm/aaaa text + native calendar on top */
 .dp{position:relative;display:block}
 .dp .dp-text{cursor:pointer;padding-right:40px;caret-color:transparent}
@@ -325,7 +334,7 @@ table.tl tr.rowclick{cursor:pointer}
 .bud-in input{width:130px}
 .cat-gh .bud-in+.mut,.cat-gh .mut{margin-left:0}
 .cat-gh .mut{margin-right:auto}
-@media (max-width:480px){.bud-in{width:100%;margin-left:0}.bud-in input{flex:1;width:auto}}
+@media (max-width:480px){.bud-in{width:100%;margin-left:0}.bud-in input{flex:1;width:auto;min-width:0}}
 
 /* bills */
 #billsCard>.pbar{margin:6px 0 4px}
@@ -577,6 +586,11 @@ dialog.dlg-wide{width:min(580px,94vw)}
 .hero-split{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:14px}
 .hero-line{margin-top:8px;font-size:14px;color:var(--ink2)}
 .bill-more>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600;color:var(--brand)}
+
+/* sync status in the header: only shown when signed in (the app works without it) */
+.sync-badge{text-decoration:none;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--surface-2,#eef2f6);color:var(--muted,#566);white-space:nowrap}
+.sync-badge.warn{background:#fff3d6;color:#7a5200}
+@media(max-width:480px){.sync-badge{font-size:11px;padding:2px 7px}}
 </style>
 <style>
 /* Import panel, quick entry and history suggestion (mobile first; the sheet is a bottom sheet on phones) */
@@ -893,6 +907,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
     <button data-t="cad" data-i="tag">Categorias</button>
     <button data-t="cfg" data-i="sliders">Ajustes</button>
   </nav>
+  <a class="sync-badge" id="syncBadge" hidden></a>
   <div class="today" id="todayLbl"></div>
   <button class="btn sm" id="printBtn" title="Imprimir ou salvar como PDF">Imprimir / PDF</button>
   <button class="btn sm" id="mailBtn" title="Abrir o e-mail com o resumo do relatório">Enviar por e-mail</button>
@@ -1075,6 +1090,13 @@ dialog.dlg-wide{width:min(580px,94vw)}
     <div class="mt-10" id="ownNames"></div>
     <div class="help">Pode cadastrar variações (ex.: “Maria S Lima”). Salário no seu nome continua sendo receita.</div>
   </div>
+  <h2 id="syncTitle" hidden>☁️ Conta e sincronização</h2>
+  <div class="card" id="syncCard" hidden><div id="syncBody"></div></div>
+  <h2 id="lockTitle" hidden>🔒 Bloqueio do app</h2>
+  <div class="card" id="lockCard" hidden>
+    <div class="row"><button class="btn" id="lockToggle" type="button"></button></div>
+    <div class="help" id="lockHelp"></div>
+  </div>
   <h2>🧰 Dados</h2>
   <div class="card"><div class="row">
     <button class="btn" id="exp">⬇️ Exportar backup</button><button class="btn" id="imp">⬆️ Importar backup</button>
@@ -1127,6 +1149,11 @@ dialog.dlg-wide{width:min(580px,94vw)}
   <label id="cfCheckW" class="cf-check" hidden><input type="checkbox" id="cfCheck"><span id="cfCheckL"></span></label>
   <div class="cf-actions"><button type="button" class="btn" id="cfCancel">Cancelar</button><button type="button" class="btn" id="cfAlt" hidden></button><button type="button" class="btn pri" id="cfOk">Confirmar</button></div>
 </dialog>
+<dialog id="lockDlg" class="lock" aria-labelledby="lockHead">
+  <div class="lock-box"><div class="lock-ico" aria-hidden="true">🔒</div><h3 id="lockHead">Everfox bloqueado</h3>
+    <div id="lockMsg" role="status" aria-live="polite"></div>
+    <button type="button" class="btn pri" id="lockRetry">Desbloquear</button></div>
+</dialog>
 <button type="button" id="fab" class="fab" aria-label="Novo lançamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 <nav id="bnav" class="bnav" aria-label="Menu principal">
   <button data-t="resumo" data-i="chart" class="on">Resumo</button><button data-t="lanc" data-i="receipt">Lançamentos</button><button data-t="cartao" data-i="card">Cartão</button><button data-t="meta" data-i="target">Patrimônio</button><button data-t="more" data-i="menu">Mais</button>
@@ -1159,6 +1186,7 @@ const DEFAULT_CATEGORIES={despesa:{'Moradia':'🏠','Mercado':'🛒','Transporte
             receita:{'Salário':'💼','VR/VA (benefício)':'🍴','Freelance':'🧑‍💻','Rendimentos':'📈','Renda Extra':'➕','Serviços':'🛠️','Outros':'💰'}};
 // expense groups: each category belongs to one group (Luz, Água, Gás... are part of Moradia).
 // [group, icon, default categories]; the user can move categories and create groups.
+/** @type {[string, string, string[]][]} */
 const DEFAULT_GROUPS=[
   ['Moradia','🏠',['Moradia','Aluguel','Condomínio','Luz','Água','Gás','Internet','Telefone','IPTU','Manutenção da casa']],
   ['Alimentação','🍽️',['Mercado','Restaurantes','Alimentação (outros)']],
@@ -1169,6 +1197,7 @@ const DEFAULT_GROUPS=[
   ['Família','🍼',['Filhos e bebê']],
   ['Financeiro e impostos','🏦',['Tarifas bancárias e juros','Imposto de renda e taxas','Financiamentos e empréstimos','Cartão de crédito']]];
 // a new category whose name matches is placed in that group (first match wins)
+/** @type {[string, RegExp][]} */
 const GROUP_KEYWORDS=[
   ['Saúde',/academia|wellhub|gympass|smart ?fit|muscula|pilates|crossfit|farm[aá]cia|drogaria|m[eé]dic|dentist|odonto|consulta|exame|plano de sa|conv[eê]nio|sa[uú]de|terapia|psic|hospital|cl[ií]nica|fisio|nutri/i],
   ['Transporte',/uber|\b99\b|t[aá]xi|combust|gasolina|etanol|transporte|[oô]nibus|metr[oô]|estacion|ped[aá]gio|ipva|ve[ií]culo|carro|moto\b|oficina/i],
@@ -1179,6 +1208,7 @@ const GROUP_KEYWORDS=[
   ['Lazer e compras',/lazer|cinema|viagem|hotel|roupa|cal[cç]ado|presente|show|bar\b/i],
   ['Financeiro e impostos',/tarifa|juros|imposto|taxa|financiamento|empr[eé]stimo|iof/i]];
 const LEG={'Contas (luz, água, net)':'💡'};
+/** @type {[string, [string, string, number][]][]} */
 const SUGGESTED_CATEGORIES=[
  ['Casa',[['Manutenção da casa','🔧',1],['IPTU','🏛️',0]]],
  ['Transporte',[['Combustível','⛽',1],['Uber e transporte por app','🚕',1],['Veículo (manutenção e seguro)','🛠️',1],['IPVA e licenciamento','📄',1],['Estacionamento e pedágio','🅿️',1]]],
@@ -1209,7 +1239,47 @@ const daysInMonth=(y,mi)=>new Date(y,mi+1,0).getDate();                 // days 
 const formatISODate=dt=>dt.getFullYear()+'-'+pad2(dt.getMonth()+1)+'-'+pad2(dt.getDate());
 const isWeekend=d=>{const w=new Date(d+'T12:00:00').getDay();return w===0||w===6;};
 const addDay=(d,n)=>{const dt=new Date(d+'T12:00:00');dt.setDate(dt.getDate()+n);return formatISODate(dt);};
-const daysBetween=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:00'))/864e5);
+const daysBetween=(a,b)=>Math.round((new Date(b+'T12:00:00').getTime()-new Date(a+'T12:00:00').getTime())/864e5);
+
+// ---- src/core/id-counter.js
+/**
+ * core/id-counter.js
+ * Responsibility: keeps the id counter `nid` usable. The counter hands out ids (numbers for transactions, 'a7' accounts, 't7' trades, 'tr7' transfers, and the series
+ * number of repeated records). Data that comes from outside (browser storage, a backup file, the server's settings document) may carry a counter that is missing,
+ * null, NaN, zero, negative, fractional, too large, or behind the ids already in use; any of those would hand out an id that is NaN, falsy or already taken.
+ * Pure: a state with a good counter is returned exactly as it is.
+ */
+const OWN_LISTS=['accounts','tx','trades','transfers'];
+const ID_NUMBER=/^(?:a|t|tr)?(\d+)$/;
+const ROOM=100; // a counter closer than this to the largest safe integer would soon stop counting (n+1 === n)
+const SAFE_TOP=Number.MAX_SAFE_INTEGER-ROOM;
+
+/** The number inside an id ('a12' -> 12, 7 -> 7); 0 for ids that are not numbered ('nu', 'sa'). */
+const numberOfId=id=>{const m=ID_NUMBER.exec(String(id));const n=m?+m[1]:0;return Number.isSafeInteger(n)&&n<=SAFE_TOP?n:0;};
+const usableCounter=n=>typeof n==='number'&&Number.isSafeInteger(n)&&n>=1&&n<=SAFE_TOP;
+
+/** The smallest counter that cannot collide with any id in the state. */
+function counterFloor(state){
+  let top=0;
+  for(const name of OWN_LISTS){
+    const list=state&&state[name];if(!Array.isArray(list))continue;
+    for(const item of list){
+      if(!item||typeof item!=='object')continue;
+      top=Math.max(top,numberOfId(item.id));
+      if(name==='tx'&&item.serie!==undefined)top=Math.max(top,numberOfId(item.serie));
+    }
+  }
+  return top+1;
+}
+
+/** Makes `state.nid` a safe integer of at least 1 that is past every id in use. Changes the object it is given and returns it. */
+function repairIdCounter(state){
+  if(!state||typeof state!=='object')return state;
+  const floor=counterFloor(state);
+  if(!usableCounter(state.nid))state.nid=floor;
+  else if(state.nid<floor)state.nid=floor;
+  return state;
+}
 
 // ---- src/core/format.js
 /**
@@ -1218,7 +1288,6 @@ const daysBetween=(a,b)=>Math.round((new Date(b+'T12:00:00')-new Date(a+'T12:00:
  */
 const f0=v=>'R$ '+Math.round(v).toLocaleString('pt-BR');
 const f2=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-const n2=v=>v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 const pc=v=>(v*100).toFixed(1).replace('.',',')+'%';
 const sum=a=>a.reduce((x,y)=>x+y,0);
 function parse(s){s=String(s).trim().replace(/[R$\s%]/g,'');if(!s)return 0;
@@ -1269,50 +1338,6 @@ function formatMoneyDigits(text){
 // any typed or pasted text ("R$ 1.234,56", "1500", "1.500,5", "12.3") -> number with 2 decimals
 const parseMoney=s=>roundMoney(parse(s));
 
-// ---- src/domain/transactions.js
-/**
- * domain/transactions.js
- * Responsibility: Transaction queries (by month/type, contributions, category parts, future series)
- * and the delete / undo-delete commands.
- */
-
-
-
-
-
-const txIn=(m,type,upto)=>S.tx.filter(t=>t.type===type&&mOf(t.date)===m&&(!upto||t.date<=upto));
-const contributionsInMonth=m=>sum(txIn(m,'aporte',asOf(m)).map(t=>t.value));
-// category parts of a transaction: the informed splits + the remainder in the main category
-const catParts=t=>{const ex=t.splits||[];const rest=roundMoney(t.value-sumMoney(ex.map(s=>s.value)));return ex.concat(rest>0.004?[{cat:t.cat,value:rest}]:[]);};
-// "equal" future transactions (same Repeat series; for old ones, same data)
-const futureSiblings=t=>{
-  if(t.type==='fatura')return [];
-  if(t.serie)return S.tx.filter(x=>x.serie===t.serie&&x.id!==t.id&&x.date>t.date);
-  return S.tx.filter(x=>x.id!==t.id&&!x.serie&&x.type===t.type&&x.date>t.date&&mOf(x.date)!==mOf(t.date)&&x.cat===t.cat&&(x.desc||'')===(t.desc||'')&&(x.fonte||'')===(t.fonte||'')&&(x.acc||'')===(t.acc||'')&&Math.abs(x.value-t.value)<0.005);
-};
-// removes transactions and drops them from the invoices that listed them
-// returns what was removed ({removed, items}) so restoreTransactions can undo it exactly
-function deleteTransactions(ids){
-  const del=new Set(ids),copy=x=>JSON.parse(JSON.stringify(x));
-  const removed=S.tx.filter(t=>del.has(t.id)).map(copy),items={};
-  S.tx.forEach(t=>{if(t.items&&t.items.some(id=>del.has(id)))items[t.id]=t.items.slice();});
-  S.tx=S.tx.filter(t=>!del.has(t.id));
-  S.tx.forEach(t=>{if(t.items)t.items=t.items.filter(id=>!del.has(id));});
-  return {removed,items};
-}
-// undo of deleteTransactions: puts the records back with their ids and the invoices' lists as they were
-function restoreTransactions(undo){
-  if(!undo||!undo.removed||!undo.removed.length)return {error:'Nada para desfazer'};
-  const taken=new Set(S.tx.map(t=>t.id));
-  if(undo.removed.some(t=>taken.has(t.id)))return {error:'Esses lançamentos já existem'};
-  S.tx=S.tx.concat(undo.removed.map(t=>JSON.parse(JSON.stringify(t))));
-  Object.keys(undo.items||{}).forEach(id=>{const inv=S.tx.find(t=>String(t.id)===id);if(inv)inv.items=undo.items[id].slice();});
-  return {restored:undo.removed.length};
-}
-// the paid invoice that currently absorbs a card purchase (null when it is still open)
-function invoiceOfPurchase(t){const {map}=alloc();const id=Object.keys(map).find(k=>map[k].includes(t.id));return id?S.tx.find(x=>x.id===+id)||null:null;}
-const TYPE_LABEL={despesa:'despesa',receita:'receita',aporte:'aporte',fatura:'pagamento de fatura'};
-
 // ---- src/domain/card-cycle.js
 /**
  * domain/card-cycle.js
@@ -1323,15 +1348,19 @@ const TYPE_LABEL={despesa:'despesa',receita:'receita',aporte:'aporte',fatura:'pa
 // ---- card invoice: checked purchases + whatever is left undetailed ----
 // ---- invoice cycle: best purchase day and due date ----
 // "Best purchase day" = day the new invoice starts; the previous invoice closes the day before.
+const DEFAULT_BEST_DAY=29,DEFAULT_DUE_DAY=7;
+const isCardDay=n=>Number.isInteger(n)&&n>=1&&n<=31;
 const CARD=()=>{
   if(!S.card)S.card={best:29,due:7,biz:true,over:{},v3:true};
   if(S.card.best===undefined){S.card={best:Math.min((S.card.close||0)+1,31),due:S.card.due||7};}
   if(!S.card.v3){S.card={best:29,due:S.card.due||7,biz:true,over:S.card.over||{},v3:true};}
+  // defensive: the days are whole numbers from 1 to 31 (the form guarantees it; a backup edited by hand or damaged may not). A bad one is replaced by the default, a good one is never touched.
+  const c=S.card;if(!isCardDay(c.best)||!isCardDay(c.due))S.card={...c,best:isCardDay(c.best)?c.best:DEFAULT_BEST_DAY,due:isCardDay(c.due)?c.due:DEFAULT_DUE_DAY};
   return S.card;};
 // closing date of cycle "j" (month j, day best-1; if best=1, the last day of month j)
 const closingIn=(y,mi)=>{const B=CARD().best;return B===1?formatISODate(new Date(y,mi+1,0)):formatISODate(new Date(y,mi,Math.min(B-1,daysInMonth(y,mi))));};
 // due date = first "due" day after closing
-const dueAfter=cl=>{const [y,m,d]=cl.split('-').map(Number),D=CARD().due;
+const dueAfter=cl=>{const [y,m]=cl.split('-').map(Number),D=CARD().due;
   const t1=formatISODate(new Date(y,m-1,Math.min(D,daysInMonth(y,m-1))));if(t1>cl)return t1;
   const ny=m===12?y+1:y,nm=m===12?0:m;return formatISODate(new Date(ny,nm,Math.min(D,daysInMonth(ny,nm))));};
 const dueDateOf=fm=>{const [y,m]=fm.split('-').map(Number);return fm+'-'+pad2(Math.min(CARD().due,daysInMonth(y,m-1)));};
@@ -1358,7 +1387,6 @@ const invoiceMonthOf=f=>f.fm||nearestDueMonth(f.date);
 
 
 
-
 // cached allocation; any change to the transactions must call invalidateAllocation()
 let _al=null;
 function invalidateAllocation(){_al=null;}
@@ -1378,7 +1406,6 @@ const openCard=(upto,ex)=>{const {map,used}=alloc();const mine=new Set(ex?map[ex
   return S.tx.filter(t=>t.type==='despesa'&&t.fonte==='cartao'&&(!used.has(t.id)||mine.has(t.id))&&(!upto||t.date<=upto));};
 const invoiceItems=t=>(alloc().map[t.id]||[]).map(id=>S.tx.find(x=>x.id===id)).filter(Boolean);
 const invoiceUndetailed=t=>Math.max(0,roundMoney(t.value-sumMoney(invoiceItems(t).map(x=>x.value))));
-const undetailedInMonth=m=>sumMoney(txIn(m,'fatura').map(invoiceUndetailed));
 function payableInvoices(){
   const fms=new Set(S.tx.filter(t=>t.type==='despesa'&&t.fonte==='cartao').map(t=>dueMonth(t.date)));
   return [...fms].sort().map(fm=>{const its=S.tx.filter(t=>t.type==='despesa'&&t.fonte==='cartao'&&dueMonth(t.date)===fm),
@@ -1394,8 +1421,9 @@ function payableItems(fm){return openCard(null,null).filter(t=>dueMonth(t.date)=
  * cannot be read, it is copied aside (never overwritten) and a blank state is used instead; and once a day it
  * keeps the previous good copy, so yesterday's data can be restored. Pure functions over a storage adapter.
  */
+
 const BACKUP_SUFFIX='.bak',BROKEN_SUFFIX='.broken';
-const parseState=raw=>{try{const r=JSON.parse(raw);return r&&r.v===2?r:null;}catch(e){return null;}};
+const parseState=raw=>{try{const r=JSON.parse(raw);return r&&r.v===2?repairIdCounter(r):null;}catch(e){return null;}};
 // -> {state, recovered}: recovered=true when something was stored but could not be read (a copy was kept aside)
 function readState(storage,key,blank){
   const raw=storage.getItem(key);
@@ -1425,21 +1453,26 @@ function readBackup(storage,key){const b=readBackupRaw(storage,key),s=b&&parseSt
 
 
 
+
 const seed=()=>({v:2,goal:1300000,rate:12.5,planned:0,nid:1,
   accounts:[{id:'nu',name:'Nubank'},{id:'in',name:'Inter'},{id:'s28',name:'Tesouro Selic 2028'},{id:'s31',name:'Tesouro Selic 2031'}],
   snaps:[['nu',157062.83,true,159830.14],['in',154796,true],['s28',395040,true],['s31',423375,true]].map(([acc,value,est,gross])=>gross?({date:'2026-11-06',acc,value,est,gross}):({date:'2026-11-06',acc,value,est})),
   tx:[]});
 // nothing at all: no accounts, balances or records (what "Apagar tudo" leaves; the goal and the rate are settings and are kept)
 const blankState=prev=>({v:2,goal:prev?prev.goal:1300000,rate:prev?prev.rate:12.5,planned:0,nid:1,accounts:[],snaps:[],tx:[],...(prev&&prev.ownNames?{ownNames:prev.ownNames}:{})});
-// Santander was emptied: moves the balance to Nubank and archives the account (once)
+// Santander was emptied: moves the balance to Nubank and archives the account, once.
+// The "done" mark lives in the state (S.migrated.sa), so the move is never repeated, even if the account shows up again unarchived
+// (a state without the mark, such as a backup taken before the move, is migrated on its next open). States without a Santander account are left untouched.
 function migrate(){
+  if(S.migrated&&S.migrated.sa)return;
   const sa=S.accounts.find(a=>a.id==='sa'),nu=S.accounts.find(a=>a.id==='nu');
-  if(!sa||sa.archived||!nu)return;
+  if(!sa||!nu)return;
+  if(sa.archived){S.migrated={...S.migrated,sa:true};return;} // already moved by an earlier version: only the mark is added (stored with the next save)
   const d=today(),vSa=balance('sa',d).v,vNu=balance('nu',d).v;
   S.snaps=S.snaps.filter(s=>!(s.date===d&&(s.acc==='sa'||(vSa>0.005&&s.acc==='nu'))));
   if(vSa>0.005)S.snaps.push({date:d,acc:'nu',value:vNu+vSa,est:false});
   S.snaps.push({date:d,acc:'sa',value:0,est:false});
-  sa.archived=true;save();
+  sa.archived=true;S.migrated={...S.migrated,sa:true};save();
 }
 // storage is injected (DIP): the browser uses localStorage; tests pass an in-memory one
 let storage=typeof localStorage!=='undefined'?localStorage:{getItem:()=>null,setItem:()=>{}};
@@ -1449,7 +1482,12 @@ const bootNotice={recovered:false};
 // a first visit opens an empty app (the example data is on demand); unreadable data is kept aside, never overwritten
 function load(){const r=readState(storage,STORAGE_KEY,()=>blankState());bootNotice.recovered=r.recovered;return r.state;}
 const autoBackup=()=>readBackup(storage,STORAGE_KEY);
-function save(){invalidateAllocation();rollBackup(storage,STORAGE_KEY,today());storage.setItem(STORAGE_KEY,JSON.stringify(S));}
+function save(){invalidateAllocation();rollBackup(storage,STORAGE_KEY,today());storage.setItem(STORAGE_KEY,JSON.stringify(S));saveListeners.forEach(f=>{try{f();}catch(e){/* a listener must never break saving */}});}
+// who wants to know when the state was saved (the sync looks for changes to send); each listener is called after the data is stored
+const saveListeners=[];
+const onSave=fn=>{saveListeners.push(fn);};
+// the state as the sync has merged it from the server: stored like any other change
+function adoptRemoteState(next){S=repairIdCounter(next);save();}
 // swaps the whole state (backup import, reset); the caller saves it through transact()
 function replaceState(next){S=next;invalidateAllocation();}
 /**
@@ -1468,6 +1506,30 @@ function transact(mutate){
   try{save();}catch(e){restore();transact.lastError=e;return false;}
   return r===undefined?true:r;
 }
+// the error of the last failed change (for diagnosis); null until something fails
+transact.lastError=null;
+// storage used inside withState(): reads find nothing, writes are dropped
+const NO_STORAGE={getItem:()=>null,setItem:()=>{}};
+/**
+ * withState(state, fn): runs domain code against a given state (one user's data on the server, a test fixture)
+ * and puts the previous state back afterwards, also when fn throws. Nested calls are fine.
+ * - synchronous only: an async fn would let other code run while this state is in force, so a promise result
+ *   is refused with an error;
+ * - nothing is persisted: transact() inside it saves nowhere; storing the result is the caller's job;
+ * - returns {result, state}: state is the one in force at the end (a command may swap it, e.g. backup import).
+ * See docs/architecture/decisions/ADR-0006.
+ */
+function withState(state,fn){
+  if(!state||typeof state!=='object'||Array.isArray(state))throw new TypeError('withState: state must be an object');
+  if(typeof fn!=='function')throw new TypeError('withState: fn must be a function');
+  const prevState=S,prevStorage=storage;
+  S=state;storage=NO_STORAGE;invalidateAllocation();
+  try{
+    const result=fn();
+    if(result&&typeof result.then==='function')throw new Error('withState: fn must be synchronous');
+    return {result,state:S};
+  }finally{S=prevState;storage=prevStorage;invalidateAllocation();}
+}
 let S=load();
 
 // ---- src/domain/settings-commands.js
@@ -1480,9 +1542,10 @@ let S=load();
 
 
 
+
 const DEFAULT_GOAL=1300000;
 function setGoalSettings({goal,rate,planned}){S.goal=goal>0?goal:DEFAULT_GOAL;S.rate=rate>0?rate:0;S.planned=planned>0?roundMoney(planned):0;}
-function setPlannedContribution(v){S.planned=Math.round(v);}
+function setPlannedContribution(v){S.planned=roundMoney(v);} // cents, like the settings field: "use my average" must not lose them
 const clampDay=(v,def)=>Math.min(Math.max(Math.round(v)||def,1),31);
 function setCardSettings({best,due,biz}){
   S.card={best:clampDay(best,1),due:clampDay(due,7),biz:!!biz,over:CARD().over||{},v3:true};
@@ -1491,7 +1554,7 @@ function setCardSettings({best,due,biz}){
 // a different closing date for one invoice; equal to the rule means "no override"
 function setClosingOverride(fm,date){const c=CARD();c.over=c.over||{};if(date&&date!==ruleClosing(fm))c.over[fm]=date;else delete c.over[fm];S.card=c;}
 function importBackup(d){
-  if(d&&d.v===2&&Array.isArray(d.tx))return {state:d,converted:false};
+  if(d&&d.v===2&&Array.isArray(d.tx))return {state:repairIdCounter(d),converted:false};
   if(!d||!d.entries)return {error:'Arquivo inválido'};
   // old format (goal tracker): month entries with balances and contributions per account
   const n=seed();n.goal=d.goal||n.goal;n.rate=d.rate||n.rate;n.planned=d.planned||0;n.snaps=[];n.tx=[];
@@ -1563,6 +1626,75 @@ function hide(){
   clearTimeout(toast.h2);toast.h2=setTimeout(()=>{try{t.hidePopover&&t.hidePopover();}catch(e){}},300);
 }
 
+// ---- src/core/text-normalize.js
+/**
+ * core/text-normalize.js
+ * Responsibility: text helpers for matching descriptions: lowercase without accents or punctuation,
+ * the significant words of a description, and a short stable hash (used to recognise a file or a row again).
+ * Pure functions.
+ */
+const normalizeText=s=>String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+// words that say how the money moved, not who received it
+const NOISE=new Set(['compra','compras','debito','credito','pix','enviado','recebido','pagamento','pagto','pgto','transferencia','transf','cartao','no','na','em','de','da','do','das','dos','ltda','sa','me','epp','com','br','a','o','e','via','pag','parcela','parc','ted','doc']);
+// "COMPRA NO DEBITO - MERCADO EXTRA 1234" -> ['mercado','extra']
+// removes accents only: digits and punctuation stay (dates and amounts are matched on it)
+// an icon is a short symbol typed by the user (usually an emoji): at most 8 characters and none that can open
+// markup, so it is safe wherever it is shown (applied when saving AND when reading, so old data and backups are covered)
+const DEFAULT_ICON='🏷️';
+const safeIcon=v=>Array.from(String(v==null?'':v).replace(/[<>"'&`]/g,'').trim()).slice(0,8).join('')||DEFAULT_ICON;
+const stripAccents=t=>String(t==null?'':t).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const significantWords=s=>normalizeText(s).split(' ').filter(w=>w.length>=3&&!/^\d+$/.test(w)&&!NOISE.has(w));
+const descriptionKey=s=>significantWords(s).slice(0,3).join(' ');
+// FNV-1a, two seeds -> 16 hex chars (not for security: only to compare)
+function textHash(s){
+  s=String(s==null?'':s);let a=0x811c9dc5,b=0x9747b28c;
+  for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,0x01000193)>>>0;b=Math.imul(b^c,0x85ebca6b)>>>0;}
+  return a.toString(16).padStart(8,'0')+b.toString(16).padStart(8,'0');
+}
+
+// ---- src/domain/transactions.js
+/**
+ * domain/transactions.js
+ * Responsibility: Transaction queries (by month/type, contributions, category parts, future series)
+ * and the delete / undo-delete commands.
+ */
+
+
+
+
+
+const txIn=(m,type,upto)=>S.tx.filter(t=>t.type===type&&mOf(t.date)===m&&(!upto||t.date<=upto));
+const contributionsInMonth=m=>sum(txIn(m,'aporte',asOf(m)).map(t=>t.value));
+// category parts of a transaction: the informed splits + the remainder in the main category
+const catParts=t=>{const ex=t.splits||[];const rest=roundMoney(t.value-sumMoney(ex.map(s=>s.value)));return ex.concat(rest>0.004?[{cat:t.cat,value:rest}]:[]);};
+// "equal" future transactions (same Repeat series; for old ones, same data)
+const futureSiblings=t=>{
+  if(t.type==='fatura')return [];
+  if(t.serie)return S.tx.filter(x=>x.serie===t.serie&&x.id!==t.id&&x.date>t.date);
+  return S.tx.filter(x=>x.id!==t.id&&!x.serie&&x.type===t.type&&x.date>t.date&&mOf(x.date)!==mOf(t.date)&&x.cat===t.cat&&(x.desc||'')===(t.desc||'')&&(x.fonte||'')===(t.fonte||'')&&(x.acc||'')===(t.acc||'')&&Math.abs(x.value-t.value)<0.005);
+};
+// removes transactions and drops them from the invoices that listed them
+// returns what was removed ({removed, items}) so restoreTransactions can undo it exactly
+function deleteTransactions(ids){
+  const del=new Set(ids),copy=x=>JSON.parse(JSON.stringify(x));
+  const removed=S.tx.filter(t=>del.has(t.id)).map(copy),items={};
+  S.tx.forEach(t=>{if(t.items&&t.items.some(id=>del.has(id)))items[t.id]=t.items.slice();});
+  S.tx=S.tx.filter(t=>!del.has(t.id));
+  S.tx.forEach(t=>{if(t.items)t.items=t.items.filter(id=>!del.has(id));});
+  return {removed,items};
+}
+// undo of deleteTransactions: puts the records back with their ids and the invoices' lists as they were
+function restoreTransactions(undo){
+  if(!undo||!undo.removed||!undo.removed.length)return {error:'Nada para desfazer'};
+  const taken=new Set(S.tx.map(t=>t.id));
+  if(undo.removed.some(t=>taken.has(t.id)))return {error:'Esses lançamentos já existem'};
+  S.tx=S.tx.concat(undo.removed.map(t=>JSON.parse(JSON.stringify(t))));
+  Object.keys(undo.items||{}).forEach(id=>{const inv=S.tx.find(t=>String(t.id)===id);if(inv)inv.items=undo.items[id].slice();});
+  return {restored:undo.removed.length};
+}
+// the paid invoice that currently absorbs a card purchase (null when it is still open)
+function invoiceOfPurchase(t){const {map}=alloc();const id=Object.keys(map).find(k=>map[k].includes(t.id));return id?S.tx.find(x=>x.id===+id)||null:null;}
+
 // ---- src/domain/category-groups.js
 /**
  * domain/category-groups.js
@@ -1572,13 +1704,14 @@ function hide(){
  */
 
 
+
 const same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
 const expenseCats=()=>((S.cats||{}).despesa||[]);
 // group of a category name (the name itself when it has no group or is unknown)
 function groupOf(cat){const c=expenseCats().find(x=>x.name===cat);return (c&&c.group)||cat;}
 function groupIcon(g){
-  const gr=(S.groups||[]).find(x=>x.name===g);if(gr)return gr.icon;
-  const c=expenseCats().find(x=>x.name===g);return (c&&c.icon)||'🏷️';
+  const gr=(S.groups||[]).find(x=>x.name===g);if(gr)return safeIcon(gr.icon);
+  const c=expenseCats().find(x=>x.name===g);return safeIcon(c&&c.icon);
 }
 // category names inside a group (a lone category is a group of one)
 function categoriesOfGroup(g){
@@ -1601,7 +1734,7 @@ function ensureGroup(name,icon){
   S.groups=S.groups||[];
   const g=S.groups.find(x=>same(x.name,name));if(g)return g.name;
   const def=DEFAULT_GROUPS.find(([n])=>same(n,name));
-  S.groups.push({name:def?def[0]:name,icon:(def&&def[1])||icon||'🏷️'});return def?def[0]:name;
+  S.groups.push({name:def?def[0]:name,icon:safeIcon((def&&def[1])||icon)});return def?def[0]:name;
 }
 // once: creates the default groups and places every expense category that has no group yet
 function assignDefaultGroups(){
@@ -1615,6 +1748,7 @@ function assignDefaultGroups(){
  * domain/categories.js
  * Responsibility: Category catalog: create, rename, usage, icon and monthly totals (groups live in category-groups.js).
  */
+
 
 
 
@@ -1648,7 +1782,7 @@ function catUse(t,name){let n=0,v=0;S.tx.forEach(x=>{if(x.type!==t)return;
   const parts=t==='despesa'?catParts(x):[{cat:x.cat,value:x.value}];
   const hit=parts.filter(p=>p.cat===name);if(hit.length){n++;v+=sum(hit.map(p=>p.value));}});return {n,v};}
 function renameCat(t,from,to){S.tx.forEach(x=>{if(x.type!==t)return;if(x.cat===from)x.cat=to;(x.splits||[]).forEach(sp=>{if(sp.cat===from)sp.cat=to;});});}
-const icon=(t,c)=>((((S.cats||{})[t])||[]).find(x=>x.name===c)||{}).icon||(DEFAULT_CATEGORIES[t]&&DEFAULT_CATEGORIES[t][c])||LEG[c]||'🏷️';
+const icon=(t,c)=>safeIcon(((((S.cats||{})[t])||[]).find(x=>x.name===c)||{}).icon||(DEFAULT_CATEGORIES[t]&&DEFAULT_CATEGORIES[t][c])||LEG[c]);
 function catMonth(m){const c={};txIn(m,'despesa').forEach(t=>catParts(t).forEach(p=>c[p.cat]=roundMoney((c[p.cat]||0)+p.value)));
   txIn(m,'fatura').forEach(t=>{const u=invoiceUndetailed(t);if(u>0)c['Cartão (sem detalhe)']=(c['Cartão (sem detalhe)']||0)+u;});return c;}
 
@@ -1956,7 +2090,6 @@ function drawTower(real,rows){
   const goal=S.goal,all=real.concat(proj),N=all.length,nReal=real.length;
   const W=chartWidth($('chTower'),980,240),narrow=W<640,H=narrow?300:410,L=narrow?60:74,R=narrow?8:14,T=30,B=46,pw=W-L-R,ph=H-T-B;
   const sc=chartScale(all.map(a=>a.t),goal),ymax=sc.max,y=v=>T+ph-v/ymax*ph,bw=pw/N,w=Math.min(bw*0.7,48),step=niceStep(ymax);
-  const last=real[real.length-1];
   let s=`<defs><pattern id="hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="7" height="7" fill="${css('--proj')}" fill-opacity=".3"/><line x1="0" y1="0" x2="0" y2="7" stroke="${css('--proj')}" stroke-width="3"/></pattern></defs>`;
   for(let g=0;g<=ymax;g+=step)s+=`<line x1="${L}" x2="${W-R}" y1="${y(g)}" y2="${y(g)}" stroke="${css('--line')}"/><text x="${L-8}" y="${y(g)+4}" text-anchor="end" font-size="12" fill="${css('--muted')}">${axisText(g)}</text>`;
   const every=Math.ceil(N/(narrow?Math.max(3,Math.floor(W/70)):13));
@@ -2071,7 +2204,7 @@ function renderMeta(){
   const prog=Math.min(last.t/goal,1);
   const ets=hit===0?'🎉 Meta atingida!':(hit===null?'mais de 5 anos':hit+(hit===1?' mês':' meses'));
   const etaN=hit>0?`Previsto para ${mShort(mKey(mIdx(last.m)+hit))} · aporte de ${f0(S.planned)}/mês`:'';
-  const first=real[0],gain=sum(real.slice(1).map(r=>r.y||0));
+  const gain=sum(real.slice(1).map(r=>r.y||0));
   $('kMeta').innerHTML=
     `<div class="card hero tap" data-kpi="networth" role="button" tabindex="0" aria-label="Patrimônio líquido: ver contas"><span class="kpi-go" aria-hidden="true">›</span><div class="ring"><svg viewBox="0 0 132 132"><circle cx="66" cy="66" r="56" fill="none" stroke="${css('--soft')}" stroke-width="12"/><circle cx="66" cy="66" r="56" fill="none" stroke="${css('--brand')}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${(prog*351.86).toFixed(1)} 351.86" transform="rotate(-90 66 66)"/></svg><div class="pct">${Math.round(prog*100)}%</div></div><div><div class="k2">Patrimônio líquido hoje ${paceChip(real)}</div><div class="big">${f0(last.t)}</div><div class="n">${last.t>=goal?'🎉 Meta atingida':'Faltam <b>'+f0(goal-last.t)+'</b> para '+f0(goal)}</div><div class="n mt-2">${(()=>{const tg=totalGross(today());return 'Bruto nos apps: <b>'+(tg.ok?'':'≈ ')+f0(tg.g)+'</b> · IR embutido: '+f0(tg.g-last.t);})()}</div></div></div>`+
     kpi('','⏱️','Previsão para a meta',ets,etaN||'','','eta')+
@@ -2607,7 +2740,8 @@ function txRow(t,o){
   o=o||{};
   const v=o.value!==undefined?o.value:t.value,sign=o.sign!==undefined?o.sign:TX_SIGN[t.type];
   const cat=t.type==='despesa'||t.type==='receita'?(t.splits&&t.splits.length?catParts(t).map(p=>p.cat).join(' + '):t.cat):'';
-  const sub=o.sub!==undefined?o.sub:[formatDateBR(t.date),t.desc&&cat?cat:'',paymentLabel(t)].filter(Boolean).join(' · ');
+  // o.sub is HTML built by the caller; the default line carries user text (category, account) and is escaped
+  const sub=o.sub!==undefined?o.sub:esc([formatDateBR(t.date),t.desc&&cat?cat:'',paymentLabel(t)].filter(Boolean).join(' · '));
   return `<div class="li ${o.cls||''}" data-tx="${t.id}" role="button" tabindex="0" aria-label="${esc(txTitle(t))}, ${esc(f2(v))}. Abrir detalhes">
     <span class="li-ic" aria-hidden="true">${txIcon(t)}</span>
     <span class="li-main"><span class="li-t">${esc(o.title||txTitle(t))}${t.serie?' <span class="li-badge" title="Repete todo mês">🔁</span>':''}</span><span class="li-s">${sub}</span></span>
@@ -2662,6 +2796,8 @@ function planPayment(fm,selectedIds,mode,partialValue){
   else{value=all?inv.rest:sumMoney(chosen.map(t=>t.value));if(!(value>0))return {error:'Marque pelo menos uma compra'};}
   return {value,full:value>=inv.rest-0.004,remaining:Math.max(0,roundMoney(inv.rest-value)),items:mode!=='part'&&!all?chosen.map(t=>t.id):null};
 }
+// what a payment pays above what is open on the invoice (0 when it does not): the app counts it as an expense "Cartão (sem detalhe)", it is not a credit for later invoices
+const paymentExcess=(value,open)=>{const x=roundMoney(value-open);return x>0.004?x:0;};
 function payInvoice(fm,plan,date){
   if(!plan||plan.error)return plan||{error:'Pagamento inválido'};
   const tx={id:S.nid++,type:'fatura',date,value:roundMoney(plan.value),desc:'',cat:INVOICE_CATEGORY,fm};
@@ -2709,7 +2845,7 @@ function classifyUndetailed(invoiceId,{cat,desc,value}){
 
 
 // ---- pay invoice (quick mode): pick the invoice and the amount, no date/description ----
-let paySel=null,payMode='total';
+let payMode='total';
 const isQuickPay=()=>ui.type==='fatura'&&ui.editId===null&&!ui.payAdvanced;
 let payOpen=null,payIds=null,payIdsFm=null;
 async function cancelPay(t){
@@ -2729,7 +2865,6 @@ function renderPay(){
   if(!L.length){box.innerHTML='<div class="empty pay-empty">Nenhuma fatura em aberto. Lance as compras com “Cartão de crédito” para elas aparecerem aqui.</div><div class="tc"><button type="button" class="btn sm" id="payAdv">Registrar pagamento manualmente</button></div>'+paidInvoicesList();bindPaidInvoices(box);$('payAdv').onclick=()=>{ui.payAdvanced=true;fillCategoryOptions();};return;}
   if(payOpen===null){const nf=nearestDueMonth(t0);payOpen=(L.find(f=>f.fm===nf)||L[0]).fm;}
   if(payOpen&&!L.some(f=>f.fm===payOpen))payOpen=L[0].fm;
-  paySel=payOpen;
   const fmNow=dueMonth(t0),head=L.filter(f=>f.fm<=fmNow),fut=L.filter(f=>f.fm>fmNow);
   const f=L.find(x=>x.fm===payOpen);
   let its=[];
@@ -2767,7 +2902,8 @@ function renderPay(){
   $('payGo').onclick=async()=>{
     const partial=payMode==='part',plan=planPayment(f.fm,[...payIds],payMode,partial?parseMoney($('payVal').value):0);
     if(plan.error)return partial?fieldError($('payVal'),plan.error):toast('⚠️ '+plan.error);
-    const html=`${plan.full?'Pagar a fatura':'Pagar <b>parcialmente</b> a fatura'} que vence em <b>${formatDateBR(dueDateOf(f.fm))}</b>?<dl class="dl mt-10"><div class="dl-r"><dt>Valor</dt><dd><b>${f2(plan.value)}</b></dd></div>${plan.full?'':`<div class="dl-r"><dt>Falta depois</dt><dd>${f2(plan.remaining)}</dd></div>`}<div class="dl-r"><dt>Data</dt><dd>hoje, ${formatDateBR(t0)}</dd></div></dl>${plan.value>f.rest+0.004?`<div class="bd-note">⚠️ O valor é maior que o da fatura (${f2(f.rest)}).</div>`:''}`;
+    const excess=paymentExcess(plan.value,f.rest);
+    const html=`${plan.full?'Pagar a fatura':'Pagar <b>parcialmente</b> a fatura'} que vence em <b>${formatDateBR(dueDateOf(f.fm))}</b>?<dl class="dl mt-10"><div class="dl-r"><dt>Valor</dt><dd><b>${f2(plan.value)}</b></dd></div>${plan.full?'':`<div class="dl-r"><dt>Falta depois</dt><dd>${f2(plan.remaining)}</dd></div>`}<div class="dl-r"><dt>Data</dt><dd>hoje, ${formatDateBR(t0)}</dd></div></dl>${excess>0?`<div class="bd-note">⚠️ <b>O valor é maior que o em aberto.</b> Em aberto: ${f2(f.rest)}. Você vai pagar: ${f2(plan.value)}. Diferença: <b>${f2(excess)}</b>.<br>A diferença será registrada como <b>despesa “Cartão (sem detalhe)”</b> neste mês; não vira crédito para as próximas faturas.</div>`:''}`;
     if(!await askConfirm({title:'Confirmar pagamento',html,ok:'💳 Pagar '+f2(plan.value)}))return;
     if(!runCommand(()=>payInvoice(f.fm,plan,t0),{render:false}))return;
     payMode='total';payIds=null;ui.cur=mOf(t0);render();
@@ -2941,8 +3077,12 @@ function bindInvoiceMonthField(){
     set(v){if(v&&![...sel.options].some(o=>o.value===v)){sel.insertAdjacentHTML('beforeend',`<option value="${v}">${formatDateBR(dueDateOf(v))}</option>`);}_selectValue.set.call(sel,v);}});
   fillInvoiceMonths();
 }
-function initInvoiceForm(){if(ui.editId===null)$('fFm').value=nearestDueMonth($('fDate').value||today());
+// marks the open purchases of the invoice that is chosen (or all of them when "any date" is on); never changes the chosen invoice
+function selectInvoicePurchases(){
   ui.invoiceSelection=new Set(openCard(null,ui.editId).filter(t=>$('fAll').checked||dueMonth(t.date)===$('fFm').value).map(t=>t.id));}
+// a new payment starts on the invoice of its date; choosing another invoice (or ticking "any date") must keep that choice
+function initInvoiceForm(){if(ui.editId===null)$('fFm').value=nearestDueMonth($('fDate').value||today());
+  selectInvoicePurchases();}
 function drawInvoiceForm(ex){
   ex=ex===undefined?ui.editId:ex;
   const fmSel=$('fFm').value||nearestDueMonth($('fDate').value||today());
@@ -2992,7 +3132,7 @@ function startEdit(id){
   const sib=futureSiblings(t);$('wApply').hidden=!(sib.length);$('fApply').checked=true;$('applyN').textContent=sib.length;
   ui.editId=id;$('fCancel').hidden=false;$('fRep').disabled=true;fillCategoryOptions();
 }
-function endEdit(){resetSplit();ui.invoiceSelection=new Set();$('wApply').hidden=true;ui.editId=null;$('fCancel').hidden=true;$('fRep').disabled=false;ui.payAdvanced=false;fillCategoryOptions();}
+function endEdit(){resetSplit();ui.invoiceSelection=new Set();$('wApply').hidden=true;ui.editId=null;$('fCancel').hidden=true;$('fRep').disabled=false;$('fRep').value='1';ui.payAdvanced=false;fillCategoryOptions();}
 const SAVE_LABEL={despesa:'Adicionar despesa',receita:'Adicionar receita',aporte:'Registrar aporte',fatura:'Registrar pagamento'};
 function updateSaveLabel(){
   $('fSave').textContent=ui.editId!==null?'Salvar alterações':SAVE_LABEL[ui.type]||'Adicionar';
@@ -3109,28 +3249,6 @@ function bindTransactionFormSheet(){
     endEdit();$('fVal').value='';$('fDesc').value='';clearFieldErrors($('txForm'));};
 }
 
-// ---- src/core/text-normalize.js
-/**
- * core/text-normalize.js
- * Responsibility: text helpers for matching descriptions: lowercase without accents or punctuation,
- * the significant words of a description, and a short stable hash (used to recognise a file or a row again).
- * Pure functions.
- */
-const normalizeText=s=>String(s==null?'':s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
-// words that say how the money moved, not who received it
-const NOISE=new Set(['compra','compras','debito','credito','pix','enviado','recebido','pagamento','pagto','pgto','transferencia','transf','cartao','no','na','em','de','da','do','das','dos','ltda','sa','me','epp','com','br','a','o','e','via','pag','parcela','parc','ted','doc']);
-// "COMPRA NO DEBITO - MERCADO EXTRA 1234" -> ['mercado','extra']
-// removes accents only: digits and punctuation stay (dates and amounts are matched on it)
-const stripAccents=t=>String(t==null?'':t).normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-const significantWords=s=>normalizeText(s).split(' ').filter(w=>w.length>=3&&!/^\d+$/.test(w)&&!NOISE.has(w));
-const descriptionKey=s=>significantWords(s).slice(0,3).join(' ');
-// FNV-1a, two seeds -> 16 hex chars (not for security: only to compare)
-function textHash(s){
-  s=String(s==null?'':s);let a=0x811c9dc5,b=0x9747b28c;
-  for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);a=Math.imul(a^c,0x01000193)>>>0;b=Math.imul(b^c,0x85ebca6b)>>>0;}
-  return a.toString(16).padStart(8,'0')+b.toString(16).padStart(8,'0');
-}
-
 // ---- src/core/import-values.js
 /**
  * core/import-values.js
@@ -3206,7 +3324,7 @@ function parseCsv(text){
   return rows;
 }
 const NAMES={
-  date:/^(data|date|dt|data (da |de )?(transacao|lancamento|compra|movimentacao|operacao|pagamento))$/,
+  date:/^(data|date|dt|data (d[aeo] )?(transacao|lancamento|compra|movimentacao|operacao|pagamento))$/,
   desc:/(descri|historico|titulo|title|estabelecimento|memo|detalhe|beneficiario|favorecido|lancamento|nome)/,
   value:/^(valor|value|amount|quantia|montante|valor \(?r\$?\)?)$/,
   debit:/(debito|saida|saidas|despesa|debit)/,
@@ -3329,6 +3447,7 @@ function joinPieces(items){
 // Statements with separate "Crédito" and "Débito" columns (Bradesco, Itaú...) print values without a sign:
 // the column says the direction. The header row gives where each column is; a value below it gets " C" or
 // " D" (the reader already understands that suffix). Values under "Saldo" are left alone.
+/** @type {[string, RegExp, string|null][]} */
 const COLUMN_HEADS=[['credit',/^cr[eé]dito/i,'C'],['debit',/^d[eé]bito/i,'D'],['balance',/^saldo/i,null]];
 const MONEY_PIECE=/^\d{1,3}(?:\.\d{3})*,\d{2}$/;
 const center=i=>i.x+(i.w||0)/2;
@@ -3565,6 +3684,7 @@ const FLAG_TEXT={
   'check-aporte':'Parece um aporte (dinheiro indo para um investimento). Escolha o investimento de destino ou mude o tipo.',
   'sign-guess':'O PDF não mostra se é entrada ou saída: deduzi pelo texto. Confirme.',
   'two-amounts':'A linha do PDF tinha dois valores: usei o primeiro (o segundo costuma ser o saldo).',
+  'possible-transfer':'Entrada com palavra de investimento ou resgate (aplicação, tesouro, resgate…): pode ser uma transferência sua, então não entrou nos totais. Se for renda de verdade, mude o tipo para receita.',
   'transfer-pair':'O outro lado desta transferência parece já estar salvo como receita ou despesa.'};
 const OWN_TRANSFER_TEXT='Transferência entre suas contas: não é receita nem despesa. Fica guardada para o app reconhecer o outro lado quando você importar o outro banco.';
 const BALANCE=/^(saldo|total|subtotal|sub total)\b|\bsaldo (anterior|final|inicial|do dia|disponivel|parcial|em conta|total)\b/;
@@ -3603,7 +3723,9 @@ function classifyEntry(entry,flow,kind,ctx){
     r.type=IMPORT_TYPE.contribution;return r;
   }
   if(OWN_TRANSFER.test(n)&&kind==='bank'){r.type=IMPORT_TYPE.ownTransfer;return r;}
-  if(OWN_TRANSFER.test(n)||(flow==='in'&&(REDEMPTION.test(n)||(INVEST_WORDS.test(n)&&kind==='bank')))){r.type=IMPORT_TYPE.ignore;r.reason=IGNORE_REASON.transfer;return r;}
+  if(OWN_TRANSFER.test(n)){r.type=IMPORT_TYPE.ignore;r.reason=IGNORE_REASON.transfer;return r;}
+  // money in with an investment or redemption word is not counted as income or expense on its own, but it is flagged for review (a shop can have such a word in its name): owner decision Q5
+  if(flow==='in'&&(REDEMPTION.test(n)||(INVEST_WORDS.test(n)&&kind==='bank'))){r.type=IMPORT_TYPE.ignore;r.reason=IGNORE_REASON.transfer;r.flags.push('possible-transfer');return r;}
   if(flow==='out'&&kind==='bank'&&INVEST_WORDS.test(n)){r.type=IMPORT_TYPE.contribution;r.flags.push('check-aporte');return r;}
   // a salary credited in the user's name is still income ("TED CONTA SALARIO MARIA SOUZA")
   if(kind==='bank'&&!SALARY_WORDS.test(n)&&mentionsOwnName(entry.desc,(ctx||{}).ownNames)){r.type=IMPORT_TYPE.ownTransfer;return r;}
@@ -3778,6 +3900,8 @@ function selectionSummary(drafts){
 }
 // transfers between own accounts that confirming will keep (not the ones already kept by an earlier import)
 const keptTransfers=drafts=>drafts.filter(d=>d.type===IMPORT_TYPE.ownTransfer&&!(d.dup&&d.dup.level==='confirmed')&&d.date&&d.value>0);
+// lines left out of the totals because they look like a transfer of the person's own money, but that the person must look at (Q5)
+const possibleTransfers=drafts=>drafts.filter(d=>d.type===IMPORT_TYPE.ignore&&d.flags.includes('possible-transfer'));
 // what the review screen shows on top (a preview: nothing here is saved)
 function importOverview(drafts){
   const sel=selectionSummary(drafts),saveable=drafts.filter(isSaveable);
@@ -3792,7 +3916,8 @@ function importOverview(drafts){
     contributions:saveable.filter(d=>d.type===IMPORT_TYPE.contribution).length,
     contributionTotal:sumMoney(saveable.filter(d=>d.type===IMPORT_TYPE.contribution).map(d=>d.value)),
     expenseTotal:sumMoney(saveable.filter(d=>d.type===IMPORT_TYPE.expense).map(d=>d.value)),
-    review:saveable.filter(d=>needsReview(d)||draftProblems(d).length).length,
+    possibleTransfers:possibleTransfers(drafts).length,
+    review:saveable.filter(d=>needsReview(d)||draftProblems(d).length).length+possibleTransfers(drafts).length,
     confirmedDup:drafts.filter(d=>d.dup&&d.dup.level==='confirmed').length,
     possibleDup:drafts.filter(d=>d.dup&&d.dup.level==='possible').length,
     months:[...new Set(saveable.map(targetMonth).filter(Boolean))].sort(),
@@ -4088,6 +4213,7 @@ const REPORT_MONTHS=6,REPORT_GROUPS=6,REPORT_BIGGEST=5,REPORT_OTHER_GROUP='Outro
 const EPS=0.004;
 // the biggest groups, the small ones together as "Outros"; share = part of the month's expenses
 function groupsOf(m,expenses){
+  /** @type {{name:string, value:number, count?:number}[]} */
   const rows=Object.entries(groupMonth(m)).filter(([,v])=>v>EPS).map(([name,value])=>({name,value:roundMoney(value)}))
     .sort((a,b)=>b.value-a.value);
   const top=rows.slice(0,REPORT_GROUPS),rest=rows.slice(REPORT_GROUPS);
@@ -4546,6 +4672,7 @@ const CUSTODY_TOTAL_ROW=new RegExp('total geral\\s+'+MONEY_RE+'\\s+'+MONEY_RE+'\
 const CUSTODY_DATE_ROW=/custodia em:?\s*(\d{2}\/\d{2}\/\d{4})/;
 // who issued the statement (by the names printed on it) and the first kind of investment of the summary,
 // to suggest the account name ("Nubank Caixinhas") when the user has no account for it yet
+/** @type {[RegExp, string][]} */
 const BROKERS=[[/\bnu investimentos\b|\bnubank\b|\bnu pagamentos\b/,'Nubank'],[/\bxp investimentos\b/,'XP'],[/\bbanco inter\b|\binter dtvm\b/,'Inter'],
   [/\bbtg pactual\b/,'BTG'],[/\brico\b/,'Rico'],[/\bclear corretora\b/,'Clear'],[/\bitau\b/,'Itaú'],[/\bbradesco\b/,'Bradesco'],[/\bsantander\b/,'Santander']];
 const FIRST_KIND=/saldo liquido \(r\$\)\s+([a-z][a-z ]{2,30}?)\s+\d/;
@@ -4809,12 +4936,12 @@ async function loadPdfjs(){
 }
 async function pdfText(file){
   let lib;
-  try{lib=await loadPdfjs();}catch(e){throw new Error('Não consegui carregar o leitor de PDF. Use CSV ou OFX por enquanto.');}
+  try{lib=await loadPdfjs();}catch(e){throw new Error('Não consegui carregar o leitor de PDF. Use CSV ou OFX por enquanto.',{cause:e});}
   // pdf.js takes ownership of the bytes it is given: always hand it a copy, so the same file can be read again
   const data=new Uint8Array((await file.arrayBuffer()).slice(0));
   let doc;
   try{doc=await lib.getDocument({data,isEvalSupported:false}).promise;}
-  catch(e){throw new Error(e&&e.name==='PasswordException'?'Este PDF tem senha. Baixe uma versão sem senha ou exporte CSV/OFX.':'Não consegui abrir este PDF (arquivo corrompido ou protegido).');}
+  catch(e){throw new Error(e&&e.name==='PasswordException'?'Este PDF tem senha. Baixe uma versão sem senha ou exporte CSV/OFX.':'Não consegui abrir este PDF (arquivo corrompido ou protegido).',{cause:e});}
   if(doc.numPages>IMPORT_LIMITS.maxPdfPages){await doc.destroy();throw new Error(`PDF com ${doc.numPages} páginas (máximo ${IMPORT_LIMITS.maxPdfPages}). Baixe um período menor.`);}
   const lines=[];
   for(let i=1;i<=doc.numPages;i++){
@@ -4853,7 +4980,7 @@ async function fileText(file){
 async function loadImportFile(file,opts){
   const token=importState.token;
   const isPdf=/\.pdf$/i.test(file.name)||file.type==='application/pdf',tooBig=file.size>(isPdf?IMPORT_LIMITS.maxPdfBytes:IMPORT_LIMITS.maxBytes);
-  let text='';
+  let text;
   try{text=tooBig?'':isPdf?await withTimeout(pdfText(file),PDF_TIMEOUT_MS):await fileText(file);}
   catch(e){return {error:isPdf&&e.message?e.message:'Não consegui ler o arquivo. Tente de novo ou exporte outro.'};}
   if(token!==importState.token)return {cancelled:true};
@@ -5830,6 +5957,7 @@ const demoMonths=()=>{const end=mIdx(mOf(today()));return Array.from({length:DEM
 // a day of that month, never later than today (no records in the future)
 const demoDate=(month,day)=>{const t=today(),d=month+'-'+String(day).padStart(2,'0');return d>t?t:d;};
 // [month offset from the first month, ticker, class, side, qty, price]
+/** @type {[number, string, string, string, number, number][]} */
 const DEMO_TRADES=[[0,'PETR4','acao','C',100,36.4],[1,'HGLG11','fii','C',20,155.2],[2,'IVVB11','etf','C',10,298.5],[3,'VALE3','acao','C',40,62.1],
   [4,'HGLG11','fii','C',15,157.9],[5,'PETR4','acao','C',60,37.8],[6,'IVVB11','etf','C',8,305.3],[8,'VALE3','acao','V',15,64.7],[9,'XPLG11','fii','C',30,98.4],[10,'BOVA11','etf','C',12,128.6],[11,'HGLG11','fii','C',10,161.3],[11,'ITSA4','acao','C',200,10.2]];
 const demoAccountFor=cls=>{
@@ -5838,6 +5966,7 @@ const demoAccountFor=cls=>{
   const id='a'+(S.nid++);S.accounts.push({id,name,demo:true});return id;
 };
 // investment accounts with made-up balances that grow every month, so the Investments screen and the chart are full
+/** @type {[string, number, number, number][]} */
 const DEMO_ACCOUNTS=[['Renda fixa (teste)',18000,0.009,1500],['Tesouro Selic (teste)',30000,0.010,0],['CDB liquidez diária (teste)',9000,0.0085,300],['Reserva de emergência (teste)',12000,0.008,0]];
 function addDemoAccounts(months){
   const ids=DEMO_ACCOUNTS.map(([name,v0,rate,aporte])=>{
@@ -5892,14 +6021,14 @@ function removeDemoData(){
 function addDemoData(){
   removeDemoData();
   let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+  /** @type {[string, string, number, number, number][]} */
   const base=[['Moradia','Condomínio',685,0,5],['Internet','Internet',120,0,10],['Luz','Conta de luz',190,.25,15],['Mercado','Mercado',880,.18,8],['Mercado','Mercado',420,.3,22],
     ['Transporte','Combustível',260,.25,12],['Saúde','Plano e farmácia',340,.3,18],['Restaurantes','Restaurantes e delivery',300,.4,20],['Lazer','Lazer e passeios',240,.5,25],['Assinaturas','Streaming e apps',95,.05,3]];
-  let n=0;
   demoMonths().forEach((m,k)=>{const g=1+k*0.012; // slow rise of ~1.2% per month
     base.forEach(([cat,desc,v,var_,day])=>{ensureCat('despesa',cat);
       const val=Math.round(v*(cat==='Moradia'||cat==='Internet'||cat==='Assinaturas'?(1+k*0.004):g)*(1+(rnd()*2-1)*var_)*100)/100;
-      S.tx.push({id:S.nid++,type:'despesa',date:demoDate(m,day),value:val,desc,cat,fonte:'caixa',demo:true});n++;});
-    if(k===3||k===7){ensureCat('despesa','Imprevistos / Outros');S.tx.push({id:S.nid++,type:'despesa',date:demoDate(m,27),value:Math.round((500+rnd()*700)*100)/100,desc:'Imprevisto (teste)',cat:'Imprevistos / Outros',fonte:'caixa',demo:true});n++;}});
+      S.tx.push({id:S.nid++,type:'despesa',date:demoDate(m,day),value:val,desc,cat,fonte:'caixa',demo:true});});
+    if(k===3||k===7){ensureCat('despesa','Imprevistos / Outros');S.tx.push({id:S.nid++,type:'despesa',date:demoDate(m,27),value:Math.round((500+rnd()*700)*100)/100,desc:'Imprevisto (teste)',cat:'Imprevistos / Outros',fonte:'caixa',demo:true});}});
   addDemoExtras();
   invalidateAllocation();
   return S.tx.filter(t=>t.demo).length;
@@ -5944,7 +6073,7 @@ $('demoOff').onclick=async()=>{if(!hasDemoData()||!await askConfirm({title:'Remo
 
 
 function renderTrend(){
-  const sv=$('chTrend'),nowM=mOf(today());
+  const sv=$('chTrend');
   if(!S.tx.length){sv.innerHTML='';$('trendSum').innerHTML='<div class="empty">Lance despesas para ver a evolução.</div>';return;}
   const {ms,vals,part,ci}=spendingWindow(ui.cur),cv=ci.map(k=>vals[k]),n=cv.length;
   const tr=linearTrend(ci,cv),avg=tr.avg,slope=n>=3?tr.slope:0,icpt=n>=3?tr.intercept:avg;
@@ -6174,7 +6303,8 @@ function renderTransactions(){
   rows.forEach(({t,value})=>{
     if(all&&mOf(t.date)!==month){month=mOf(t.date);h+=`<div class="li-month">${mLabel(month)}</div>`;}
     if(t.date!==day){day=t.date;h+=`<div class="li-day">${new Date(day+'T12:00').toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'})}</div>`;}
-    const sub=[t.type==='fatura'?invoiceItems(t).length+' compra(s) identificada(s)'+(invoiceUndetailed(t)>0?' · '+f2(invoiceUndetailed(t))+' sem detalhe':''):t.desc&&t.cat?(t.splits&&t.splits.length?catParts(t).map(p=>p.cat).join(' + '):t.cat):'',paymentLabel(t)].filter(Boolean).join(' · ');
+    // the category is the person's text: the line goes into HTML escaped
+    const sub=esc([t.type==='fatura'?invoiceItems(t).length+' compra(s) identificada(s)'+(invoiceUndetailed(t)>0?' · '+f2(invoiceUndetailed(t))+' sem detalhe':''):t.desc&&t.cat?(t.splits&&t.splits.length?catParts(t).map(p=>p.cat).join(' + '):t.cat):'',paymentLabel(t)].filter(Boolean).join(' · '));
     h+=txRow(t,{sub,value:ui.group?value:undefined,actions:`<span class="li-act"><button type="button" class="btn sm" data-edit="${t.id}" aria-label="Editar">Editar</button></span>`});
   });
   const tot=listTotal(rows),signed=ui.filt===ALL_TYPES&&!ui.group;
@@ -6499,9 +6629,10 @@ $('addAcc').onclick=()=>{if(runCommand(()=>addAccount($('newAcc').value),{ok:'Co
 
 
 
+
 const sameName=(a,b)=>a.toLowerCase()===b.toLowerCase();
 function setCategoryEnabled(t,i,on){const c=S.cats[t][i];if(on)delete c.off;else c.off=true;return {name:c.name};}
-function setCategoryIcon(t,i,ic){S.cats[t][i].icon=(ic||'').trim()||'🏷️';}
+function setCategoryIcon(t,i,ic){S.cats[t][i].icon=safeIcon(ic);}
 function renameCategoryAt(t,i,name){
   const c=S.cats[t][i],nn=(name||'').trim();
   if(!nn||nn===c.name)return {name:c.name,unchanged:true};
@@ -6512,7 +6643,7 @@ function addCategory(t,name,ic){
   const nn=(name||'').trim();
   if(!nn)return {error:'Digite o nome da categoria'};
   if(S.cats[t].some(x=>sameName(x.name,nn)))return {error:'Essa categoria já existe'};
-  const c={name:nn,icon:(ic||'').trim()||'🏷️'},g=t==='despesa'?suggestGroup(nn):null;
+  const c={name:nn,icon:safeIcon(ic)},g=t==='despesa'?suggestGroup(nn):null;
   if(g)c.group=ensureGroup(g);
   S.cats[t].push(c);return {name:nn,group:c.group||null};
 }
@@ -6526,7 +6657,7 @@ function deleteCategoryAt(t,i,moveTo){
   S.cats[t].splice(i,1);return {name:c.name,movedTo:used?moveTo:null};
 }
 function addCategories(list){let added=0;list.forEach(({name,icon})=>{if(!S.cats.despesa.some(c=>sameName(c.name,name))){
-  const c={name,icon},g=suggestGroup(name);if(g)c.group=ensureGroup(g);S.cats.despesa.push(c);added++;}});return {added};}
+  const c={name,icon:safeIcon(icon)},g=suggestGroup(name);if(g)c.group=ensureGroup(g);S.cats.despesa.push(c);added++;}});return {added};}
 // moves an expense category to a group; a new group name creates the group; empty = no group
 function setCategoryGroup(i,name){
   const c=S.cats.despesa[i],nn=(name||'').trim();
@@ -6535,7 +6666,7 @@ function setCategoryGroup(i,name){
   c.group=ensureGroup(nn,c.icon);return {name:c.name,group:c.group};
 }
 // group icon (the group must exist)
-function setGroupIcon(name,ic){const g=(S.groups||[]).find(x=>x.name===name);if(!g)return {error:'Grupo não encontrado'};g.icon=(ic||'').trim()||'🏷️';return {name};}
+function setGroupIcon(name,ic){const g=(S.groups||[]).find(x=>x.name===name);if(!g)return {error:'Grupo não encontrado'};g.icon=safeIcon(ic);return {name};}
 
 // ---- src/ui/views/categories.js
 /**
@@ -6746,6 +6877,71 @@ function backupReminder(lastBackup,now){
   return {show:hasData&&(days===null||days>REMIND_AFTER_DAYS),days};
 }
 
+// ---- src/ui/native-bridge.js
+/**
+ * ui/native-bridge.js
+ * Responsibility: what changes when the app runs inside the Android shell (Capacitor) instead of a browser: how it knows, and how a file leaves the phone.
+ * A WebView does not download a Blob link, so a backup goes through the system share sheet (save to Files, Drive, e-mail, ...).
+ * The platform is a parameter (default: the global Capacitor object) so the logic runs in tests without a device.
+ */
+const isNative=(cap=globalThis.Capacitor)=>!!(cap&&typeof cap.isNativePlatform==='function'&&cap.isNativePlatform());
+/**
+ * Writes `text` to a file in the app's cache and opens the share sheet for it.
+ * Returns {ok:true}, or {ok:false,cancelled:true} when the person closed the sheet, or {ok:false,error} when it could not be done.
+ */
+async function shareTextFile(text,name,cap=globalThis.Capacitor){
+  const P=cap&&cap.Plugins;
+  if(!isNative(cap)||!P||!P.Filesystem||!P.Share)return {ok:false,error:'sharing is not available here'};
+  try{
+    const file=await P.Filesystem.writeFile({path:name,data:text,directory:'CACHE',encoding:'utf8'});
+    await P.Share.share({title:name,dialogTitle:'Salvar backup',url:file.uri});
+    return {ok:true};
+  }catch(e){
+    const msg=String(e&&e.message||e);
+    // closing the sheet is an answer, not a failure
+    if(/cancel/i.test(msg))return {ok:false,cancelled:true};
+    return {ok:false,error:msg};
+  }
+}
+
+// ---- the hardware Back button ----
+// The Android WebView does not give a <dialog> the Back gesture, and Capacitor then leaves the app. So the app answers Back itself:
+// the innermost thing on screen closes first, then the tab goes back to the summary, and only then the app is left.
+const DIALOGS=['itemDlg','sugDlg','catDlg'];
+/** What Back should do for what is on screen: 'confirm-cancel' | 'dialog-close' | 'sheet-back' | 'sheet-close' | 'home' | 'exit'. s: {locked,confirmOpen,dialogOpen,sheetOpen,sheetDepth,tab} */
+function backAction(s){
+  if(s.locked)return 'exit';
+  if(s.confirmOpen)return 'confirm-cancel';
+  if(s.dialogOpen)return 'dialog-close';
+  if(s.sheetOpen)return s.sheetDepth>1?'sheet-back':'sheet-close';
+  if(s.tab&&s.tab!=='resumo')return 'home';
+  return 'exit';
+}
+/** What is on screen, read from the page (the confirmation, the other dialogs, the sheet and how deep it is, the current tab). */
+function readScreen(doc){
+  const open=id=>{const d=doc.getElementById(id);return !!(d&&d.open);};
+  const on=doc.querySelector('#nav button.on');
+  return {locked:open('lockDlg'),confirmOpen:open('confirmDlg'),dialogOpen:DIALOGS.some(open),sheetOpen:open('sheet'),
+    sheetDepth:doc.getElementById('shBack')&&!doc.getElementById('shBack').hidden?2:1,tab:on?on.dataset.t:'resumo'};
+}
+/** Does what backAction said, through the app's own controls (so each screen cleans up the way it always does). */
+function doBack(action,doc,cap=globalThis.Capacitor){
+  const click=sel=>{const e=doc.querySelector(sel);if(e)e.click();};
+  if(action==='confirm-cancel')click('#cfCancel');
+  else if(action==='dialog-close'){const d=DIALOGS.map(id=>doc.getElementById(id)).find(x=>x&&x.open);if(d)d.close();}
+  else if(action==='sheet-back')click('#shBack');
+  else if(action==='sheet-close')click('#shClose');
+  else if(action==='home')click('#nav [data-t=resumo]');
+  else if(action==='exit'){const A=cap&&cap.Plugins&&cap.Plugins.App;if(A&&A.exitApp)A.exitApp();}
+}
+/** Listens to the Back button inside the Android shell; a no-op in a browser. Returns true when it is listening. */
+function bindNativeBack(doc=document,cap=globalThis.Capacitor){
+  const A=cap&&cap.Plugins&&cap.Plugins.App;
+  if(!isNative(cap)||!A||typeof A.addListener!=='function')return false;
+  A.addListener('backButton',()=>doBack(backAction(readScreen(doc)),doc,cap));
+  return true;
+}
+
 // ---- src/ui/views/backup.js
 /**
  * ui/views/backup.js
@@ -6760,21 +6956,430 @@ function backupReminder(lastBackup,now){
 
 
 
+
 const LAST_BACKUP_KEY='metaapp.lastBackup';
 function renderBackup(){renderDemo();renderAdvanced();
   const r=backupReminder(+localStorage.getItem(LAST_BACKUP_KEY)||0,Date.now());
   $('bkNote').innerHTML=r.show?`<div class="banner"><span>${r.days!==null?'Seu último backup foi há '+r.days+' dias.':'Você ainda não fez backup.'} Os dados ficam só neste navegador.</span><button class="btn sm pri" id="bkNow">Fazer backup agora</button></div>`:'';
   const b=$('bkNow');if(b)b.onclick=()=>$('exp').click();
 }
-function downloadJSON(data,name){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));a.download=name;a.click();}
+async function downloadJSON(data,name){
+  const text=JSON.stringify(data,null,2);
+  if(isNative()){const r=await shareTextFile(text,name);if(!r.ok&&!r.cancelled)toast('⚠️ Não foi possível salvar o backup: '+r.error);return r.ok;}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.download=name;a.click();return true;}
 function bindBackup(){
-$('exp').onclick=()=>{localStorage.setItem(LAST_BACKUP_KEY,String(Date.now()));renderBackup();downloadJSON(S,'meta1300k-backup.json');};
+// the reminder only counts as done when the file really left (on the phone the person may close the share sheet)
+$('exp').onclick=async()=>{if(await downloadJSON(S,'meta1300k-backup.json')){localStorage.setItem(LAST_BACKUP_KEY,String(Date.now()));renderBackup();}};
 $('imp').onclick=()=>$('file').click();
 $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileReader();
   rd.onload=()=>{let d;try{d=JSON.parse(rd.result);}catch(x){return toast('⚠️ Arquivo inválido');}
     const r=importBackup(d);if(r.error)return toast('⚠️ '+r.error);
     runCommand(()=>replaceState(r.state),{ok:r.converted?'Backup antigo convertido. Confira os saldos na aba Patrimônio.':'✅ Backup importado'});};
   rd.readAsText(f);e.target.value='';};
+}
+
+// ---- src/sync/api-client.js
+/**
+ * sync/api-client.js
+ * Responsibility: talks to the API (push, changes, who am I) and turns every failure into the few kinds the sync understands. fetch is injected.
+ */
+const JSON_HEADERS={'content-type':'application/json','x-everfox-csrf':'1'};
+/** @param {typeof fetch} fetchFn @param {string} [base] */
+function createApiClient(fetchFn,base=''){
+  async function call(method,path,body){
+    let res;
+    try{res=await fetchFn(base+path,{method,credentials:'same-origin',headers:JSON_HEADERS,body:body===undefined?undefined:JSON.stringify(body)});}
+    catch(e){throw {kind:'offline'};}
+    if(res.status===401)throw {kind:'unauthorized'};
+    if(!res.ok)throw {kind:'server',status:res.status};
+    try{return await res.json();}catch(e){throw {kind:'server',status:res.status};}
+  }
+  return {
+    push:mutations=>call('POST','/api/v1/sync/push',{mutations}),
+    changes:cursor=>call('GET','/api/v1/sync/changes?cursor='+encodeURIComponent(cursor)+'&limit=1000'),
+    /** {state:'signed_in',user} | {state:'signed_out'} | {state:'unavailable'}: unavailable = no API here (a file, a static server, no network). */
+    async me(){
+      try{const user=await call('GET','/api/v1/me');return user&&typeof user.id==='string'?{state:'signed_in',user}:{state:'unavailable'};}
+      catch(e){return e&&e.kind==='unauthorized'?{state:'signed_out'}:{state:'unavailable'};}
+    },
+    async logout(){try{await call('POST','/auth/logout');return true;}catch(e){return false;}},
+  };
+}
+const loginUrl=(returnTo='/')=>'/auth/login?returnTo='+encodeURIComponent(returnTo);
+
+// ---- src/sync/records.js
+/**
+ * sync/records.js
+ * Responsibility: how the app's state maps to synced records (the same split the server makes) and a stable fingerprint to see what changed. Pure functions.
+ */
+// the lists of the state and the kind each becomes; everything else is the settings document (same table as the server: legacy-state.ts)
+const LISTS={accounts:'account',snaps:'snap',tx:'tx',trades:'trade',transfers:'transfer',imports:'import'};
+const LISTS_MARK='_lists';
+const LIST_NAMES=Object.keys(LISTS);
+const listOfKind=kind=>LIST_NAMES.find(n=>LISTS[n]===kind);
+
+/** The key a record has in the app ('nu', 12, 't7', the hash of an imported file); a balance has none of its own, so it is identified by day and account. */
+function keyOf(kind,body){
+  if(!body||typeof body!=='object')return null;
+  if(kind==='snap')return body.date==null||body.acc==null?null:body.date+'|'+body.acc;
+  const raw=kind==='import'?body.hash:body.id;
+  return raw==null?null:String(raw);
+}
+/** What the server stores as the legacy key: a balance has none. */
+const legacyKeyOf=(kind,body)=>kind==='snap'?null:keyOf(kind,body);
+const refOf=(kind,key)=>kind+':'+key;
+
+function stable(v){
+  if(v===null||typeof v!=='object')return JSON.stringify(v);
+  if(Array.isArray(v))return '['+v.map(stable).join(',')+']';
+  return '{'+Object.keys(v).sort().filter(k=>v[k]!==undefined).map(k=>JSON.stringify(k)+':'+stable(v[k])).join(',')+'}';
+}
+/** A 53-bit fingerprint of a value, the same for the same content whatever the order of its keys (cyrb53). */
+function fingerprint(value){
+  const s=stable(value);let h1=0xdeadbeef,h2=0x41c6ce57;
+  for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+  h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return (4294967296*(2097151&h2)+(h1>>>0)).toString(36)+'.'+s.length;
+}
+
+/** The settings document: the state without its lists, plus which lists exist (an absent list is not an empty one for the rules). */
+function settingsOf(state){
+  const out={};
+  for(const k of Object.keys(state))if(!Object.hasOwn(LISTS,k))out[k]=state[k];
+  out[LISTS_MARK]=LIST_NAMES.filter(n=>Array.isArray(state[n]));
+  return out;
+}
+
+/** The state as records: ref -> {kind,key,body,fp}, and the settings. A record with no key cannot be synced and is left out (listed in `skipped`). */
+function splitState(state){
+  const records=new Map();let skipped=0;
+  for(const name of LIST_NAMES){
+    const list=state[name];if(!Array.isArray(list))continue;
+    const kind=LISTS[name];
+    for(const body of list){
+      const key=keyOf(kind,body);
+      if(key===null){skipped++;continue;}
+      records.set(refOf(kind,key),{kind,key,body,fp:fingerprint(body)});
+    }
+  }
+  const settings=settingsOf(state);
+  return {records,settings,settingsFp:fingerprint(settings),skipped};
+}
+
+// ---- src/sync/apply.js
+/**
+ * sync/apply.js
+ * Responsibility: puts what the server reports (changes pulled from it) into the local state and bookkeeping, without echoing it back. Pure functions.
+ */
+
+
+const clone=v=>JSON.parse(JSON.stringify(v));
+// 'a12', 't7', 'tr3' and plain numbers come from the counter `nid`: a device must not hand out a number another device already used
+const counterOf=key=>{const m=/^(?:a|t|tr)?(\d+)$/.exec(String(key));return m?+m[1]:0;};
+
+/**
+ * Applies a page of changes. Returns {state, meta, conflicts}; neither input is changed.
+ * - a record waiting to be sent here wins over the server's version (the last writer by arrival decides when it is sent);
+ * - a delete wins over a waiting edit (ADR-0008);
+ * - the same key under another id: on the first merge on this device it is the same record (adopted); later it is a clash, kept for the person to review.
+ */
+function applyChanges(state,meta,changes){
+  const next=clone(state),m={...meta,ids:{...meta.ids},known:{...meta.known},outbox:meta.outbox.map(e=>({...e})),review:[...meta.review]};
+  const firstMerge=!meta.merged;
+  const touched=new Set();
+  const byId=new Map(Object.entries(m.ids).map(([ref,id])=>[id,ref]));
+  const waiting=id=>m.outbox.findIndex(e=>e.id===id);
+  for(const c of changes){
+    if(c.resource==='state'){
+      if(c.deleted||!c.data)continue;
+      const waitingAt=m.outbox.findIndex(e=>e.resource==='state');
+      // settings waiting to be sent win, except on the first merge: a new device must never overwrite the account's settings with its blank ones
+      if(waitingAt>=0){if(!firstMerge)continue;m.outbox.splice(waitingAt,1);}
+      const body=c.data.body,keep={},counter=+next.nid||1;
+      for(const n of Object.keys(LISTS))if(Array.isArray(next[n]))keep[n]=next[n];
+      for(const k of Object.keys(next))delete next[k];
+      for(const [k,v] of Object.entries(body))if(k!==LISTS_MARK)next[k]=clone(v);
+      Object.assign(next,keep);
+      next.nid=Math.max(+body.nid||1,counter); // the counter only goes up and is never missing (the app lifts it past the ids in use when it adopts the state)
+      for(const n of Array.isArray(body[LISTS_MARK])?body[LISTS_MARK]:[])if(Object.hasOwn(LISTS,n)&&!Array.isArray(next[n]))next[n]=[];
+      m.settingsFp=splitState(next).settingsFp;
+      continue;
+    }
+    const kind=c.resource,name=listOfKind(kind);
+    if(!name)continue;
+    if(c.deleted){
+      const ref=byId.get(c.id);if(!ref)continue;
+      const at=waiting(c.id);if(at>=0)m.outbox.splice(at,1);
+      const key=ref.slice(ref.indexOf(':')+1);
+      next[name]=(next[name]||[]).filter(b=>keyOf(kind,b)!==key);
+      delete m.ids[ref];delete m.known[ref];byId.delete(c.id);
+      continue;
+    }
+    const body=c.data&&c.data.body,key=keyOf(kind,body);
+    if(key===null)continue;
+    const ref=refOf(kind,key),fp=fingerprint(body),localId=m.ids[ref];
+    if(localId&&localId!==c.id){
+      if(!firstMerge){m.review.push({reason:'key_conflict',ref,resource:kind,id:c.id,body:clone(body)});continue;}
+      // the same record this device already had: adopt the server's id; what was waiting for the old id now goes under the new one
+      for(const e of m.outbox)if(e.id===localId)e.id=c.id;
+      byId.delete(localId);m.ids[ref]=c.id;byId.set(c.id,ref);
+      const at=waiting(c.id);
+      if(at>=0&&m.outbox[at].data&&fingerprint(m.outbox[at].data.body)===fp){m.outbox.splice(at,1);m.known[ref]=fp;}
+      continue;
+    }
+    if(waiting(c.id)>=0){m.ids[ref]=c.id;byId.set(c.id,ref);continue;}
+    const list=next[name]||(next[name]=[]);
+    const at=list.findIndex(b=>keyOf(kind,b)===key);
+    if(at>=0)list[at]=clone(body);else list.push(clone(body));
+    m.ids[ref]=c.id;m.known[ref]=fp;byId.set(c.id,ref);touched.add(ref);
+    if(kind!=='snap'&&kind!=='import')next.nid=Math.max(+next.nid||1,counterOf(key)+1);
+  }
+  return {state:next,meta:m,conflicts:m.review.length-meta.review.length};
+}
+
+// ---- src/sync/outbox.js
+/**
+ * sync/outbox.js
+ * Responsibility: the sync bookkeeping (what the server knows, what is waiting to be sent) and the step that turns a changed state into outbox entries. Pure functions.
+ */
+
+
+/** meta: {userId, cursor, merged, ids: ref->uuid, known: ref->fingerprint, settingsFp, outbox: [entry], review: [item], lastSyncAt} */
+const emptyMeta=()=>({v:1,userId:null,cursor:'0',merged:false,ids:{},known:{},settingsFp:null,outbox:[],review:[],lastSyncAt:null});
+// an entry: {mutationId, resource, op:'put'|'delete', id, data, attempted}; `attempted` = a send started, so the server may have it
+const wireEntry=e=>({mutationId:e.mutationId,resource:e.resource,op:e.op,id:e.id,...(e.data!==undefined?{data:e.data}:{})});
+
+/**
+ * Compares the state with what is known and queues the difference. Returns a new meta (the old one is not changed).
+ * ids = {newId(), newMutationId()}. Editing a record that was never sent updates its waiting entry; deleting one that was never sent cancels it.
+ */
+function queueChanges(meta,state,ids){
+  const next={...meta,ids:{...meta.ids},known:{...meta.known},outbox:meta.outbox.map(e=>({...e}))};
+  const {records,settings,settingsFp}=splitState(state);
+  const waiting=id=>next.outbox.findIndex(e=>e.id===id&&!e.attempted);
+  const push=(resource,op,id,data)=>{
+    const at=op==='put'?waiting(id):-1;
+    if(at>=0&&next.outbox[at].op==='put'){next.outbox[at].data=data;return;}
+    next.outbox.push({mutationId:ids.newMutationId(),resource,op,id,...(data!==undefined?{data}:{}),attempted:false});
+  };
+  for(const [ref,r] of records){
+    if(next.known[ref]===r.fp)continue;
+    const id=next.ids[ref]??(next.ids[ref]=ids.newId());
+    push(r.kind,'put',id,{body:r.body,legacyKey:legacyKeyOf(r.kind,r.body)});
+    next.known[ref]=r.fp;
+  }
+  for(const ref of Object.keys(next.known)){
+    if(records.has(ref))continue;
+    const id=next.ids[ref];
+    delete next.known[ref];delete next.ids[ref];
+    if(!id)continue;
+    const at=waiting(id);
+    if(at>=0&&next.outbox[at].op==='put'){next.outbox.splice(at,1);continue;} // never sent: nothing to tell the server
+    push(ref.slice(0,ref.indexOf(':')),'delete',id);
+  }
+  if(next.userId&&next.settingsFp!==settingsFp){
+    const at=next.outbox.findIndex(e=>e.resource==='state'&&!e.attempted);
+    if(at>=0)next.outbox[at].data={body:settings};
+    else next.outbox.push({mutationId:ids.newMutationId(),resource:'state',op:'put',id:next.userId,data:{body:settings},attempted:false});
+    next.settingsFp=settingsFp;
+  }
+  return next;
+}
+const pendingCount=meta=>meta.outbox.length;
+
+// ---- src/sync/runner.js
+/**
+ * sync/runner.js
+ * Responsibility: one sync run: send the outbox, then pull what changed; keeps the outbox safe when the network or the login fails. No DOM, no storage of its own.
+ */
+
+
+
+const BATCH=100;
+/** The sync bookkeeping lives under one storage key, next to the app's own data. */
+function metaStore(storage,key){
+  return {
+    load(){try{const m=JSON.parse(storage.getItem(key));return m&&m.v===1?{...emptyMeta(),...m}:emptyMeta();}catch(e){return emptyMeta();}},
+    save(meta){storage.setItem(key,JSON.stringify(meta));},
+  };
+}
+
+/**
+ * deps: {api:{push(mutations), changes(cursor)}, store, getState(), setState(state), newId(), newMutationId(), now()}
+ * The api throws an object {kind:'offline'|'unauthorized'|'server'} when it cannot answer; the outbox is then kept as it is.
+ */
+function createSync(deps){
+  const {api,store,getState,setState,newId,newMutationId,now}=deps;
+  let running=null;
+  const ids={newId,newMutationId};
+  const capture=()=>{const before=store.load(),after=queueChanges(before,getState(),ids);store.save(after);return after;};
+
+  // The app can save (and so queue changes) while a request is in flight, so the bookkeeping is read again after every wait, never kept across one.
+  async function pull(){
+    for(;;){
+      const cursor=store.load().cursor;
+      const page=await api.changes(cursor);
+      const applied=applyChanges(getState(),store.load(),page.changes);
+      const m=applied.meta;m.cursor=page.cursor;
+      if(page.changes.length>0)setState(applied.state);
+      store.save(m);
+      if(!page.hasMore)break;
+    }
+    store.save({...store.load(),merged:true});
+  }
+
+  async function push(){
+    for(;;){
+      const before=store.load();
+      if(before.outbox.length===0)return;
+      const batch=before.outbox.slice(0,BATCH);
+      for(const e of batch)e.attempted=true;
+      store.save(before); // a send is starting: from now on the server may have these
+      const {results}=await api.push(batch.map(wireEntry));
+      const byId=new Map(results.map(r=>[r.mutationId,r]));
+      const m=store.load();let done=0;
+      for(const e of batch){
+        const r=byId.get(e.mutationId);
+        if(!r||r.status==='skipped')continue;
+        m.outbox=m.outbox.filter(x=>x.mutationId!==e.mutationId);done++;
+        if(r.status==='rejected')m.review.push({reason:r.reason,resource:e.resource,id:e.id,op:e.op,data:e.data});
+      }
+      store.save(m);
+      if(done===0)throw {kind:'server'}; // an answer that settles nothing: stop, the outbox stays
+    }
+  }
+
+  async function runOnce(){
+    let m=capture();
+    if(!m.userId)return {ok:false,reason:'not_signed_in'};
+    try{
+      if(!m.merged)await pull();       // the first time: look at what the server has before sending, so the same record is not made twice
+      capture();
+      await push();
+      await pull();
+      m=capture();
+      m.lastSyncAt=now();store.save(m);
+      return {ok:true,pending:m.outbox.length,review:m.review.length};
+    }catch(e){
+      return {ok:false,reason:(e&&e.kind)||'error',pending:store.load().outbox.length};
+    }
+  }
+  return {
+    capture,
+    /** Binds the bookkeeping to the signed-in person. Another person on the same device is refused: their data must not go to this account. */
+    bind(userId){
+      const m=store.load();
+      if(m.userId&&m.userId!==userId)return {ok:false,reason:'other_account'};
+      if(!m.userId)store.save({...m,userId});
+      return {ok:true};
+    },
+    reviewItems(){return store.load().review;},
+    clearReview(){store.save({...store.load(),review:[]});},
+    run(){return running??=runOnce().finally(()=>{running=null;});},
+    status(){const m=store.load();return {pending:m.outbox.length,pendingItems:m.outbox.filter(e=>e.resource!=='state').length,review:m.review.length,lastSyncAt:m.lastSyncAt,signedIn:!!m.userId};},
+  };
+}
+
+// ---- src/ui/views/sync-view.js
+/**
+ * ui/views/sync-view.js
+ * Responsibility: Settings → "Conta e sincronização": sign-in, the pending count, the "Sincronizar" button and the review list. Connects the sync to the app's state.
+ * Hidden when there is no API to talk to (the page opened as a file or from a plain static server): the app then works exactly as before.
+ */
+
+
+
+
+
+
+
+
+const DEBOUNCE_MS=400;
+const api=createApiClient((...a)=>fetch(...a));
+let sync=null;
+// checking | unavailable | signed_out | signed_in | other_account
+const syncView={state:'checking',user:null,busy:false};
+const uuid=()=>crypto.randomUUID();
+const when=ms=>ms?new Date(ms).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'ainda não';
+const REASONS={key_conflict:'o mesmo número foi usado em outro aparelho',invalid_data:'o servidor não aceitou este item',not_found:'o item pertence a outra conta',unknown_resource:'tipo desconhecido'};
+
+function renderSync(){
+  const card=$('syncCard');if(!card)return;
+  const hide=syncView.state==='checking'||syncView.state==='unavailable';
+  card.hidden=$('syncTitle').hidden=hide;
+  const badge=$('syncBadge');
+  if(hide){badge.hidden=true;return;}
+  const st=sync?sync.status():{pending:0,pendingItems:0,review:0,lastSyncAt:null};
+  // what the person sees is records (an expense), not the settings entry that carries the id counter along with it
+  const n=st.pendingItems||(st.pending?1:0);
+  let html;
+  if(syncView.state==='signed_out'){
+    html=`<div class="help m0">Entre para guardar seus dados na sua conta e usar em outros aparelhos. O que já está neste aparelho continua aqui e sobe na primeira sincronização.</div>
+      <div class="row mt-10"><a class="btn pri" id="syncLogin" href="${loginUrl(location.pathname)}">Entrar</a></div>`;
+  }else if(syncView.state==='other_account'){
+    html=`<div class="banner"><span>⚠️ Este aparelho já está ligado a outra conta (${esc(syncView.user.email||'sem e-mail')} acabou de entrar). Para não misturar dados, nada foi enviado nem recebido.</span></div>
+      <div class="row mt-10"><button class="btn" id="syncLogout">Sair</button></div>`;
+  }else{
+    const plan=syncView.user.plan==='pro'?'PRO':'Gratuito';
+    html=`<div class="help m0">Conectado como <b>${esc(syncView.user.email||syncView.user.displayName||'sua conta')}</b> · plano ${esc(plan)}</div>
+      <div class="row mt-10"><button class="btn pri" id="syncNow"${syncView.busy?' disabled':''}>${syncView.busy?'Sincronizando…':'🔄 Sincronizar'}</button><button class="btn" id="syncLogout">Sair</button></div>
+      <div class="help" id="syncStatus">${n?`<b>${n}</b> pendente${n>1?'s':''} · `:'Tudo enviado · '}última sincronização: ${when(st.lastSyncAt)}</div>`;
+    if(st.review){
+      const items=sync.reviewItems().slice(0,20).map(i=>`<li>${esc(i.resource||i.ref||'item')}: ${esc(REASONS[i.reason]||i.reason)}</li>`).join('');
+      html+=`<div class="banner mt-10"><span>⚠️ ${st.review} ${st.review>1?'itens precisam':'item precisa'} de revisão. Seus dados neste aparelho não foram alterados.<ul>${items}</ul></span><button class="btn sm" id="syncClear">Entendi</button></div>`;
+    }
+  }
+  $('syncBody').innerHTML=html;
+  // signed in: the sync state; signed out: a shortcut to sign in (a link, so it also works when the script is slow)
+  badge.hidden=syncView.state!=='signed_in'&&syncView.state!=='signed_out';
+  badge.classList.toggle('warn',syncView.state==='signed_in'&&(!!n||!!st.review));
+  if(syncView.state==='signed_out'){badge.textContent='☁️ Entrar';badge.href=loginUrl(location.pathname);badge.title='Entrar para sincronizar seus dados';}
+  else if(!badge.hidden){badge.removeAttribute('href');badge.removeAttribute('title');badge.textContent=syncView.busy?'☁️ sincronizando…':n?`☁️ ${n} pendente${n>1?'s':''}`:'☁️ em dia';}
+  const now=$('syncNow');if(now)now.onclick=()=>syncView.go(true);
+  const out=$('syncLogout');if(out)out.onclick=signOut;
+  const clr=$('syncClear');if(clr)clr.onclick=()=>{sync.clearReview();renderSync();};
+}
+
+async function runSync(manual){
+  if(!sync||syncView.busy||syncView.state!=='signed_in')return;
+  syncView.busy=true;renderSync();
+  const r=await sync.run();
+  syncView.busy=false;
+  if(r.reason==='unauthorized'){syncView.state='signed_out';}
+  renderSync();
+  if(manual||!r.ok&&r.reason==='unauthorized')toast(r.ok?'✅ Sincronizado':MESSAGES[r.reason]||MESSAGES.error);
+}
+const MESSAGES={
+  offline:'⚠️ Sem conexão. Suas alterações ficam guardadas e serão enviadas depois.',
+  unauthorized:'⚠️ Sua sessão terminou. Entre de novo; nada foi perdido.',
+  server:'⚠️ O servidor não respondeu direito. Tente de novo em instantes.',
+  error:'⚠️ Não foi possível sincronizar agora.',
+  not_signed_in:'⚠️ Entre na sua conta para sincronizar.',
+};
+async function signOut(){await api.logout();syncView.state='signed_out';syncView.user=null;renderSync();}
+
+async function bindSync(){
+  // inside the Android shell there is no API on this origin (and the login is cookie based): the app works offline there until the phone has its own sign-in
+  if(typeof fetch!=='function'||location.protocol==='file:'||isNative()){syncView.state='unavailable';return;}
+  const me=await api.me();
+  syncView.state=me.state;syncView.user=me.user||null;
+  if(me.state==='signed_in'){
+    let changed=false;
+    sync=createSync({api,store:metaStore(localStorage,STORAGE_KEY+'.sync'),getState:()=>S,
+      setState:next=>{changed=true;adoptRemoteState(next);},newId:uuid,newMutationId:uuid,now:()=>Date.now()});
+    const bound=sync.bind(me.user.id);
+    if(!bound.ok){syncView.state='other_account';sync=null;}
+    else{
+      let timer=null;
+      onSave(()=>{clearTimeout(timer);timer=setTimeout(()=>{sync.capture();renderSync();},DEBOUNCE_MS);});
+      const go=async manual=>{changed=false;await runSync(manual);if(changed)render();};
+      window.addEventListener('online',()=>go(false));
+      document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')go(false);});
+      syncView.go=go;go(false);
+    }
+  }
+  renderSync();
 }
 
 // ---- src/ui/render.js
@@ -6802,7 +7407,8 @@ $('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const rd=new FileR
 
 
 
-function render(){initCats();renderMeta();renderFlow();renderStart();renderTodo();renderHero();renderBudgets();renderBills();renderTrend();renderCycles();renderTransactions();renderInvestments();renderSettings();renderOwnNames();renderBackup();renderCategories();
+
+function render(){initCats();renderMeta();renderFlow();renderStart();renderTodo();renderHero();renderBudgets();renderBills();renderTrend();renderCycles();renderTransactions();renderInvestments();renderSettings();renderOwnNames();renderBackup();renderSync();renderCategories();
   fillInvoiceMonths();stackTables();prepareMoneyInputs();Sheet.refresh();}
 
 // ---- src/ui/components/command.js
@@ -6985,8 +7591,8 @@ function bindTransactionFormEvents(){
 document.querySelectorAll('input[name=tp]').forEach(r=>r.onchange=()=>{ui.type=r.value;ui.payAdvanced=false;if(ui.type==='fatura')initInvoiceForm();fillCategoryOptions();$('fCat').value='';});
 $('fDate').value=today();
 $('fDate').onchange=()=>{updateFormHelp();if(ui.type!=='fatura')return;initInvoiceForm();drawInvoiceForm();};
-$('fFm').onchange=()=>{initInvoiceForm();drawInvoiceForm();};
-$('fAll').onchange=()=>{initInvoiceForm();drawInvoiceForm();};
+$('fFm').onchange=()=>{selectInvoicePurchases();drawInvoiceForm();};
+$('fAll').onchange=()=>{selectInvoicePurchases();drawInvoiceForm();};
 $('fCancel').onclick=()=>{endEdit();$('fVal').value='';$('fDesc').value='';};
 $('chips').onclick=e=>{const c=e.target.closest('.chip');if(!c)return;ui.filt=c.dataset.f;renderTransactions();};
 $('qBox').oninput=e=>{ui.q=e.target.value.trim();renderTransactions();};
@@ -7283,12 +7889,203 @@ function bindDescriptionSuggestions(){
   });
 }
 
+// ---- src/ui/app-lock/lock-policy.js
+/**
+ * ui/app-lock/lock-policy.js
+ * Responsibility: the rules of the app lock, with no screen and no phone in them: is it switched on (a flag in the device storage), and has the app been away long enough to lock again.
+ */
+const LOCK_KEY='metaapp.lock';
+/** Leaving the app for a moment (a notification, the share sheet) does not lock it; leaving it for this long does. */
+const GRACE_MS=30000;
+function lockEnabled(storage=globalThis.localStorage){
+  try{return storage.getItem(LOCK_KEY)==='1';}catch(e){return false;}
+}
+function setLockEnabled(on,storage=globalThis.localStorage){
+  try{if(on)storage.setItem(LOCK_KEY,'1');else storage.removeItem(LOCK_KEY);}catch(e){/* storage unavailable: the lock stays as it was */}
+}
+/** backgroundedAt: when the app left the screen (ms), or null when it did not. */
+function shouldLockOnResume(backgroundedAt,now,grace=GRACE_MS){
+  return typeof backgroundedAt==='number'&&now-backgroundedAt>=grace;
+}
+
+// ---- src/ui/app-lock/app-lock.js
+/**
+ * ui/app-lock/app-lock.js
+ * Responsibility: the lock's behaviour: when to lock (at start and after the app was away), how to unlock, how to switch it on and off.
+ * It is built from three parts it does not know the insides of: the gateway (the phone), the screen (the dialog) and the storage (the on/off flag).
+ * If the phone has no screen lock any more, the lock cannot work, so it switches itself off instead of shutting the person out.
+ */
+
+const TEXT={
+  title:'Desbloquear o Everfox',subtitle:'Use sua digital, seu rosto ou o PIN do celular',
+  cancelled:'Desbloqueio cancelado. Toque em “Desbloquear” para tentar de novo.',
+  lockout:'Muitas tentativas. Aguarde um pouco e tente de novo.',
+  failed:'Não foi possível desbloquear. Tente de novo.',
+  gone:'O celular ficou sem bloqueio de tela, então o bloqueio do app foi desligado.',
+  needDeviceLock:'Para usar o bloqueio do app, ative uma tela de bloqueio (PIN, padrão ou biometria) nas configurações do celular.',
+};
+const LOCK_TEXT=TEXT;
+function createAppLock({gateway,screen,storage,now=Date.now,notify=()=>{}}){
+  let locked=false,busy=false,awayAt=null;
+  const messageFor=code=>code==='cancelled'?TEXT.cancelled:code==='lockout'?TEXT.lockout:TEXT.failed;
+  function unlock(){locked=false;awayAt=null;screen.message('');screen.hide();}
+  async function turnOffBecauseUnavailable(){
+    setLockEnabled(false,storage);await gateway.setSecure(false);unlock();notify(TEXT.gone);
+  }
+  /** Asks the phone to confirm the person. Only one request at a time. */
+  async function prompt(){
+    if(busy||!locked)return;
+    busy=true;
+    try{
+      const st=await gateway.status();
+      if(!st.available){await turnOffBecauseUnavailable();return;}
+      const r=await gateway.authenticate({title:TEXT.title,subtitle:TEXT.subtitle});
+      if(r.ok)unlock();
+      else if(r.code==='unavailable')await turnOffBecauseUnavailable();
+      else screen.message(messageFor(r.code));
+    }finally{busy=false;}
+  }
+  function lock(){
+    if(locked||!lockEnabled(storage))return;
+    locked=true;screen.message('');screen.show();prompt();
+  }
+  return {
+    isLocked:()=>locked,
+    isEnabled:()=>lockEnabled(storage),
+    /** At app start: wire the button, then lock at once when the lock is on. */
+    start(){screen.bind(prompt);gateway.setSecure(lockEnabled(storage));lock();},
+    retry:prompt,
+    /** The app left the screen / came back. The system prompt also pauses the app, but then the app is locked already, and unlocking forgets the time away. */
+    onBackground(){awayAt=now();},
+    onForeground(){const was=awayAt;awayAt=null;if(shouldLockOnResume(was,now()))lock();},
+    /** Switching on needs a phone with a screen lock and one successful confirmation, so the person cannot lock themselves out. */
+    async enable(){
+      const st=await gateway.status();
+      if(!st.available)return {ok:false,message:TEXT.needDeviceLock};
+      const r=await gateway.authenticate({title:'Ativar o bloqueio do app',subtitle:TEXT.subtitle});
+      if(!r.ok)return {ok:false,message:r.code==='cancelled'?'':messageFor(r.code)};
+      setLockEnabled(true,storage);await gateway.setSecure(true);
+      return {ok:true};
+    },
+    /** Switching off also needs the confirmation: someone holding an unlocked phone cannot just remove the lock. */
+    async disable(){
+      const r=await gateway.authenticate({title:'Desativar o bloqueio do app',subtitle:TEXT.subtitle});
+      if(!r.ok)return {ok:false,message:r.code==='cancelled'?'':messageFor(r.code)};
+      setLockEnabled(false,storage);await gateway.setSecure(false);
+      return {ok:true};
+    },
+  };
+}
+
+// ---- src/ui/app-lock/lock-gateway.js
+/**
+ * ui/app-lock/lock-gateway.js
+ * Responsibility: the only place that talks to the native AppLock plugin (the Android biometric / device-credential prompt and the screen-capture flag).
+ * It turns every outcome into plain data, so the rest of the lock never sees an exception. Outside the Android shell it reports "not available".
+ * authenticate() answers {ok:true} or {ok:false,code}: code is 'cancelled' | 'lockout' | 'unavailable' | 'failed'.
+ */
+
+function lockGateway(cap=globalThis.Capacitor){
+  const P=cap&&cap.Plugins&&cap.Plugins.AppLock;
+  const present=isNative(cap)&&!!P;
+  return {
+    present,
+    async status(){
+      if(!present)return {available:false,reason:'unsupported'};
+      try{const s=await P.status();return {available:!!s.available,reason:s.reason||''};}
+      catch(e){return {available:false,reason:'error'};}
+    },
+    async authenticate(opts){
+      if(!present)return {ok:false,code:'unavailable'};
+      try{await P.authenticate(opts);return {ok:true};}
+      catch(e){return {ok:false,code:(e&&e.code)||'failed'};}
+    },
+    /** Hides the app from the recent-apps list and from screenshots while the lock is on. */
+    async setSecure(secure){
+      if(!present)return;
+      try{await P.setSecure({secure:!!secure});}catch(e){/* cosmetic protection: its failure must not block the lock */}
+    },
+  };
+}
+
+// ---- src/ui/app-lock/lock-screen.js
+/**
+ * ui/app-lock/lock-screen.js
+ * Responsibility: the lock screen itself, a full-screen modal dialog (#lockDlg): show it, hide it, put a message on it, and report the "Unlock" button.
+ * A modal dialog sits in the top layer, so it covers every other dialog and sheet; Back / Esc cannot close it.
+ */
+function lockScreen(doc=document){
+  const dlg=()=>doc.getElementById('lockDlg');
+  return {
+    isOpen(){const d=dlg();return !!(d&&d.open);},
+    show(){const d=dlg();if(d&&!d.open)d.showModal();},
+    hide(){const d=dlg();if(d&&d.open)d.close();},
+    message(text){const m=doc.getElementById('lockMsg');if(m)m.textContent=text||'';},
+    /** The dialog's cancel event (Esc, system Back) must not close it; the button runs `fn`. */
+    bind(fn){
+      const d=dlg(),b=doc.getElementById('lockRetry');
+      if(d)d.addEventListener('cancel',e=>e.preventDefault());
+      if(b)b.onclick=fn;
+    },
+  };
+}
+
+// ---- src/ui/app-lock/lock-events.js
+/**
+ * ui/app-lock/lock-events.js
+ * Responsibility: tells the lock when the app leaves and returns to the screen, from the Capacitor App plugin (appStateChange) or, in a browser, from the page's visibility.
+ */
+
+function bindLockEvents(lock,cap=globalThis.Capacitor){
+  const A=cap&&cap.Plugins&&cap.Plugins.App;
+  if(!isNative(cap)||!A||typeof A.addListener!=='function')return false;
+  A.addListener('appStateChange',s=>{if(s&&s.isActive)lock.onForeground();else lock.onBackground();});
+  return true;
+}
+
+// ---- src/ui/views/lock-settings.js
+/**
+ * ui/views/lock-settings.js
+ * Responsibility: the "Bloqueio do app" card in Ajustes: shown only inside the Android shell, one button that switches the lock on or off, and its explanation.
+ */
+
+
+function renderLockCard(lock,present){
+  $('lockTitle').hidden=!present;$('lockCard').hidden=!present;
+  if(!present)return;
+  const on=lock.isEnabled();
+  $('lockToggle').textContent=on?'🔓 Desativar o bloqueio':'🔒 Ativar o bloqueio';
+  $('lockHelp').textContent=on
+    ?'O app pede sua digital, seu rosto ou o PIN do celular ao abrir e depois de 30 segundos fora dele. A tela do app também some da lista de apps recentes.'
+    :'Peça sua digital, seu rosto ou o PIN do celular para abrir o app. Funciona sem internet e não cria uma senha nova.';
+}
+function bindLockSettings(lock,present){
+  renderLockCard(lock,present);
+  if(!present)return;
+  $('lockToggle').onclick=async()=>{
+    const b=$('lockToggle');b.disabled=true;
+    try{
+      const r=lock.isEnabled()?await lock.disable():await lock.enable();
+      if(!r.ok&&r.message)toast('⚠️ '+r.message);
+      else if(r.ok)toast(lock.isEnabled()?'Bloqueio do app ativado':'Bloqueio do app desativado');
+    }finally{b.disabled=false;renderLockCard(lock,present);}
+  };
+}
+
 // ---- src/app.js
 /**
  * app.js
  * Responsibility: bootstrap. Wires the pieces in the right order and renders the first time.
  * Contains no business rules and no HTML.
  */
+
+
+
+
+
+
+
+
 
 
 
@@ -7347,12 +8144,19 @@ bindOwnNames();
 bindStart();
 bindReportPrint();
 bindBackup();
+bindSync();
+bindNativeBack();
 bindAdvanced();
 bindInvestments();
 bindBills();
 bindImport();
 bindQuickEntry();
 bindDescriptionSuggestions();
+const gateway=lockGateway();
+const appLock=createAppLock({gateway,screen:lockScreen(),storage:localStorage,notify:m=>{toast('⚠️ '+m);renderLockCard(appLock,gateway.present);}});
+appLock.start();
+bindLockEvents(appLock);
+bindLockSettings(appLock,gateway.present);
 render();
 announceRecovery();
 

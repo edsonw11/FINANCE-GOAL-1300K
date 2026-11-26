@@ -1,0 +1,50 @@
+%% Everfox: Integrations and Data Sources
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_who["Who calls"]
+    direction TB
+    n_w_oidc["OPENIDCLIENTPROVIDER<br/>At login (authorization request, code exchange) and logout (end-session address). Errors: a failed start answers 503, a failed callback ends in the login-failed page, a missing end-session address is null, logout still works.<br/>backend/src/auth/openid-client.provider.ts  OpenIdClientProvider<br/>IMPLEMENTED"]
+    n_w_prisma["PRISMASERVICE<br/>Every request that reads or writes data. Connects on first use, so the API can start before the database. Ready check has a timeout.<br/>backend/src/database/prisma.service.ts  PrismaService<br/>IMPLEMENTED"]
+    n_w_share["SHARETEXTFILE AND APPLOCKPLUGIN<br/>Android only: share sheet (backup file) and BiometricPrompt (app lock). A cancelled sheet or prompt is an answer, not an error.<br/>src/ui/native-bridge.js  shareTextFile<br/>IMPLEMENTED"]
+    n_w_tg["TELEGRAM APK SERVICE<br/>Developer tool, not part of the app: sends the debug APK to a chat. Token only from an ignored .env, errors never print it.<br/>services/telegram-apk/lib/telegram.mjs  createTelegram<br/>IMPLEMENTED"]
+    n_w_pdf["PDF.JS (VENDORED COPY)<br/>Reads the text of a PDF in the page, from a local file, no network.<br/>src/ui/views/pdf-text.js  pdfText<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_ext["External system or platform"]
+    direction TB
+    n_x_kc["KEYCLOAK (OIDC)<br/>Identity provider. Local: Docker Compose, development realm. Endpoint comes from OIDC_ISSUER.<br/>docker-compose.yml  keycloak:<br/>IMPLEMENTED"]
+    n_x_pg["POSTGRESQL 18<br/>The only database. Local: Docker Compose, port 5433 on the host. Limits: one instance, no hosted copy yet.<br/>docker-compose.yml  postgres:<br/>IMPLEMENTED"]
+    n_x_and["ANDROID SYSTEM<br/>BiometricPrompt (fingerprint, face or phone PIN), share sheet, file cache.<br/>android/app/src/main/java/com/everfox/app/AppLockPlugin.java  AppLockPlugin<br/>IMPLEMENTED"]
+    n_x_tg["TELEGRAM BOT API<br/>api.telegram.org: getMe, getChat, sendMessage, sendDocument (50 MB limit).<br/>services/telegram-apk/lib/telegram.mjs  DEFAULT_API<br/>IMPLEMENTED"]
+    n_x_pdfjs["NO NETWORK<br/>The PDF library ships inside the repository.<br/>vendor/pdfjs/pdf.min.mjs<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_none["Searched and not found"]
+    direction TB
+    n_z_mkt["MARKET DATA AND PRICES<br/>No call to any price, quote or fundamentals service in src, backend, services or scripts.<br/>NOT IDENTIFIED"]
+    n_z_brk["BROKERS, OPLAB, BOLSAI, OPEN FINANCE, TESOURO DIRETO<br/>No code or configuration refers to them. Investments are typed, or read from files (OFX, CSV, PDF, B3 brokerage notes).<br/>NOT IDENTIFIED"]
+    n_z_pay["PAYMENTS AND BILLING<br/>Plans exist as data and a guard, there is no payment provider.<br/>backend/src/plans/features.ts  FEATURES<br/>PARTIAL"]
+  end
+  n_w_oidc -->|"OIDC"| n_x_kc
+  n_w_prisma -->|"Prisma"| n_x_pg
+  n_w_share -->|"Capacitor plugins"| n_x_and
+  n_w_tg -->|"HTTPS multipart"| n_x_tg
+  n_w_pdf -.->|"local file"| n_x_pdfjs
+  class n_w_oidc svc
+  class n_w_prisma svc
+  class n_w_share svc
+  class n_w_tg svc
+  class n_w_pdf svc
+  class n_x_kc ext
+  class n_x_pg ext
+  class n_x_and ext
+  class n_x_tg ext
+  class n_x_pdfjs ext
+  class n_z_mkt err
+  class n_z_brk err
+  class n_z_pay err

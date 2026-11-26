@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1317" viewBox="0 0 1120 1317"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: System Overview</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">Personal finance app: follow a net-worth goal (default R$ 1,300,000), monthly cash flow, credit card invoices and investments. Works offline in the browser and in an Android app; cloud sync</text>
+<text x="20" y="69" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">is optional (web only).</text>
+<rect x="20" y="96" width="300" height="480" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">1. Inputs</text>
+<rect x="40" y="152" width="260" height="135" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Manual entry</text>
+<text x="48" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">The + button form, or one short</text>
+<text x="48" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">Portuguese sentence such as &quot;Gastei</text>
+<text x="48" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">85,90 no mercado hoje&quot;.</text>
+<text x="48" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/quick-entry.js &gt;</text>
+<text x="48" y="245" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">parseQuickEntry</text>
+<text x="48" y="260" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="307" width="260" height="121" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="325" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Bank files</text>
+<text x="48" y="343" font-family="Helvetica,Arial,sans-serif" font-size="11">OFX, CSV and digital PDF (statements and</text>
+<text x="48" y="357" font-family="Helvetica,Arial,sans-serif" font-size="11">card invoices); B3 brokerage notes.</text>
+<text x="48" y="373" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/import-reader.js &gt;</text>
+<text x="48" y="386" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">readImportFile</text>
+<text x="48" y="401" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="448" width="260" height="108" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="466" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Backup file</text>
+<text x="48" y="484" font-family="Helvetica,Arial,sans-serif" font-size="11">A JSON file exported earlier is</text>
+<text x="48" y="498" font-family="Helvetica,Arial,sans-serif" font-size="11">restored.</text>
+<text x="48" y="514" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/backup.js &gt; bindBackup</text>
+<text x="48" y="529" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="340" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">2. Everfox app (on the device)</text>
+<rect x="430" y="152" width="260" height="122" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Rules</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Month result, card invoices, goal</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">projection, portfolio, budgets,</text>
+<text x="438" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">emergency reserve.</text>
+<text x="438" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/month-result.js &gt; monthResult</text>
+<text x="438" y="247" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="294" width="260" height="122" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="312" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Local state</text>
+<text x="438" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">One JSON in the browser storage (key</text>
+<text x="438" y="344" font-family="Helvetica,Arial,sans-serif" font-size="11">metaapp.v2) with an automatic copy of</text>
+<text x="438" y="358" font-family="Helvetica,Arial,sans-serif" font-size="11">the previous day.</text>
+<text x="438" y="374" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/store.js &gt; transact</text>
+<text x="438" y="389" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="800" y="96" width="300" height="622" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">3. Outputs</text>
+<rect x="820" y="152" width="260" height="122" rx="8" fill="#ffffff" stroke="#333333"/>
+<text x="828" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Screens</text>
+<text x="828" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Numbers, charts and lists: Summary,</text>
+<text x="828" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">Lançamentos, Cartão, Patrimônio,</text>
+<text x="828" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">Análise, Categorias, Ajustes.</text>
+<text x="828" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/render.js &gt; render</text>
+<text x="828" y="247" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="294" width="260" height="121" rx="8" fill="#ffffff" stroke="#333333"/>
+<text x="828" y="312" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Monthly report</text>
+<text x="828" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">Printed or saved as PDF by the browser,</text>
+<text x="828" y="344" font-family="Helvetica,Arial,sans-serif" font-size="11">or sent as an e-mail summary.</text>
+<text x="828" y="360" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/report-print.js &gt;</text>
+<text x="828" y="373" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">renderReport</text>
+<text x="828" y="388" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="435" width="260" height="108" rx="8" fill="#ffffff" stroke="#333333"/>
+<text x="828" y="453" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Backup file</text>
+<text x="828" y="471" font-family="Helvetica,Arial,sans-serif" font-size="11">JSON saved by the browser, or shared</text>
+<text x="828" y="485" font-family="Helvetica,Arial,sans-serif" font-size="11">through the Android share sheet.</text>
+<text x="828" y="501" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/native-bridge.js &gt; shareTextFile</text>
+<text x="828" y="516" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="563" width="260" height="135" rx="8" fill="#ffffff" stroke="#333333"/>
+<text x="828" y="581" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Android app</text>
+<text x="828" y="599" font-family="Helvetica,Arial,sans-serif" font-size="11">The same app inside a Capacitor shell:</text>
+<text x="828" y="613" font-family="Helvetica,Arial,sans-serif" font-size="11">offline, with an app lock (fingerprint</text>
+<text x="828" y="627" font-family="Helvetica,Arial,sans-serif" font-size="11">or phone PIN).</text>
+<text x="828" y="643" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">android/app/src/main/java/com/everfox/</text>
+<text x="828" y="656" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">app/MainActivity.java &gt; MainActivity</text>
+<text x="828" y="671" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="766" width="300" height="439" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="766" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="789" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Optional cloud (web app only)</text>
+<rect x="430" y="822" width="260" height="108" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="840" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Sync client</text>
+<text x="438" y="858" font-family="Helvetica,Arial,sans-serif" font-size="11">Sends what changed offline, then pulls</text>
+<text x="438" y="872" font-family="Helvetica,Arial,sans-serif" font-size="11">what changed elsewhere.</text>
+<text x="438" y="888" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/runner.js &gt; createSync</text>
+<text x="438" y="903" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="950" width="260" height="108" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="968" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">API (NestJS)</text>
+<text x="438" y="986" font-family="Helvetica,Arial,sans-serif" font-size="11">Login, sync, accounts, month rules,</text>
+<text x="438" y="1000" font-family="Helvetica,Arial,sans-serif" font-size="11">plans.</text>
+<text x="438" y="1016" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/create-app.ts &gt; createApp</text>
+<text x="438" y="1031" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="1078" width="260" height="107" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="438" y="1096" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">PostgreSQL</text>
+<text x="438" y="1114" font-family="Helvetica,Arial,sans-serif" font-size="11">Records, user state, sessions, plans.</text>
+<text x="438" y="1130" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/prisma/schema.prisma &gt; model</text>
+<text x="438" y="1143" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">Record</text>
+<text x="438" y="1158" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="800" y="766" width="300" height="210" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="766" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="789" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Identity</text>
+<rect x="820" y="822" width="260" height="134" rx="8" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="828" y="840" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Keycloak (OIDC)</text>
+<text x="828" y="858" font-family="Helvetica,Arial,sans-serif" font-size="11">The identity provider that logs the</text>
+<text x="828" y="872" font-family="Helvetica,Arial,sans-serif" font-size="11">person in.</text>
+<text x="828" y="888" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/auth/</text>
+<text x="828" y="901" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">openid-client.provider.ts &gt;</text>
+<text x="828" y="914" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">OpenIdClientProvider</text>
+<text x="828" y="929" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<path d="M300,219.5 L347,219.5 L347,213 L430,213" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="294.4" y="202.5" width="105.2" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="298.4" y="213.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">validate and build</text>
+<path d="M300,367.5 L356,367.5 L356,213 L430,213" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="314.2" y="350.5" width="83.60000000000001" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="318.2" y="361.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">read, classify</text>
+<path d="M300,502 L365,502 L365,355 L430,355" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="342.1" y="485" width="45.800000000000004" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="346.1" y="496" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">restore</text>
+<path d="M560,274 L560,294" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="566" y="273" width="51.2" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="570" y="284" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">transact</text>
+<path d="M690,355 L773,355 L773,213 L820,213" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="752.8" y="338" width="40.400000000000006" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="756.8" y="349" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">render</text>
+<path d="M690,213 L737,213 L737,354.5 L820,354.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="703.3" y="196" width="67.4" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="707.3" y="207" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">report data</text>
+<path d="M560,416 L560,822" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<rect x="566" y="608" width="51.2" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="570" y="619" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">optional</text>
+<path d="M560,930 L560,950" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<rect x="566" y="929" width="35" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="570" y="940" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">HTTPS</text>
+<path d="M560,1058 L560,1078" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="566" y="1057" width="40.400000000000006" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="570" y="1068" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">Prisma</text>
+<path d="M690,1004 L773,1004 L773,889 L820,889" fill="none" stroke="#d79b00" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="758.2" y="987" width="29.6" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="762.2" y="998" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">OIDC</text>
+<rect x="20" y="1229" width="150" height="26" rx="5" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="26" y="1246" font-family="Helvetica,Arial,sans-serif" font-size="10">API and entry</text>
+<rect x="180" y="1229" width="150" height="26" rx="5" fill="#d5e8d4" stroke="#82b366"/>
+<text x="186" y="1246" font-family="Helvetica,Arial,sans-serif" font-size="10">Processing and domain rules</text>
+<rect x="340" y="1229" width="150" height="26" rx="5" fill="#ffffff" stroke="#333333"/>
+<text x="346" y="1246" font-family="Helvetica,Arial,sans-serif" font-size="10">Results and outputs</text>
+<rect x="500" y="1229" width="150" height="26" rx="5" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="506" y="1246" font-family="Helvetica,Arial,sans-serif" font-size="10">Orchestration and services</text>
+<rect x="660" y="1229" width="150" height="26" rx="5" fill="#f5f5f5" stroke="#666666"/>
+<text x="666" y="1246" font-family="Helvetica,Arial,sans-serif" font-size="10">Infrastructure</text>
+<rect x="820" y="1229" width="150" height="26" rx="5" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="826" y="1246" font-family="Helvetica,Arial,sans-serif" font-size="10">External integrations</text>
+<text x="20" y="1277" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text>
+<text x="20" y="1299" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">In the Android app the cloud part is switched off: the app keeps its data on the phone (ADR-0014). No market data, price or Open Finance service is called: balances and prices are typed or imported.</text></svg>

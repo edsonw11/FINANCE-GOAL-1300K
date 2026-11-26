@@ -1,6 +1,6 @@
 /** A new category is created only on purpose (closest existing one suggested); "Pago com" starts with the last method used. */
 const {createContext,suite}=require('./harness');
-module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('entry-defaults');
+module.exports=()=>{const {run}=createContext(),{eq,res}=suite('entry-defaults');
   const J=JSON.stringify;
   run(`S=blankState();S.cats={despesa:[{name:'Mercado'},{name:'Farmácia'},{name:'Contas (luz, água, net)'},{name:'Restaurante'}],receita:[{name:'Salário'}]};`);
   const m=(type,name)=>run(`matchCategory(${J(type)},${J(name)})`);

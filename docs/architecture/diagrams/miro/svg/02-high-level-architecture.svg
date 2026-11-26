@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="1879" viewBox="0 0 1120 1879"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: High-Level Architecture</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">One code base for the rules (src/core and src/domain), used by the browser app and, on the server, by the API.</text>
+<rect x="20" y="96" width="300" height="339" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Clients</text>
+<rect x="40" y="152" width="260" height="122" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Browser app</text>
+<text x="48" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Plain ES modules (index.html + src/), or</text>
+<text x="48" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">the single-file build in dist/. Keeps</text>
+<text x="48" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">its data in the browser.</text>
+<text x="48" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/app.js &gt; bindNavigation</text>
+<text x="48" y="247" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="294" width="260" height="121" rx="8" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="48" y="312" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Android shell</text>
+<text x="48" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">Capacitor 8 around the same page, with</text>
+<text x="48" y="344" font-family="Helvetica,Arial,sans-serif" font-size="11">its own CSP, offline, app lock.</text>
+<text x="48" y="360" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">android/app/src/main/java/com/everfox/</text>
+<text x="48" y="373" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">app/MainActivity.java &gt; MainActivity</text>
+<text x="48" y="388" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="1184" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">API (NestJS 12 on Fastify 5)</text>
+<rect x="430" y="152" width="260" height="135" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Security layer</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Rate limits, CSRF by origin, login</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">check, plan and admin guards, security</text>
+<text x="438" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">headers.</text>
+<text x="438" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/security/security.module.ts</text>
+<text x="438" y="245" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">&gt; SecurityModule</text>
+<text x="438" y="260" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="307" width="260" height="121" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="325" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Web</text>
+<text x="438" y="343" font-family="Helvetica,Arial,sans-serif" font-size="11">Serves the browser app files (an</text>
+<text x="438" y="357" font-family="Helvetica,Arial,sans-serif" font-size="11">allow-list of src/ and vendor/).</text>
+<text x="438" y="373" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/web/web.module.ts &gt;</text>
+<text x="438" y="386" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">WebModule</text>
+<text x="438" y="401" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="448" width="260" height="121" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="466" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Health</text>
+<text x="438" y="484" font-family="Helvetica,Arial,sans-serif" font-size="11">Live and ready checks (ready asks the</text>
+<text x="438" y="498" font-family="Helvetica,Arial,sans-serif" font-size="11">database).</text>
+<text x="438" y="514" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/health/health.module.ts &gt;</text>
+<text x="438" y="527" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">HealthModule</text>
+<text x="438" y="542" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="589" width="260" height="107" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="607" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Auth</text>
+<text x="438" y="625" font-family="Helvetica,Arial,sans-serif" font-size="11">OIDC login, cookie sessions, who am I.</text>
+<text x="438" y="641" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/auth/auth.module.ts &gt;</text>
+<text x="438" y="654" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">AuthModule</text>
+<text x="438" y="669" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="716" width="260" height="121" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="734" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Plans</text>
+<text x="438" y="752" font-family="Helvetica,Arial,sans-serif" font-size="11">Plan features per person and admin</text>
+<text x="438" y="766" font-family="Helvetica,Arial,sans-serif" font-size="11">routes.</text>
+<text x="438" y="782" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/plans/plans.module.ts &gt;</text>
+<text x="438" y="795" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">PlansModule</text>
+<text x="438" y="810" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="857" width="260" height="107" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="875" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Accounts</text>
+<text x="438" y="893" font-family="Helvetica,Arial,sans-serif" font-size="11">Accounts of a person (REST).</text>
+<text x="438" y="909" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/accounts/accounts.module.ts</text>
+<text x="438" y="922" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">&gt; AccountsModule</text>
+<text x="438" y="937" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="984" width="260" height="121" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="1002" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Sync</text>
+<text x="438" y="1020" font-family="Helvetica,Arial,sans-serif" font-size="11">Push of offline changes, pull of changes</text>
+<text x="438" y="1034" font-family="Helvetica,Arial,sans-serif" font-size="11">after a cursor.</text>
+<text x="438" y="1050" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/sync/sync.module.ts &gt;</text>
+<text x="438" y="1063" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">SyncModule</text>
+<text x="438" y="1078" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="1125" width="260" height="135" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="1143" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Month rules and import/export</text>
+<text x="438" y="1161" font-family="Helvetica,Arial,sans-serif" font-size="11">Month summary, result and report</text>
+<text x="438" y="1175" font-family="Helvetica,Arial,sans-serif" font-size="11">computed by the shared rules; import and</text>
+<text x="438" y="1189" font-family="Helvetica,Arial,sans-serif" font-size="11">export of the whole state.</text>
+<text x="438" y="1205" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/legacy/legacy.module.ts &gt;</text>
+<text x="438" y="1218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">LegacyModule</text>
+<text x="438" y="1233" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="800" y="96" width="300" height="351" fill="#fff" stroke="#9aa4b2"/><rect x="800" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="950" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Data and identity</text>
+<rect x="820" y="152" width="260" height="121" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="828" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">PostgreSQL 18</text>
+<text x="828" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">Tables app_user, session, record,</text>
+<text x="828" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">user_state, sync_*, plan, audit_log.</text>
+<text x="828" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/database/prisma.service.ts &gt;</text>
+<text x="828" y="231" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">PrismaService</text>
+<text x="828" y="246" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="820" y="293" width="260" height="134" rx="8" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="828" y="311" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Keycloak 26</text>
+<text x="828" y="329" font-family="Helvetica,Arial,sans-serif" font-size="11">OpenID Connect identity provider</text>
+<text x="828" y="343" font-family="Helvetica,Arial,sans-serif" font-size="11">(development realm in Docker Compose).</text>
+<text x="828" y="359" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/auth/</text>
+<text x="828" y="372" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">openid-client.provider.ts &gt;</text>
+<text x="828" y="385" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">OpenIdClientProvider</text>
+<text x="828" y="400" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="1328" width="300" height="211" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="1328" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="1351" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Shared rules</text>
+<rect x="430" y="1384" width="260" height="135" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="1402" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">src/core + src/domain</text>
+<text x="438" y="1420" font-family="Helvetica,Arial,sans-serif" font-size="11">The same plain JavaScript files, loaded</text>
+<text x="438" y="1434" font-family="Helvetica,Arial,sans-serif" font-size="11">by the API at start and run on one</text>
+<text x="438" y="1448" font-family="Helvetica,Arial,sans-serif" font-size="11">person's state.</text>
+<text x="438" y="1464" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/src/domain/domain-runtime.ts &gt;</text>
+<text x="438" y="1477" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">loadDomain</text>
+<text x="438" y="1492" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="20" y="1328" width="300" height="439" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="1328" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="1351" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Build and delivery</text>
+<rect x="40" y="1384" width="260" height="94" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="48" y="1402" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">CI (GitHub Actions)</text>
+<text x="48" y="1420" font-family="Helvetica,Arial,sans-serif" font-size="11">Jobs: check, backend, stack, android.</text>
+<text x="48" y="1436" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">.github/workflows/ci.yml &gt; android:</text>
+<text x="48" y="1451" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="1498" width="260" height="108" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="48" y="1516" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Docker Compose</text>
+<text x="48" y="1534" font-family="Helvetica,Arial,sans-serif" font-size="11">db, keycloak, migrate, api for the local</text>
+<text x="48" y="1548" font-family="Helvetica,Arial,sans-serif" font-size="11">full stack.</text>
+<text x="48" y="1564" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">docker-compose.yml &gt; keycloak:</text>
+<text x="48" y="1579" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="1626" width="260" height="121" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="48" y="1644" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">APK to Telegram</text>
+<text x="48" y="1662" font-family="Helvetica,Arial,sans-serif" font-size="11">Developer tool that sends the debug APK</text>
+<text x="48" y="1676" font-family="Helvetica,Arial,sans-serif" font-size="11">to a chat.</text>
+<text x="48" y="1692" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">services/telegram-apk/send-apk.mjs &gt;</text>
+<text x="48" y="1705" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">main</text>
+<text x="48" y="1720" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<path d="M300,213 L347,213 L347,367.5 L430,367.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="321.4" y="196" width="51.2" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="325.4" y="207" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">GET page</text>
+<path d="M300,213 L356,213 L356,642.5 L430,642.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="338.5" y="196" width="35" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="342.5" y="207" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">login</text>
+<path d="M300,213 L365,213 L365,1044.5 L430,1044.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="323.2" y="196" width="83.60000000000001" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="327.2" y="207" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">push / changes</text>
+<path d="M690,642.5 L764,642.5 L764,360 L820,360" fill="none" stroke="#d79b00" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="749.2" y="625.5" width="29.6" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="753.2" y="636.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">OIDC</text>
+<path d="M690,1044.5 L773,1044.5 L773,212.5 L820,212.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="752.8" y="1027.5" width="40.400000000000006" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="756.8" y="1038.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">Prisma</text>
+<path d="M560,1260 L560,1384" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="566" y="1311" width="83.60000000000001" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="570" y="1322" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">loads at start</text>
+<rect x="20" y="1791" width="150" height="26" rx="5" fill="#dae8fc" stroke="#6c8ebf"/>
+<text x="26" y="1808" font-family="Helvetica,Arial,sans-serif" font-size="10">API and entry</text>
+<rect x="180" y="1791" width="150" height="26" rx="5" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="186" y="1808" font-family="Helvetica,Arial,sans-serif" font-size="10">Orchestration and services</text>
+<rect x="340" y="1791" width="150" height="26" rx="5" fill="#f5f5f5" stroke="#666666"/>
+<text x="346" y="1808" font-family="Helvetica,Arial,sans-serif" font-size="10">Infrastructure</text>
+<rect x="500" y="1791" width="150" height="26" rx="5" fill="#ffe6cc" stroke="#d79b00"/>
+<text x="506" y="1808" font-family="Helvetica,Arial,sans-serif" font-size="10">External integrations</text>
+<rect x="660" y="1791" width="150" height="26" rx="5" fill="#d5e8d4" stroke="#82b366"/>
+<text x="666" y="1808" font-family="Helvetica,Arial,sans-serif" font-size="10">Processing and domain rules</text>
+<text x="20" y="1839" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text>
+<text x="20" y="1861" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">The Android shell makes no network calls (connect-src none): sync and login are not part of it yet. Only the browser app talks to the API.</text></svg>

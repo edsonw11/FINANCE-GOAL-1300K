@@ -19,6 +19,11 @@ module.exports=()=>{const {run}=createContext(),{eq,res}=suite('import-values');
   eq('R$ 1.234,56',a('R$ 1.234,56'),1234.56);
   eq('plain comma decimal',a('12,5'),12.5);
   eq('dot decimal',a('12.50'),12.5);
+  // owner decision Q3: the two readers differ on purpose and the difference is documented (docs/testing/owner-decisions.md)
+  const p=t=>run(`parse(${JSON.stringify(t)})`);
+  eq('Q3 form parser: "1,234" is 1.234 (a comma is always a decimal mark); file importer: "1,234" is 1234 (a lone comma with 3 digits after it is a thousands mark)',[p('1,234'),a('1,234')],[1.234,1234]);
+  eq('Q3 both read "1.234" as 1234 (a dot with 3 digits after it groups thousands)',[p('1.234'),a('1.234')],[1234,1234]);
+  eq('Q3 an American-format file value "1,234.56" is read right by the importer (1234.56)',a('1,234.56'),1234.56);
   eq('dot thousands only',a('1.234'),1234);
   eq('US format',a('1,234.56'),1234.56);
   eq('negative: leading minus',a('-12,50'),-12.5);

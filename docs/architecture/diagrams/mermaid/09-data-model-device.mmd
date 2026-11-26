@@ -1,0 +1,39 @@
+%% Everfox: Data Kept on the Device
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_state["State S (metaapp.v2)"]
+    direction TB
+    n_m_root["ROOT<br/>v (2), goal, rate, planned, nid (next id), ownNames, card settings.<br/>src/domain/store.js  blankState<br/>IMPLEMENTED"]
+    n_m_acc["ACCOUNTS<br/>id, name, archived, reserve, kind, balances come from snaps.<br/>src/domain/accounts.js  balance<br/>IMPLEMENTED"]
+    n_m_snap["SNAPS<br/>date, acc, value, est: a dated balance of an account.<br/>src/domain/store.js  snaps<br/>IMPLEMENTED"]
+    n_m_tx["TX<br/>id, type (receita, despesa, aporte, fatura...), value, date, cat, fonte, desc, acc, splits, fm.<br/>src/domain/transaction-builder.js  saveTransaction<br/>IMPLEMENTED"]
+    n_m_trade["TRADES<br/>ticker, side (C or V), qty, price, fees, date, cls.<br/>src/domain/portfolio.js  tradesOf<br/>IMPLEMENTED"]
+    n_m_xfer["TRANSFERS AND IMPORTS<br/>Own-account transfers kept apart, and the keys of imported items (to find duplicates).<br/>src/domain/transfers.js  transfers<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_side["Side keys"]
+    direction TB
+    n_k_bak["METAAPP.V2.BAK AND .BROKEN<br/>The previous good copy (once a day), and the copy of data that could not be read.<br/>src/domain/state-recovery.js  BACKUP_SUFFIX<br/>IMPLEMENTED"]
+    n_k_sync["SYNC BOOKKEEPING<br/>cursor, outbox, review list, fingerprints, one key next to the state.<br/>src/sync/outbox.js  emptyMeta<br/>IMPLEMENTED"]
+    n_k_lock["METAAPP.LOCK<br/>The app lock flag ('1' when on).<br/>src/ui/app-lock/lock-policy.js  LOCK_KEY<br/>IMPLEMENTED"]
+    n_k_last["METAAPP.LASTBACKUP<br/>When a backup last left the device.<br/>src/ui/views/backup.js  LAST_BACKUP_KEY<br/>IMPLEMENTED"]
+  end
+  n_m_root -->|"has many"| n_m_acc
+  n_m_acc -->|"has many"| n_m_snap
+  n_m_root -.->|"copy"| n_k_bak
+  class n_m_root dom
+  class n_m_acc dom
+  class n_m_snap dom
+  class n_m_tx dom
+  class n_m_trade dom
+  class n_m_xfer dom
+  class n_k_bak infra
+  class n_k_sync infra
+  class n_k_lock infra
+  class n_k_last infra

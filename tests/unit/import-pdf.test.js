@@ -1,6 +1,6 @@
 /** Digital PDF text -> entries: line rebuilding, dates (numeric and "05 NOV"), signs, card invoice, honest failures. */
 const {createContext,suite}=require('./harness');
-module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('import-pdf');
+module.exports=()=>{const {run}=createContext(),{eq,res}=suite('import-pdf');
   const J=JSON.stringify;
   run(`S=seed();S.tx=[];S.imports=[];initCats();`);
   const pe=(lines,opts)=>run(`pdfEntries(${J(lines.join('\n'))},${J(Object.assign({today:'2026-11-10'},opts||{}))})`);

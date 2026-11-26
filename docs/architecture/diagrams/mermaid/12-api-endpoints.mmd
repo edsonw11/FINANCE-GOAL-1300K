@@ -1,0 +1,63 @@
+%% Everfox: API and Use Cases
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_pub["Pages, health and login"]
+    direction TB
+    n_ep_web["GET /, /INDEX.HTML, /SRC/*, /VENDOR/*<br/>Serves the browser app from an allow-list of files (public, no rate limit). 404 for anything else.<br/>backend/src/web/web.controller.ts  WebController<br/>IMPLEMENTED"]
+    n_ep_live["GET /HEALTH/LIVE<br/>The process is up (public).<br/>backend/src/health/health.controller.ts  live<br/>IMPLEMENTED"]
+    n_ep_ready["GET /HEALTH/READY<br/>The database answers within the timeout (public). Not ready otherwise.<br/>backend/src/health/health.controller.ts  ready<br/>IMPLEMENTED"]
+    n_ep_login["GET /AUTH/LOGIN?RETURNTO<br/>Starts the OIDC login, 302 to the provider. Public, 20 per minute per address. 503 when the provider is unreachable.<br/>backend/src/auth/auth.controller.ts  start<br/>IMPLEMENTED"]
+    n_ep_cb["GET /AUTH/CALLBACK<br/>Finishes the login, session cookie, 302 to returnTo, or to the login-failed page. Public, 20 per minute per address.<br/>backend/src/auth/auth.controller.ts  finish<br/>IMPLEMENTED"]
+    n_ep_out["POST /AUTH/LOGOUT<br/>Ends the session, answers the provider's end-session address or null. Public.<br/>backend/src/auth/auth.controller.ts  logout<br/>IMPLEMENTED"]
+    n_ep_me["GET /API/V1/ME<br/>Who is logged in, with the plan features (the app shows locked ones as PRO).<br/>backend/src/auth/me.controller.ts  MeController<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_data["A person's data"]
+    direction TB
+    n_ep_push["POST /API/V1/SYNC/PUSH<br/>Applies the outbox in order. Body: mutations (mutationId, resource, id, op, data). Answer: one result per mutation (applied, superseded, rejected, skipped). 120 per minute per person.<br/>backend/src/sync/sync.controller.ts  push<br/>IMPLEMENTED"]
+    n_ep_chg["GET /API/V1/SYNC/CHANGES<br/>Changes after a cursor, in version order. Query: cursor, limit. Answer: changes, cursor, hasMore.<br/>backend/src/sync/sync.controller.ts  changes<br/>IMPLEMENTED"]
+    n_ep_al["GET /API/V1/ACCOUNTS<br/>The person's accounts: { items }.<br/>backend/src/accounts/accounts.controller.ts  list<br/>IMPLEMENTED"]
+    n_ep_ag["GET /API/V1/ACCOUNTS/:ID<br/>One account. 404 when it is not found.<br/>backend/src/accounts/accounts.controller.ts  get<br/>IMPLEMENTED"]
+    n_ep_ap["PUT /API/V1/ACCOUNTS/:ID<br/>Creates or renames an account (idempotent). Body: name.<br/>backend/src/accounts/accounts.controller.ts  save<br/>IMPLEMENTED"]
+    n_ep_ad["DELETE /API/V1/ACCOUNTS/:ID<br/>Removes an account (204).<br/>backend/src/accounts/accounts.controller.ts  remove<br/>IMPLEMENTED"]
+    n_ep_imp["POST /API/V1/IMPORT/LEGACY-STATE?REPLACE<br/>Imports a whole state (up to 25 MB). 6 per hour per person.<br/>backend/src/legacy/legacy.controller.ts  importState<br/>IMPLEMENTED"]
+    n_ep_exp["GET /API/V1/EXPORT/LEGACY-STATE<br/>Exports the whole state.<br/>backend/src/legacy/legacy.controller.ts  exportState<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_rules["Month rules and admin"]
+    direction TB
+    n_ep_sum["GET /API/V1/MONTHS/:MONTH/SUMMARY<br/>Month summary computed by the shared rules. :month is yyyy-mm.<br/>backend/src/legacy/months.controller.ts  summary<br/>IMPLEMENTED"]
+    n_ep_res["GET /API/V1/MONTHS/:MONTH/RESULT<br/>Month result: income, expenses, left, rate, level.<br/>backend/src/legacy/months.controller.ts  result<br/>IMPLEMENTED"]
+    n_ep_rep["GET /API/V1/MONTHS/:MONTH/REPORT<br/>Monthly report data. Needs plan feature report.monthly (403 feature_locked). Optional today=yyyy-mm-dd.<br/>backend/src/legacy/months.controller.ts  report<br/>IMPLEMENTED"]
+    n_ep_apl["GET /API/V1/ADMIN/PLANS<br/>Plans and their features. Admin only.<br/>backend/src/plans/admin.controller.ts  list<br/>IMPLEMENTED"]
+    n_ep_aen["PUT /API/V1/ADMIN/PLANS/:PLANID/FEATURES/:KEY<br/>Turns a feature on for a plan (key must be in the catalogue, 400 unknown_feature). Written to the audit log.<br/>backend/src/plans/admin.controller.ts  enable<br/>IMPLEMENTED"]
+    n_ep_adi["DELETE /API/V1/ADMIN/PLANS/:PLANID/FEATURES/:KEY<br/>Turns a feature off. Audit logged.<br/>backend/src/plans/admin.controller.ts  disable<br/>IMPLEMENTED"]
+    n_ep_aus["PUT /API/V1/ADMIN/USERS/:USERID/PLAN<br/>Moves a person to a plan. 404 when the person is not found. Audit logged.<br/>backend/src/plans/admin.controller.ts  setPlan<br/>IMPLEMENTED"]
+  end
+  class n_ep_web api
+  class n_ep_live api
+  class n_ep_ready api
+  class n_ep_login api
+  class n_ep_cb api
+  class n_ep_out api
+  class n_ep_me api
+  class n_ep_push svc
+  class n_ep_chg svc
+  class n_ep_al svc
+  class n_ep_ag svc
+  class n_ep_ap svc
+  class n_ep_ad svc
+  class n_ep_imp svc
+  class n_ep_exp svc
+  class n_ep_sum dom
+  class n_ep_res dom
+  class n_ep_rep dom
+  class n_ep_apl dom
+  class n_ep_aen dom
+  class n_ep_adi dom
+  class n_ep_aus dom

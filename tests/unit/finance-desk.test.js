@@ -2,7 +2,7 @@
  * Savings rate, emergency reserve and the "what to do now" list.
  */
 const {createContext,suite}=require('./harness');
-module.exports=()=>{const {run}=createContext(),{eq,ok,near,res}=suite('finance-desk');
+module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('finance-desk');
   const tx=(id,type,date,value,extra)=>JSON.stringify({id,type,date,value,cat:'Outros',desc:'x'+id,fonte:'caixa',...extra});
   // savings rate
   run(`S=blankState();S.tx=[${tx(1,'receita','2026-10-05',1000)},${tx(2,'despesa','2026-10-06',750)}]`);

@@ -20,6 +20,8 @@ export function planPayment(fm,selectedIds,mode,partialValue){
   else{value=all?inv.rest:sumMoney(chosen.map(t=>t.value));if(!(value>0))return {error:'Marque pelo menos uma compra'};}
   return {value,full:value>=inv.rest-0.004,remaining:Math.max(0,roundMoney(inv.rest-value)),items:mode!=='part'&&!all?chosen.map(t=>t.id):null};
 }
+// what a payment pays above what is open on the invoice (0 when it does not): the app counts it as an expense "Cartão (sem detalhe)", it is not a credit for later invoices
+export const paymentExcess=(value,open)=>{const x=roundMoney(value-open);return x>0.004?x:0;};
 export function payInvoice(fm,plan,date){
   if(!plan||plan.error)return plan||{error:'Pagamento inválido'};
   const tx={id:S.nid++,type:'fatura',date,value:roundMoney(plan.value),desc:'',cat:INVOICE_CATEGORY,fm};

@@ -4,7 +4,7 @@
  */
 import { $, css, esc } from '../../core/dom.js';
 import { f0, f2 } from '../../core/format.js';
-import { mLabel, mOf, mShort, today } from '../../core/dates.js';
+import { mLabel, mShort } from '../../core/dates.js';
 import { S } from '../../domain/store.js';
 import { groupIcon } from '../../domain/category-groups.js';
 import { groupMonth, spendingWindow } from '../../domain/spending.js';
@@ -16,7 +16,7 @@ import { kpi } from './kpi.js';
 import { renderInsights } from './summary-insights.js';
 import { generateDemoData } from './settings-demo.js';
 export function renderTrend(){
-  const sv=$('chTrend'),nowM=mOf(today());
+  const sv=$('chTrend');
   if(!S.tx.length){sv.innerHTML='';$('trendSum').innerHTML='<div class="empty">Lance despesas para ver a evolução.</div>';return;}
   const {ms,vals,part,ci}=spendingWindow(ui.cur),cv=ci.map(k=>vals[k]),n=cv.length;
   const tr=linearTrend(ci,cv),avg=tr.avg,slope=n>=3?tr.slope:0,icpt=n>=3?tr.intercept:avg;

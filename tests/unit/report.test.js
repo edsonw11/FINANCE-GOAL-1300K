@@ -4,7 +4,7 @@
  * the month in progress (attention, card, comparison) is left out of a closed month. Values are made up.
  */
 const {createContext,suite}=require('./harness');
-module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('report');
+module.exports=()=>{const {run}=createContext(),{eq,res}=suite('report');
   const J=JSON.stringify;
   const tx=(id,type,date,value,cat,extra)=>J({id,type,date,value,cat,desc:cat+' '+id,fonte:'caixa',...extra});
   const fresh=txs=>run(`S=blankState();S.accounts=[{id:'a1',name:'CDB'}];S.snaps=[{date:'2026-10-31',acc:'a1',value:50000}];S.cats=undefined;delete S.catsV2;delete S.catsV3;delete S.catsV4;initCats();S.tx=[${txs.join(',')}]`);

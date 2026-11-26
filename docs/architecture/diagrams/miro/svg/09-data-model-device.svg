@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1055" viewBox="0 0 900 1055"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: Data Kept on the Device</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">No database in the browser: one JSON in localStorage (key metaapp.v2, version 2), plus small side keys.</text>
+<rect x="20" y="96" width="300" height="865" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">State S (metaapp.v2)</text>
+<rect x="40" y="152" width="260" height="108" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Root</text>
+<text x="48" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">v (2), goal, rate, planned, nid (next</text>
+<text x="48" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">id), ownNames, card settings.</text>
+<text x="48" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/store.js &gt; blankState</text>
+<text x="48" y="233" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="280" width="260" height="108" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="48" y="298" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">accounts</text>
+<text x="48" y="316" font-family="Helvetica,Arial,sans-serif" font-size="11">id, name, archived, reserve, kind;</text>
+<text x="48" y="330" font-family="Helvetica,Arial,sans-serif" font-size="11">balances come from snaps.</text>
+<text x="48" y="346" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/accounts.js &gt; balance</text>
+<text x="48" y="361" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="408" width="260" height="108" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="48" y="426" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">snaps</text>
+<text x="48" y="444" font-family="Helvetica,Arial,sans-serif" font-size="11">date, acc, value, est: a dated balance</text>
+<text x="48" y="458" font-family="Helvetica,Arial,sans-serif" font-size="11">of an account.</text>
+<text x="48" y="474" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/store.js &gt; snaps</text>
+<text x="48" y="489" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="536" width="260" height="135" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="48" y="554" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">tx</text>
+<text x="48" y="572" font-family="Helvetica,Arial,sans-serif" font-size="11">id, type (receita, despesa, aporte,</text>
+<text x="48" y="586" font-family="Helvetica,Arial,sans-serif" font-size="11">fatura...), value, date, cat, fonte,</text>
+<text x="48" y="600" font-family="Helvetica,Arial,sans-serif" font-size="11">desc, acc, splits, fm.</text>
+<text x="48" y="616" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/transaction-builder.js &gt;</text>
+<text x="48" y="629" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">saveTransaction</text>
+<text x="48" y="644" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="691" width="260" height="108" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="48" y="709" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">trades</text>
+<text x="48" y="727" font-family="Helvetica,Arial,sans-serif" font-size="11">ticker, side (C or V), qty, price, fees,</text>
+<text x="48" y="741" font-family="Helvetica,Arial,sans-serif" font-size="11">date, cls.</text>
+<text x="48" y="757" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/portfolio.js &gt; tradesOf</text>
+<text x="48" y="772" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="819" width="260" height="122" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="48" y="837" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">transfers and imports</text>
+<text x="48" y="855" font-family="Helvetica,Arial,sans-serif" font-size="11">Own-account transfers kept apart, and</text>
+<text x="48" y="869" font-family="Helvetica,Arial,sans-serif" font-size="11">the keys of imported items (to find</text>
+<text x="48" y="883" font-family="Helvetica,Arial,sans-serif" font-size="11">duplicates).</text>
+<text x="48" y="899" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/transfers.js &gt; transfers</text>
+<text x="48" y="914" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="566" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Side keys</text>
+<rect x="430" y="152" width="260" height="121" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">metaapp.v2.bak and .broken</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">The previous good copy (once a day), and</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">the copy of data that could not be read.</text>
+<text x="438" y="218" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/domain/state-recovery.js &gt;</text>
+<text x="438" y="231" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">BACKUP_SUFFIX</text>
+<text x="438" y="246" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="293" width="260" height="108" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="438" y="311" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">Sync bookkeeping</text>
+<text x="438" y="329" font-family="Helvetica,Arial,sans-serif" font-size="11">cursor, outbox, review list,</text>
+<text x="438" y="343" font-family="Helvetica,Arial,sans-serif" font-size="11">fingerprints, one key next to the state.</text>
+<text x="438" y="359" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/sync/outbox.js &gt; emptyMeta</text>
+<text x="438" y="374" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="421" width="260" height="107" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="438" y="439" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">metaapp.lock</text>
+<text x="438" y="457" font-family="Helvetica,Arial,sans-serif" font-size="11">The app lock flag (&quot;1&quot; when on).</text>
+<text x="438" y="473" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/app-lock/lock-policy.js &gt;</text>
+<text x="438" y="486" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">LOCK_KEY</text>
+<text x="438" y="501" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="548" width="260" height="94" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="438" y="566" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">metaapp.lastBackup</text>
+<text x="438" y="584" font-family="Helvetica,Arial,sans-serif" font-size="11">When a backup last left the device.</text>
+<text x="438" y="600" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">src/ui/views/backup.js &gt; LAST_BACKUP_KEY</text>
+<text x="438" y="615" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<path d="M170,260 L170,280" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="176" y="259" width="51.2" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="180" y="270" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">has many</text>
+<path d="M170,388 L170,408" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="176" y="387" width="51.2" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="180" y="398" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">has many</text>
+<path d="M300,206 L365,206 L365,212.5 L430,212.5" fill="none" stroke="#4a5568" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#a)"/>
+<rect x="350.2" y="189" width="29.6" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="354.2" y="200" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">copy</text>
+<rect x="20" y="985" width="150" height="26" rx="5" fill="#d5e8d4" stroke="#82b366"/>
+<text x="26" y="1002" font-family="Helvetica,Arial,sans-serif" font-size="10">Processing and domain rules</text>
+<rect x="180" y="985" width="150" height="26" rx="5" fill="#f5f5f5" stroke="#666666"/>
+<text x="186" y="1002" font-family="Helvetica,Arial,sans-serif" font-size="10">Infrastructure</text>
+<text x="20" y="1033" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text></svg>

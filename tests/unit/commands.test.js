@@ -1,6 +1,6 @@
 /** Commands used by the screens: categories, accounts, settings, backup import, demo data. */
 const {createContext,suite}=require('./harness');
-module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('commands');
+module.exports=()=>{const {run}=createContext({today:'2026-11-20'}),{eq,ok,res}=suite('commands');
   run("S=seed();S.tx=[];initCats();");
   // categories
   const n0=run("S.cats.despesa.length");

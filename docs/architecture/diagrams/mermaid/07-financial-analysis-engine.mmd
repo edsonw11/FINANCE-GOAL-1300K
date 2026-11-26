@@ -1,0 +1,69 @@
+%% Everfox: Rules and Calculations
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_in["Data the rules read"]
+    direction TB
+    n_r_tx["TRANSACTIONS<br/>Income, expense, aporte (money into an investment), card purchases and invoice payments.<br/>src/domain/transactions.js  txIn<br/>IMPLEMENTED"]
+    n_r_acc["ACCOUNTS AND BALANCES<br/>Each account has dated balance snapshots, a balance on a day comes from them.<br/>src/domain/accounts.js  balance<br/>IMPLEMENTED"]
+    n_r_trades["TRADES<br/>Buys and sells read from B3 brokerage notes.<br/>src/domain/portfolio.js  tradesOf<br/>IMPLEMENTED"]
+    n_r_set["SETTINGS<br/>Goal (default 1,300,000), yearly rate (default 12.5%), planned monthly contribution, card days.<br/>src/domain/store.js  blankState<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_month["Month numbers"]
+    direction TB
+    n_r_sum["MONTH SUMMARY<br/>Income, expenses and contributions of a month, with the records behind each number.<br/>src/domain/month-summary.js  monthSummary<br/>IMPLEMENTED"]
+    n_r_res["MONTH RESULT<br/>left = income - expenses, rate = left / income (none without income), kept = left - invested.<br/>src/domain/month-result.js  monthResult<br/>IMPLEMENTED"]
+    n_r_lvl["SAVINGS LEVEL<br/>rate below 0: negative, below 10%: low, 10% to 20%: ok, 20% or more: good.<br/>src/domain/savings.js  savingsLevel<br/>IMPLEMENTED"]
+    n_r_bud["BUDGET BY GROUP<br/>Share of the budget used: up to 80% ok, from 80% near, above 100% over.<br/>src/domain/budgets.js  budgetStatus<br/>IMPLEMENTED"]
+    n_r_bill["MONTHLY BILLS<br/>Recurring expenses found in the last 3 months (at least 2 times, amount varying up to 20%).<br/>src/domain/monthly-bills.js  monthlyBills<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_card["Credit card"]
+    direction TB
+    n_r_cyc["CYCLE AND INVOICE MONTH<br/>Best purchase day starts the invoice, closing is the day before, due is the next due day after closing, a purchase belongs to the first invoice whose closing has not passed. Weekend closing moves to the next business day if the option is on.<br/>src/domain/card-cycle.js  dueMonth<br/>IMPLEMENTED"]
+    n_r_inv["INVOICE ITEMS AND UNDETAILED AMOUNT<br/>Which purchases belong to an invoice, and what the invoice total leaves undetailed.<br/>src/domain/card-invoices.js  invoiceUndetailed<br/>IMPLEMENTED"]
+    n_r_pay["INVOICE PAYMENT<br/>Plans and records a full or partial payment.<br/>src/domain/invoice-payment.js  planPayment<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_wealth["Goal and wealth"]
+    direction TB
+    n_r_proj["GOAL PROJECTION<br/>monthly rate = (1 + yearly/100)^(1/12) - 1, each month: balance + interest + planned contribution. A second line uses the rate 2 points lower.<br/>src/domain/goal-projection.js  projectionPlan<br/>IMPLEMENTED"]
+    n_r_real["REAL SERIES AND AVERAGE CONTRIBUTION<br/>Net worth by month from the balances, average of real contributions.<br/>src/domain/investments.js  realSeries<br/>IMPLEMENTED"]
+    n_r_res6["EMERGENCY RESERVE<br/>Reserve balance divided by the average expense of the last 3 closed months, target 6 months, minimum 3.<br/>src/domain/emergency-fund.js  emergencyFund<br/>IMPLEMENTED"]
+    n_r_pos["PORTFOLIO POSITIONS<br/>Per ticker: quantity, average cost (costs included), amount invested, result of what was sold.<br/>src/domain/portfolio.js  positions<br/>IMPLEMENTED"]
+    n_r_alloc["ALLOCATION TARGET<br/>Optional target share per kind of asset, within 2 points of the target counts as on target.<br/>src/domain/allocation.js  allocationStatus<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_imp["Import classification"]
+    direction TB
+    n_r_imp{"WHAT AN ENTRY IS<br/>Balance line: dropped. Invoice payment, own transfer, refund, redemption, yield or tax: not income or expense on their own. Pix, TED and doc: flagged to confirm. 'PARC 03/10': read as an installment.<br/>src/domain/import-classify.js  IMPORT_TYPE<br/>IMPLEMENTED"}
+    n_r_own{"OWN-ACCOUNT TRANSFERS<br/>Pairs the two sides of a transfer between the person's accounts, so it is neither income nor expense.<br/>src/domain/transfers.js  markTransferPairs<br/>IMPLEMENTED"}
+  end
+  n_r_tx -->|"by month"| n_r_sum
+  n_r_sum --> n_r_res
+  n_r_res --> n_r_lvl
+  n_r_acc -->|"balances"| n_r_real
+  n_r_set -->|"goal, rate, plan"| n_r_proj
+  n_r_trades --> n_r_pos
+  class n_r_tx infra
+  class n_r_acc infra
+  class n_r_trades infra
+  class n_r_set infra
+  class n_r_sum dom
+  class n_r_res dom
+  class n_r_lvl dom
+  class n_r_bud dom
+  class n_r_bill dom
+  class n_r_cyc dom
+  class n_r_inv dom
+  class n_r_pay dom
+  class n_r_proj dom
+  class n_r_real dom
+  class n_r_res6 dom
+  class n_r_pos dom
+  class n_r_alloc dom
+  class n_r_imp dec
+  class n_r_own dec

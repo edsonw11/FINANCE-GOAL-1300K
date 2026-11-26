@@ -1,0 +1,53 @@
+%% Everfox: Components of the API
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_http["HTTP layer"]
+    direction TB
+    n_h_main["MAIN.TS AND CREATE-APP.TS<br/>Builds the Fastify app, cookies, body limits, headers on every answer.<br/>backend/src/create-app.ts  createApp<br/>IMPLEMENTED"]
+    n_h_guards["GLOBAL GUARDS, IN ORDER<br/>Address rate limit, CSRF, login check, person rate limit, admin, plan feature.<br/>backend/src/auth/auth.module.ts  APP_GUARD<br/>IMPLEMENTED"]
+    n_h_input["INPUT CHECKING<br/>Every body and parameter is checked against a schema, 400 names the field.<br/>backend/src/http/parse-input.ts  parseInput<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_mod["Feature modules"]
+    direction TB
+    n_m_auth["AUTH: LOGINSERVICE, SESSIONSERVICE<br/>Two-step OIDC login, opaque cookie sessions kept as a hash.<br/>backend/src/auth/login.service.ts  LoginService<br/>IMPLEMENTED"]
+    n_m_sync["SYNC: SYNCSERVICE<br/>Applies pushed mutations once, answers changes after a cursor.<br/>backend/src/sync/sync.service.ts  SyncService<br/>IMPLEMENTED"]
+    n_m_acc["ACCOUNTS: ACCOUNTSSERVICE<br/>Account rules over the record store.<br/>backend/src/accounts/accounts.service.ts  AccountsService<br/>IMPLEMENTED"]
+    n_m_rules["LEGACY: FINANCERULESSERVICE<br/>Runs the shared rules on one person's stored state.<br/>backend/src/legacy/finance-rules.service.ts  FinanceRulesService<br/>IMPLEMENTED"]
+    n_m_plans["PLANS: ENTITLEMENTSSERVICE<br/>Which features a person's plan has.<br/>backend/src/plans/entitlements.service.ts  EntitlementsService<br/>IMPLEMENTED"]
+    n_m_health["HEALTH: HEALTHSERVICE<br/>Live always, ready when the database answers.<br/>backend/src/health/health.service.ts  HealthService<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_port["Ports and adapters"]
+    direction TB
+    n_p_rec["RECORDSTORE<br/>Records with versions, soft delete and a per-person change counter.<br/>backend/src/records/record.store.ts  RecordStore<br/>IMPLEMENTED"]
+    n_p_sess["SESSIONREPOSITORY<br/>Session rows (only the hash of the cookie value).<br/>backend/src/auth/session.repository.ts  SessionRepository<br/>IMPLEMENTED"]
+    n_p_log["MUTATIONLOG<br/>The answer to every mutation seen, so a retry changes nothing.<br/>backend/src/sync/mutation-log.ts  MutationLog<br/>IMPLEMENTED"]
+    n_p_plan["PLANREPOSITORY<br/>Plans and their features.<br/>backend/src/plans/plan.repository.ts  PlanRepository<br/>IMPLEMENTED"]
+    n_p_prisma["PRISMASERVICE<br/>The one database client (pool), connected on first use.<br/>backend/src/database/prisma.service.ts  PrismaService<br/>IMPLEMENTED"]
+  end
+  n_h_guards -->|"every request"| n_m_auth
+  n_m_sync -->|"records outcome"| n_p_log
+  n_m_acc -->|"reads and writes"| n_p_rec
+  n_m_auth -->|"sessions"| n_p_sess
+  n_m_plans -->|"features"| n_p_plan
+  n_m_health -->|"ready check"| n_p_prisma
+  class n_h_main api
+  class n_h_guards api
+  class n_h_input api
+  class n_m_auth svc
+  class n_m_sync svc
+  class n_m_acc svc
+  class n_m_rules svc
+  class n_m_plans svc
+  class n_m_health svc
+  class n_p_rec infra
+  class n_p_sess infra
+  class n_p_log infra
+  class n_p_plan infra
+  class n_p_prisma infra

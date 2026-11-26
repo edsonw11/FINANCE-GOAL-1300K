@@ -11,11 +11,18 @@ function domainFiles(){
   const dir=d=>fs.readdirSync(path.join(root,'src',d)).filter(f=>f.endsWith('.js')).sort().map(f=>path.join(root,'src',d,f));
   return moduleOrder(dir('core').concat(dir('domain')));
 }
-function createContext(){
+/** A Date whose "now" is always noon of the given ISO day (a test that needs a fixed today passes {today}); with arguments it is the normal Date. */
+function fixedDate(iso){
+  const [y,m,d]=iso.split('-').map(Number),now=new Date(y,m-1,d,12).getTime();
+  function FixedDate(...a){return a.length?new Date(...a):new Date(now);}
+  FixedDate.prototype=Date.prototype;FixedDate.now=()=>now;FixedDate.UTC=Date.UTC;FixedDate.parse=Date.parse;
+  return FixedDate;
+}
+function createContext(opts={}){
   const mem={},storage={
     getItem:k=>mem[k]??null,
     setItem:(k,v)=>{if(storage.fail)throw new Error('QuotaExceededError');mem[k]=String(v);},mem};
-  const ctx={console,Math,JSON,Date,Intl,String,Number,Object,Array,Set,Map,Error,parseInt,parseFloat,isNaN,localStorage:storage};
+  const ctx={console,Math,JSON,Date:opts.today?fixedDate(opts.today):Date,Intl,String,Number,Object,Array,Set,Map,Error,parseInt,parseFloat,isNaN,localStorage:storage};
   vm.createContext(ctx);
   // the modules become one script (imports removed), so a test can call any top-level function
   domainFiles().forEach(f=>vm.runInContext(stripModule(fs.readFileSync(f,'utf8')),ctx,{filename:path.relative(root,f)}));

@@ -13,7 +13,7 @@ import { deleteTransactions } from '../../domain/transactions.js';
 import { icon } from '../../domain/categories.js';
 import { closeDateOf, cycleStart, dueDateOf, dueMonth, invoiceMonthOf, nearestDueMonth } from '../../domain/card-cycle.js';
 import { payableInvoices, payableItems } from '../../domain/card-invoices.js';
-import { payInvoice, planPayment } from '../../domain/invoice-payment.js';
+import { payInvoice, paymentExcess, planPayment } from '../../domain/invoice-payment.js';
 import { ui } from '../ui-state.js';
 import { toast } from '../toast.js';
 import { askConfirm } from '../components/confirm.js';
@@ -25,7 +25,7 @@ import { drawInvoiceForm, initInvoiceForm } from './invoice-form.js';
 import { openItem } from './item-dialog.js';
 import { invoiceName } from '../invoice-name.js';
 // ---- pay invoice (quick mode): pick the invoice and the amount, no date/description ----
-let paySel=null,payMode='total';
+let payMode='total';
 export const isQuickPay=()=>ui.type==='fatura'&&ui.editId===null&&!ui.payAdvanced;
 let payOpen=null,payIds=null,payIdsFm=null;
 export async function cancelPay(t){
@@ -45,7 +45,6 @@ export function renderPay(){
   if(!L.length){box.innerHTML='<div class="empty pay-empty">Nenhuma fatura em aberto. Lance as compras com “Cartão de crédito” para elas aparecerem aqui.</div><div class="tc"><button type="button" class="btn sm" id="payAdv">Registrar pagamento manualmente</button></div>'+paidInvoicesList();bindPaidInvoices(box);$('payAdv').onclick=()=>{ui.payAdvanced=true;fillCategoryOptions();};return;}
   if(payOpen===null){const nf=nearestDueMonth(t0);payOpen=(L.find(f=>f.fm===nf)||L[0]).fm;}
   if(payOpen&&!L.some(f=>f.fm===payOpen))payOpen=L[0].fm;
-  paySel=payOpen;
   const fmNow=dueMonth(t0),head=L.filter(f=>f.fm<=fmNow),fut=L.filter(f=>f.fm>fmNow);
   const f=L.find(x=>x.fm===payOpen);
   let its=[];
@@ -83,7 +82,8 @@ export function renderPay(){
   $('payGo').onclick=async()=>{
     const partial=payMode==='part',plan=planPayment(f.fm,[...payIds],payMode,partial?parseMoney($('payVal').value):0);
     if(plan.error)return partial?fieldError($('payVal'),plan.error):toast('⚠️ '+plan.error);
-    const html=`${plan.full?'Pagar a fatura':'Pagar <b>parcialmente</b> a fatura'} que vence em <b>${formatDateBR(dueDateOf(f.fm))}</b>?<dl class="dl mt-10"><div class="dl-r"><dt>Valor</dt><dd><b>${f2(plan.value)}</b></dd></div>${plan.full?'':`<div class="dl-r"><dt>Falta depois</dt><dd>${f2(plan.remaining)}</dd></div>`}<div class="dl-r"><dt>Data</dt><dd>hoje, ${formatDateBR(t0)}</dd></div></dl>${plan.value>f.rest+0.004?`<div class="bd-note">⚠️ O valor é maior que o da fatura (${f2(f.rest)}).</div>`:''}`;
+    const excess=paymentExcess(plan.value,f.rest);
+    const html=`${plan.full?'Pagar a fatura':'Pagar <b>parcialmente</b> a fatura'} que vence em <b>${formatDateBR(dueDateOf(f.fm))}</b>?<dl class="dl mt-10"><div class="dl-r"><dt>Valor</dt><dd><b>${f2(plan.value)}</b></dd></div>${plan.full?'':`<div class="dl-r"><dt>Falta depois</dt><dd>${f2(plan.remaining)}</dd></div>`}<div class="dl-r"><dt>Data</dt><dd>hoje, ${formatDateBR(t0)}</dd></div></dl>${excess>0?`<div class="bd-note">⚠️ <b>O valor é maior que o em aberto.</b> Em aberto: ${f2(f.rest)}. Você vai pagar: ${f2(plan.value)}. Diferença: <b>${f2(excess)}</b>.<br>A diferença será registrada como <b>despesa “Cartão (sem detalhe)”</b> neste mês; não vira crédito para as próximas faturas.</div>`:''}`;
     if(!await askConfirm({title:'Confirmar pagamento',html,ok:'💳 Pagar '+f2(plan.value)}))return;
     if(!runCommand(()=>payInvoice(f.fm,plan,t0),{render:false}))return;
     payMode='total';payIds=null;ui.cur=mOf(t0);render();

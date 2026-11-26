@@ -4,6 +4,7 @@
  */
 import { STORAGE_KEY } from '../core/config.js';
 import { today } from '../core/dates.js';
+import { repairIdCounter } from '../core/id-counter.js';
 import { balance } from './accounts.js';
 import { invalidateAllocation } from './card-invoices.js';
 import { readBackup, readState, rollBackup } from './state-recovery.js';
@@ -13,25 +14,34 @@ export const seed=()=>({v:2,goal:1300000,rate:12.5,planned:0,nid:1,
   tx:[]});
 // nothing at all: no accounts, balances or records (what "Apagar tudo" leaves; the goal and the rate are settings and are kept)
 export const blankState=prev=>({v:2,goal:prev?prev.goal:1300000,rate:prev?prev.rate:12.5,planned:0,nid:1,accounts:[],snaps:[],tx:[],...(prev&&prev.ownNames?{ownNames:prev.ownNames}:{})});
-// Santander was emptied: moves the balance to Nubank and archives the account (once)
+// Santander was emptied: moves the balance to Nubank and archives the account, once.
+// The "done" mark lives in the state (S.migrated.sa), so the move is never repeated, even if the account shows up again unarchived
+// (a state without the mark, such as a backup taken before the move, is migrated on its next open). States without a Santander account are left untouched.
 export function migrate(){
+  if(S.migrated&&S.migrated.sa)return;
   const sa=S.accounts.find(a=>a.id==='sa'),nu=S.accounts.find(a=>a.id==='nu');
-  if(!sa||sa.archived||!nu)return;
+  if(!sa||!nu)return;
+  if(sa.archived){S.migrated={...S.migrated,sa:true};return;} // already moved by an earlier version: only the mark is added (stored with the next save)
   const d=today(),vSa=balance('sa',d).v,vNu=balance('nu',d).v;
   S.snaps=S.snaps.filter(s=>!(s.date===d&&(s.acc==='sa'||(vSa>0.005&&s.acc==='nu'))));
   if(vSa>0.005)S.snaps.push({date:d,acc:'nu',value:vNu+vSa,est:false});
   S.snaps.push({date:d,acc:'sa',value:0,est:false});
-  sa.archived=true;save();
+  sa.archived=true;S.migrated={...S.migrated,sa:true};save();
 }
 // storage is injected (DIP): the browser uses localStorage; tests pass an in-memory one
 let storage=typeof localStorage!=='undefined'?localStorage:{getItem:()=>null,setItem:()=>{}};
-function configureStorage(adapter){storage=adapter;}
+export function configureStorage(adapter){storage=adapter;}
 // what happened when the app opened: recovered=true when the saved data could not be read (a copy was kept aside)
 export const bootNotice={recovered:false};
 // a first visit opens an empty app (the example data is on demand); unreadable data is kept aside, never overwritten
 function load(){const r=readState(storage,STORAGE_KEY,()=>blankState());bootNotice.recovered=r.recovered;return r.state;}
 export const autoBackup=()=>readBackup(storage,STORAGE_KEY);
-export function save(){invalidateAllocation();rollBackup(storage,STORAGE_KEY,today());storage.setItem(STORAGE_KEY,JSON.stringify(S));}
+export function save(){invalidateAllocation();rollBackup(storage,STORAGE_KEY,today());storage.setItem(STORAGE_KEY,JSON.stringify(S));saveListeners.forEach(f=>{try{f();}catch(e){/* a listener must never break saving */}});}
+// who wants to know when the state was saved (the sync looks for changes to send); each listener is called after the data is stored
+const saveListeners=[];
+export const onSave=fn=>{saveListeners.push(fn);};
+// the state as the sync has merged it from the server: stored like any other change
+export function adoptRemoteState(next){S=repairIdCounter(next);save();}
 // swaps the whole state (backup import, reset); the caller saves it through transact()
 export function replaceState(next){S=next;invalidateAllocation();}
 /**
@@ -49,5 +59,29 @@ export function transact(mutate){
   if(r&&r.error){restore();return r;}
   try{save();}catch(e){restore();transact.lastError=e;return false;}
   return r===undefined?true:r;
+}
+// the error of the last failed change (for diagnosis); null until something fails
+transact.lastError=null;
+// storage used inside withState(): reads find nothing, writes are dropped
+const NO_STORAGE={getItem:()=>null,setItem:()=>{}};
+/**
+ * withState(state, fn): runs domain code against a given state (one user's data on the server, a test fixture)
+ * and puts the previous state back afterwards, also when fn throws. Nested calls are fine.
+ * - synchronous only: an async fn would let other code run while this state is in force, so a promise result
+ *   is refused with an error;
+ * - nothing is persisted: transact() inside it saves nowhere; storing the result is the caller's job;
+ * - returns {result, state}: state is the one in force at the end (a command may swap it, e.g. backup import).
+ * See docs/architecture/decisions/ADR-0006.
+ */
+export function withState(state,fn){
+  if(!state||typeof state!=='object'||Array.isArray(state))throw new TypeError('withState: state must be an object');
+  if(typeof fn!=='function')throw new TypeError('withState: fn must be a function');
+  const prevState=S,prevStorage=storage;
+  S=state;storage=NO_STORAGE;invalidateAllocation();
+  try{
+    const result=fn();
+    if(result&&typeof result.then==='function')throw new Error('withState: fn must be synchronous');
+    return {result,state:S};
+  }finally{S=prevState;storage=prevStorage;invalidateAllocation();}
 }
 export let S=load();

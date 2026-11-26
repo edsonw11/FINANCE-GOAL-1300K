@@ -81,6 +81,8 @@ export function selectionSummary(drafts){
 }
 // transfers between own accounts that confirming will keep (not the ones already kept by an earlier import)
 export const keptTransfers=drafts=>drafts.filter(d=>d.type===IMPORT_TYPE.ownTransfer&&!(d.dup&&d.dup.level==='confirmed')&&d.date&&d.value>0);
+// lines left out of the totals because they look like a transfer of the person's own money, but that the person must look at (Q5)
+export const possibleTransfers=drafts=>drafts.filter(d=>d.type===IMPORT_TYPE.ignore&&d.flags.includes('possible-transfer'));
 // what the review screen shows on top (a preview: nothing here is saved)
 export function importOverview(drafts){
   const sel=selectionSummary(drafts),saveable=drafts.filter(isSaveable);
@@ -95,7 +97,8 @@ export function importOverview(drafts){
     contributions:saveable.filter(d=>d.type===IMPORT_TYPE.contribution).length,
     contributionTotal:sumMoney(saveable.filter(d=>d.type===IMPORT_TYPE.contribution).map(d=>d.value)),
     expenseTotal:sumMoney(saveable.filter(d=>d.type===IMPORT_TYPE.expense).map(d=>d.value)),
-    review:saveable.filter(d=>needsReview(d)||draftProblems(d).length).length,
+    possibleTransfers:possibleTransfers(drafts).length,
+    review:saveable.filter(d=>needsReview(d)||draftProblems(d).length).length+possibleTransfers(drafts).length,
     confirmedDup:drafts.filter(d=>d.dup&&d.dup.level==='confirmed').length,
     possibleDup:drafts.filter(d=>d.dup&&d.dup.level==='possible').length,
     months:[...new Set(saveable.map(targetMonth).filter(Boolean))].sort(),

@@ -39,4 +39,3 @@ export function restoreTransactions(undo){
 }
 // the paid invoice that currently absorbs a card purchase (null when it is still open)
 export function invoiceOfPurchase(t){const {map}=alloc();const id=Object.keys(map).find(k=>map[k].includes(t.id));return id?S.tx.find(x=>x.id===+id)||null:null;}
-const TYPE_LABEL={despesa:'despesa',receita:'receita',aporte:'aporte',fatura:'pagamento de fatura'};

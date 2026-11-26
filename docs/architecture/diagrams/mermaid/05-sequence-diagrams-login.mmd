@@ -1,0 +1,22 @@
+%% Everfox: Sequence of Logging In (OpenID Connect)
+sequenceDiagram
+  autonumber
+  participant n_br as Browser
+  participant n_ac as AuthController
+  participant n_ls as LoginService
+  participant n_af as AuthFlowRepository
+  participant n_kc as Keycloak
+  participant n_ss as SessionService
+  n_br->>n_ac: GET /auth/login?returnTo
+  n_ac->>n_ls: begin(returnTo)
+  n_ls->>n_kc: createAuthorizationRequest (state, nonce, PKCE verifier)
+  n_ls->>n_af: insert the attempt (hashed id), delete expired
+  n_ac-->>n_br: 302 to Keycloak, login cookie set
+  n_br->>n_kc: person signs in
+  n_br->>n_ac: GET /auth/callback?code
+  n_ac->>n_ls: complete(cookie, callback url)
+  n_ls->>n_af: consume the attempt (once)
+  n_ls->>n_kc: completeLogin: exchange the code
+  n_ls->>n_ss: create(userId): random token, store its hash
+  n_ac-->>n_br: 302 to returnTo, session cookie set
+  n_ac--xn_br: LoginFailedError: login cookie cleared, redirect to the login-failed page, no session

@@ -16,7 +16,7 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('import-custod
     cell('Total geral',60,600),cell('1.000,00',200,600),cell('20,00',300,600),cell('1,00',400,600),cell('979,00',500,600)])})`);
   ok('the reader keeps the columns apart',lines.some(l=>/Total geral \| 1\.000,00 \|/.test(l)));
   eq('totals read across column marks',run(`parseCustody(${J(lines.join('\n'))})`),{date:'2026-11-06',gross:1000,ir:20,iof:1,net:979,name:'Investimentos'});
-  ok('missing total is reported',!!run(`parseCustody('Extrato de Custódia Custódia em: 06/11/2026').error`));
+  eq('missing total is reported',run(`parseCustody('Extrato de Custódia Custódia em: 06/11/2026')`).error,'Reconheci um extrato de custódia, mas não achei a linha “Total geral” do resumo da posição.');
   const before=run('S.tx.length');
   run(`applyCustody(parseCustody(${J(text)}),'nu')`);
   eq('snapshot saved with net and gross',run("S.snaps.filter(s=>s.acc==='nu'&&s.date==='2026-11-06').map(s=>[s.value,s.gross])"),[[979,1000]]);

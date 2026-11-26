@@ -6,13 +6,14 @@
  */
 import { DEFAULT_GROUPS, GROUP_KEYWORDS } from '../core/config.js';
 import { S } from './store.js';
+import { safeIcon } from '../core/text-normalize.js';
 const same=(a,b)=>String(a).toLowerCase()===String(b).toLowerCase();
 const expenseCats=()=>((S.cats||{}).despesa||[]);
 // group of a category name (the name itself when it has no group or is unknown)
 export function groupOf(cat){const c=expenseCats().find(x=>x.name===cat);return (c&&c.group)||cat;}
 export function groupIcon(g){
-  const gr=(S.groups||[]).find(x=>x.name===g);if(gr)return gr.icon;
-  const c=expenseCats().find(x=>x.name===g);return (c&&c.icon)||'🏷️';
+  const gr=(S.groups||[]).find(x=>x.name===g);if(gr)return safeIcon(gr.icon);
+  const c=expenseCats().find(x=>x.name===g);return safeIcon(c&&c.icon);
 }
 // category names inside a group (a lone category is a group of one)
 export function categoriesOfGroup(g){
@@ -35,7 +36,7 @@ export function ensureGroup(name,icon){
   S.groups=S.groups||[];
   const g=S.groups.find(x=>same(x.name,name));if(g)return g.name;
   const def=DEFAULT_GROUPS.find(([n])=>same(n,name));
-  S.groups.push({name:def?def[0]:name,icon:(def&&def[1])||icon||'🏷️'});return def?def[0]:name;
+  S.groups.push({name:def?def[0]:name,icon:safeIcon((def&&def[1])||icon)});return def?def[0]:name;
 }
 // once: creates the default groups and places every expense category that has no group yet
 export function assignDefaultGroups(){

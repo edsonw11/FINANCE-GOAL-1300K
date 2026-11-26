@@ -4,8 +4,9 @@
  * cannot be read, it is copied aside (never overwritten) and a blank state is used instead; and once a day it
  * keeps the previous good copy, so yesterday's data can be restored. Pure functions over a storage adapter.
  */
+import { repairIdCounter } from '../core/id-counter.js';
 export const BACKUP_SUFFIX='.bak',BROKEN_SUFFIX='.broken';
-const parseState=raw=>{try{const r=JSON.parse(raw);return r&&r.v===2?r:null;}catch(e){return null;}};
+const parseState=raw=>{try{const r=JSON.parse(raw);return r&&r.v===2?repairIdCounter(r):null;}catch(e){return null;}};
 // -> {state, recovered}: recovered=true when something was stored but could not be read (a copy was kept aside)
 export function readState(storage,key,blank){
   const raw=storage.getItem(key);

@@ -4,6 +4,7 @@
  */
 import { DEFAULT_CATEGORIES, LEG, SUGGESTED_CATEGORIES } from '../core/config.js';
 import { sum } from '../core/format.js';
+import { safeIcon } from '../core/text-normalize.js';
 import { roundMoney } from '../core/money.js';
 import { S, save } from './store.js';
 import { catParts, txIn } from './transactions.js';
@@ -35,6 +36,6 @@ export function catUse(t,name){let n=0,v=0;S.tx.forEach(x=>{if(x.type!==t)return
   const parts=t==='despesa'?catParts(x):[{cat:x.cat,value:x.value}];
   const hit=parts.filter(p=>p.cat===name);if(hit.length){n++;v+=sum(hit.map(p=>p.value));}});return {n,v};}
 export function renameCat(t,from,to){S.tx.forEach(x=>{if(x.type!==t)return;if(x.cat===from)x.cat=to;(x.splits||[]).forEach(sp=>{if(sp.cat===from)sp.cat=to;});});}
-export const icon=(t,c)=>((((S.cats||{})[t])||[]).find(x=>x.name===c)||{}).icon||(DEFAULT_CATEGORIES[t]&&DEFAULT_CATEGORIES[t][c])||LEG[c]||'🏷️';
+export const icon=(t,c)=>safeIcon(((((S.cats||{})[t])||[]).find(x=>x.name===c)||{}).icon||(DEFAULT_CATEGORIES[t]&&DEFAULT_CATEGORIES[t][c])||LEG[c]);
 export function catMonth(m){const c={};txIn(m,'despesa').forEach(t=>catParts(t).forEach(p=>c[p.cat]=roundMoney((c[p.cat]||0)+p.value)));
   txIn(m,'fatura').forEach(t=>{const u=invoiceUndetailed(t);if(u>0)c['Cartão (sem detalhe)']=(c['Cartão (sem detalhe)']||0)+u;});return c;}

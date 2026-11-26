@@ -29,8 +29,12 @@ export function bindInvoiceMonthField(){
     set(v){if(v&&![...sel.options].some(o=>o.value===v)){sel.insertAdjacentHTML('beforeend',`<option value="${v}">${formatDateBR(dueDateOf(v))}</option>`);}_selectValue.set.call(sel,v);}});
   fillInvoiceMonths();
 }
-export function initInvoiceForm(){if(ui.editId===null)$('fFm').value=nearestDueMonth($('fDate').value||today());
+// marks the open purchases of the invoice that is chosen (or all of them when "any date" is on); never changes the chosen invoice
+export function selectInvoicePurchases(){
   ui.invoiceSelection=new Set(openCard(null,ui.editId).filter(t=>$('fAll').checked||dueMonth(t.date)===$('fFm').value).map(t=>t.id));}
+// a new payment starts on the invoice of its date; choosing another invoice (or ticking "any date") must keep that choice
+export function initInvoiceForm(){if(ui.editId===null)$('fFm').value=nearestDueMonth($('fDate').value||today());
+  selectInvoicePurchases();}
 export function drawInvoiceForm(ex){
   ex=ex===undefined?ui.editId:ex;
   const fmSel=$('fFm').value||nearestDueMonth($('fDate').value||today());

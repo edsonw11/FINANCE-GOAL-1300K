@@ -1,1 +1,14 @@
 tests/.*.html
+node_modules/
+# generated for the Android shell (scripts/mobile.sh builds them from src/)
+mobile/www/
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+android/local.properties
+android/.gradle/
+android/app/build/
+android/build/
+android/capacitor-cordova-android-plugins/build/
+__pycache__/
+coverage/

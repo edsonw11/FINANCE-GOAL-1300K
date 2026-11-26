@@ -1,0 +1,51 @@
+%% Everfox: Flow of Adding an Expense
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_s1["1. Open"]
+    direction TB
+    n_a_open["OPEN THE FORM<br/>The + button opens the form in a sheet, the date starts as today.<br/>src/ui/views/item-dialog.js  openItem<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_s2["2. Fill"]
+    direction TB
+    n_a_fill["FILL THE FORM<br/>Value, date, category, account. Optional help: a short sentence fills the form (nothing is saved until Salvar), and a past description offers its category (never applied alone).<br/>src/domain/quick-entry.js  parseQuickEntry<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_s3["3. Validate"]
+    direction TB
+    n_a_valid{"VALID?<br/>Value above zero, a date, a destination for an aporte, splits not above the total.<br/>src/domain/transaction-builder.js  validateTransaction<br/>IMPLEMENTED"}
+    n_a_err["MESSAGE UNDER THE FIELD<br/>The form stays open with what was typed.<br/>src/ui/components/field-error.js<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_s4["4. Save"]
+    direction TB
+    n_a_build["BUILD THE RECORD<br/>Copies the form into a transaction, a monthly series or an edit with future siblings.<br/>src/domain/transaction-builder.js  saveTransaction<br/>IMPLEMENTED"]
+    n_a_tx["TRANSACT()<br/>Runs the change and saves, if saving fails the change is undone.<br/>src/domain/store.js  transact<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_s5["5. React"]
+    direction TB
+    n_a_render["REDRAW<br/>render() redraws the screens from the new state.<br/>src/ui/render.js  render<br/>IMPLEMENTED"]
+    n_a_budget["BUDGET WARNING<br/>Saving an expense over its group budget warns.<br/>src/domain/budgets.js  budgetAlerts<br/>IMPLEMENTED"]
+    n_a_undo["TOAST WITH DESFAZER<br/>The record can be brought back.<br/>src/ui/toast.js  toast<br/>IMPLEMENTED"]
+  end
+  n_a_open --> n_a_fill
+  n_a_fill -->|"Salvar"| n_a_valid
+  n_a_valid -->|"no"| n_a_err
+  n_a_valid -->|"yes"| n_a_build
+  n_a_build --> n_a_tx
+  n_a_tx -->|"saved"| n_a_render
+  n_a_render --> n_a_budget
+  n_a_budget --> n_a_undo
+  class n_a_open api
+  class n_a_fill api
+  class n_a_valid dec
+  class n_a_err err
+  class n_a_build dom
+  class n_a_tx dom
+  class n_a_render out
+  class n_a_budget out
+  class n_a_undo out

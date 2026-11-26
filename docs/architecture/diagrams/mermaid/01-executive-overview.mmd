@@ -1,0 +1,61 @@
+%% Everfox: System Overview
+flowchart LR
+  classDef api fill:#dae8fc,stroke:#6c8ebf,color:#222
+  classDef svc fill:#e1d5e7,stroke:#9673a6,color:#222
+  classDef dom fill:#d5e8d4,stroke:#82b366,color:#222
+  classDef ext fill:#ffe6cc,stroke:#d79b00,color:#222
+  classDef infra fill:#f5f5f5,stroke:#666666,color:#222
+  classDef dec fill:#fff2cc,stroke:#d6b656,color:#222
+  classDef err fill:#f8cecc,stroke:#b85450,color:#222
+  classDef out fill:#ffffff,stroke:#333333,color:#222
+  subgraph n_l_in["1. Inputs"]
+    direction TB
+    n_in_manual["MANUAL ENTRY<br/>The + button form, or one short Portuguese sentence such as 'Gastei 85,90 no mercado hoje'.<br/>src/domain/quick-entry.js  parseQuickEntry<br/>IMPLEMENTED"]
+    n_in_import["BANK FILES<br/>OFX, CSV and digital PDF (statements and card invoices), B3 brokerage notes.<br/>src/domain/import-reader.js  readImportFile<br/>IMPLEMENTED"]
+    n_in_backup["BACKUP FILE<br/>A JSON file exported earlier is restored.<br/>src/ui/views/backup.js  bindBackup<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_app["2. Everfox app (on the device)"]
+    direction TB
+    n_app_rules["RULES<br/>Month result, card invoices, goal projection, portfolio, budgets, emergency reserve.<br/>src/domain/month-result.js  monthResult<br/>IMPLEMENTED"]
+    n_app_state["LOCAL STATE<br/>One JSON in the browser storage (key metaapp.v2) with an automatic copy of the previous day.<br/>src/domain/store.js  transact<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_out["3. Outputs"]
+    direction TB
+    n_out_screens["SCREENS<br/>Numbers, charts and lists: Summary, Lançamentos, Cartão, Patrimônio, Análise, Categorias, Ajustes.<br/>src/ui/render.js  render<br/>IMPLEMENTED"]
+    n_out_report["MONTHLY REPORT<br/>Printed or saved as PDF by the browser, or sent as an e-mail summary.<br/>src/ui/views/report-print.js  renderReport<br/>IMPLEMENTED"]
+    n_out_backup["BACKUP FILE<br/>JSON saved by the browser, or shared through the Android share sheet.<br/>src/ui/native-bridge.js  shareTextFile<br/>IMPLEMENTED"]
+    n_out_apk["ANDROID APP<br/>The same app inside a Capacitor shell: offline, with an app lock (fingerprint or phone PIN).<br/>android/app/src/main/java/com/everfox/app/MainActivity.java  MainActivity<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_cloud["Optional cloud (web app only)"]
+    direction TB
+    n_cl_sync["SYNC CLIENT<br/>Sends what changed offline, then pulls what changed elsewhere.<br/>src/sync/runner.js  createSync<br/>IMPLEMENTED"]
+    n_cl_api["API (NESTJS)<br/>Login, sync, accounts, month rules, plans.<br/>backend/src/create-app.ts  createApp<br/>IMPLEMENTED"]
+    n_cl_db["POSTGRESQL<br/>Records, user state, sessions, plans.<br/>backend/prisma/schema.prisma  model Record<br/>IMPLEMENTED"]
+  end
+  subgraph n_l_idp["Identity"]
+    direction TB
+    n_cl_id["KEYCLOAK (OIDC)<br/>The identity provider that logs the person in.<br/>backend/src/auth/openid-client.provider.ts  OpenIdClientProvider<br/>IMPLEMENTED"]
+  end
+  n_in_manual -->|"validate and build"| n_app_rules
+  n_in_import -->|"read, classify"| n_app_rules
+  n_in_backup -->|"restore"| n_app_state
+  n_app_rules -->|"transact"| n_app_state
+  n_app_state -->|"render"| n_out_screens
+  n_app_rules -->|"report data"| n_out_report
+  n_app_state -.->|"optional"| n_cl_sync
+  n_cl_sync -.->|"HTTPS"| n_cl_api
+  n_cl_api -->|"Prisma"| n_cl_db
+  n_cl_api -->|"OIDC"| n_cl_id
+  class n_in_manual api
+  class n_in_import api
+  class n_in_backup api
+  class n_app_rules dom
+  class n_app_state dom
+  class n_out_screens out
+  class n_out_report out
+  class n_out_backup out
+  class n_out_apk out
+  class n_cl_sync svc
+  class n_cl_api svc
+  class n_cl_db infra
+  class n_cl_id ext

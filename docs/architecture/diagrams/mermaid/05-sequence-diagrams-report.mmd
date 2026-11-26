@@ -1,0 +1,17 @@
+%% Everfox: Sequence of the Monthly Report on the API
+sequenceDiagram
+  autonumber
+  participant n_cl as Client
+  participant n_fg as FeatureGuard
+  participant n_en as EntitlementsService
+  participant n_fr as FinanceRulesService
+  participant n_ls as LegacyStateService
+  participant n_dr as Shared rules (buildReport)
+  n_cl->>n_fg: GET /api/v1/months/2026-11/report
+  n_fg->>n_en: has(userId, report.monthly)?
+  n_en-->>n_fg: plan features read from the database
+  n_fg--xn_cl: 403 feature_locked (the app shows the PRO screen)
+  n_cl->>n_fr: compute(userId, fn)
+  n_fr->>n_ls: loadState(userId)
+  n_fr->>n_dr: runWithState(blank + stored state, buildReport(month))
+  n_fr-->>n_cl: the report data (JSON), nothing saved

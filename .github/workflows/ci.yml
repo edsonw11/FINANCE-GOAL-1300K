@@ -1,0 +1,139 @@
+# CI: the same gate as `npm run check`, plus a dependency audit. No secrets are used.
+name: ci
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - name: secret scan of the tracked files
+        run: bash scripts/secret-scan.sh
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test:unit
+      - name: build, and fail if dist/ is not the build of src/
+        run: npm run build && git diff --exit-code -- dist/
+      - name: end-to-end and phone widths (headless Chrome of the runner)
+        run: npm run test:e2e && npm run test:mobile
+
+  backend:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: backend
+    services:
+      postgres:
+        image: postgres:18.7-alpine3.24
+        env:
+          POSTGRES_USER: everfox
+          POSTGRES_DB: everfox
+          POSTGRES_PASSWORD: ci_only_password # a throwaway database that lives as long as this job
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U everfox -d everfox"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      # the API and the tests connect as the data-only role; migrations (and the checks about the role) use the owner
+      DATABASE_URL: postgresql://everfox_app:ci_only_app_password@127.0.0.1:5432/everfox
+      MIGRATE_DATABASE_URL: postgresql://everfox:ci_only_password@127.0.0.1:5432/everfox
+      # the throwaway Keycloak started below (same realm file as local development)
+      APP_BASE_URL: http://localhost:3000
+      OIDC_ISSUER: http://localhost:8081/realms/everfox
+      OIDC_CLIENT_ID: everfox-web
+      OIDC_CLIENT_SECRET: everfox-dev-client-secret
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: make the data-only role of the API (what infrastructure does once)
+        run: |
+          APP_DB_PASSWORD=ci_only_app_password ADMIN_URL="$MIGRATE_DATABASE_URL" ./scripts/db-app-role.sh
+      - name: apply the migrations to an empty database, then the role's grants
+        run: npm run db:migrate
+      - name: start Keycloak (the real identity provider, with the development realm)
+        working-directory: .
+        run: docker compose up -d --wait --wait-timeout 180 keycloak
+      - name: integration tests (real PostgreSQL, real Keycloak, built program)
+        run: npm run test:integration
+
+  # What a new developer does on a clean machine: one command, then the proof that it all works (images are built from nothing).
+  stack:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 20
+      - name: one command for the whole environment, with demo data
+        run: bash scripts/dev.sh up
+      - name: the stack works end to end
+        run: bash scripts/dev.sh check
+      - name: logs when it did not
+        if: failure()
+        run: docker compose logs --no-color --tail=200
+
+  # The Android app: the same web app inside the Capacitor shell, built to a debug APK (the runner already has the Android SDK).
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22 # the Capacitor 8 CLI needs it
+          cache: npm
+      - uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - name: debug APK
+        run: bash scripts/mobile.sh apk
+      - name: the APK holds the app, with its own policy, and no cloud backup
+        run: |
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          B="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)"
+          "$B/aapt2" dump badging "$APK" | grep -q "package: name='com.everfox.app'"
+          unzip -p "$APK" assets/public/index.html | grep -q 'http-equiv="Content-Security-Policy"'
+          unzip -p "$APK" assets/public/index.html | grep -q "connect-src 'none'"
+          "$B/aapt2" dump xmltree --file AndroidManifest.xml "$APK" | grep -q 'allowBackup.*=false'
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: everfox-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14

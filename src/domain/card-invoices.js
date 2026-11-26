@@ -5,7 +5,6 @@
 import { sum } from '../core/format.js';
 import { roundMoney, sumMoney } from '../core/money.js';
 import { S } from './store.js';
-import { txIn } from './transactions.js';
 import { dueMonth, invoiceMonthOf } from './card-cycle.js';
 // cached allocation; any change to the transactions must call invalidateAllocation()
 let _al=null;
@@ -26,7 +25,6 @@ export const openCard=(upto,ex)=>{const {map,used}=alloc();const mine=new Set(ex
   return S.tx.filter(t=>t.type==='despesa'&&t.fonte==='cartao'&&(!used.has(t.id)||mine.has(t.id))&&(!upto||t.date<=upto));};
 export const invoiceItems=t=>(alloc().map[t.id]||[]).map(id=>S.tx.find(x=>x.id===id)).filter(Boolean);
 export const invoiceUndetailed=t=>Math.max(0,roundMoney(t.value-sumMoney(invoiceItems(t).map(x=>x.value))));
-const undetailedInMonth=m=>sumMoney(txIn(m,'fatura').map(invoiceUndetailed));
 export function payableInvoices(){
   const fms=new Set(S.tx.filter(t=>t.type==='despesa'&&t.fonte==='cartao').map(t=>dueMonth(t.date)));
   return [...fms].sort().map(fm=>{const its=S.tx.filter(t=>t.type==='despesa'&&t.fonte==='cartao'&&dueMonth(t.date)===fm),

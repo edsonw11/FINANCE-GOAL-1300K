@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1355" viewBox="0 0 900 1355"><defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#4a5568"/></marker></defs><rect width="100%" height="100%" fill="#fff"/>
+<text x="20" y="32" font-family="Helvetica,Arial,sans-serif" font-size="20" font-weight="bold">Everfox: Tables of the API Database</text>
+<text x="20" y="54" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#555">backend/prisma/schema.prisma. A person's data is records of a kind with a version; ids are UUID v7 where the database creates them.</text>
+<rect x="20" y="96" width="300" height="507" fill="#fff" stroke="#9aa4b2"/><rect x="20" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="170" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Identity and sessions</text>
+<rect x="40" y="152" width="260" height="135" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="48" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">app_user</text>
+<text x="48" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">id, oidc_issuer + oidc_subject (unique),</text>
+<text x="48" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">email, display_name, plan_id, is_admin,</text>
+<text x="48" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">last_login_at.</text>
+<text x="48" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/prisma/schema.prisma &gt; model</text>
+<text x="48" y="245" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">AppUser</text>
+<text x="48" y="260" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="307" width="260" height="135" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="48" y="325" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">session</text>
+<text x="48" y="343" font-family="Helvetica,Arial,sans-serif" font-size="11">id_hash (the cookie value is never</text>
+<text x="48" y="357" font-family="Helvetica,Arial,sans-serif" font-size="11">stored), user_id, last_seen_at,</text>
+<text x="48" y="371" font-family="Helvetica,Arial,sans-serif" font-size="11">expires_at.</text>
+<text x="48" y="387" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/prisma/schema.prisma &gt; model</text>
+<text x="48" y="400" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">Session</text>
+<text x="48" y="415" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="40" y="462" width="260" height="121" rx="8" fill="#f5f5f5" stroke="#666666"/>
+<text x="48" y="480" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">auth_flow</text>
+<text x="48" y="498" font-family="Helvetica,Arial,sans-serif" font-size="11">One login attempt: state, nonce,</text>
+<text x="48" y="512" font-family="Helvetica,Arial,sans-serif" font-size="11">code_verifier, return_to, expires_at.</text>
+<text x="48" y="528" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/prisma/schema.prisma &gt; model</text>
+<text x="48" y="541" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">AuthFlow</text>
+<text x="48" y="556" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="96" width="300" height="634" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="96" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="119" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">A person's data</text>
+<rect x="430" y="152" width="260" height="135" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="170" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">record</text>
+<text x="438" y="188" font-family="Helvetica,Arial,sans-serif" font-size="11">id, user_id, kind (account, tx, snap,</text>
+<text x="438" y="202" font-family="Helvetica,Arial,sans-serif" font-size="11">trade, transfer, import), position, body</text>
+<text x="438" y="216" font-family="Helvetica,Arial,sans-serif" font-size="11">(JSON), version, deleted_at.</text>
+<text x="438" y="232" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/prisma/schema.prisma &gt; model</text>
+<text x="438" y="245" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">Record</text>
+<text x="438" y="260" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="307" width="260" height="121" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="325" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">user_state</text>
+<text x="438" y="343" font-family="Helvetica,Arial,sans-serif" font-size="11">The settings part of the state as one</text>
+<text x="438" y="357" font-family="Helvetica,Arial,sans-serif" font-size="11">JSON, with a version.</text>
+<text x="438" y="373" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/prisma/schema.prisma &gt; model</text>
+<text x="438" y="386" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">UserState</text>
+<text x="438" y="401" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="448" width="260" height="121" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="466" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">sync_cursor</text>
+<text x="438" y="484" font-family="Helvetica,Arial,sans-serif" font-size="11">last_version: the person's change</text>
+<text x="438" y="498" font-family="Helvetica,Arial,sans-serif" font-size="11">counter.</text>
+<text x="438" y="514" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/prisma/schema.prisma &gt; model</text>
+<text x="438" y="527" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">SyncCursor</text>
+<text x="438" y="542" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="589" width="260" height="121" rx="8" fill="#d5e8d4" stroke="#82b366"/>
+<text x="438" y="607" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">sync_mutation</text>
+<text x="438" y="625" font-family="Helvetica,Arial,sans-serif" font-size="11">(user_id, mutation_id) and its outcome:</text>
+<text x="438" y="639" font-family="Helvetica,Arial,sans-serif" font-size="11">a retry gets the first answer.</text>
+<text x="438" y="655" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/prisma/schema.prisma &gt; model</text>
+<text x="438" y="668" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">SyncMutation</text>
+<text x="438" y="683" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="410" y="778" width="300" height="465" fill="#fff" stroke="#9aa4b2"/><rect x="410" y="778" width="300" height="36" fill="#f8f9fb" stroke="#9aa4b2"/>
+<text x="560" y="801" font-family="Helvetica,Arial,sans-serif" font-size="13" font-weight="bold" text-anchor="middle">Plans</text>
+<rect x="430" y="834" width="260" height="107" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="852" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">plan</text>
+<text x="438" y="870" font-family="Helvetica,Arial,sans-serif" font-size="11">id, name.</text>
+<text x="438" y="886" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/prisma/schema.prisma &gt; model</text>
+<text x="438" y="899" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">Plan</text>
+<text x="438" y="914" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="961" width="260" height="121" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="979" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">plan_feature</text>
+<text x="438" y="997" font-family="Helvetica,Arial,sans-serif" font-size="11">(plan_id, feature_key): what each plan</text>
+<text x="438" y="1011" font-family="Helvetica,Arial,sans-serif" font-size="11">can use.</text>
+<text x="438" y="1027" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/prisma/schema.prisma &gt; model</text>
+<text x="438" y="1040" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">PlanFeature</text>
+<text x="438" y="1055" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<rect x="430" y="1102" width="260" height="121" rx="8" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="438" y="1120" font-family="Helvetica,Arial,sans-serif" font-size="12" font-weight="bold">audit_log</text>
+<text x="438" y="1138" font-family="Helvetica,Arial,sans-serif" font-size="11">actor, action, target, details of admin</text>
+<text x="438" y="1152" font-family="Helvetica,Arial,sans-serif" font-size="11">changes.</text>
+<text x="438" y="1168" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">backend/prisma/schema.prisma &gt; model</text>
+<text x="438" y="1181" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="#666">AuditLog</text>
+<text x="438" y="1196" font-family="Helvetica,Arial,sans-serif" font-size="9" font-style="italic">Status: IMPLEMENTED</text>
+<path d="M300,219.5 L347,219.5 L347,219.5 L430,219.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="332.2" y="202.5" width="29.6" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="336.2" y="213.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">owns</text>
+<path d="M170,287 L170,307" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="176" y="286" width="24.200000000000003" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="180" y="297" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">has</text>
+<path d="M300,219.5 L365,219.5 L365,887.5 L430,887.5" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="336.7" y="202.5" width="56.6" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="340.7" y="213.5" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">on a plan</text>
+<path d="M560,941 L560,961" fill="none" stroke="#4a5568" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="566" y="940" width="24.200000000000003" height="14" rx="3" fill="#fff" stroke="#e2e8f0"/>
+<text x="570" y="951" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#333">has</text>
+<rect x="20" y="1267" width="150" height="26" rx="5" fill="#f5f5f5" stroke="#666666"/>
+<text x="26" y="1284" font-family="Helvetica,Arial,sans-serif" font-size="10">Infrastructure</text>
+<rect x="180" y="1267" width="150" height="26" rx="5" fill="#d5e8d4" stroke="#82b366"/>
+<text x="186" y="1284" font-family="Helvetica,Arial,sans-serif" font-size="10">Processing and domain rules</text>
+<rect x="340" y="1267" width="150" height="26" rx="5" fill="#e1d5e7" stroke="#9673a6"/>
+<text x="346" y="1284" font-family="Helvetica,Arial,sans-serif" font-size="10">Orchestration and services</text>
+<text x="20" y="1315" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Status values: IMPLEMENTED | PARTIAL | NOT CONFIRMED | NOT IDENTIFIED | LEGACY | PROPOSAL | MOCK. Colours are a convention, not an implementation status.</text>
+<text x="20" y="1337" font-family="Helvetica,Arial,sans-serif" font-size="10" fill="#555">Records use an index on (user_id, version) for the changes after a cursor. The API database role only reads and writes data; migrations run with another role (backend/prisma/roles/grants.sql).</text></svg>

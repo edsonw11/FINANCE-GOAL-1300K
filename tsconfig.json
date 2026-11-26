@@ -1,0 +1,16 @@
+{
+  "//": "Type check of the JavaScript (no build, no emit). Scope: core + domain, the layers the backend will reuse. The UI comes later (ADR-0005).",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "noEmit": true,
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM"],
+    "strict": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true
+  },
+  "include": ["src/core/**/*.js", "src/domain/**/*.js"]
+}

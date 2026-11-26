@@ -25,6 +25,7 @@ export const REPORT_MONTHS=6,REPORT_GROUPS=6,REPORT_BIGGEST=5,REPORT_OTHER_GROUP
 const EPS=0.004;
 // the biggest groups, the small ones together as "Outros"; share = part of the month's expenses
 function groupsOf(m,expenses){
+  /** @type {{name:string, value:number, count?:number}[]} */
   const rows=Object.entries(groupMonth(m)).filter(([,v])=>v>EPS).map(([name,value])=>({name,value:roundMoney(value)}))
     .sort((a,b)=>b.value-a.value);
   const top=rows.slice(0,REPORT_GROUPS),rest=rows.slice(REPORT_GROUPS);
