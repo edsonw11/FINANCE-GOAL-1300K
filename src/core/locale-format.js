@@ -6,7 +6,7 @@
 import { getLocale } from './i18n.js';
 /** group separators always on (Spanish does not group 4-digit numbers by default) */
 export function formatNumber(v,min,max){
-  return Number(v).toLocaleString(getLocale(),{minimumFractionDigits:min,maximumFractionDigits:max===undefined?min:max,useGrouping:'always'});
+  return Number(v).toLocaleString(getLocale(),{minimumFractionDigits:min,maximumFractionDigits:max===undefined?min:max,useGrouping:/** @type {any} */ ('always')});
 }
 /** "," in Portuguese and Spanish, "." in English */
 export const decimalSeparator=()=>(1.1).toLocaleString(getLocale()).charAt(1);

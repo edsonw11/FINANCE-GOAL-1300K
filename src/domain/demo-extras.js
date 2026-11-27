@@ -26,7 +26,7 @@ const demoAccountFor=cls=>{
   const id='a'+(S.nid++);S.accounts.push({id,name,demo:true});return id;
 };
 // investment accounts with made-up balances that grow every month, so the Investments screen and the chart are full
-/** @type {[string, number, number, number][]} */
+/** @type {() => [string, number, number, number][]} */
 const demoAccounts=()=>[[t('demo.accFixedIncome'),18000,0.009,1500],[t('demo.accTreasury'),30000,0.010,0],[t('demo.accCdb'),9000,0.0085,300],[t('demo.accEmergency'),12000,0.008,0]];
 function addDemoAccounts(months){
   const ids=demoAccounts().map(([name,v0,rate,aporte])=>{
