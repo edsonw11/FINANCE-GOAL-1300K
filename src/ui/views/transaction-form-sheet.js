@@ -6,6 +6,7 @@
  * come filled (prefill: cat, desc, value, date, fonte, acc) with a note saying where it came from
  * (quick entry sentence, repeated record): the user still reviews and saves.
  */
+import { t } from '../../core/i18n.js';
 import { $ } from '../../core/dom.js';
 import { today } from '../../core/dates.js';
 import { m2 } from '../../core/format.js';
@@ -31,7 +32,7 @@ function formView(o){
         if(ui.type!=='fatura')setTimeout(()=>{if(formInSheet)$('fVal').focus();},250);}
       showNote(o.note);
       updateSaveLabel();
-      return {title:o.id!=null?'Editar lançamento':NEW_TITLE[ui.type]||'Novo lançamento',sub:o.id!=null?'':'Leva poucos segundos'};
+      return {title:o.id!=null?t('tx.sheet.editTx'):NEW_TITLE[ui.type]||t('tx.sheet.newTx'),sub:o.id!=null?'':t('tx.sheet.takesSeconds')};
     },
     leave(){
       showNote('');$('txForm').classList.remove('in-sheet');$('txFormHome').appendChild($('txForm'));formInSheet=false;
@@ -59,7 +60,8 @@ function startSource(){
   if([...$('fFonte').options].some(o=>o.value===f)){$('fFonte').value=f;updateFormHelp();}
 }
 function showNote(text){const n=$('fNote');n.hidden=!text;n.textContent=text||'';}
-export const NEW_TITLE={despesa:'Nova despesa',receita:'Nova receita',aporte:'Novo aporte',fatura:'Pagar fatura'};
+// getters: the text follows the active language every time it is read
+export const NEW_TITLE={get despesa(){return t('tx.sheet.newExpense');},get receita(){return t('tx.sheet.newIncome');},get aporte(){return t('tx.sheet.newContribution');},get fatura(){return t('tx.sheet.payInvoice');}};
 export function openTxForm(o){o=o||{};Sheet.depth()?Sheet.push(formView(o)):Sheet.open(formView(o));}
 // called after a successful save: back to where the user came from
 export function afterFormSave(){if(!formInSheet)return;Sheet.depth()>1?Sheet.pop():Sheet.close();}

@@ -7,6 +7,7 @@
  * did not know it was a transfer) and turns such a record into a transfer when the user confirms, and
  * the other way round: a kept transfer whose line was re-imported as income/expense stops being one.
  */
+import { tt } from '../core/i18n.js';
 import { daysBetween, formatDateBR } from '../core/dates.js';
 import { roundMoney, toCents } from '../core/money.js';
 import { S } from './store.js';
@@ -31,7 +32,7 @@ export function markTransferPairs(drafts){
   const keys=new Set(transfers().map(t=>t.key).filter(Boolean)),used=new Set();
   drafts.forEach(d=>{
     d.pair=null;
-    if(d.key&&keys.has(d.key)){d.dup={level:'confirmed',text:'Transferência já registrada antes (nada foi duplicado)'};d.selected=false;return;}
+    if(d.key&&keys.has(d.key)){d.dup={level:'confirmed',text:tt('tx.transfers.dupConfirmed')};d.selected=false;return;}
     if(!d.date||!(d.value>0)||d.type===IMPORT_TYPE.ignore||d.type===IMPORT_TYPE.contribution)return;
     const dir=dirOf(d),want=opposite(dir);
     const tr=transfers().find(t=>!t.pair&&!used.has(t.id)&&t.dir===want&&toCents(t.value)===toCents(d.value)&&near(t.date,d.date));
@@ -44,10 +45,10 @@ export function markTransferPairs(drafts){
   });
 }
 // text of the pair for the review card
-export const pairText=p=>`${p.kind===PAIR_KIND.transfer?'Outro lado':'Parece o outro lado de'} “${p.desc}” de ${formatDateBR(p.date)}`;
+export const pairText=p=>tt(p.kind===PAIR_KIND.transfer?'tx.transfers.otherSide':'tx.transfers.looksOtherSide',{desc:p.desc,date:formatDateBR(p.date)});
 // a saved income/expense becomes a transfer (removed from the records, kept in S.transfers)
 export function recordToTransfer(id){
-  const t=S.tx.find(x=>x.id===id);if(!t)return {error:'Lançamento não encontrado'};
+  const t=S.tx.find(x=>x.id===id);if(!t)return {error:tt('tx.err.txNotFound')};
   const tr={id:'tr'+(S.nid++),key:t.imp||'',date:t.date,value:roundMoney(t.value),dir:t.type==='despesa'?'out':'in',desc:t.desc||t.cat,pair:null};
   S.tx=S.tx.filter(x=>x.id!==id);S.transfers=transfers().concat([tr]);
   return {transfer:tr};

@@ -3,6 +3,7 @@
  * Responsibility: commands for the goal assumptions, the card settings and the backup
  * (import converts old backups; it returns the new state and does not apply it).
  */
+import { t } from '../core/i18n.js';
 import { monthEnd } from '../core/dates.js';
 import { roundMoney } from '../core/money.js';
 import { repairIdCounter } from '../core/id-counter.js';
@@ -20,7 +21,7 @@ export function setCardSettings({best,due,biz}){
 export function setClosingOverride(fm,date){const c=CARD();c.over=c.over||{};if(date&&date!==ruleClosing(fm))c.over[fm]=date;else delete c.over[fm];S.card=c;}
 export function importBackup(d){
   if(d&&d.v===2&&Array.isArray(d.tx))return {state:repairIdCounter(d),converted:false};
-  if(!d||!d.entries)return {error:'Arquivo inválido'};
+  if(!d||!d.entries)return {error:t('sys.settings.invalidFile')};
   // old format (goal tracker): month entries with balances and contributions per account
   const n=seed();n.goal=d.goal||n.goal;n.rate=d.rate||n.rate;n.planned=d.planned||0;n.snaps=[];n.tx=[];
   Object.keys(d.entries).sort().forEach(k=>{const e=d.entries[k];
@@ -32,6 +33,6 @@ export function importBackup(d){
 // puts back the automatic copy of the day before (kept by the store); {error} when there is none
 export function restoreAutoBackup(){
   const b=autoBackup();
-  if(!b)return {error:'Ainda não existe cópia automática'};
+  if(!b)return {error:t('sys.settings.noAutoBackup')};
   replaceState(b.state);return {day:b.day};
 }

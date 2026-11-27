@@ -3,6 +3,7 @@
  * Responsibility: tab and month navigation. Top menu on wide screens, bottom bar on phones
  * ("Mais" opens the other tabs). The selected month and filters are kept when switching tabs.
  */
+import { t } from '../core/i18n.js';
 import { $ } from '../core/dom.js';
 import { mIdx, mKey, mOf, today } from '../core/dates.js';
 import { ui } from './ui-state.js';
@@ -24,12 +25,12 @@ export function goTab(t){
 const isNarrow=()=>window.matchMedia('(max-width:720px)').matches;
 function moreView(){
   return {render(body){
-    const items=[['analise','chart','Análise dos gastos','Média, gastos fixos e o que mudou'],['cad','tag','Categorias','Criar, renomear, ativar ou excluir'],['cfg','sliders','Ajustes','Meta, cartão, backup e dados de teste']];
-    body.innerHTML='<div class="lst">'+items.map(([t,i,n,d])=>`<div class="li" data-more="${t}" role="button" tabindex="0"><span class="li-ic">${svg(i)}</span><span class="li-main"><span class="li-t">${n}</span><span class="li-s">${d}</span></span><span class="li-v">›</span></div>`).join('')+
-      `<div class="li" data-more="print" role="button" tabindex="0"><span class="li-ic">🖨️</span><span class="li-main"><span class="li-t">Imprimir / salvar PDF</span></span><span class="li-v">›</span></div>
-      <div class="li" data-more="mail" role="button" tabindex="0"><span class="li-ic">✉️</span><span class="li-main"><span class="li-t">Enviar relatório por e-mail</span></span><span class="li-v">›</span></div></div>`;
+    const items=[['analise','chart',t('sys.more.analysis'),t('sys.more.analysisSub')],['cad','tag',t('sys.more.categories'),t('sys.more.categoriesSub')],['cfg','sliders',t('sys.more.settings'),t('sys.more.settingsSub')]];
+    body.innerHTML='<div class="lst">'+items.map(([k,i,n,d])=>`<div class="li" data-more="${k}" role="button" tabindex="0"><span class="li-ic">${svg(i)}</span><span class="li-main"><span class="li-t">${n}</span><span class="li-s">${d}</span></span><span class="li-v">›</span></div>`).join('')+
+      `<div class="li" data-more="print" role="button" tabindex="0"><span class="li-ic">🖨️</span><span class="li-main"><span class="li-t">${t('sys.more.print')}</span></span><span class="li-v">›</span></div>
+      <div class="li" data-more="mail" role="button" tabindex="0"><span class="li-ic">✉️</span><span class="li-main"><span class="li-t">${t('sys.more.mail')}</span></span><span class="li-v">›</span></div></div>`;
     body.querySelectorAll('[data-more]').forEach(el=>el.onclick=()=>{Sheet.close();if(el.dataset.more==='print')return window.print();if(el.dataset.more==='mail')return sendReportMail();goTab(el.dataset.more);});
-    return {title:'Mais opções'};
+    return {title:t('sys.more.title')};
   }};
 }
 export function bindNavigation(){

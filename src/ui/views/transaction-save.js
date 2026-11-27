@@ -6,6 +6,7 @@
  */
 import { BUDGET_LEVEL, budgetAlerts } from '../../domain/budgets.js';
 import { groupOf } from '../../domain/category-groups.js';
+import { t } from '../../core/i18n.js';
 import { $ } from '../../core/dom.js';
 import { f2 } from '../../core/format.js';
 import { mOf, today } from '../../core/dates.js';
@@ -29,18 +30,18 @@ function readTransactionForm(){
 }
 const FORM_FIELD={value:'fVal',date:'fDate',acc:'fAcc'};
 function successMessage(d,r){
-  if(d.editId!==null)return '✅ Lançamento atualizado'+(r.siblings?' e mais '+r.siblings+' futuro(s)':'');
-  if(d.type==='aporte'&&d.reinv)return `🔁 Reinvestimento de ${f2(d.value)} em ${accName(d.acc)} registrado (não conta como novo aporte)`;
-  if(d.type==='aporte')return `🏦 Aporte de ${f2(d.value)} em ${accName(d.acc)}. Saldo agora: ${f2(balance(d.acc,today()).v)}`;
-  if(d.type==='fatura')return '💳 Pagamento de fatura de '+f2(d.value)+' registrado';
-  return (d.type==='receita'?'➕ Receita':'➖ Despesa')+' de '+f2(d.value)+' adicionada'+(r.ids.length>1?` (${r.ids.length}x)`:'');
+  if(d.editId!==null)return r.siblings?t('tx.save.updatedMore',{count:r.siblings}):t('tx.save.updated');
+  if(d.type==='aporte'&&d.reinv)return t('tx.save.reinvested',{amount:f2(d.value),account:accName(d.acc)});
+  if(d.type==='aporte')return t('tx.save.contribution',{amount:f2(d.value),account:accName(d.acc),balance:f2(balance(d.acc,today()).v)});
+  if(d.type==='fatura')return t('tx.save.invoicePaid',{amount:f2(d.value)});
+  return t(d.type==='receita'?'tx.save.incomeAdded':'tx.save.expenseAdded',{amount:f2(d.value)})+(r.ids.length>1?` (${r.ids.length}x)`:'');
 }
 // "⚠️ Moradia: 92% do orçamento" when the saved expense leaves its group near or over the budget
 export function budgetWarning(d){
   if(d.type!=='despesa')return '';
   const cats=[d.cat].concat((d.splits||[]).map(s=>s.cat)).filter(Boolean);
   const a=budgetAlerts(mOf(d.date),cats,groupOf);
-  return a.map(x=>` · ⚠️ ${x.group}: ${Math.round(x.share*100)}% do orçamento${x.level===BUDGET_LEVEL.over?' (estourou)':''}`).join('');
+  return a.map(x=>t(x.level===BUDGET_LEVEL.over?'tx.save.budgetOver':'tx.save.budget',{group:x.group,pct:Math.round(x.share*100)})).join('');
 }
 function saveRecord(d){
   const btn=$('fSave');

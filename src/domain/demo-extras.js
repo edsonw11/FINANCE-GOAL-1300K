@@ -5,6 +5,8 @@
  * the contribution each buy creates). Everything is marked demo:true, so removeDemoData() takes it all away.
  * Deterministic: the same call always creates the same records.
  */
+import { t } from '../core/i18n.js';
+import { decimalSeparator } from '../core/locale-format.js';
 import { mIdx, mKey, mOf, today } from '../core/dates.js';
 import { S } from './store.js';
 import { ensureCat } from './categories.js';
@@ -25,9 +27,9 @@ const demoAccountFor=cls=>{
 };
 // investment accounts with made-up balances that grow every month, so the Investments screen and the chart are full
 /** @type {[string, number, number, number][]} */
-const DEMO_ACCOUNTS=[['Renda fixa (teste)',18000,0.009,1500],['Tesouro Selic (teste)',30000,0.010,0],['CDB liquidez diária (teste)',9000,0.0085,300],['Reserva de emergência (teste)',12000,0.008,0]];
+const demoAccounts=()=>[[t('demo.accFixedIncome'),18000,0.009,1500],[t('demo.accTreasury'),30000,0.010,0],[t('demo.accCdb'),9000,0.0085,300],[t('demo.accEmergency'),12000,0.008,0]];
 function addDemoAccounts(months){
-  const ids=DEMO_ACCOUNTS.map(([name,v0,rate,aporte])=>{
+  const ids=demoAccounts().map(([name,v0,rate,aporte])=>{
     const id='a'+(S.nid++);S.accounts.push({id,name,demo:true});
     let v=v0;months.forEach((m,k)=>{
       const date=demoDate(m,28),gross=Math.round(v*1.03*100)/100;
@@ -41,17 +43,17 @@ export function addDemoExtras(){
   const months=demoMonths(),accs=addDemoAccounts(months);
   ensureCat('receita','Salário');ensureCat('receita','Outros');ensureCat('despesa','Mercado');ensureCat('despesa','Lazer');
   months.forEach((m,k)=>{
-    put({type:'receita',date:demoDate(m,5),value:6500+k*40,desc:'Salário (teste)',cat:'Salário',fonte:'caixa'});
-    if(k%4===2)put({type:'receita',date:demoDate(m,20),value:850,desc:'Renda extra (teste)',cat:'Outros',fonte:'caixa'});
+    put({type:'receita',date:demoDate(m,5),value:6500+k*40,desc:t('demo.salary'),cat:'Salário',fonte:'caixa'});
+    if(k%4===2)put({type:'receita',date:demoDate(m,20),value:850,desc:t('demo.extraIncome'),cat:'Outros',fonte:'caixa'});
     // the monthly aporte of each account is also a record, so the yield of the month is only the growth
-    DEMO_ACCOUNTS.forEach(([name,,,aporte],i)=>{if(aporte>0)put({type:'aporte',date:demoDate(m,6),value:aporte,desc:'Aporte mensal (teste)',acc:accs.ids[i]});});
-    [['Mercado','Compra no cartão (teste)',240+k*6,9],['Lazer','Cinema e jantar (teste)',180+k*5,17]].forEach(([cat,desc,v,day])=>
+    demoAccounts().forEach(([name,,,aporte],i)=>{if(aporte>0)put({type:'aporte',date:demoDate(m,6),value:aporte,desc:t('demo.monthlyContribution'),acc:accs.ids[i]});});
+    [['Mercado',t('demo.cardPurchase'),240+k*6,9],['Lazer',t('demo.cinema'),180+k*5,17]].forEach(([cat,desc,v,day])=>
       put({type:'despesa',date:demoDate(m,day),value:v,desc,cat,fonte:'cartao'}));
   });
   DEMO_TRADES.forEach(([k,ticker,cls,side,qty,price],i)=>{
     const date=demoDate(months[k],12),fees=Math.round(qty*price*0.0005*100)/100+1;
     S.trades=S.trades||[];
     S.trades.push({id:'t'+(S.nid++),key:'demo:'+i,demo:true,date,ticker,cls,name:'',side,qty,price,fees});
-    if(side==='C')put({type:'aporte',date,value:Math.round((qty*price+fees)*100)/100,desc:'Compra '+ticker+' '+qty+' × '+String(price).replace('.',','),acc:demoAccountFor(cls)});
+    if(side==='C')put({type:'aporte',date,value:Math.round((qty*price+fees)*100)/100,desc:t('data.tradeBuy',{ticker,qty,price:String(price).replace('.',decimalSeparator())}),acc:demoAccountFor(cls)});
   });
 }

@@ -5,6 +5,8 @@
  * Rows with data-tx open the record detail (see transaction-actions.js).
  */
 import { esc } from '../../core/dom.js';
+import { tt } from '../../core/i18n.js';
+import { displayName } from '../../core/stored-names.js';
 import { f2 } from '../../core/format.js';
 import { formatDateBR, mShort } from '../../core/dates.js';
 import { accName } from '../../domain/accounts.js';
@@ -14,29 +16,29 @@ import { icon } from '../../domain/categories.js';
 import { dueDateOf, dueMonth, invoiceMonthOf } from '../../domain/card-cycle.js';
 export const TX_SIGN={receita:'+',despesa:'−',fatura:'−',aporte:'→'};
 export function paymentLabel(t){
-  if(t.type==='aporte')return 'Investimento';
-  if(t.type==='fatura')return 'Conta';
-  if(t.fonte==='cartao')return 'Cartão · fatura '+mShort(dueMonth(t.date));
-  if(t.fonte==='beneficio')return 'VR/VA';
-  return t.type==='receita'?'Conta':'Pix / conta';
+  if(t.type==='aporte')return tt('sum.tx.payInvestment');
+  if(t.type==='fatura')return tt('sum.tx.payAccount');
+  if(t.fonte==='cartao')return tt('sum.tx.payCard',{month:mShort(dueMonth(t.date))});
+  if(t.fonte==='beneficio')return tt('sum.tx.payVoucher');
+  return t.type==='receita'?tt('sum.tx.payAccount'):tt('sum.tx.payPix');
 }
 export function txTitle(t){
-  if(t.type==='fatura')return 'Pagamento da fatura de '+formatDateBR(dueDateOf(invoiceMonthOf(t)));
-  if(isReinvestment(t))return 'Reinvestimento em '+accName(t.acc);
-  if(t.type==='aporte')return 'Aporte em '+accName(t.acc);
-  return t.desc||t.cat||'Sem descrição';
+  if(t.type==='fatura')return tt('sum.tx.invoicePayment',{date:formatDateBR(dueDateOf(invoiceMonthOf(t)))});
+  if(isReinvestment(t))return tt('sum.tx.reinvestment',{account:accName(t.acc)});
+  if(t.type==='aporte')return tt('sum.tx.contribution',{account:accName(t.acc)});
+  return t.desc||t.cat||tt('sum.tx.noDescription');
 }
 function txIcon(t){return t.type==='fatura'?'💳':isReinvestment(t)?'🔁':t.type==='aporte'?'🏦':icon(t.type,t.cat);}
 // o: {value, sign, sub, title, actions, cls}
 export function txRow(t,o){
   o=o||{};
   const v=o.value!==undefined?o.value:t.value,sign=o.sign!==undefined?o.sign:TX_SIGN[t.type];
-  const cat=t.type==='despesa'||t.type==='receita'?(t.splits&&t.splits.length?catParts(t).map(p=>p.cat).join(' + '):t.cat):'';
+  const cat=t.type==='despesa'||t.type==='receita'?(t.splits&&t.splits.length?catParts(t).map(p=>displayName(p.cat)).join(' + '):displayName(t.cat)):'';
   // o.sub is HTML built by the caller; the default line carries user text (category, account) and is escaped
   const sub=o.sub!==undefined?o.sub:esc([formatDateBR(t.date),t.desc&&cat?cat:'',paymentLabel(t)].filter(Boolean).join(' · '));
-  return `<div class="li ${o.cls||''}" data-tx="${t.id}" role="button" tabindex="0" aria-label="${esc(txTitle(t))}, ${esc(f2(v))}. Abrir detalhes">
+  return `<div class="li ${o.cls||''}" data-tx="${t.id}" role="button" tabindex="0" aria-label="${tt('sum.tx.openDetails',{title:esc(txTitle(t)),value:esc(f2(v))})}">
     <span class="li-ic" aria-hidden="true">${txIcon(t)}</span>
-    <span class="li-main"><span class="li-t">${esc(o.title||txTitle(t))}${t.serie?' <span class="li-badge" title="Repete todo mês">🔁</span>':''}</span><span class="li-s">${sub}</span></span>
+    <span class="li-main"><span class="li-t">${esc(o.title||txTitle(t))}${t.serie?` <span class="li-badge" title="${tt('sum.tx.repeatsMonthly')}">🔁</span>`:''}</span><span class="li-s">${sub}</span></span>
     <span class="li-v ${t.type}">${sign?sign+' ':''}${f2(v)}</span>${o.actions||''}</div>`;
 }
 // row that is not a single transaction (opening balance, undetailed amount, a month, a category)
@@ -57,10 +59,10 @@ export function listView(build){
     const s=build();
     const n=s.count!==undefined?s.count:s.groups.reduce((a,g)=>a+g.rows.length,0);
     const groups=s.groups.filter(g=>g.rows.length||g.always);
-    body.innerHTML=`<div class="bd-total"><div class="bd-k">${s.totalLabel||'Total'}</div><div class="bd-v">${s.total}</div><div class="bd-n">${n} ${n===1?(s.unit||'lançamento'):(s.units||'lançamentos')}${s.period?' · '+s.period:''}</div></div>`+
+    body.innerHTML=`<div class="bd-total"><div class="bd-k">${s.totalLabel||tt('sum.list.total')}</div><div class="bd-v">${s.total}</div><div class="bd-n">${n} ${n===1?(s.unit||tt('sum.list.unitOne')):(s.units||tt('sum.list.unitMany'))}${s.period?' · '+s.period:''}</div></div>`+
       (s.note?`<div class="bd-note">${s.note}</div>`:'')+
-      (groups.length?groups.map(g=>`<div class="bd-g">${g.label?`<div class="bd-gh"><span>${g.label}</span>${g.total!==undefined?`<b>${g.total}</b>`:''}</div>`:''}<div class="lst">${g.rows.join('')||'<div class="empty sm">Nada aqui.</div>'}</div></div>`).join('')
-        :`<div class="empty">${s.empty||'Nenhum lançamento neste período.'}</div>`);
+      (groups.length?groups.map(g=>`<div class="bd-g">${g.label?`<div class="bd-gh"><span>${g.label}</span>${g.total!==undefined?`<b>${g.total}</b>`:''}</div>`:''}<div class="lst">${g.rows.join('')||`<div class="empty sm">${tt('sum.list.nothingHere')}</div>`}</div></div>`).join('')
+        :`<div class="empty">${s.empty||tt('sum.list.empty')}</div>`);
     return {title:s.title,sub:s.sub};
   }};
 }

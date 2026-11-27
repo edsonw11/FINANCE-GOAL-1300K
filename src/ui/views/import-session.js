@@ -5,6 +5,7 @@
  * touch drafts; saved data is changed by domain/import-commit.js after the user confirms.
  */
 import { today } from '../../core/dates.js';
+import { t } from '../../core/i18n.js';
 import { parseMoney } from '../../core/money.js';
 import { IMPORT_TYPE } from '../../domain/import-classify.js';
 import { blankDraft, isSaveable } from '../../domain/import-draft.js';
@@ -35,7 +36,7 @@ export function beginNote(note,file){
   importState.session={phase:'note',note,file,drafts:[],read:{ok:true,drafts:[]},openId:null,busy:false,result:null};
   return importState.session;
 }
-export function endSession(){trace('sessão encerrada');importState.token++;importState.session=null;}
+export function endSession(){trace(t('imp.session.ended'));importState.token++;importState.session=null;}
 export const draftById=id=>importState.session&&importState.session.drafts.find(d=>d.id===id)||null;
 const NUMBER_FIELDS=['value'];
 // applies the edited fields of one draft; keeps type/source/selection consistent and re-checks duplicates

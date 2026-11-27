@@ -7,24 +7,26 @@
  * category for the obvious cases (fees, salary). Pure rules over text; never touches the data.
  */
 import { normalizeText } from '../core/text-normalize.js';
+import { t } from '../core/i18n.js';
 import { mentionsOwnName } from './own-names.js';
 export const IMPORT_TYPE={expense:'despesa',income:'receita',contribution:'aporte',ownTransfer:'transferencia',ignore:'ignorar'};
 export const IGNORE_REASON={invoicePayment:'pagamento_fatura',transfer:'transferencia',refund:'estorno',redemption:'resgate',yield:'rendimento'};
+// the texts are read when used (getters), so they follow the active language
 export const REASON_TEXT={
-  pagamento_fatura:'Pagamento de fatura: já está nas compras do cartão. Registre em “Pagar fatura” para não contar duas vezes.',
-  transferencia:'Parece movimentação entre suas contas ou investimento, não é receita nem despesa.',
-  estorno:'Estorno ou crédito no cartão: o app não tem lançamento negativo. Registre como receita só se quiser.',
-  resgate:'Resgate ou saída do investimento: não é gasto nem receita. O saldo se atualiza na aba Patrimônio.',
-  rendimento:'Rendimento, imposto ou taxa do investimento: já está no saldo, não é um lançamento.'};
+  get pagamento_fatura(){return t('imp.reason.invoicePayment');},
+  get transferencia(){return t('imp.reason.transfer');},
+  get estorno(){return t('imp.reason.refund');},
+  get resgate(){return t('imp.reason.redemption');},
+  get rendimento(){return t('imp.reason.yield');}};
 export const FLAG_TEXT={
-  'maybe-transfer':'Pix/TED/transferência: confirme se é gasto ou renda de verdade e não uma transferência sua.',
-  'installment-unsure':'Parece uma parcela, mas o texto não diz “parcela”. Confirme.',
-  'check-aporte':'Parece um aporte (dinheiro indo para um investimento). Escolha o investimento de destino ou mude o tipo.',
-  'sign-guess':'O PDF não mostra se é entrada ou saída: deduzi pelo texto. Confirme.',
-  'two-amounts':'A linha do PDF tinha dois valores: usei o primeiro (o segundo costuma ser o saldo).',
-  'possible-transfer':'Entrada com palavra de investimento ou resgate (aplicação, tesouro, resgate…): pode ser uma transferência sua, então não entrou nos totais. Se for renda de verdade, mude o tipo para receita.',
-  'transfer-pair':'O outro lado desta transferência parece já estar salvo como receita ou despesa.'};
-export const OWN_TRANSFER_TEXT='Transferência entre suas contas: não é receita nem despesa. Fica guardada para o app reconhecer o outro lado quando você importar o outro banco.';
+  get 'maybe-transfer'(){return t('imp.flag.maybeTransfer');},
+  get 'installment-unsure'(){return t('imp.flag.installmentUnsure');},
+  get 'check-aporte'(){return t('imp.flag.checkContribution');},
+  get 'sign-guess'(){return t('imp.flag.signGuess');},
+  get 'two-amounts'(){return t('imp.flag.twoAmounts');},
+  get 'possible-transfer'(){return t('imp.flag.possibleTransfer');},
+  get 'transfer-pair'(){return t('imp.flag.transferPair');}};
+export const ownTransferText=()=>t('imp.ownTransfer.note');
 const BALANCE=/^(saldo|total|subtotal|sub total)\b|\bsaldo (anterior|final|inicial|do dia|disponivel|parcial|em conta|total)\b/;
 const INVOICE_PAYMENT=/\b(pagamento (de )?fatura|pgto fatura|pag fatura|pagto fatura|pagamento recebido|pagamento efetuado|pagamento on ?line|fatura cartao|pagamento cartao|pagto cartao|credito pagamento|pagamento da fatura)\b/;
 const OWN_TRANSFER=/\b(transferencia entre contas|transf(erencia)? (entre )?contas|mesma titularidade|poupanca)\b/;

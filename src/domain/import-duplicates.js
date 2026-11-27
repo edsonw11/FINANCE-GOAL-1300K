@@ -8,6 +8,7 @@
  */
 import { formatDateBR, daysBetween } from '../core/dates.js';
 import { significantWords } from '../core/text-normalize.js';
+import { t } from '../core/i18n.js';
 import { S } from './store.js';
 import { SAVEABLE } from './import-draft.js';
 export const DUP_LEVEL={confirmed:'confirmed',possible:'possible'};
@@ -32,11 +33,11 @@ export function markDuplicates(drafts){
   const inFile=new Set();
   drafts.forEach(d=>{
     d.dup=null;
-    if(d.key&&byKey[d.key]){d.dup={level:DUP_LEVEL.confirmed,text:'Já importado: “'+(byKey[d.key].desc||byKey[d.key].cat)+'” de '+formatDateBR(byKey[d.key].date)};}
-    else if(d.key&&inFile.has(d.key)){d.dup={level:DUP_LEVEL.confirmed,text:'Repetido no arquivo (mesmo identificador do banco)'};}
+    if(d.key&&byKey[d.key]){d.dup={level:DUP_LEVEL.confirmed,text:t('imp.dup.already',{desc:byKey[d.key].desc||byKey[d.key].cat,date:formatDateBR(byKey[d.key].date)})};}
+    else if(d.key&&inFile.has(d.key)){d.dup={level:DUP_LEVEL.confirmed,text:t('imp.dup.inFile')};}
     else if(SAVEABLE.includes(d.type)&&d.date){
       const hit=matchExisting(d,byCents[cents(d.value)]||[]);
-      if(hit)d.dup={level:DUP_LEVEL.possible,text:'Parecido com “'+(hit.desc||hit.cat)+'” de '+formatDateBR(hit.date)+' (mesmo valor). Marque para importar mesmo assim.'};
+      if(hit)d.dup={level:DUP_LEVEL.possible,text:t('imp.dup.similar',{desc:hit.desc||hit.cat,date:formatDateBR(hit.date)})};
     }
     if(d.key)inFile.add(d.key);
   });

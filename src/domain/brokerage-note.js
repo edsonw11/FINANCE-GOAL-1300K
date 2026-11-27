@@ -8,6 +8,7 @@
 import { parseAmount, parseBrDate } from '../core/import-values.js';
 import { stripAccents } from '../core/text-normalize.js';
 import { roundMoney, sumMoney } from '../core/money.js';
+import { t } from '../core/i18n.js';
 import { classOfTicker } from './ticker-class.js';
 const NUM='(\\d{1,3}(?:\\.\\d{3})*|\\d+)',PRICE='(\\d{1,3}(?:\\.\\d{3})*,\\d{2,4})',TOTAL='(\\d{1,3}(?:\\.\\d{3})*,\\d{2})';
 // "1-BOVESPA C VISTA PETR4 PN N2 100 38,20 3.820,00 D"
@@ -46,7 +47,7 @@ function noteDate(text){
 export function parseBrokerageNote(text){
   if(!looksLikeBrokerageNote(text))return null;
   const date=noteDate(text);
-  if(!date)return {error:'Reconheci uma nota de corretagem, mas não achei a data do pregão.'};
+  if(!date)return {error:t('imp.note.noDate')};
   const trades=[];
   stripAccents(text).split('\n').forEach(line=>{
     const m=line.trim().replace(/\s+/g,' ').match(TRADE_ROW);if(!m)return;
@@ -54,7 +55,7 @@ export function parseBrokerageNote(text){
     if(!(qty>0)||!(price>0)||!(gross>0))return;
     trades.push({side:m[1].toUpperCase(),ticker,name:spec,cls:classOfTicker(ticker,spec),qty,price,gross,fees:0});
   });
-  if(!trades.length)return {error:'Reconheci uma nota de corretagem, mas não achei nenhuma linha de compra ou venda.'};
+  if(!trades.length)return {error:t('imp.note.noTrades')};
   const costs=costsOf(text);shareCosts(trades,costs);
   return {date,trades,costs};
 }

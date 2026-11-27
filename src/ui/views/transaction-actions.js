@@ -4,6 +4,9 @@
  * Editar / Excluir / Fechar, the delete confirmation (naming the item and the value, with the
  * impact explained) and the global tap handling of rows with data-tx.
  */
+import { UNDETAILED_CAT } from '../../domain/spending.js';
+import { displayName } from '../../core/stored-names.js';
+import { tt } from '../../core/i18n.js';
 import { copyPrefill } from '../../domain/record-copy.js';
 import { isReinvestment } from '../../domain/reinvestment.js';
 import { esc } from '../../core/dom.js';
@@ -24,54 +27,55 @@ import { TX_SIGN, paymentLabel, txRow, txTitle } from '../components/breakdown.j
 import { runCommand } from '../components/command.js';
 import { openTxForm } from './transaction-form-sheet.js';
 import { cancelPay } from './pay-invoice.js';
+const TYPE_LABEL={despesa:()=>tt('tx.type.despesa'),receita:()=>tt('tx.type.receita'),aporte:()=>tt('tx.type.aporte')};
 function txDetailView(id){
   return {render(body,foot){
     const t=S.tx.find(x=>x.id===id);if(!t)return null;
     const row=(k,v)=>v?`<div class="dl-r"><dt>${k}</dt><dd>${v}</dd></div>`:'';
     let extra='';
     if(t.type==='despesa'||t.type==='receita'){
-      extra+=row('Categoria',t.splits&&t.splits.length?catParts(t).map(p=>`${icon(t.type,p.cat)} ${esc(p.cat)} <span class="mut">${f2(p.value)}</span>`).join('<br>'):`${icon(t.type,t.cat)} ${esc(t.cat)}`);
-      extra+=row(t.type==='receita'?'Entrou em':'Pago com',esc(paymentLabel(t)));
+      extra+=row(tt('tx.field.category'),t.splits&&t.splits.length?catParts(t).map(p=>`${icon(t.type,p.cat)} ${esc(displayName(p.cat))} <span class="mut">${f2(p.value)}</span>`).join('<br>'):`${icon(t.type,t.cat)} ${esc(displayName(t.cat))}`);
+      extra+=row(t.type==='receita'?tt('tx.field.enteredIn'):tt('tx.field.paidWith'),esc(paymentLabel(t)));
       if(isCard(t)){const inv=invoiceOfPurchase(t),fm=dueMonth(t.date);
-        extra+=row('Fatura',`Vence em ${formatDateBR(dueDateOf(fm))} · ${inv?'<span class="tag pay-vr">✔ Paga em '+formatDateBR(inv.date)+'</span>':'<span class="tag pay-cartao">Em aberto</span>'}`);}
+        extra+=row(tt('tx.field.invoice'),`${tt('tx.card.dueOn',{date:formatDateBR(dueDateOf(fm))})} · ${inv?'<span class="tag pay-vr">'+tt('tx.detail.paidOn',{date:formatDateBR(inv.date)})+'</span>':'<span class="tag pay-cartao">'+tt('tx.detail.open')+'</span>'}`);}
     }
-    if(t.type==='aporte')extra+=row(isReinvestment(t)?'Reinvestido em':'Investido em',(isReinvestment(t)?'🔁 ':'🏦 ')+esc(accName(t.acc)));
-    if(isReinvestment(t))extra+=row('Conta como','<span class="mut">Não é novo aporte: fora de “Investido”, da sobra e do saldo</span>');
+    if(t.type==='aporte')extra+=row(isReinvestment(t)?tt('tx.detail.reinvestedIn'):tt('tx.detail.investedIn'),(isReinvestment(t)?'🔁 ':'🏦 ')+esc(accName(t.acc)));
+    if(isReinvestment(t))extra+=row(tt('tx.detail.countsAs'),'<span class="mut">'+tt('tx.detail.notNewContribution')+'</span>');
     if(t.type==='fatura'){const its=invoiceItems(t),u=invoiceUndetailed(t);
-      extra+=row('Fatura','Vence em '+formatDateBR(dueDateOf(invoiceMonthOf(t))));
-      extra+=row('Compras identificadas',its.length+' · '+f2(sumMoney(its.map(x=>x.value))));
-      if(u>0.004)extra+=row('Sem detalhe',`<b class="warn-c">${f2(u)}</b> <span class="mut">(entra como “Cartão (sem detalhe)”)</span>`);
-      if(its.length)extra+=`<div class="bd-gh mt-14"><span>Compras desta fatura</span><b>${f2(sumMoney(its.map(x=>x.value)))}</b></div><div class="lst">${its.map(x=>txRow(x)).join('')}</div>`;}
+      extra+=row(tt('tx.field.invoice'),tt('tx.card.dueOn',{date:formatDateBR(dueDateOf(invoiceMonthOf(t)))}));
+      extra+=row(tt('tx.detail.identified'),its.length+' · '+f2(sumMoney(its.map(x=>x.value))));
+      if(u>0.004)extra+=row(tt('tx.detail.undetailed'),tt('tx.detail.undetailedValue',{undetailed:displayName(UNDETAILED_CAT),amount:f2(u)}));
+      if(its.length)extra+=`<div class="bd-gh mt-14"><span>${tt('tx.detail.invoicePurchases')}</span><b>${f2(sumMoney(its.map(x=>x.value)))}</b></div><div class="lst">${its.map(x=>txRow(x)).join('')}</div>`;}
     const sib=futureSiblings(t);
-    body.innerHTML=`<div class="dt-head"><span class="tag ${t.type}">${t.type==='fatura'?'Fatura paga':t.type[0].toUpperCase()+t.type.slice(1)}</span>
+    body.innerHTML=`<div class="dt-head"><span class="tag ${t.type}">${t.type==='fatura'?tt('tx.detail.paidInvoiceTag'):TYPE_LABEL[t.type]?TYPE_LABEL[t.type]():t.type[0].toUpperCase()+t.type.slice(1)}</span>
       <div class="dt-v li-v ${t.type}">${TX_SIGN[t.type]} ${f2(t.value)}</div><div class="dt-t">${esc(txTitle(t))}</div></div>
-      <dl class="dl">${row('Data',formatDateBR(t.date)+' <span class="mut">('+new Date(t.date+'T12:00').toLocaleDateString('pt-BR',{weekday:'long'})+')</span>')}${extra}${row('Descrição',t.desc?esc(t.desc):'<span class="mut">sem descrição</span>')}
-      ${sib.length?row('Repetição','🔁 Mais '+sib.length+' lançamento(s) igual(is) nos próximos meses'):''}${t.demo?row('Origem','🧪 Dado de teste'):''}</dl>`;
-    foot.innerHTML=`<button type="button" class="btn dng" data-act="del">${t.type==='fatura'?'Cancelar pagamento':'Excluir'}</button>${t.type==='fatura'?'':'<button type="button" class="btn" data-act="dup">Repetir</button>'}<button type="button" class="btn pri" data-act="edit">Editar</button>`;
+      <dl class="dl">${row(tt('tx.field.date'),formatDateBR(t.date)+' <span class="mut">('+new Date(t.date+'T12:00').toLocaleDateString('pt-BR',{weekday:'long'})+')</span>')}${extra}${row(tt('tx.field.description'),t.desc?esc(t.desc):'<span class="mut">'+tt('tx.detail.noDesc')+'</span>')}
+      ${sib.length?row(tt('tx.detail.repeat'),tt('tx.detail.moreSame',{count:sib.length})):''}${t.demo?row(tt('tx.detail.origin'),tt('tx.detail.testData')):''}</dl>`;
+    foot.innerHTML=`<button type="button" class="btn dng" data-act="del">${t.type==='fatura'?tt('tx.pay.cancelBtn'):tt('tx.common.delete')}</button>${t.type==='fatura'?'':'<button type="button" class="btn" data-act="dup">'+tt('tx.common.repeat')+'</button>'}<button type="button" class="btn pri" data-act="edit">${tt('tx.common.edit')}</button>`;
     foot.querySelector('[data-act=del]').onclick=()=>deleteTxFlow(t.id);
     const dup=foot.querySelector('[data-act=dup]');
-    if(dup)dup.onclick=()=>openTxForm({type:t.type,prefill:copyPrefill(t,today()),note:'Cópia de “'+txTitle(t)+'”: ajuste a data e o valor e salve. O original não muda.'});
+    if(dup)dup.onclick=()=>openTxForm({type:t.type,prefill:copyPrefill(t,today()),note:tt('tx.detail.copyNote',{title:txTitle(t)})});
     foot.querySelector('[data-act=edit]').onclick=()=>openTxForm({id:t.id});
-    return {title:t.type==='fatura'?'Pagamento de fatura':'Detalhes do lançamento',sub:mLabel(mOf(t.date))};
+    return {title:t.type==='fatura'?tt('tx.detail.titleInvoice'):tt('tx.detail.title'),sub:mLabel(mOf(t.date))};
   }};
 }
 export async function deleteTxFlow(id){
   const t=S.tx.find(x=>x.id===id);if(!t)return false;
   if(t.type==='fatura')return cancelPay(t);
   const sib=futureSiblings(t),inv=isCard(t)&&t.type==='despesa'?invoiceOfPurchase(t):null;
-  const name=t.type==='aporte'?accName(t.acc):(t.desc||t.cat);
-  let html=`Deseja excluir ${t.type==='receita'?'a receita':t.type==='aporte'?'o aporte em':'a despesa'} <b>“${esc(name)}”</b>, no valor de <b>${f2(t.value)}</b>, de ${formatDateBR(t.date)}?`;
-  if(inv)html+=`<div class="bd-note mt-10">Esta compra está na fatura paga em ${formatDateBR(inv.date)}. O valor dela passa a aparecer como “Cartão (sem detalhe)”, então o total de despesas do mês não muda.</div>`;
-  if(t.type==='aporte'&&!isReinvestment(t))html+=`<div class="bd-note mt-10">O saldo de ${esc(accName(t.acc))} diminui ${f2(t.value)}.</div>`;
+  const name=t.type==='aporte'?accName(t.acc):(t.desc||displayName(t.cat));
+  let html=tt(t.type==='receita'?'tx.del.askIncome':t.type==='aporte'?'tx.del.askContribution':'tx.del.askExpense',{name:esc(name),amount:f2(t.value),date:formatDateBR(t.date)});
+  if(inv)html+=`<div class="bd-note mt-10">${tt('tx.del.invNote',{undetailed:displayName(UNDETAILED_CAT),date:formatDateBR(inv.date)})}</div>`;
+  if(t.type==='aporte'&&!isReinvestment(t))html+=`<div class="bd-note mt-10">${tt('tx.del.balanceDown',{account:esc(accName(t.acc)),amount:f2(t.value)})}</div>`;
   // a plain record is deleted at once (Desfazer brings it back); a choice or a side effect still asks first
   const ask=sib.length||inv||t.type==='aporte';
-  const r=ask?await askConfirm({title:t.type==='aporte'?'Excluir aporte':'Excluir lançamento',html,ok:'Excluir',danger:true,
-    check:sib.length?`Excluir também os ${sib.length} lançamento(s) futuro(s) iguais`:''}):{checked:false};
+  const r=ask?await askConfirm({title:t.type==='aporte'?tt('tx.del.titleContribution'):tt('tx.del.titleTx'),html,ok:tt('tx.common.delete'),danger:true,
+    check:sib.length?tt('tx.del.alsoFuture',{count:sib.length}):''}):{checked:false};
   if(!r)return false;
   const ids=[t.id].concat(r.checked?sib.map(x=>x.id):[]);
   const undo=runCommand(()=>deleteTransactions(ids));if(!undo)return false;
-  toast('🗑️ '+(ids.length>1?ids.length+' lançamentos excluídos':'Lançamento excluído')+': '+name,
-    {action:{label:'Desfazer',run:()=>runCommand(()=>restoreTransactions(undo),{ok:'↩️ Lançamento de volta'})}});
+  toast(ids.length>1?tt('tx.del.doneMany',{count:ids.length,name}):tt('tx.del.doneOne',{name}),
+    {action:{label:tt('tx.common.undo'),run:()=>runCommand(()=>restoreTransactions(undo),{ok:tt('tx.del.restored')})}});
   return true;
 }
 function openTxDetail(id){Sheet.depth()?Sheet.push(txDetailView(id)):Sheet.open(txDetailView(id));}

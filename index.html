@@ -28,164 +28,164 @@
 <header><div class="hd">
   <div class="brand"><span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></svg></span><div>Meta <span>R$ 1,3 M</span></div></div>
   <nav id="nav">
-    <button data-t="resumo" class="on" data-i="chart">Resumo</button>
-    <button data-t="lanc" data-i="receipt">Lançamentos</button>
-    <button data-t="cartao" data-i="card">Cartão</button>
-    <button data-t="meta" data-i="target">Patrimônio</button>
-        <button data-t="analise" data-i="chart">Análise</button>
-    <button data-t="cad" data-i="tag">Categorias</button>
-    <button data-t="cfg" data-i="sliders">Ajustes</button>
+    <button data-t="resumo" class="on" data-i="chart"><span data-i18n="nav.resumo">Resumo</span></button>
+    <button data-t="lanc" data-i="receipt"><span data-i18n="nav.lanc">Lançamentos</span></button>
+    <button data-t="cartao" data-i="card"><span data-i18n="nav.cartao">Cartão</span></button>
+    <button data-t="meta" data-i="target"><span data-i18n="nav.meta">Patrimônio</span></button>
+        <button data-t="analise" data-i="chart"><span data-i18n="nav.analise">Análise</span></button>
+    <button data-t="cad" data-i="tag"><span data-i18n="nav.cad">Categorias</span></button>
+    <button data-t="cfg" data-i="sliders"><span data-i18n="nav.cfg">Ajustes</span></button>
   </nav>
   <a class="sync-badge" id="syncBadge" hidden></a>
   <div class="today" id="todayLbl"></div>
-  <button class="btn sm" id="printBtn" title="Imprimir ou salvar como PDF">Imprimir / PDF</button>
-  <button class="btn sm" id="mailBtn" title="Abrir o e-mail com o resumo do relatório">Enviar por e-mail</button>
+  <button data-i18n-title="a11y.imprimirOuSalvarComo" data-i18n="nav.printBtn" class="btn sm" id="printBtn" title="Imprimir ou salvar como PDF">Imprimir / PDF</button>
+  <button data-i18n-title="a11y.abrirOEMail" data-i18n="nav.mailBtn" class="btn sm" id="mailBtn" title="Abrir o e-mail com o resumo do relatório">Enviar por e-mail</button>
 </div></header>
 <main>
 
 <!-- RESUMO -->
 <section class="tab on" id="t-resumo">
-  <div class="ph"><h1>Resumo do mês</h1><p>Quanto entrou, quanto saiu e onde o dinheiro foi.</p></div>
+  <div class="ph"><h1 data-i18n="resumo.h1">Resumo do mês</h1><p data-i18n="resumo.p">Quanto entrou, quanto saiu e onde o dinheiro foi.</p></div>
   <div id="bkNote"></div>
 
-  <div class="mnav"><button data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab1" aria-live="polite"></div><button data-mv="1" aria-label="Próximo mês">›</button><button class="btn sm mtoday" data-mtoday hidden>Hoje</button></div>
+  <div class="mnav"><button data-i18n-aria-label="a11y.mesAnterior" data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab1" aria-live="polite"></div><button data-i18n-aria-label="a11y.proximoMes" data-mv="1" aria-label="Próximo mês">›</button><button data-i18n="resumo.button" class="btn sm mtoday" data-mtoday hidden>Hoje</button></div>
   <div class="card mt-10 start" id="startCard" hidden></div>
   <div class="card mt-10" id="todoCard" hidden></div>
   <div class="card mt-10 month-hero" id="monthHero"></div>
   <div class="card kpi health mt-10" id="reserveCard" hidden></div>
   <div class="grid g3 mt-10" id="kFlow"></div>
-  <div class="card mt-14"><div class="card-title tight">Onde gastei no mês</div><div class="help mb4">Toque num grupo para ver os lançamentos.</div><div id="cats"></div></div>
+  <div class="card mt-14"><div data-i18n="resumo.div" class="card-title tight">Onde gastei no mês</div><div data-i18n="resumo.div2" class="help mb4">Toque num grupo para ver os lançamentos.</div><div id="cats"></div></div>
   <div class="grid g2 sum-pair">
     <div class="card" id="budgetCard"></div>
     <div class="card" id="billsCard"></div>
   </div>
   <div class="card mt-14">
-    <div class="head-row"><div class="fw7">Gastos mês a mês</div><div class="help m0">Toque numa barra para ver o mês</div></div>
+    <div class="head-row"><div data-i18n="resumo.div3" class="fw7">Gastos mês a mês</div><div data-i18n="resumo.div4" class="help m0">Toque numa barra para ver o mês</div></div>
     <div class="grid trend-sum" id="trendSum"></div>
-    <div class="rel" id="trendWrap"><svg id="chTrend" role="img" aria-label="Despesas por mês com linha de tendência"></svg><div class="tip-box" id="trendTip"></div></div>
+    <div class="rel" id="trendWrap"><svg data-i18n-aria-label="a11y.despesasPorMesCom" id="chTrend" role="img" aria-label="Despesas por mês com linha de tendência"></svg><div class="tip-box" id="trendTip"></div></div>
     <div id="trendSel"></div><div class="mt-8" id="trendDemo"></div>
-    <div class="legend"><span><i class="lg-bar"></i>Despesas do mês</span><span><i class="lg-real"></i>Mês selecionado</span><span><i class="lg-cur"></i>Mês em andamento</span><span><i class="lg-line lg-real"></i>Curva dos gastos</span><span><i class="lg-line lg-warn"></i>Tendência</span></div>
-    <div class="mt-12"><button type="button" class="btn" data-go-tab="analise">📊 Ver análise completa dos gastos</button></div>
+    <div class="legend"><span><i class="lg-bar"></i><span data-i18n="resumo.span">Despesas do mês</span></span><span><i class="lg-real"></i><span data-i18n="resumo.span2">Mês selecionado</span></span><span><i class="lg-cur"></i><span data-i18n="resumo.span3">Mês em andamento</span></span><span><i class="lg-line lg-real"></i><span data-i18n="resumo.span4">Curva dos gastos</span></span><span><i class="lg-line lg-warn"></i><span data-i18n="resumo.span5">Tendência</span></span></div>
+    <div class="mt-12"><button data-i18n="resumo.button2" type="button" class="btn" data-go-tab="analise">📊 Ver análise completa dos gastos</button></div>
   </div>
 </section>
 
 <!-- ANÁLISE (was the bottom of the Summary) -->
 <section class="tab" id="t-analise">
-  <div class="ph"><h1>Análise dos gastos</h1><p>Média, gastos fixos, o que mudou e cada grupo mês a mês.</p></div>
-  <div class="mnav"><button data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab4" aria-live="polite"></div><button data-mv="1" aria-label="Próximo mês">›</button><button class="btn sm mtoday" data-mtoday hidden>Hoje</button></div>
+  <div class="ph"><h1 data-i18n="analise.h1">Análise dos gastos</h1><p data-i18n="analise.p">Média, gastos fixos, o que mudou e cada grupo mês a mês.</p></div>
+  <div class="mnav"><button data-i18n-aria-label="a11y.mesAnterior" data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab4" aria-live="polite"></div><button data-i18n-aria-label="a11y.proximoMes" data-mv="1" aria-label="Próximo mês">›</button><button data-i18n="resumo.button" class="btn sm mtoday" data-mtoday hidden>Hoje</button></div>
   <div class="card" id="trendIns"></div>
 </section>
 
 <!-- CARTÃO -->
 <section class="tab" id="t-cartao">
-  <div class="ph"><h1>Cartão de crédito</h1><p>Cada fatura com as compras, o fechamento e o que já foi pago. Use ‹ › para trocar de fatura.</p></div>
+  <div class="ph"><h1 data-i18n="cartao.h1">Cartão de crédito</h1><p data-i18n="cartao.p">Cada fatura com as compras, o fechamento e o que já foi pago. Use ‹ › para trocar de fatura.</p></div>
   <div id="cycleBox"></div>
   <div id="cardBox"></div><datalist id="catListD"></datalist>
 </section>
 
 <!-- META -->
 <section class="tab" id="t-meta">
-  <div class="ph"><h1>Patrimônio e meta</h1><p>Quanto você já tem, onde está, quanto falta e a projeção até a meta.</p></div>
+  <div class="ph"><h1 data-i18n="meta.h1">Patrimônio e meta</h1><p data-i18n="meta.p">Quanto você já tem, onde está, quanto falta e a projeção até a meta.</p></div>
 
   <div class="grid g4" id="kMeta"></div>
   <!-- balances first: where the money is today -->
-  <div id="invStart" class="inv-part"><h2 class="part-h">💼 Onde está seu dinheiro</h2><p class="help">Saldo de cada conta hoje. Toque em ⋯ para marcar a reserva de emergência ou arquivar.</p></div>
+  <div id="invStart" class="inv-part"><h2 data-i18n="meta.h2" class="part-h">💼 Onde está seu dinheiro</h2><p data-i18n="meta.p2" class="help">Saldo de cada conta hoje. Toque em ⋯ para marcar a reserva de emergência ou arquivar.</p></div>
   <div class="card"><div id="accList"></div>
-    <div class="row mt-12"><div class="f mw-260"><label for="newAcc">Adicionar conta/investimento</label><input id="newAcc" placeholder="Ex.: XP CDB"></div><button class="btn" id="addAcc">Adicionar</button></div></div>
-  <h2>🍩 Distribuição dos investimentos</h2>
+    <div class="row mt-12"><div class="f mw-260"><label data-i18n="meta.labelNewAcc" for="newAcc">Adicionar conta/investimento</label><input data-i18n-placeholder="a11y.exXpCdb" id="newAcc" placeholder="Ex.: XP CDB"></div><button data-i18n="meta.addAcc" class="btn" id="addAcc">Adicionar</button></div></div>
+  <h2 data-i18n="meta.h22">🍩 Distribuição dos investimentos</h2>
   <div class="card" id="distCard"></div>
   <!-- one chart: real, projection, lower-rate scenario and goal; the table stays collapsed -->
-  <h2>📈 Evolução e projeção</h2>
+  <h2 data-i18n="meta.h23">📈 Evolução e projeção</h2>
   <div class="card">
-    <div class="chartbox" id="box"><svg id="chTower" role="img" aria-label="Patrimônio líquido: real por tipo, projeção, cenário com juros menores e meta"></svg><div id="tip"></div></div>
+    <div class="chartbox" id="box"><svg data-i18n-aria-label="a11y.patrimonioLiquidoRealPor" id="chTower" role="img" aria-label="Patrimônio líquido: real por tipo, projeção, cenário com juros menores e meta"></svg><div id="tip"></div></div>
     <div class="legend" id="lgTower"></div>
     <div class="help" id="paceMsg"></div>
   </div>
   <details class="card mt-14 proj-card" id="projCard">
-    <summary class="card-title" id="projSum">Projeção mês a mês</summary>
-    <div class="help">Juros sobre juros a partir do saldo de hoje, com o aporte planejado.</div>
+    <summary data-i18n="meta.projSum" class="card-title" id="projSum">Projeção mês a mês</summary>
+    <div data-i18n="meta.div" class="help">Juros sobre juros a partir do saldo de hoje, com o aporte planejado.</div>
     <div class="scroll"><table id="projTbl"></table></div>
     <div class="help" id="projHelp"></div>
   </details>
-  <h2>📊 Carteira</h2>
+  <h2 data-i18n="meta.h24">📊 Carteira</h2>
   <div class="card" id="portfolio"></div>
-  <h2>📥 Importar</h2>
-  <div class="card"><div class="help">Do extrato da corretora ou do banco. <b>Extrato de custódia (PDF)</b> atualiza o saldo. <b>Nota de corretagem</b> (PDF): compras viram aporte e entram na Carteira. <b>Extrato de movimentações</b> (CSV, OFX ou PDF): o que entrou vira <b>aporte</b>; resgate, rendimento e IR são ignorados.</div>
-    <button type="button" class="btn imp-open" id="impOpenInv">📥 Importar saldo ou aportes</button></div>
-  <h2>🔄 Atualizar saldos</h2>
+  <h2 data-i18n="meta.h25">📥 Importar</h2>
+  <div class="card"><div data-i18n-html="meta.div2" class="help">Do extrato da corretora ou do banco. <b>Extrato de custódia (PDF)</b> atualiza o saldo. <b>Nota de corretagem</b> (PDF): compras viram aporte e entram na Carteira. <b>Extrato de movimentações</b> (CSV, OFX ou PDF): o que entrou vira <b>aporte</b>; resgate, rendimento e IR são ignorados.</div>
+    <button data-i18n="meta.impOpenInv" type="button" class="btn imp-open" id="impOpenInv">📥 Importar saldo ou aportes</button></div>
+  <h2 data-i18n="meta.h26">🔄 Atualizar saldos</h2>
   <div class="card">
-    <div class="help mb12-only">Abra o app de cada banco e digite o <b>saldo líquido</b> de hoje (já sem IR). Os aportes que você lançou depois desta data entram sozinhos. Não digite aportes aqui.</div>
+    <div data-i18n-html="meta.div3" class="help mb12-only">Abra o app de cada banco e digite o <b>saldo líquido</b> de hoje (já sem IR). Os aportes que você lançou depois desta data entram sozinhos. Não digite aportes aqui.</div>
     <div class="formgrid" id="snapForm"></div>
-    <div class="row mt-14"><div class="f mw-190"><label for="snapDate">Saldo válido em</label><input type="date" id="snapDate" required></div><button class="btn pri" id="snapSave">Salvar saldos</button></div>
+    <div class="row mt-14"><div class="f mw-190"><label data-i18n="meta.labelSnapDate" for="snapDate">Saldo válido em</label><input type="date" id="snapDate" required></div><button data-i18n="meta.snapSave" class="btn pri" id="snapSave">Salvar saldos</button></div>
   </div>
-  <h2>📈 Histórico do patrimônio</h2>
+  <h2 data-i18n="meta.h27">📈 Histórico do patrimônio</h2>
   <div class="card"><div class="scroll"><table id="histTbl" class="stack"></table></div>
-    <div class="help">“Rendimento” só aparece nos meses em que você atualizou os saldos. É a diferença do patrimônio, menos os aportes.</div></div>
+    <div data-i18n="meta.div4" class="help">“Rendimento” só aparece nos meses em que você atualizou os saldos. É a diferença do patrimônio, menos os aportes.</div></div>
 </section>
 
 <!-- LANÇAMENTOS -->
 <section class="tab" id="t-lanc">
-  <div class="ph"><h1>Lançamentos</h1><p>Registre receitas, despesas e aportes. Leva poucos segundos.</p></div>
+  <div class="ph"><h1 data-i18n="lanc.h1">Lançamentos</h1><p data-i18n="lanc.p">Registre receitas, despesas e aportes. Leva poucos segundos.</p></div>
   <div class="card smart-add" id="smartAdd">
     <form class="qe" id="qeForm" autocomplete="off">
-      <label for="qeText">⚡ Lançamento rápido</label>
-      <div class="qe-row"><input id="qeText" placeholder="Ex.: gastei 85,90 no mercado hoje" enterkeyhint="go" aria-describedby="qeHelp"><button type="submit" class="btn pri" id="qeGo">Preencher</button></div>
-      <div class="help" id="qeHelp">Escreva como falaria: “recebi 5.000 de salário dia 5”, “paguei 230 de internet no cartão”. Você confere antes de salvar.</div>
+      <label data-i18n="lanc.labelQeText" for="qeText">⚡ Lançamento rápido</label>
+      <div class="qe-row"><input data-i18n-placeholder="a11y.exGasteiNoMercado" id="qeText" placeholder="Ex.: gastei 85,90 no mercado hoje" enterkeyhint="go" aria-describedby="qeHelp"><button data-i18n="lanc.qeGo" type="submit" class="btn pri" id="qeGo">Preencher</button></div>
+      <div data-i18n="lanc.qeHelp" class="help" id="qeHelp">Escreva como falaria: “recebi 5.000 de salário dia 5”, “paguei 230 de internet no cartão”. Você confere antes de salvar.</div>
     </form>
-    <button type="button" class="btn imp-open" id="impOpen">📥 Importar extrato ou fatura (CSV, OFX, PDF)</button>
+    <button data-i18n="lanc.impOpen" type="button" class="btn imp-open" id="impOpen">📥 Importar extrato ou fatura (CSV, OFX, PDF)</button>
     <input type="file" id="impFile" hidden>
   </div>
-  <div id="txFormHome"><h2>➕ Novo lançamento</h2>
+  <div id="txFormHome"><h2 data-i18n="lanc.h2">➕ Novo lançamento</h2>
   <div class="card" id="txForm">
-    <div class="seg" id="typeSeg" role="radiogroup" aria-label="Tipo de lançamento">
-      <label><input type="radio" name="tp" value="despesa" checked><span>➖ Despesa</span></label>
-      <label><input type="radio" name="tp" value="receita"><span>➕ Receita</span></label>
-      <label><input type="radio" name="tp" value="fatura"><span>💳 Pagar fatura</span></label>
-      <label><input type="radio" name="tp" value="aporte"><span>🏦 Aporte (investir)</span></label>
+    <div data-i18n-aria-label="a11y.tipoDeLancamento" class="seg" id="typeSeg" role="radiogroup" aria-label="Tipo de lançamento">
+      <label><input type="radio" name="tp" value="despesa" checked><span data-i18n="lanc.span">➖ Despesa</span></label>
+      <label><input type="radio" name="tp" value="receita"><span data-i18n="lanc.span2">➕ Receita</span></label>
+      <label><input type="radio" name="tp" value="fatura"><span data-i18n="lanc.span3">💳 Pagar fatura</span></label>
+      <label><input type="radio" name="tp" value="aporte"><span data-i18n="lanc.span4">🏦 Aporte (investir)</span></label>
     </div>
     <div class="bd-note mt-14" id="fNote" hidden></div>
     <div class="formgrid mt-14" id="fGrid">
-      <div class="f-val"><label for="fVal">Valor <span class="req" aria-hidden="true">*</span></label><input id="fVal" data-money placeholder="R$ 0,00" required aria-required="true"></div>
-      <div><label for="fDate">Data <span class="req" aria-hidden="true">*</span></label><input type="date" id="fDate" required></div>
-      <div id="wCat" class="f-wide"><label for="fCat">Categoria</label><input id="fCat" list="catList" placeholder="Escolha abaixo ou digite"><datalist id="catList"></datalist><div class="chips qchips" id="catChips" data-qchips="despesa"></div></div>
-      <div id="wAcc" hidden><label for="fAcc">Investir em</label><select id="fAcc"></select></div>
-      <div id="wReinv" class="f-wide" hidden><label class="apply-opt sm"><input class="w-auto mr-8" type="checkbox" id="fReinv" data-smoke="reinv">É reinvestimento (o dinheiro já estava investido, por exemplo um CDB que venceu)</label><div class="help" id="reinvHelp">Marcado: não conta como novo aporte, não entra em “Investido” nem sai da sobra do mês, e não muda o saldo (ele continua sendo o que você informa em “Atualizar saldos”).</div></div>
-      <div id="wFonte"><label for="fFonte" id="lFonte">Pago com</label><select id="fFonte"></select></div>
-      <div><label for="fDesc">Descrição <span class="opt">(opcional)</span></label><input id="fDesc" placeholder="Ex.: mercado" enterkeyhint="done"><div class="chips qchips" id="descSug" aria-live="polite"></div></div>
+      <div class="f-val"><label data-i18n-html="lanc.labelFVal" for="fVal">Valor <span class="req" aria-hidden="true">*</span></label><input id="fVal" data-money placeholder="R$ 0,00" required aria-required="true"></div>
+      <div><label data-i18n-html="lanc.labelFDate" for="fDate">Data <span class="req" aria-hidden="true">*</span></label><input type="date" id="fDate" required></div>
+      <div id="wCat" class="f-wide"><label data-i18n="lanc.labelFCat" for="fCat">Categoria</label><input data-i18n-placeholder="a11y.escolhaAbaixoOuDigite" id="fCat" list="catList" placeholder="Escolha abaixo ou digite"><datalist id="catList"></datalist><div class="chips qchips" id="catChips" data-qchips="despesa"></div></div>
+      <div id="wAcc" hidden><label data-i18n="lanc.labelFAcc" for="fAcc">Investir em</label><select id="fAcc"></select></div>
+      <div id="wReinv" class="f-wide" hidden><label class="apply-opt sm"><input class="w-auto mr-8" type="checkbox" id="fReinv" data-smoke="reinv"><span data-i18n="lanc.span5">É reinvestimento (o dinheiro já estava investido, por exemplo um CDB que venceu)</span></label><div data-i18n="lanc.reinvHelp" class="help" id="reinvHelp">Marcado: não conta como novo aporte, não entra em “Investido” nem sai da sobra do mês, e não muda o saldo (ele continua sendo o que você informa em “Atualizar saldos”).</div></div>
+      <div id="wFonte"><label data-i18n="lanc.lFonte" for="fFonte" id="lFonte">Pago com</label><select id="fFonte"></select></div>
+      <div><label data-i18n-html="lanc.labelFDesc" for="fDesc">Descrição <span class="opt">(opcional)</span></label><input data-i18n-placeholder="a11y.exMercado" id="fDesc" placeholder="Ex.: mercado" enterkeyhint="done"><div class="chips qchips" id="descSug" aria-live="polite"></div></div>
     </div>
-    <details class="more-opts mt-14" id="wMore"><summary>Mais opções: repetir todo mês, dividir em categorias</summary>
+    <details class="more-opts mt-14" id="wMore"><summary data-i18n="lanc.summary">Mais opções: repetir todo mês, dividir em categorias</summary>
     <div class="formgrid mt-10">
-      <div><label for="fRep">Repetir</label><select id="fRep"><option value="1">Não repetir</option></select></div>
+      <div><label data-i18n="lanc.labelFRep" for="fRep">Repetir</label><select id="fRep"><option data-i18n="lanc.option" value="1">Não repetir</option></select></div>
     </div>
     <div class="mt-10" id="wSplit">
-      <button type="button" class="btn sm" id="splitBtn">✂️ Dividir em categorias</button>
+      <button data-i18n="lanc.splitBtn" type="button" class="btn sm" id="splitBtn">✂️ Dividir em categorias</button>
       <span class="help ml-8" id="splitHint"></span>
       <div class="box-dashed mt-10" id="splitBox" hidden>
-        <div class="help mb10-only">Exemplo: fatura de R$ 350 que inclui R$ 99,90 de Wellhub (Saúde). Informe só as partes de <b>outra</b> categoria; o que sobrar fica na categoria principal acima.</div>
+        <div data-i18n-html="lanc.div" class="help mb10-only">Exemplo: fatura de R$ 350 que inclui R$ 99,90 de Wellhub (Saúde). Informe só as partes de <b>outra</b> categoria; o que sobrar fica na categoria principal acima.</div>
         <div id="splitRows"></div>
-        <div class="row mt-8 ai-c"><button type="button" class="btn sm" id="splitAdd">+ adicionar parte</button><span class="help m0" id="splitSum"></span></div>
+        <div class="row mt-8 ai-c"><button data-i18n="lanc.splitAdd" type="button" class="btn sm" id="splitAdd">+ adicionar parte</button><span class="help m0" id="splitSum"></span></div>
       </div>
     </div>
     </details>
     <label class="apply-opt" id="wApply" hidden><input class="w-auto mr-8" type="checkbox" id="fApply" checked>Aplicar também aos <b id="applyN">0</b> lançamentos futuros iguais (próximos meses)</label>
     <div class="box-dashed mt-14" id="fatBox" hidden>
-      <div class="help mb10-only"><b>O que está nesta fatura?</b> Aparecem as compras do ciclo desta fatura (fechamento e vencimento ficam em Ajustes). O que sobrar entra como “Cartão (sem detalhe)”, para não ficar de fora dos seus gastos.</div>
-      <div class="row fm-row"><label class="m0" for="fFm">Fatura que vence em</label><select class="mw-200" id="fFm"></select><span class="help m0" id="fmRange"></span></div>
-      <label class="check-opt note"><input class="w-auto" type="checkbox" id="fAll">Mostrar compras de qualquer data (para quando a fatura teve um ciclo diferente do normal)</label>
+      <div data-i18n-html="lanc.div2" class="help mb10-only"><b>O que está nesta fatura?</b> Aparecem as compras do ciclo desta fatura (fechamento e vencimento ficam em Ajustes). O que sobrar entra como “Cartão (sem detalhe)”, para não ficar de fora dos seus gastos.</div>
+      <div class="row fm-row"><label data-i18n="lanc.labelFFm" class="m0" for="fFm">Fatura que vence em</label><select class="mw-200" id="fFm"></select><span class="help m0" id="fmRange"></span></div>
+      <label class="check-opt note"><input class="w-auto" type="checkbox" id="fAll"><span data-i18n="lanc.span6">Mostrar compras de qualquer data (para quando a fatura teve um ciclo diferente do normal)</span></label>
       <div id="fatList"></div>
-      <div class="mt-8"><button type="button" class="btn sm" id="nfAdd">+ Adicionar compra esquecida</button></div>
-      <div class="row mt-8 ai-c"><button type="button" class="btn sm" id="fatUse">Usar a soma das marcadas como valor da fatura</button><span class="help m0" id="fatSum"></span></div>
+      <div class="mt-8"><button data-i18n="lanc.nfAdd" type="button" class="btn sm" id="nfAdd">+ Adicionar compra esquecida</button></div>
+      <div class="row mt-8 ai-c"><button data-i18n="lanc.fatUse" type="button" class="btn sm" id="fatUse">Usar a soma das marcadas como valor da fatura</button><span class="help m0" id="fatSum"></span></div>
     </div>
     <div class="mt-14" id="payBox" hidden></div>
     <div class="help" id="fHelp"></div>
-    <div class="row f-actions" id="fActions"><button type="button" class="btn" id="fCancel" hidden>Cancelar edição</button><button type="button" class="btn pri" id="fSave">Adicionar despesa</button></div>
+    <div class="row f-actions" id="fActions"><button data-i18n="lanc.fCancel" type="button" class="btn" id="fCancel" hidden>Cancelar edição</button><button data-i18n="lanc.fSave" type="button" class="btn pri" id="fSave">Adicionar despesa</button></div>
   </div></div>
-  <h2>📋 Lançamentos do mês</h2>
-  <div class="mnav"><button data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab2" aria-live="polite"></div><button data-mv="1" aria-label="Próximo mês">›</button><button class="btn sm mtoday" data-mtoday hidden>Hoje</button></div>
-  <div class="chips" id="chips" role="toolbar" aria-label="Filtrar lançamentos">
-    <button class="chip on" data-f="todos">Todos</button><button class="chip" data-f="receita">Receitas</button><button class="chip" data-f="despesa">Despesas</button><button class="chip" data-f="fatura">Faturas</button><button class="chip" data-f="aporte">Aportes</button>
-    <select id="grpSel" class="grp-sel" aria-label="Filtrar por grupo de despesa"></select>
-    <input id="qBox" type="search" placeholder="Buscar descrição ou categoria" aria-label="Buscar lançamentos">
+  <h2 data-i18n="lanc.h22">📋 Lançamentos do mês</h2>
+  <div class="mnav"><button data-i18n-aria-label="a11y.mesAnterior" data-mv="-1" aria-label="Mês anterior">‹</button><div class="m" id="mLab2" aria-live="polite"></div><button data-i18n-aria-label="a11y.proximoMes" data-mv="1" aria-label="Próximo mês">›</button><button data-i18n="resumo.button" class="btn sm mtoday" data-mtoday hidden>Hoje</button></div>
+  <div data-i18n-aria-label="a11y.filtrarLancamentos" class="chips" id="chips" role="toolbar" aria-label="Filtrar lançamentos">
+    <button data-i18n="lanc.button2" class="chip on" data-f="todos">Todos</button><button data-i18n="lanc.button3" class="chip" data-f="receita">Receitas</button><button data-i18n="lanc.button4" class="chip" data-f="despesa">Despesas</button><button data-i18n="lanc.button5" class="chip" data-f="fatura">Faturas</button><button data-i18n="lanc.button6" class="chip" data-f="aporte">Aportes</button>
+    <select data-i18n-aria-label="a11y.filtrarPorGrupoDe" id="grpSel" class="grp-sel" aria-label="Filtrar por grupo de despesa"></select>
+    <input data-i18n-placeholder="a11y.buscarDescricaoOuCategoria" data-i18n-aria-label="a11y.buscarLancamentos" id="qBox" type="search" placeholder="Buscar descrição ou categoria" aria-label="Buscar lançamentos">
   </div>
   <div class="card lst-card"><div class="lst" id="txList"></div></div>
 </section>
@@ -193,106 +193,106 @@
 
 <!-- AJUSTES -->
 <section class="tab" id="t-cad">
-  <div class="ph"><h1>Categorias</h1><p>Crie, renomeie ou apague categorias. Use a chave à esquerda para ativar ou desativar: categoria desativada some das listas de lançamento, mas o histórico continua.</p></div>
-  <div class="mb-12"><button class="btn" id="sugOpen">✨ Ver categorias sugeridas</button></div>
+  <div class="ph"><h1 data-i18n="cad.h1">Categorias</h1><p data-i18n="cad.p">Crie, renomeie ou apague categorias. Use a chave à esquerda para ativar ou desativar: categoria desativada some das listas de lançamento, mas o histórico continua.</p></div>
+  <div class="mb-12"><button data-i18n="cad.sugOpen" class="btn" id="sugOpen">✨ Ver categorias sugeridas</button></div>
   <div class="grid g2" id="catPage"></div>
-  <div class="help mt-12">Ao renomear, todos os lançamentos antigos mudam junto. Ao apagar uma categoria que já foi usada, você escolhe para qual outra categoria os lançamentos vão.</div>
+  <div data-i18n="cad.div" class="help mt-12">Ao renomear, todos os lançamentos antigos mudam junto. Ao apagar uma categoria que já foi usada, você escolhe para qual outra categoria os lançamentos vão.</div>
 </section>
 
 <section class="tab" id="t-cfg">
-  <div class="ph"><h1>Ajustes</h1><p>Meta, premissas da projeção e backup dos dados.</p></div>
-  <h2>🎯 Premissas</h2>
+  <div class="ph"><h1 data-i18n="cfg.h1">Ajustes</h1><p data-i18n="cfg.p">Meta, premissas da projeção e backup dos dados.</p></div>
+  <h2 data-i18n="cfg.h2">🎯 Premissas</h2>
   <div class="card"><div class="row">
-    <div class="f f-full"><label for="goal">Meta líquida</label><input id="goal" data-money></div>
-    <div class="f"><label for="rate">Rendimento líquido (% ao ano)</label><input id="rate" inputmode="decimal"></div>
-    <div class="f"><label for="planned">Aporte mensal planejado</label><input id="planned" data-money></div></div>
+    <div class="f f-full"><label data-i18n="cfg.labelGoal" for="goal">Meta líquida</label><input id="goal" data-money></div>
+    <div class="f"><label data-i18n="cfg.labelRate" for="rate">Rendimento líquido (% ao ano)</label><input id="rate" inputmode="decimal"></div>
+    <div class="f"><label data-i18n="cfg.labelPlanned" for="planned">Aporte mensal planejado</label><input id="planned" data-money></div></div>
     <div class="row mt-14">
-      <div class="f"><label for="cClose">Cartão: melhor dia de compra</label><input id="cClose" inputmode="numeric" maxlength="2"></div>
-      <div class="f"><label for="cDue">Cartão: dia do vencimento</label><input id="cDue" inputmode="numeric" maxlength="2"></div>
-      <div class="f f-note f14"><label class="check-opt"><input class="w-auto" type="checkbox" id="cBiz">Se o fechamento cair em fim de semana, passa para o próximo dia útil</label></div>
-      <div class="f f-note f2">O <b>melhor dia de compra</b> é o dia em que começa a fatura nova (a anterior fecha no dia anterior). Veja no app do banco, na fatura: “melhor data de compra”.</div></div>
+      <div class="f"><label data-i18n="cfg.labelCClose" for="cClose">Cartão: melhor dia de compra</label><input id="cClose" inputmode="numeric" maxlength="2"></div>
+      <div class="f"><label data-i18n="cfg.labelCDue" for="cDue">Cartão: dia do vencimento</label><input id="cDue" inputmode="numeric" maxlength="2"></div>
+      <div class="f f-note f14"><label class="check-opt"><input class="w-auto" type="checkbox" id="cBiz"><span data-i18n="cfg.span">Se o fechamento cair em fim de semana, passa para o próximo dia útil</span></label></div>
+      <div data-i18n-html="cfg.div" class="f f-note f2">O <b>melhor dia de compra</b> é o dia em que começa a fatura nova (a anterior fecha no dia anterior). Veja no app do banco, na fatura: “melhor data de compra”.</div></div>
     <div class="help" id="avgHelp"></div>
-    <div class="help">Referência: CDI 14,75% bruto ≈ 12,5% líquido (IR 15%). Se a Selic cair, use um valor menor (seu relatório usa 11,16%).</div></div>
-  <h2 data-i18n="language.title">🌐 Idioma</h2>
+    <div data-i18n="cfg.div2" class="help">Referência: CDI 14,75% bruto ≈ 12,5% líquido (IR 15%). Se a Selic cair, use um valor menor (seu relatório usa 11,16%).</div></div>
+  <h2 data-i18n="language.title">Idioma</h2>
   <div class="card">
-    <div class="f mw-260"><label for="langSel" data-i18n="language.label">Idioma do app</label><select id="langSel" class="ci"></select></div>
+    <div class="lang-btns" id="langBtns" role="radiogroup" data-i18n-aria-label="language.label" aria-label="Idioma do app"></div>
     <div class="help" id="langInfo"></div>
     <div class="help" data-i18n="language.help">“Automático” segue o idioma do aparelho. Se o aparelho usar um idioma que o app não tem, o app aparece em inglês.</div>
   </div>
-  <h2>🔁 Transferências entre suas contas</h2>
+  <h2 data-i18n="cfg.h22">🔁 Transferências entre suas contas</h2>
   <div class="card" id="ownCard">
-    <div class="help m0">Dinheiro que você manda de um banco seu para outro (Santander → Nubank) não é receita nem despesa. Informe seu nome <b>como aparece no extrato</b>: na importação, Pix e TED com ele viram “🔁 Transferência minha” e o app reconhece o outro lado quando você importar o outro banco.</div>
-    <div class="row mt-10 own-add"><div class="f mw-260"><label for="ownNameIn">Seu nome no extrato</label><input id="ownNameIn" placeholder="Ex.: Maria Souza Lima" autocomplete="name"></div><button type="button" class="btn" id="ownNameAdd">Adicionar</button></div>
+    <div data-i18n-html="cfg.div3" class="help m0">Dinheiro que você manda de um banco seu para outro (Santander → Nubank) não é receita nem despesa. Informe seu nome <b>como aparece no extrato</b>: na importação, Pix e TED com ele viram “🔁 Transferência minha” e o app reconhece o outro lado quando você importar o outro banco.</div>
+    <div class="row mt-10 own-add"><div class="f mw-260"><label data-i18n="cfg.labelOwnNameIn" for="ownNameIn">Seu nome no extrato</label><input data-i18n-placeholder="a11y.exMariaSouzaLima" id="ownNameIn" placeholder="Ex.: Maria Souza Lima" autocomplete="name"></div><button data-i18n="meta.addAcc" type="button" class="btn" id="ownNameAdd">Adicionar</button></div>
     <div class="mt-10" id="ownNames"></div>
-    <div class="help">Pode cadastrar variações (ex.: “Maria S Lima”). Salário no seu nome continua sendo receita.</div>
+    <div data-i18n="cfg.div4" class="help">Pode cadastrar variações (ex.: “Maria S Lima”). Salário no seu nome continua sendo receita.</div>
   </div>
-  <h2 id="syncTitle" hidden>☁️ Conta e sincronização</h2>
+  <h2 data-i18n="cfg.syncTitle" id="syncTitle" hidden>☁️ Conta e sincronização</h2>
   <div class="card" id="syncCard" hidden><div id="syncBody"></div></div>
-  <h2 id="lockTitle" hidden>🔒 Bloqueio do app</h2>
+  <h2 data-i18n="cfg.lockTitle" id="lockTitle" hidden>🔒 Bloqueio do app</h2>
   <div class="card" id="lockCard" hidden>
     <div class="row"><button class="btn" id="lockToggle" type="button"></button></div>
     <div class="help" id="lockHelp"></div>
   </div>
-  <h2>🧰 Dados</h2>
+  <h2 data-i18n="cfg.h23">🧰 Dados</h2>
   <div class="card"><div class="row">
-    <button class="btn" id="exp">⬇️ Exportar backup</button><button class="btn" id="imp">⬆️ Importar backup</button>
+    <button data-i18n="cfg.exp" class="btn" id="exp">⬇️ Exportar backup</button><button data-i18n="cfg.imp" class="btn" id="imp">⬆️ Importar backup</button>
     <input type="file" id="file" accept="application/json" hidden></div>
-    <div class="help">Os dados ficam só neste navegador. Exporte um backup de vez em quando. O app também guarda sozinho uma cópia do dia anterior. Backups da versão anterior (acompanhamento) também podem ser importados.</div>
-    <details class="adv"><summary>Avançado</summary>
+    <div data-i18n="cfg.div5" class="help">Os dados ficam só neste navegador. Exporte um backup de vez em quando. O app também guarda sozinho uma cópia do dia anterior. Backups da versão anterior (acompanhamento) também podem ser importados.</div>
+    <details class="adv"><summary data-i18n="cfg.summary">Avançado</summary>
       <div class="adv-body">
-        <div class="adv-item"><button class="btn" id="restoreAuto" hidden>↩️ Restaurar cópia automática</button><span class="help m0" id="restoreAutoNote"></span></div>
-        <div class="adv-item"><button class="btn" id="demoOn">🧪 Gerar dados de teste (últimos 12 meses)</button><button class="btn" id="demoOff">Remover dados de teste</button><span class="help m0" id="demoN"></span></div>
-        <div class="adv-item adv-danger"><button class="btn dng" id="reset">🗑️ Apagar tudo</button><span class="help m0">Apaga lançamentos, investimentos, carteira e saldos deste navegador. Exporte um backup antes.</span></div>
+        <div class="adv-item"><button data-i18n="cfg.restoreAuto" class="btn" id="restoreAuto" hidden>↩️ Restaurar cópia automática</button><span class="help m0" id="restoreAutoNote"></span></div>
+        <div class="adv-item"><button data-i18n="cfg.demoOn" class="btn" id="demoOn">🧪 Gerar dados de teste (últimos 12 meses)</button><button data-i18n="cfg.demoOff" class="btn" id="demoOff">Remover dados de teste</button><span class="help m0" id="demoN"></span></div>
+        <div class="adv-item adv-danger"><button data-i18n="cfg.reset" class="btn dng" id="reset">🗑️ Apagar tudo</button><span data-i18n="cfg.span2" class="help m0">Apaga lançamentos, investimentos, carteira e saldos deste navegador. Exporte um backup antes.</span></div>
       </div></details></div>
   <div class="note" id="estNote"></div>
 </section>
-<p class="foot">Educacional, não é recomendação de investimento. Projeção: saldo<sub>n</sub> = saldo<sub>n−1</sub> × (1+taxa)<sup>1/12</sup> + aporte planejado.</p>
+<p data-i18n-html="cfg.p2" class="foot">Educacional, não é recomendação de investimento. Projeção: saldo<sub>n</sub> = saldo<sub>n−1</sub> × (1+taxa)<sup>1/12</sup> + aporte planejado.</p>
 </main>
 <dialog id="itemDlg"><form class="m0" id="itemForm">
-  <h3 class="dlg-h s14" id="itemTitle">Editar compra</h3>
+  <h3 data-i18n="itemDlg.itemTitle" class="dlg-h s14" id="itemTitle">Editar compra</h3>
   <div class="formgrid cols-2">
-    <div class="span-all"><label for="dCat">Categoria <span class="req" aria-hidden="true">*</span></label><input id="dCat" list="catListD" placeholder="Ex.: Transporte"><div class="chips qchips" id="dCatChips" data-qchips="despesa"></div></div>
-    <div class="span-all"><label for="dDesc">Descrição <span class="opt">(opcional)</span></label><input id="dDesc" placeholder="Ex.: Uber"></div>
-    <div><label for="dVal">Valor <span class="req" aria-hidden="true">*</span></label><input id="dVal" data-money placeholder="R$ 0,00"></div>
-    <div><label for="dDate">Data <span class="req" aria-hidden="true">*</span></label><input type="date" id="dDate"></div>
+    <div class="span-all"><label data-i18n-html="itemDlg.labelDCat" for="dCat">Categoria <span class="req" aria-hidden="true">*</span></label><input data-i18n-placeholder="a11y.exTransporte" id="dCat" list="catListD" placeholder="Ex.: Transporte"><div class="chips qchips" id="dCatChips" data-qchips="despesa"></div></div>
+    <div class="span-all"><label data-i18n-html="lanc.labelFDesc" for="dDesc">Descrição <span class="opt">(opcional)</span></label><input data-i18n-placeholder="a11y.exUber" id="dDesc" placeholder="Ex.: Uber"></div>
+    <div><label data-i18n-html="lanc.labelFVal" for="dVal">Valor <span class="req" aria-hidden="true">*</span></label><input id="dVal" data-money placeholder="R$ 0,00"></div>
+    <div><label data-i18n-html="lanc.labelFDate" for="dDate">Data <span class="req" aria-hidden="true">*</span></label><input type="date" id="dDate"></div>
   </div>
   <label class="apply-opt sm" id="dApplyW" hidden><input class="w-auto mr-8" type="checkbox" id="dApply" checked>Aplicar também aos <b id="dApplyN">0</b> lançamentos futuros iguais</label>
   <div class="row dlg-foot between">
-    <button type="button" class="btn dng" id="dDel">Excluir</button>
-    <span class="btn-pair"><button type="button" class="btn" id="dCancel">Cancelar</button><button type="button" class="btn pri" id="dSave">Salvar</button></span>
+    <button data-i18n="itemDlg.dDel" type="button" class="btn dng" id="dDel">Excluir</button>
+    <span class="btn-pair"><button data-i18n="itemDlg.dCancel" type="button" class="btn" id="dCancel">Cancelar</button><button data-i18n="itemDlg.dSave" type="button" class="btn pri" id="dSave">Salvar</button></span>
   </div>
 </form></dialog>
 <dialog class="dlg-wide" id="sugDlg"><div class="m0">
-  <h3 class="dlg-h s4">Categorias sugeridas</h3>
-  <p class="dlg-p">Já marquei as que mais combinam com o que você lança. As que você já tem aparecem desativadas. Menos categorias é mais rápido de preencher: marque só o que for usar.</p>
+  <h3 data-i18n="sugDlg.h3" class="dlg-h s4">Categorias sugeridas</h3>
+  <p data-i18n="sugDlg.p" class="dlg-p">Já marquei as que mais combinam com o que você lança. As que você já tem aparecem desativadas. Menos categorias é mais rápido de preencher: marque só o que for usar.</p>
   <div class="scroll-list" id="sugList"></div>
-  <div class="row dlg-foot s16"><button type="button" class="btn" id="sugCancel">Fechar</button><button type="button" class="btn pri" id="sugOk">Adicionar selecionadas</button></div>
+  <div class="row dlg-foot s16"><button data-i18n="sugDlg.sugCancel" type="button" class="btn" id="sugCancel">Fechar</button><button data-i18n="sugDlg.sugOk" type="button" class="btn pri" id="sugOk">Adicionar selecionadas</button></div>
 </div></dialog>
 <dialog id="catDlg"><form class="m0" id="catForm">
-  <h3 class="dlg-h" id="catDlgTitle">Apagar categoria</h3>
+  <h3 data-i18n="catDlg.catDlgTitle" class="dlg-h" id="catDlgTitle">Apagar categoria</h3>
   <p class="dlg-p lg" id="catDlgText"></p>
-  <label for="catTo">Mover os lançamentos para</label><select id="catTo"></select>
-  <div class="row dlg-foot"><button type="button" class="btn" id="catCancel">Cancelar</button><button type="button" class="btn dng" id="catOk">Mover e apagar</button></div>
+  <label data-i18n="catDlg.labelCatTo" for="catTo">Mover os lançamentos para</label><select id="catTo"></select>
+  <div class="row dlg-foot"><button data-i18n="itemDlg.dCancel" type="button" class="btn" id="catCancel">Cancelar</button><button data-i18n="catDlg.catOk" type="button" class="btn dng" id="catOk">Mover e apagar</button></div>
 </form></dialog>
 <dialog id="sheet" class="sheet" aria-labelledby="shTitle">
   <div class="sh-grab" aria-hidden="true"></div>
-  <div class="sh-head"><button type="button" class="sh-btn" id="shBack" aria-label="Voltar" hidden>‹</button><div class="sh-tt"><h3 id="shTitle"></h3><div id="shSub"></div></div><button type="button" class="sh-btn" id="shClose" aria-label="Fechar">✕</button></div>
+  <div class="sh-head"><button data-i18n-aria-label="a11y.voltar" type="button" class="sh-btn" id="shBack" aria-label="Voltar" hidden>‹</button><div class="sh-tt"><h3 id="shTitle"></h3><div id="shSub"></div></div><button data-i18n-aria-label="sugDlg.sugCancel" type="button" class="sh-btn" id="shClose" aria-label="Fechar">✕</button></div>
   <div class="sh-body" id="shBody" tabindex="-1" autofocus></div>
   <div class="sh-foot" id="shFoot" hidden></div>
 </dialog>
 <dialog id="confirmDlg" class="confirm" aria-labelledby="cfTitle">
   <h3 id="cfTitle"></h3><div id="cfText"></div>
   <label id="cfCheckW" class="cf-check" hidden><input type="checkbox" id="cfCheck"><span id="cfCheckL"></span></label>
-  <div class="cf-actions"><button type="button" class="btn" id="cfCancel">Cancelar</button><button type="button" class="btn" id="cfAlt" hidden></button><button type="button" class="btn pri" id="cfOk">Confirmar</button></div>
+  <div class="cf-actions"><button data-i18n="itemDlg.dCancel" type="button" class="btn" id="cfCancel">Cancelar</button><button type="button" class="btn" id="cfAlt" hidden></button><button data-i18n="confirmDlg.cfOk" type="button" class="btn pri" id="cfOk">Confirmar</button></div>
 </dialog>
 <dialog id="lockDlg" class="lock" aria-labelledby="lockHead">
-  <div class="lock-box"><div class="lock-ico" aria-hidden="true">🔒</div><h3 id="lockHead">Everfox bloqueado</h3>
+  <div class="lock-box"><div class="lock-ico" aria-hidden="true">🔒</div><h3 data-i18n="lockDlg.lockHead" id="lockHead">Everfox bloqueado</h3>
     <div id="lockMsg" role="status" aria-live="polite"></div>
-    <button type="button" class="btn pri" id="lockRetry">Desbloquear</button></div>
+    <button data-i18n="lockDlg.lockRetry" type="button" class="btn pri" id="lockRetry">Desbloquear</button></div>
 </dialog>
-<button type="button" id="fab" class="fab" aria-label="Novo lançamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
-<nav id="bnav" class="bnav" aria-label="Menu principal">
-  <button data-t="resumo" data-i="chart" class="on">Resumo</button><button data-t="lanc" data-i="receipt">Lançamentos</button><button data-t="cartao" data-i="card">Cartão</button><button data-t="meta" data-i="target">Patrimônio</button><button data-t="more" data-i="menu">Mais</button>
+<button data-i18n-aria-label="lanc.h2" type="button" id="fab" class="fab" aria-label="Novo lançamento"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+<nav data-i18n-aria-label="a11y.menuPrincipal" id="bnav" class="bnav" aria-label="Menu principal">
+  <button data-t="resumo" data-i="chart" class="on"><span data-i18n="nav.resumo">Resumo</span></button><button data-t="lanc" data-i="receipt"><span data-i18n="nav.lanc">Lançamentos</span></button><button data-t="cartao" data-i="card"><span data-i18n="nav.cartao">Cartão</span></button><button data-t="meta" data-i="target"><span data-i18n="nav.meta">Patrimônio</span></button><button data-t="more" data-i="menu"><span data-i18n="nav.more">Mais</span></button>
 </nav>
 <div id="toast" popover="manual" role="status" aria-live="polite"></div>
 

@@ -5,6 +5,8 @@
  * select, remove or add drafts. Updates only the parts that changed so what the user typed stays.
  */
 import { $, esc } from '../../core/dom.js';
+import { t } from '../../core/i18n.js';
+import { storedName } from '../../core/stored-names.js';
 import { f2 } from '../../core/format.js';
 import { formatDateBR, mShort } from '../../core/dates.js';
 import { S } from '../../domain/store.js';
@@ -24,53 +26,54 @@ const catsFor=d=>catNames(d.type==='receita'?'receita':'despesa');
 export function summaryHtml(s){
   const ov=importOverview(s.drafts),r=s.read,sel=ov.selected,dup=ov.confirmedDup+ov.possibleDup;
   const notes=[];
-  if(r.alreadyImported)notes.push(`Este arquivo já foi importado em ${formatDateBR(r.alreadyImported.at||'0000-00-00')} (${r.alreadyImported.count} lançamentos). O que já foi salvo aparece como duplicado e fica desmarcado.`);
-  if(r.format==='pdf')notes.push('Leitura de PDF é aproximada: confira data, valor e sinal de cada linha com o documento. Linhas sem data no começo podem ter ficado de fora.');
-  if(r.dropped)notes.push(`${r.dropped} linha(s) de saldo ou total foram deixadas de fora: não são lançamentos.`);
+  if(r.alreadyImported)notes.push(t('imp.review.noteAlready',{date:formatDateBR(r.alreadyImported.at||'0000-00-00'),count:r.alreadyImported.count}));
+  if(r.format==='pdf')notes.push(t('imp.review.notePdf'));
+  if(r.dropped)notes.push(t('imp.review.noteDropped',{count:r.dropped}));
   const sk=r.skipped||{},skipped=(sk.noDate||0)+(sk.noValue||0);
-  if(skipped)notes.push(`${skipped} linha(s) sem data ou sem valor foram ignoradas.`);
-  if(r.unreadable)notes.push(`${r.unreadable} transação(ões) do OFX não puderam ser lidas.`);
-  return `<div class="imp-banner">🔎 <b>Prévia:</b> nada foi gravado ainda. Confira, ajuste e só então confirme.</div>
-    <div class="imp-file"><b>${esc(r.fileName)}</b> · ${r.format.toUpperCase()} · ${r.kind==='card'?'fatura do cartão':r.kind==='invest'?'extrato de investimento: entradas viram aporte':'extrato da conta'}</div>
+  if(skipped)notes.push(t('imp.review.noteSkipped',{count:skipped}));
+  if(r.unreadable)notes.push(t('imp.review.noteUnreadable',{count:r.unreadable}));
+  return `<div class="imp-banner">${t('imp.review.banner')}</div>
+    <div class="imp-file"><b>${esc(r.fileName)}</b> · ${r.format.toUpperCase()} · ${r.kind==='card'?t('imp.review.kindCard'):r.kind==='invest'?t('imp.review.kindInvest'):t('imp.review.kindBank')}</div>
     <div class="imp-tiles">
-      <div><span>Lidos</span><b>${ov.total}</b></div>
-      <div><span>Receitas</span><b class="rec">${ov.incomes}</b><small>${f2(ov.incomeTotal)}</small></div>
-      <div><span>Despesas</span><b class="des">${ov.expenses}</b><small>${f2(ov.expenseTotal)}</small></div>
-      ${ov.contributions?`<div><span>Aportes</span><b class="apo">${ov.contributions}</b><small>${f2(ov.contributionTotal)}</small></div>`:''}
-      ${ov.transfers?`<div><span>Transferências suas</span><b>${ov.transfers}</b><small>${f2(ov.transferTotal)} · não contam</small></div>`:''}
-      ${ov.others?`<div><span>Não importáveis</span><b>${ov.others}</b><small>não viram lançamento</small></div>`:''}
-      <div class="${ov.review?'warn':''}"><span>Para revisar</span><b>${ov.review}</b></div>
-      <div class="${dup?'warn':''}"><span>Duplicados</span><b>${dup}</b>${dup?`<small>${ov.confirmedDup} certos · ${ov.possibleDup} possíveis</small>`:''}</div>
+      <div><span>${t('imp.review.read')}</span><b>${ov.total}</b></div>
+      <div><span>${t('imp.review.incomes')}</span><b class="rec">${ov.incomes}</b><small>${f2(ov.incomeTotal)}</small></div>
+      <div><span>${t('imp.review.expenses')}</span><b class="des">${ov.expenses}</b><small>${f2(ov.expenseTotal)}</small></div>
+      ${ov.contributions?`<div><span>${t('imp.review.contributions')}</span><b class="apo">${ov.contributions}</b><small>${f2(ov.contributionTotal)}</small></div>`:''}
+      ${ov.transfers?`<div><span>${t('imp.review.ownTransfers')}</span><b>${ov.transfers}</b><small>${t('imp.review.notCounted',{value:f2(ov.transferTotal)})}</small></div>`:''}
+      ${ov.others?`<div><span>${t('imp.review.notImportable')}</span><b>${ov.others}</b><small>${t('imp.review.notTransaction')}</small></div>`:''}
+      <div class="${ov.review?'warn':''}"><span>${t('imp.review.toReview')}</span><b>${ov.review}</b></div>
+      <div class="${dup?'warn':''}"><span>${t('imp.review.duplicates')}</span><b>${dup}</b>${dup?`<small>${t('imp.review.dupDetail',{confirmed:ov.confirmedDup,possible:ov.possibleDup})}</small>`:''}</div>
     </div>
-    <div class="imp-pick-sum">Selecionados: <b>${sel.count}</b>${sel.count?` · receitas ${f2(sel.income)} · despesas ${f2(sel.expense)} · ${sel.months.map(m=>esc(mShort(m))).join(', ')}`:''}</div>
+    <div class="imp-pick-sum">${sel.count?t('imp.review.selectedTotals',{count:sel.count,income:f2(sel.income),expense:f2(sel.expense),months:sel.months.map(m=>esc(mShort(m))).join(', ')}):t('imp.review.selected',{count:sel.count})}</div>
     ${ownHintHtml(s)}${notes.map(n=>`<div class="imp-note">ℹ️ ${esc(n)}</div>`).join('')}`;
 }
 // "is this you?": the name that receives the salary also sends/receives Pix in this statement
 function ownHintHtml(s){
   if(s.read.kind!=='bank')return '';
   const h=ownNameHint(s.drafts);if(!h)return '';
-  return `<div class="imp-own-hint"><div>💡 <b>${esc(h.name)}</b> recebe o salário e aparece em mais <b>${h.count}</b> linha(s) (${f2(h.total)}). Se é você, isso é dinheiro mudando de banco: não é gasto nem receita.</div>
-    <button type="button" class="btn sm pri" data-imp-own="${esc(h.name)}">Sim, sou eu</button></div>`;
+  return `<div class="imp-own-hint"><div>${t('imp.review.ownHint',{name:esc(h.name),count:h.count,total:f2(h.total)})}</div>
+    <button type="button" class="btn sm pri" data-imp-own="${esc(h.name)}">${t('imp.review.ownYes')}</button></div>`;
 }
-const optionsHtml=s=>`<details class="imp-opts-d"><summary>Opções do arquivo: extrato ou fatura, sinais, colunas</summary><div class="imp-opts">
-  <label>Este arquivo é<select id="impKind"><option value="bank"${s.opts.kind!=='card'?' selected':''}>Extrato da conta</option><option value="card"${s.opts.kind==='card'?' selected':''}>Fatura do cartão</option></select></label>
-  <label class="check-opt"><input type="checkbox" id="impInvert"${s.opts.invert?' checked':''}> Inverter sinais (se receitas e despesas vieram trocadas)</label>
-  ${s.read.format==='csv'?'<button type="button" class="link-btn" data-imp-cols>Ajustar colunas</button>':''}
+const optionsHtml=s=>`<details class="imp-opts-d"><summary>${t('imp.review.optionsTitle')}</summary><div class="imp-opts">
+  <label>${t('imp.review.thisFileIs')}<select id="impKind"><option value="bank"${s.opts.kind!=='card'?' selected':''}>${t('imp.review.optBank')}</option><option value="card"${s.opts.kind==='card'?' selected':''}>${t('imp.review.optCard')}</option></select></label>
+  <label class="check-opt"><input type="checkbox" id="impInvert"${s.opts.invert?' checked':''}> ${t('imp.review.invert')}</label>
+  ${s.read.format==='csv'?`<button type="button" class="link-btn" data-imp-cols>${t('imp.review.adjustColumns')}</button>`:''}
 </div></details>`;
-const toolbarHtml='<div class="imp-tools"><button type="button" class="btn sm" data-imp-all="1">Marcar todos</button><button type="button" class="btn sm" data-imp-all="0">Desmarcar todos</button><button type="button" class="btn sm" data-imp-add>+ Adicionar lançamento</button></div>';
+const toolbarHtml=()=>`<div class="imp-tools"><button type="button" class="btn sm" data-imp-all="1">${t('imp.review.selectAll')}</button><button type="button" class="btn sm" data-imp-all="0">${t('imp.review.selectNone')}</button><button type="button" class="btn sm" data-imp-add>${t('imp.review.addTx')}</button></div>`;
 const itemHtml=(s,d)=>`<div class="imp-item" data-imp-item="${d.id}">${rowCard(d)}${s.openId===d.id?rowEditor(d,catsFor(d)):''}</div>`;
-const listHtml=s=>s.drafts.length?s.drafts.map(d=>itemHtml(s,d)).join(''):'<div class="empty">Nada para importar. Use “Adicionar lançamento” se algo não foi identificado.</div>';
+const listHtml=s=>s.drafts.length?s.drafts.map(d=>itemHtml(s,d)).join(''):`<div class="empty">${t('imp.review.empty')}</div>`;
 export function reviewHtml(s){
-  return `<div id="impSum">${summaryHtml(s)}</div>${optionsHtml(s)}${toolbarHtml}<div class="imp-list" id="impList">${listHtml(s)}</div>`;
+  return `<div id="impSum">${summaryHtml(s)}</div>${optionsHtml(s)}${toolbarHtml()}<div class="imp-list" id="impList">${listHtml(s)}</div>`;
 }
 export function footerCounts(s){
-  const ov=importOverview(s.drafts),c=ov.selected.count,t=ov.transfers;
-  const label=c?`Importar ${c} lançamento${c>1?'s':''}${t?' + '+t+' transf.':''}`:t?`Guardar ${t} transferência${t>1?'s':''}`:'Nada selecionado';
-  return {count:c+t,label};
+  const ov=importOverview(s.drafts),c=ov.selected.count,tr=ov.transfers;
+  const label=c?(tr?t('imp.review.footImportT',{count:c,transfers:tr}):t('imp.review.footImport',{count:c})):tr?t('imp.review.footKeep',{count:tr}):t('imp.review.footNone');
+  return {count:c+tr,label};
 }
 // binds the events once per draw (assigning on* replaces the previous handlers)
 export function bindReview(body,ctx){
   const s=importState.session,item=id=>body.querySelector(`[data-imp-item="${id}"]`);
+  const ownSaved=()=>t('imp.review.ownSaved'); // read when used: the handlers below keep their own local "t"
   const refreshSummary=()=>{$('impSum').innerHTML=summaryHtml(s);ctx.footer();};
   const redrawItem=id=>{const el=item(id),d=draftById(id);if(el&&d){el.outerHTML=itemHtml(s,d);}openEditorTools(item(id));};
   const redrawCard=id=>{const row=body.querySelector(`[data-imp-row="${id}"]`),d=draftById(id);if(row&&d)row.outerHTML=rowCard(d);};
@@ -101,12 +104,12 @@ export function bindReview(body,ctx){
     if(t.closest('[data-imp-cols]')){s.phase='mapping';ctx.redraw();return;}
     // saves the holder's name (also in Ajustes) and reads the file again, so those lines become transfers
     const own=t.closest('[data-imp-own]');
-    if(own&&runCommand(()=>addOwnName(own.dataset.impOwn),{ok:'✅ Nome salvo em Ajustes: Pix para você não conta como gasto',render:false})){rereadSession({});ctx.redraw();}
+    if(own&&runCommand(()=>addOwnName(own.dataset.impOwn),{ok:ownSaved(),render:false})){rereadSession({});ctx.redraw();}
   };
   // a part typed in: the rest updates while typing, the card when the field is left
   function editPart(id,t){
     const d=draftById(id),i=+(t.dataset.spCat||t.dataset.spVal);
-    patchDraft(id,{splits:splitChanged(d,i,t.matches('[data-sp-cat]')?{cat:t.value}:{value:parseMoney(t.value)})});
+    patchDraft(id,{splits:splitChanged(d,i,t.matches('[data-sp-cat]')?{cat:storedName(t.value)}:{value:parseMoney(t.value)})});
     const sum=item(id)&&item(id).querySelector('[data-sp-sum]');if(sum)sum.innerHTML=splitRestHtml(draftById(id));
   }
   // text typed into a draft is kept while typing, not only when the field is left: a phone keyboard or a tap on the import
@@ -114,7 +117,7 @@ export function bindReview(body,ctx){
   const LIVE_TEXT='[data-f="newAcc"],[data-f="desc"],[data-f="cat"]';
   body.oninput=e=>{const t=e.target,row=t.closest('[data-imp-item]');if(!row)return;
     if(t.matches('[data-sp-cat],[data-sp-val]'))editPart(row.dataset.impItem,t);
-    else if(t.matches(LIVE_TEXT)){patchDraft(row.dataset.impItem,{[t.dataset.f]:t.value});refreshSummary();}};
+    else if(t.matches(LIVE_TEXT)){patchDraft(row.dataset.impItem,{[t.dataset.f]:t.dataset.f==='cat'?storedName(t.value):t.value});refreshSummary();}};
   body.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.imp-main')){e.preventDefault();e.target.click();}};
   body.onchange=e=>{
     const t=e.target,row=t.closest('[data-imp-item]'),id=row&&row.dataset.impItem;
@@ -124,7 +127,7 @@ export function bindReview(body,ctx){
     if(t.matches('[data-imp-sel]')){patchDraft(id,{selected:t.checked});redrawCard(id);refreshSummary();return;}
     if(t.matches('[data-sp-cat],[data-sp-val]')){editPart(id,t);redrawCard(id);refreshSummary();return;}
     const f=t.dataset.f;if(!f)return;
-    patchDraft(id,{[f]:f==='createRest'?t.checked:t.value});
+    patchDraft(id,{[f]:f==='createRest'?t.checked:f==='cat'?storedName(t.value):t.value});
     if(f==='type'||f==='createRest'||f==='acc')redrawItem(id);else redrawCard(id);
     if(f==='cat'||f==='value'){const sum=item(id).querySelector('[data-sp-sum]');if(sum)sum.innerHTML=splitRestHtml(draftById(id));}
     refreshSummary();

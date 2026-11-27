@@ -5,6 +5,7 @@
  * when the goal is far above it, the goal is a label instead of a line pressed against the top.
  */
 import { $, css, esc } from '../../core/dom.js';
+import { t } from '../../core/i18n.js';
 import { f0, f2 } from '../../core/format.js';
 import { mLabel, mShort } from '../../core/dates.js';
 import { S } from '../../domain/store.js';
@@ -46,17 +47,17 @@ export function drawTower(real,rows){
   // "se juros caírem": from today's bar through the projected months
   if(proj.length){const cx=j=>L+j*bw+bw/2,pts=[[cx(nReal-1),y(real[nReal-1].t)]].concat(proj.map((p,k)=>[cx(nReal+k),y(p.low)]));
     s+=`<polyline points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}" fill="none" stroke="${css('--warn')}" stroke-width="2.5" stroke-dasharray="3 5" stroke-linecap="round"/>`;}
-  s+=sc.goalInside?`<line x1="${L}" x2="${W-R}" y1="${y(goal)}" y2="${y(goal)}" stroke="${css('--meta')}" stroke-width="2.5" stroke-dasharray="7 5"/><text x="${L+4}" y="${y(goal)-7}" font-size="13" font-weight="700" fill="${css('--meta')}">🎯 Meta ${f0(goal)}</text>`
-    :`<text x="${W-R}" y="${T-12}" text-anchor="end" font-size="13" font-weight="700" fill="${css('--meta')}">🎯 Meta ${f0(goal)} ↑ acima da escala</text>`;
+  s+=sc.goalInside?`<line x1="${L}" x2="${W-R}" y1="${y(goal)}" y2="${y(goal)}" stroke="${css('--meta')}" stroke-width="2.5" stroke-dasharray="7 5"/><text x="${L+4}" y="${y(goal)-7}" font-size="13" font-weight="700" fill="${css('--meta')}">${t('sum.tower.goalLabel',{goal:f0(goal)})}</text>`
+    :`<text x="${W-R}" y="${T-12}" text-anchor="end" font-size="13" font-weight="700" fill="${css('--meta')}">${t('sum.tower.goalAbove',{goal:f0(goal)})}</text>`;
   const svg=$('chTower');svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.innerHTML=s;
   const tip=$('tip'),box=$('box');
   svg.querySelectorAll('.hit').forEach(el=>{
     el.onmousemove=e=>{const j=+el.dataset.j,r=all[j];let h;
-      if(j<real.length)h=`<b>${mLabel(r.m)}</b><br>Total: ${f2(r.t)}${r.est?' <small>(com o rendimento estimado entre os saldos)</small>':''}<br>`+byType(r.bal).map(([id,v])=>`${esc(TYPE_NAME[id])}: ${f0(v)}`).join('<br>')+(r.ap?`<br>🏦 Aportes: ${f0(r.ap)}`:'')+`<br>Falta: ${f0(Math.max(goal-r.t,0))}`;
-      else h=`<b>${mLabel(r.m)}</b> · projeção<br>Total: ${f0(r.t)}<br>Se juros caírem: ${f0(r.low)}<br>${r.t>=goal?'✅ meta atingida':'Falta: '+f0(goal-r.t)}`;
+      if(j<real.length)h=`<b>${mLabel(r.m)}</b><br>${r.est?t('sum.tower.totalEst',{value:f2(r.t)}):t('sum.tower.total',{value:f2(r.t)})}<br>`+byType(r.bal).map(([id,v])=>`${esc(TYPE_NAME[id])}: ${f0(v)}`).join('<br>')+(r.ap?`<br>${t('sum.tower.contributions',{value:f0(r.ap)})}`:'')+`<br>${t('sum.tower.missing',{value:f0(Math.max(goal-r.t,0))})}`;
+      else h=`${t('sum.tower.projHead',{month:mLabel(r.m)})}<br>${t('sum.tower.total',{value:f0(r.t)})}<br>${t('sum.tower.lowRow',{value:f0(r.low)})}<br>${r.t>=goal?t('sum.tower.goalReached'):t('sum.tower.missing',{value:f0(goal-r.t)})}`;
       tip.innerHTML=h;const bb=box.getBoundingClientRect();tip.style.left=Math.max(0,Math.min(e.clientX-bb.left+14,bb.width-240))+'px';tip.style.top=(e.clientY-bb.top+14)+'px';tip.style.opacity=1;};
     el.onclick=el.onmousemove;el.onmouseleave=()=>tip.style.opacity=0;});
   const used=TYPE_ORDER.filter(id=>real.some(r=>byType(r.bal).some(([t])=>t===id)));
   $('lgTower').innerHTML=used.map(id=>`<span><i style="background:${typeColor(id)}"></i>${esc(TYPE_NAME[id])}</span>`).join('')+
-    `<span><i class="lg-proj"></i>Projeção (${String(S.rate).replace('.',',')}% a.a.)</span><span><i class="lg-line lg-low"></i>Se juros caírem (${String(lowerRate()).replace('.',',')}% a.a.)</span><span><i class="lg-line lg-goal"></i>Meta</span>`;
+    `<span><i class="lg-proj"></i>${t('sum.tower.legendProj',{rate:String(S.rate).replace('.',',')})}</span><span><i class="lg-line lg-low"></i>${t('sum.tower.legendLow',{rate:String(lowerRate()).replace('.',',')})}</span><span><i class="lg-line lg-goal"></i>${t('sum.tower.legendGoal')}</span>`;
 }

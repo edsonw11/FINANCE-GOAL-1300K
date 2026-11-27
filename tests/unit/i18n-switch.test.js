@@ -9,7 +9,7 @@ module.exports=()=>{const {eq,ok,res}=suite('i18n-switch');
   const set=l=>run(`setLocale(${JSON.stringify(l)})`);
   const t=(k,p)=>run(`t(${JSON.stringify(k)},${JSON.stringify(p)})`);
   eq('starts in the source language (Portuguese)',run('getLocale()'),'pt-BR');
-  const expected={'pt-BR':'🌐 Idioma','en-US':'🌐 Language','es':'🌐 Idioma'};
+  const expected={'pt-BR':'Idioma','en-US':'Language','es':'Idioma'};
   L.forEach(l=>{eq('setLocale accepts '+l,set(l),true);eq('getLocale after '+l,run('getLocale()'),l);eq('title in '+l,t('language.title'),expected[l]);});
   // every ordered pair: from A to B shows B's text
   const label={'pt-BR':'Idioma do app','en-US':'App language','es':'Idioma de la app'};

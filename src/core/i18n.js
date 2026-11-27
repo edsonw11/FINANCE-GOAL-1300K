@@ -16,8 +16,12 @@ export function setLocale(locale){
   if(!SUPPORTED_LOCALES.includes(locale))return false;
   activeLocale=locale;return true;
 }
+/** true when the key exists in the source catalog (used to tell a known stored name from a name the person typed) */
+export const hasMessage=key=>Object.prototype.hasOwnProperty.call(CATALOGS[SOURCE_LOCALE],key);
 export function t(key,params){
   const chain=[{locale:activeLocale,messages:CATALOGS[activeLocale]}];
   if(activeLocale!==SOURCE_LOCALE)chain.push({locale:SOURCE_LOCALE,messages:CATALOGS[SOURCE_LOCALE]});
   return translate(chain,key,params);
 }
+/** the same function as t() under a name no local variable uses: files whose code has variables called t (a transaction, a type) import this one */
+export const tt=t;

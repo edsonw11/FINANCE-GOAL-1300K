@@ -283,6 +283,10 @@
     const chip=qa('#splitRows .sp-part:first-child [data-qchips] .chip').find(b=>b.dataset.qc!=='Saúde');need(chip,'no other category to pick');
     chip.click();await tick();need(q('[data-sc="0"]').value===chip.dataset.qc,'the chip did not change the part: '+q('[data-sc="0"]').value);
     need(q('#splitRows .sp-part:first-child [data-qchips] .chip.on')&&q('#splitRows .sp-part:first-child [data-qchips] .chip.on').dataset.qc===chip.dataset.qc,'the chosen chip is not marked');
+    const inView=c=>{const a=c.getBoundingClientRect(),b=c.parentElement.getBoundingClientRect();return a.left>=b.left-1&&a.right<=b.right+1;};
+    need(inView(q('#splitRows .sp-part:first-child [data-qchips] .chip.on')),'the chosen chip is hidden off the side of the row');
+    need(q('#splitRows .sp-part:first-child [data-qchips]').getBoundingClientRect().height<50,'the one-tap categories take more than one line: '+q('#splitRows .sp-part:first-child [data-qchips]').getBoundingClientRect().height);
+    const gap=q('#splitRows .sp-part:first-child [data-sv]').getBoundingClientRect().top-q('#splitRows .sp-part:first-child [data-qchips]').getBoundingClientRect().bottom;need(gap>=8,'the value field is stuck to the categories: '+gap);
     $('fSave').click();await tick();if($('confirmDlg').open)$('cfOk').click();await tick();closeSheet();
     const t=stored().tx.find(x=>x.desc==='Compra com parte');same((t.splits||[]).map(x=>[x.cat,x.value]),[[chip.dataset.qc,50]],'the stored part has the tapped category');});
 
@@ -301,32 +305,43 @@
     sel2.value='';sel2.dispatchEvent(new Event('change',{bubbles:true}));await tick();
     need(!stored().cats.despesa.find(c=>c.name===name).group,'"Sem grupo" did not clear the group');tab('resumo');});
 
-  await step('language: switch between Portuguese, English and Spanish, "Automático" follows the phone, the choice is saved',async()=>{
+  await step('language: flag buttons switch between Portuguese, English and Spanish, the whole screen follows, "Automático" follows the phone, the choice is saved',async()=>{
     tab('cfg');await tick();
-    const sel=$('langSel'),title=()=>q('[data-i18n="language.title"]').textContent,pick=async v=>{sel.value=v;sel.dispatchEvent(new Event('change',{bubbles:true}));await tick();};
-    need(sel&&[...sel.options].map(o=>o.value).join()==='auto,pt-BR,en-US,es','options: '+(sel&&[...sel.options].map(o=>o.value).join()));
-    const names=[...sel.options].map(o=>o.textContent).slice(1);same(names,['Português','English','Español'],'each language is written in itself');
-    const T={'pt-BR':'🌐 Idioma','en-US':'🌐 Language','es':'🌐 Idioma'},LABEL={'pt-BR':'Idioma do app','en-US':'App language','es':'Idioma de la app'};
+    const btn=v=>q('#langBtns [data-lang="'+v+'"]'),pick=async v=>{btn(v).click();await tick();},nav=()=>q('#nav [data-t=resumo] [data-i18n]').textContent;
+    need([...qa('#langBtns [data-lang]')].map(b=>b.dataset.lang).join()==='auto,pt-BR,en-US,es','buttons: '+[...qa('#langBtns [data-lang]')].map(b=>b.dataset.lang).join());
+    need(!$('langSel'),'the old language combo is still on the page');
+    need(qa('#langBtns .lang-btn').every(b=>b.querySelector('.lang-flag svg')),'every button needs a flag or icon');
+    same(qa('#langBtns [data-lang]').slice(1).map(b=>b.querySelector('.lang-name').textContent),['Português','English','Español'],'each language is written in itself');
+    const NAV={'pt-BR':'Resumo','en-US':'Summary','es':'Resumen'},H1={'pt-BR':'Resumo do mês','en-US':'Monthly summary'},CFG={'pt-BR':'Ajustes','en-US':'Settings','es':'Ajustes'};
     const L=['pt-BR','en-US','es'];
     for(const a of L)for(const b of L){await pick(a);await pick(b);
       need(document.documentElement.lang===b,a+' -> '+b+': <html lang> is '+document.documentElement.lang);
-      need(title()===T[b],a+' -> '+b+': title is '+title());
-      need(q('label[for=langSel]').textContent===LABEL[b],a+' -> '+b+': label is '+q('label[for=langSel]').textContent);
-      need(sel.value===b,a+' -> '+b+': the select shows '+sel.value);
+      need(nav()===NAV[b],a+' -> '+b+': menu says '+nav());
+      need(q('#bnav [data-t=resumo] [data-i18n]').textContent===NAV[b],a+' -> '+b+': the phone menu says '+q('#bnav [data-t=resumo] [data-i18n]').textContent);
+      need(q('#nav [data-t=cfg] [data-i18n]').textContent===CFG[b],a+' -> '+b+': settings tab says '+q('#nav [data-t=cfg] [data-i18n]').textContent);
+      if(H1[b])need(q('#t-resumo h1').textContent===H1[b],a+' -> '+b+': page title is '+q('#t-resumo h1').textContent);
+      need(btn(b).getAttribute('aria-checked')==='true'&&qa('#langBtns [aria-checked=true]').length===1,a+' -> '+b+': the pressed flag is not '+b);
+      need(qa('#nav [data-t] svg').length>=7,a+' -> '+b+': the menu icons were lost');
       need(localStorage.getItem('metaapp.language')===b,'the choice was not saved: '+localStorage.getItem('metaapp.language'));}
     await pick('en-US');need(/In use now: English/.test($('langInfo').textContent)&&/3 languages available/.test($('langInfo').textContent),'info: '+$('langInfo').textContent);
+    need(!/Resumo|Lançamentos|Ajustes/.test(q('#nav').textContent),'the menu still has Portuguese words in English: '+q('#nav').textContent);
     await pick('es');need(/En uso ahora: Español/.test($('langInfo').textContent)&&/3 idiomas disponibles/.test($('langInfo').textContent),'info: '+$('langInfo').textContent);
-    need(sel.options[0].textContent==='Automático (idioma del teléfono)','the automatic option is not translated: '+sel.options[0].textContent);
+    need(/Automático/.test(btn('auto').querySelector('.lang-name').textContent),'auto label: '+btn('auto').textContent);
+    // the date in the header is written in the chosen language
+    await pick('en-US');need(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/.test($('todayLbl').textContent),'date in English: '+$('todayLbl').textContent);
+    await pick('es');need(/^(lunes|martes|miércoles|jueves|viernes|sábado|domingo)/.test($('todayLbl').textContent),'date in Spanish: '+$('todayLbl').textContent);
+    await pick('pt-BR');need(/-feira|sábado|domingo/.test($('todayLbl').textContent),'date in Portuguese: '+$('todayLbl').textContent);
     // automatic: follows the language of the phone (here faked), and falls back to English for one the app does not have
     const fake=l=>Object.defineProperty(navigator,'languages',{configurable:true,get:()=>l});
     fake(['es-MX']);await pick('auto');need(document.documentElement.lang==='es'&&localStorage.getItem('metaapp.language')==='auto','auto on a Spanish phone: '+document.documentElement.lang);
+    need(btn('auto').getAttribute('aria-checked')==='true','the automatic button is not marked');
     need(/Idioma detectado en el dispositivo: Español/.test($('langInfo').textContent),'info: '+$('langInfo').textContent);
     fake(['pt-PT']);await pick('en-US');await pick('auto');need(document.documentElement.lang==='pt-BR','auto on a Portuguese phone: '+document.documentElement.lang);
     fake(['fr-FR','de']);await pick('es');await pick('auto');need(document.documentElement.lang==='en-US','auto on a French phone should fall back to English: '+document.documentElement.lang);
-    need(title()==='🌐 Language','the page is not in English after the fallback');
+    need(nav()==='Summary','the menu is not in English after the fallback: '+nav());
     fake(['fr-FR','es-AR']);await pick('en-US');await pick('auto');need(document.documentElement.lang==='es','auto takes the first supported language of the phone: '+document.documentElement.lang);
     // back to Portuguese so the rest of the checks (written in Portuguese) keep working
-    await pick('pt-BR');need(title()==='🌐 Idioma'&&document.documentElement.lang==='pt-BR','not back in Portuguese');
+    await pick('pt-BR');need(nav()==='Resumo'&&document.documentElement.lang==='pt-BR','not back in Portuguese');
     delete navigator.languages;tab('resumo');});
 
   await step('no script error so far',()=>{need(errs.length===0,errs.join(' / '));});

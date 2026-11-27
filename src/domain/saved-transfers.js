@@ -4,6 +4,7 @@
  * yourself that was saved as an expense or income. Finds them (salary excluded) and moves them to
  * the transfers, so they stop counting in the month totals. Only imported records are touched.
  */
+import { t } from '../core/i18n.js';
 import { normalizeText } from '../core/text-normalize.js';
 import { roundMoney } from '../core/money.js';
 import { S } from './store.js';
@@ -17,7 +18,7 @@ export function savedOwnTransfers(){
 }
 // command -> {count, total} | {error}
 export function convertSavedTransfers(){
-  const list=savedOwnTransfers();if(!list.length)return {error:'Nenhum lançamento para corrigir'};
+  const list=savedOwnTransfers();if(!list.length)return {error:t('tx.saved.none')};
   const total=roundMoney(list.reduce((a,t)=>a+t.value,0));
   list.forEach(t=>recordToTransfer(t.id));
   return {count:list.length,total};

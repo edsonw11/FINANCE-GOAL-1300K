@@ -5,6 +5,7 @@
  * saveTransaction(d)     -> {ids, siblings}   (new record, monthly series or edit + future siblings)
  * d = {editId, type, value, date, cat, fonte, desc, acc, reinv, splits:[{cat,value}], fm, items, repeat, applyToFuture, invoiceSelectedTotal}
  */
+import { t } from '../core/i18n.js';
 import { addMonths } from '../core/dates.js';
 import { roundMoney, sumMoney } from '../core/money.js';
 import { S } from './store.js';
@@ -14,11 +15,11 @@ const DEFAULT_CATEGORY={receita:'Outros',despesa:'Imprevistos / Outros'};
 export const INVOICE_CATEGORY='Fatura do cartão';
 const cleanSplits=d=>(d.type==='aporte'||d.type==='fatura')?[]:(d.splits||[]).filter(s=>s.cat&&s.cat.trim()&&s.value>0).map(s=>({cat:s.cat.trim(),value:roundMoney(s.value)}));
 export function validateTransaction(d){
-  if(!(d.value>0))return {field:'value',msg:'Digite o valor. Ex.: 3500 vira R$ 35,00'};
-  if(!d.date)return {field:'date',msg:'Escolha a data no calendário'};
-  if(d.type==='aporte'&&!d.acc)return {field:'acc',msg:'Escolha onde investir'};
-  if(sumMoney(cleanSplits(d).map(s=>s.value))>d.value+0.004)return {field:'value',msg:'As partes divididas somam mais que o valor total'};
-  if(d.type==='fatura'&&(d.invoiceSelectedTotal||0)>d.value+0.004)return {field:'value',msg:'As compras marcadas somam mais que o valor da fatura'};
+  if(!(d.value>0))return {field:'value',msg:t('tx.valid.value')};
+  if(!d.date)return {field:'date',msg:t('tx.valid.date')};
+  if(d.type==='aporte'&&!d.acc)return {field:'acc',msg:t('tx.valid.account')};
+  if(sumMoney(cleanSplits(d).map(s=>s.value))>d.value+0.004)return {field:'value',msg:t('tx.valid.splitSum')};
+  if(d.type==='fatura'&&(d.invoiceSelectedTotal||0)>d.value+0.004)return {field:'value',msg:t('tx.valid.invoiceSum')};
   return null;
 }
 // copies the form data into a transaction (keeps id, date of siblings and series)

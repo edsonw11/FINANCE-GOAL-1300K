@@ -9,6 +9,7 @@ import { catParts, txIn } from './transactions.js';
 import { invoiceUndetailed } from './card-invoices.js';
 import { monthSpending } from './month-summary.js';
 import { roundMoney } from '../core/money.js';
+import { displayName } from '../core/stored-names.js';
 import { catMonth } from './categories.js';
 import { groupOf } from './category-groups.js';
 export const UNDETAILED_CAT='Cartão (sem detalhe)';
@@ -40,7 +41,7 @@ export const MAX_NAMED_PARTS=3;
 export function partsText(list,group){
   if(!list||!list.length||(list.length===1&&list[0].cat===group))return '';
   const more=list.length-MAX_NAMED_PARTS;
-  return list.slice(0,MAX_NAMED_PARTS).map(x=>x.cat).join(', ')+(more>0?' +'+more:'');
+  return list.slice(0,MAX_NAMED_PARTS).map(x=>displayName(x.cat)).join(', ')+(more>0?' +'+more:'');
 }
 // [{t, value, cats}] whose values add up to groupMonth(m)[group]; one row per record
 // (a record split into Água + Gás + Moradia shows once in Moradia, with the sum of those parts)

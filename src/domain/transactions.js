@@ -3,6 +3,7 @@
  * Responsibility: Transaction queries (by month/type, contributions, category parts, future series)
  * and the delete / undo-delete commands.
  */
+import { t } from '../core/i18n.js';
 import { sum } from '../core/format.js';
 import { asOf, mOf } from '../core/dates.js';
 import { roundMoney, sumMoney } from '../core/money.js';
@@ -31,9 +32,9 @@ export function deleteTransactions(ids){
 }
 // undo of deleteTransactions: puts the records back with their ids and the invoices' lists as they were
 export function restoreTransactions(undo){
-  if(!undo||!undo.removed||!undo.removed.length)return {error:'Nada para desfazer'};
+  if(!undo||!undo.removed||!undo.removed.length)return {error:t('tx.undo.nothing')};
   const taken=new Set(S.tx.map(t=>t.id));
-  if(undo.removed.some(t=>taken.has(t.id)))return {error:'Esses lançamentos já existem'};
+  if(undo.removed.some(t=>taken.has(t.id)))return {error:t('tx.undo.exist')};
   S.tx=S.tx.concat(undo.removed.map(t=>JSON.parse(JSON.stringify(t))));
   Object.keys(undo.items||{}).forEach(id=>{const inv=S.tx.find(t=>String(t.id)===id);if(inv)inv.items=undo.items[id].slice();});
   return {restored:undo.removed.length};

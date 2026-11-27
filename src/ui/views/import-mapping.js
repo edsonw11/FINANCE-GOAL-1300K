@@ -5,16 +5,17 @@
  * caller; reading again is done by import-load.js.
  */
 import { esc } from '../../core/dom.js';
-const FIELDS=[['date','Data'],['desc','Descrição'],['value','Valor (com sinal)'],['credit','Entradas (opcional)'],['debit','Saídas (opcional)']];
-const colLabel=(rows,m,i)=>m.hasHeader?(rows[0][i]||'Coluna '+(i+1)):'Coluna '+(i+1)+(rows[0]?' ('+String(rows[0][i]||'').slice(0,18)+')':'');
+import { t } from '../../core/i18n.js';
+const fields=()=>[['date',t('imp.common.date')],['desc',t('imp.common.description')],['value',t('imp.map.value')],['credit',t('imp.map.credit')],['debit',t('imp.map.debit')]];
+const colLabel=(rows,m,i)=>m.hasHeader?(rows[0][i]||t('imp.map.column',{n:i+1})):rows[0]?t('imp.map.columnSample',{n:i+1,sample:String(rows[0][i]||'').slice(0,18)}):t('imp.map.column',{n:i+1});
 export function mappingHtml(read){
   const rows=read.rows||[],m=read.mapping||{hasHeader:true},width=Math.max(0,...rows.slice(0,20).map(r=>r.length));
-  const opts=sel=>'<option value="-1">— não tem —</option>'+Array.from({length:width},(_,i)=>`<option value="${i}"${sel===i?' selected':''}>${esc(colLabel(rows,m,i))}</option>`).join('');
+  const opts=sel=>`<option value="-1">${t('imp.map.none')}</option>`+Array.from({length:width},(_,i)=>`<option value="${i}"${sel===i?' selected':''}>${esc(colLabel(rows,m,i))}</option>`).join('');
   const preview=rows.slice(0,4).map(r=>`<tr>${r.slice(0,width).map(c=>`<td>${esc(String(c).slice(0,24))}</td>`).join('')}</tr>`).join('');
-  return `<div class="imp-map"><p class="help">${esc(read.error||'Confira quais colunas do arquivo são a data, a descrição e o valor.')}</p>
+  return `<div class="imp-map"><p class="help">${esc(read.error||t('imp.map.hint'))}</p>
     <div class="imp-prev"><table><tbody>${preview}</tbody></table></div>
-    <label class="check-opt"><input type="checkbox" id="mapHeader"${m.hasHeader?' checked':''}> A primeira linha é o cabeçalho</label>
-    <div class="formgrid mt-10">${FIELDS.map(([k,l])=>`<div><label for="map_${k}">${l}</label><select id="map_${k}" data-map="${k}">${opts(m[k]===undefined?-1:m[k])}</select></div>`).join('')}</div></div>`;
+    <label class="check-opt"><input type="checkbox" id="mapHeader"${m.hasHeader?' checked':''}> ${t('imp.map.header')}</label>
+    <div class="formgrid mt-10">${fields().map(([k,l])=>`<div><label for="map_${k}">${l}</label><select id="map_${k}" data-map="${k}">${opts(m[k]===undefined?-1:m[k])}</select></div>`).join('')}</div></div>`;
 }
 // reads the selects -> mapping object, or null when date or amount is still missing
 export function readMapping(root){

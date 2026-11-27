@@ -8,6 +8,7 @@
  *   screen shows a legend list instead, used on narrow phones where side labels would be cut)
  */
 import { esc } from '../../core/dom.js';
+import { t } from '../../core/i18n.js';
 const GAP=1.5;       // visual space between slices, in ring units (only when there is more than one)
 const LINE_H=13;     // height of one line of label text
 const MARGIN=16;     // space kept above and below the labels
@@ -61,7 +62,7 @@ export function donutSvg(slices,o){
     return `<g class="donut-call"${k}${x.dim?' opacity="0.35"':''}><polyline points="${ax.toFixed(1)},${ay.toFixed(1)} ${ex.toFixed(1)},${ey.toFixed(1)} ${lx.toFixed(1)},${m.ly.toFixed(1)}" fill="none" stroke="${x.color}" stroke-width="1.4"/>`+
       lines.map((l,i)=>`<text x="${tx.toFixed(1)}" y="${(y0+i*LINE_H).toFixed(1)}" text-anchor="${anchor}" class="donut-name">${esc(l)}</text>`).join('')+
       `<text x="${tx.toFixed(1)}" y="${(y0+lines.length*LINE_H).toFixed(1)}" text-anchor="${anchor}" class="donut-pct" fill="${x.color}">${esc(x.text)}</text></g>`;}).join('');
-  return `<svg viewBox="0 0 ${z.w} ${z.h}" class="donut${o.bare?' bare':''}" role="img" aria-label="${esc(o.ariaLabel||'Distribuição')}"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--soft)" stroke-width="${z.t}"/>${arcs.join('')}${callouts}`+
+  return `<svg viewBox="0 0 ${z.w} ${z.h}" class="donut${o.bare?' bare':''}" role="img" aria-label="${esc(o.ariaLabel||t('sum.donut.aria'))}"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--soft)" stroke-width="${z.t}"/>${arcs.join('')}${callouts}`+
     (o.centerTop?`<text x="${cx}" y="${cy-1}" text-anchor="middle" class="donut-top${o.compact?' sm':''}">${o.centerTop}</text>`:'')+
     (o.centerBottom?`<text x="${cx}" y="${cy+15}" text-anchor="middle" class="donut-bottom">${o.centerBottom}</text>`:'')+`</svg>`;
 }

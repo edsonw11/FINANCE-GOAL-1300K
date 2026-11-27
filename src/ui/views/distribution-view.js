@@ -5,6 +5,7 @@
  * name and percentage; on narrow phones the ring has no side labels and the names are a list under it. Tapping a slice or its label highlights it and shows its value in the middle. Read only; numbers come from the domain.
  */
 import { $, esc } from '../../core/dom.js';
+import { t } from '../../core/i18n.js';
 import { f0, pc } from '../../core/format.js';
 import { DIST_OTHER_ID, investmentDistribution } from '../../domain/investments.js';
 import { donutSvg } from '../charts/donut-chart.js';
@@ -19,30 +20,30 @@ const NARROW=640; // below this the side labels do not fit: ring only, names in 
 // the list under the ring on phones: whole names, share and value; tapping one highlights its slice
 const legendHtml=(items,pick)=>`<div class="dist-legend">${items.map(i=>`<button type="button" class="dist-li${pick&&pick.id!==i.id?' dim':''}" data-key="${esc(i.id)}" aria-pressed="${!!pick&&pick.id===i.id}"><i style="background:${colorOf(i)}"></i><span class="dist-n">${esc(i.name)}${i.count>1&&view.by==='type'?' ('+i.count+')':''}</span><b>${pc(i.share)}</b><span class="dist-v">${f0(i.value)}</span></button>`).join('')}</div>`;
 const colorOf=i=>i.id===DIST_OTHER_ID?css('--mut')||'#9aa5ba':view.by==='type'?typeColor(i.id):accColor(i.id);
-const tabs=()=>`<div class="dist-tabs" role="tablist">${[['account','Por conta'],['type','Por tipo']].map(([k,l])=>`<button type="button" role="tab" aria-selected="${view.by===k}" class="dist-tab${view.by===k?' on':''}" data-dist-by="${k}">${l}</button>`).join('')}</div>`;
-const GAP_TEXT={on:()=>'✅ no alvo',over:r=>'acima: tirar '+f0(-r.money),under:r=>'abaixo: faltam '+f0(r.money),none:()=>''};
+const tabs=()=>`<div class="dist-tabs" role="tablist">${[['account',t('sum.dist.byAccount')],['type',t('sum.dist.byType')]].map(([k,l])=>`<button type="button" role="tab" aria-selected="${view.by===k}" class="dist-tab${view.by===k?' on':''}" data-dist-by="${k}">${l}</button>`).join('')}</div>`;
+const GAP_TEXT={on:()=>t('sum.dist.gapOn'),over:r=>t('sum.dist.gapOver',{value:f0(-r.money)}),under:r=>t('sum.dist.gapUnder',{value:f0(r.money)}),none:()=>''};
 // optional target per type: where I am, where I want to be, and the difference in money
 function targetsHtml(){
-  const st=allocationStatus(),rows=st.rows.map(r=>`<div class="tg-row ${r.level}"><span class="tg-n"><i style="background:${typeColor(r.id)}"></i>${esc(r.name)}</span><span class="tg-now">${pc(r.share)}</span><label class="tg-in"><span class="sr-only">Meta de ${esc(r.name)} (%)</span><input inputmode="decimal" data-target="${r.id}" value="${r.target?String(Math.round(r.target*1000)/10).replace('.',','):''}" placeholder="meta %"></label><span class="tg-gap">${GAP_TEXT[r.level](r)}</span></div>`).join('');
-  return `<div class="tg"><h3 class="m0">Minha alocação ideal <span class="mut tg-opt">(opcional)</span></h3><div class="help">Diga quanto de cada tipo você quer ter. O app mostra a diferença em reais, sem mexer em nada.</div>${rows}${st.targeted?'<button type="button" class="btn sm" data-target-clear>Limpar metas</button>':''}</div>`;
+  const st=allocationStatus(),rows=st.rows.map(r=>`<div class="tg-row ${r.level}"><span class="tg-n"><i style="background:${typeColor(r.id)}"></i>${esc(r.name)}</span><span class="tg-now">${pc(r.share)}</span><label class="tg-in"><span class="sr-only">${t('sum.dist.targetOf',{name:esc(r.name)})}</span><input inputmode="decimal" data-target="${r.id}" value="${r.target?String(Math.round(r.target*1000)/10).replace('.',','):''}" placeholder="${t('sum.dist.targetPlaceholder')}"></label><span class="tg-gap">${GAP_TEXT[r.level](r)}</span></div>`).join('');
+  return `<div class="tg"><h3 class="m0">${t('sum.dist.idealTitle')}</h3><div class="help">${t('sum.dist.idealHelp')}</div>${rows}${st.targeted?`<button type="button" class="btn sm" data-target-clear>${t('sum.dist.clearTargets')}</button>`:''}</div>`;
 }
 export function renderDistribution(){
   const el=$('distCard');if(!el)return;
   const d=investmentDistribution(undefined,view.by);
-  if(!d.items.length){el.innerHTML='<div class="help">Sem saldo nos investimentos ainda. Atualize os saldos abaixo (ou importe um extrato de custódia) e a distribuição aparece aqui.</div>';return;}
+  if(!d.items.length){el.innerHTML=`<div class="help">${t('sum.dist.empty')}</div>`;return;}
   if(view.sel&&!d.items.some(i=>i.id===view.sel))view.sel=null;
   const pick=d.items.find(i=>i.id===view.sel);
   const slices=d.items.map(i=>({value:i.value,color:colorOf(i),key:i.id,dim:!!pick&&pick.id!==i.id,name:i.name+(i.count>1&&view.by==='type'?' ('+i.count+')':''),text:pc(i.share)}));
   const narrow=window.innerWidth<=NARROW;
   el.innerHTML=`${tabs()}${donutSvg(slices,{bare:narrow,width:Math.min(window.innerWidth-56,600),
-      centerTop:(narrow?compactMoney:f0)(pick?pick.value:d.total),centerBottom:pick?esc(pick.name):'total',ariaLabel:'Distribuição dos investimentos: '+d.items.map(i=>i.name+' '+pc(i.share)).join(', ')})}${narrow?legendHtml(d.items,pick):''}${view.by==='type'?targetsHtml():''}`;
+      centerTop:(narrow?compactMoney:f0)(pick?pick.value:d.total),centerBottom:pick?esc(pick.name):t('sum.dist.centerTotal'),ariaLabel:t('sum.dist.aria',{items:d.items.map(i=>i.name+' '+pc(i.share)).join(', ')})})}${narrow?legendHtml(d.items,pick):''}${view.by==='type'?targetsHtml():''}`;
 }
 export function bindDistribution(){
   const el=$('distCard');if(!el)return;
   const choose=key=>{view.sel=view.sel===key?null:key;renderDistribution();};
   el.onclick=e=>{
-    const t=e.target.closest('[data-dist-by]');if(t){view.by=t.dataset.distBy;view.sel=null;renderDistribution();return;}
-    if(e.target.closest('[data-target-clear]'))return runCommand(()=>clearTargets(),{ok:'Metas removidas'});
+    const tab=e.target.closest('[data-dist-by]');if(tab){view.by=tab.dataset.distBy;view.sel=null;renderDistribution();return;}
+    if(e.target.closest('[data-target-clear]'))return runCommand(()=>clearTargets(),{ok:t('sum.dist.targetsCleared')});
     const k=e.target.closest('[data-key]');if(k)choose(k.dataset.key);};
-  el.onchange=e=>{const i=e.target.closest('[data-target]');if(i)runCommand(()=>setTarget(i.dataset.target,parseFloat(String(i.value).replace(',','.'))||0),{ok:'Meta salva'});};
+  el.onchange=e=>{const i=e.target.closest('[data-target]');if(i)runCommand(()=>setTarget(i.dataset.target,parseFloat(String(i.value).replace(',','.'))||0),{ok:t('sum.dist.targetSaved')});};
 }

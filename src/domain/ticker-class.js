@@ -4,8 +4,9 @@
  * grouped in a way a person understands. A guess from the ticker and the name on the note; the user can
  * correct it in the review. Pure rules, no data.
  */
+import { t } from '../core/i18n.js';
 export const ASSET_CLASS={stock:'acao',fii:'fii',etf:'etf',bdr:'bdr'};
-export const ASSET_LABEL={acao:'Ações',fii:'FIIs',etf:'ETFs',bdr:'BDRs'};
+export const ASSET_LABEL={get acao(){return t('sys.asset.stocks');},fii:'FIIs',etf:'ETFs',bdr:'BDRs'};
 export const ASSET_ICON={acao:'📈',fii:'🏢',etf:'🧺',bdr:'🌎'};
 export const ASSET_ORDER=['acao','fii','etf','bdr'];
 // ETFs that end in 11 (the ones that are common in Brazil); a name with ETF/ISHARES/INDEX also counts

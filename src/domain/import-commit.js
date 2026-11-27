@@ -15,6 +15,7 @@ import { dropTransfersOf, keepTransfers } from './transfers.js';
 import { splitParts } from './import-split.js';
 import { NEW_ACCOUNT, accountNamed } from './import-account.js';
 import { addAccount } from './account-commands.js';
+import { t } from '../core/i18n.js';
 const MAX_LOG=200;
 export const formOfDraft=d=>({editId:null,type:d.type,value:d.value,date:d.date,cat:d.cat,fonte:d.fonte,acc:d.type==='aporte'?d.acc:undefined,desc:d.desc,splits:splitParts(d).map(p=>({cat:p.cat.trim(),value:p.value})),
   repeat:d.installment&&d.createRest?Math.max(1,d.installment.of-d.installment.n+1):1});
@@ -26,7 +27,7 @@ export function commitImport(drafts,meta){
   drafts.filter(d=>d.selected).forEach(d=>{
     const problems=draftProblems(d);
     if(problems.length)return items.push({id:d.id,status:'failed',reason:problems[0]});
-    if(d.key&&taken.has(d.key))return items.push({id:d.id,status:'skipped',reason:'Já importado antes (nada foi duplicado)'});
+    if(d.key&&taken.has(d.key))return items.push({id:d.id,status:'skipped',reason:t('imp.commit.alreadyImported')});
     const form=formOfDraft(d),err=validateTransaction(form);
     if(err)return items.push({id:d.id,status:'failed',reason:err.msg});
     if(form.acc===NEW_ACCOUNT)form.acc=accountOf(d.newAcc);

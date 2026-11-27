@@ -5,6 +5,7 @@
  * (wheel/calendar on phones, calendar pop-up on desktop). The field's .value stays ISO (yyyy-mm-dd),
  * so there is no timezone shift and the rest of the code does not change.
  */
+import { t } from '../../core/i18n.js';
 import { $ } from '../../core/dom.js';
 const _inputValue=Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value');
 const isoDateToBR=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||'')?v.split('-').reverse().join('/'):'';
@@ -17,7 +18,7 @@ export function datePicker(el,opts){
   const nat=document.createElement('input');
   nat.type='date';nat.className='dp-native';nat.min=opts.min||'2000-01-01';nat.max=opts.max||'2100-12-31';
   const lab=el.id&&document.querySelector(`label[for="${el.id}"]`);
-  nat.setAttribute('aria-label',((lab&&lab.textContent.replace('*','').trim())||el.getAttribute('aria-label')||'Data')+': abrir calendário');
+  nat.setAttribute('aria-label',t('sys.date.openCalendar',{label:(lab&&lab.textContent.replace('*','').trim())||el.getAttribute('aria-label')||t('sys.date.label')}));
   if(el.required)nat.required=true;
   wrap.appendChild(nat);el._dpNative=nat;
   el.type='text';el.readOnly=true;el.tabIndex=-1;el.classList.add('dp-text');el.placeholder='dd/mm/aaaa';el.setAttribute('aria-hidden','true');

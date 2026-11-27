@@ -3,6 +3,7 @@
  * Responsibility: Real net-worth series and projection (compound interest, scenarios).
  */
 import { sum } from '../core/format.js';
+import { t } from '../core/i18n.js';
 import { asOf, mIdx, mKey, mOf, today } from '../core/dates.js';
 import { S } from './store.js';
 import { balance, total } from './accounts.js';
@@ -19,7 +20,7 @@ export const DIST_MAX_SLICES=7,DIST_OTHER_ID='_other',DIST_FIXED_ID='_fixed';
 // the type of an account by its name: an asset class (Ações, FIIs...) or fixed income and others
 export function typeOfAccount(name){
   const cls=Object.keys(ASSET_LABEL).find(k=>ASSET_LABEL[k]===name);
-  return cls?{id:cls,name}:{id:DIST_FIXED_ID,name:'Renda fixa e outros'};
+  return cls?{id:cls,name}:{id:DIST_FIXED_ID,name:t('sum.type.fixedIncome')};
 }
 export const TYPE_ORDER=[DIST_FIXED_ID,'acao','fii','etf','bdr'];
 export function investmentDistribution(day=today(),by='account'){
@@ -35,7 +36,7 @@ export function investmentDistribution(day=today(),by='account'){
   items.sort((a,b)=>b.value-a.value);
   if(by!=='type'&&items.length>DIST_MAX_SLICES+1){
     const rest=items.slice(DIST_MAX_SLICES),sum=rest.reduce((x,r)=>x+r.value,0);
-    items=items.slice(0,DIST_MAX_SLICES).concat([{id:DIST_OTHER_ID,name:'Outras ('+rest.length+')',value:sum,count:rest.length}]);
+    items=items.slice(0,DIST_MAX_SLICES).concat([{id:DIST_OTHER_ID,name:t('sum.dist.others',{n:rest.length}),value:sum,count:rest.length}]);
   }
   return {total:tot,items:items.map(r=>({...r,share:tot?r.value/tot:0}))};
 }

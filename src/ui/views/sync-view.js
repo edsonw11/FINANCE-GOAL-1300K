@@ -3,6 +3,7 @@
  * Responsibility: Settings → "Conta e sincronização": sign-in, the pending count, the "Sincronizar" button and the review list. Connects the sync to the app's state.
  * Hidden when there is no API to talk to (the page opened as a file or from a plain static server): the app then works exactly as before.
  */
+import { t } from '../../core/i18n.js';
 import { $, esc } from '../../core/dom.js';
 import { STORAGE_KEY } from '../../core/config.js';
 import { S, adoptRemoteState, onSave } from '../../domain/store.js';
@@ -17,8 +18,8 @@ let sync=null;
 // checking | unavailable | signed_out | signed_in | other_account
 const syncView={state:'checking',user:null,busy:false};
 const uuid=()=>crypto.randomUUID();
-const when=ms=>ms?new Date(ms).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'ainda não';
-const REASONS={key_conflict:'o mesmo número foi usado em outro aparelho',invalid_data:'o servidor não aceitou este item',not_found:'o item pertence a outra conta',unknown_resource:'tipo desconhecido'};
+const when=ms=>ms?new Date(ms).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):t('set.sync.never');
+const REASONS={key_conflict:'set.sync.reasonKeyConflict',invalid_data:'set.sync.reasonInvalidData',not_found:'set.sync.reasonNotFound',unknown_resource:'set.sync.reasonUnknownResource'};
 
 export function renderSync(){
   const card=$('syncCard');if(!card)return;
@@ -31,27 +32,27 @@ export function renderSync(){
   const n=st.pendingItems||(st.pending?1:0);
   let html;
   if(syncView.state==='signed_out'){
-    html=`<div class="help m0">Entre para guardar seus dados na sua conta e usar em outros aparelhos. O que já está neste aparelho continua aqui e sobe na primeira sincronização.</div>
-      <div class="row mt-10"><a class="btn pri" id="syncLogin" href="${loginUrl(location.pathname)}">Entrar</a></div>`;
+    html=`<div class="help m0">${t('set.sync.signedOutHelp')}</div>
+      <div class="row mt-10"><a class="btn pri" id="syncLogin" href="${loginUrl(location.pathname)}">${t('set.sync.login')}</a></div>`;
   }else if(syncView.state==='other_account'){
-    html=`<div class="banner"><span>⚠️ Este aparelho já está ligado a outra conta (${esc(syncView.user.email||'sem e-mail')} acabou de entrar). Para não misturar dados, nada foi enviado nem recebido.</span></div>
-      <div class="row mt-10"><button class="btn" id="syncLogout">Sair</button></div>`;
+    html=`<div class="banner"><span>${t('set.sync.otherAccount',{email:esc(syncView.user.email||t('set.sync.noEmail'))})}</span></div>
+      <div class="row mt-10"><button class="btn" id="syncLogout">${t('set.sync.logout')}</button></div>`;
   }else{
-    const plan=syncView.user.plan==='pro'?'PRO':'Gratuito';
-    html=`<div class="help m0">Conectado como <b>${esc(syncView.user.email||syncView.user.displayName||'sua conta')}</b> · plano ${esc(plan)}</div>
-      <div class="row mt-10"><button class="btn pri" id="syncNow"${syncView.busy?' disabled':''}>${syncView.busy?'Sincronizando…':'🔄 Sincronizar'}</button><button class="btn" id="syncLogout">Sair</button></div>
-      <div class="help" id="syncStatus">${n?`<b>${n}</b> pendente${n>1?'s':''} · `:'Tudo enviado · '}última sincronização: ${when(st.lastSyncAt)}</div>`;
+    const plan=syncView.user.plan==='pro'?'PRO':t('set.sync.planFree');
+    html=`<div class="help m0">${t('set.sync.connected',{who:esc(syncView.user.email||syncView.user.displayName||t('set.sync.yourAccount')),plan:esc(plan)})}</div>
+      <div class="row mt-10"><button class="btn pri" id="syncNow"${syncView.busy?' disabled':''}>${syncView.busy?t('set.sync.syncing'):t('set.sync.syncNow')}</button><button class="btn" id="syncLogout">${t('set.sync.logout')}</button></div>
+      <div class="help" id="syncStatus">${n?t('set.sync.statusPending',{count:n,when:when(st.lastSyncAt)}):t('set.sync.statusDone',{when:when(st.lastSyncAt)})}</div>`;
     if(st.review){
-      const items=sync.reviewItems().slice(0,20).map(i=>`<li>${esc(i.resource||i.ref||'item')}: ${esc(REASONS[i.reason]||i.reason)}</li>`).join('');
-      html+=`<div class="banner mt-10"><span>⚠️ ${st.review} ${st.review>1?'itens precisam':'item precisa'} de revisão. Seus dados neste aparelho não foram alterados.<ul>${items}</ul></span><button class="btn sm" id="syncClear">Entendi</button></div>`;
+      const items=sync.reviewItems().slice(0,20).map(i=>`<li>${esc(i.resource||i.ref||t('set.sync.item'))}: ${esc(REASONS[i.reason]?t(REASONS[i.reason]):i.reason)}</li>`).join('');
+      html+=`<div class="banner mt-10"><span>${t('set.sync.review',{count:st.review})}<ul>${items}</ul></span><button class="btn sm" id="syncClear">${t('set.sync.understood')}</button></div>`;
     }
   }
   $('syncBody').innerHTML=html;
   // signed in: the sync state; signed out: a shortcut to sign in (a link, so it also works when the script is slow)
   badge.hidden=syncView.state!=='signed_in'&&syncView.state!=='signed_out';
   badge.classList.toggle('warn',syncView.state==='signed_in'&&(!!n||!!st.review));
-  if(syncView.state==='signed_out'){badge.textContent='☁️ Entrar';badge.href=loginUrl(location.pathname);badge.title='Entrar para sincronizar seus dados';}
-  else if(!badge.hidden){badge.removeAttribute('href');badge.removeAttribute('title');badge.textContent=syncView.busy?'☁️ sincronizando…':n?`☁️ ${n} pendente${n>1?'s':''}`:'☁️ em dia';}
+  if(syncView.state==='signed_out'){badge.textContent=t('set.sync.badgeLogin');badge.href=loginUrl(location.pathname);badge.title=t('set.sync.badgeLoginTitle');}
+  else if(!badge.hidden){badge.removeAttribute('href');badge.removeAttribute('title');badge.textContent=syncView.busy?t('set.sync.badgeSyncing'):n?t('set.sync.badgePending',{count:n}):t('set.sync.badgeUpToDate');}
   const now=$('syncNow');if(now)now.onclick=()=>syncView.go(true);
   const out=$('syncLogout');if(out)out.onclick=signOut;
   const clr=$('syncClear');if(clr)clr.onclick=()=>{sync.clearReview();renderSync();};
@@ -64,14 +65,14 @@ async function runSync(manual){
   syncView.busy=false;
   if(r.reason==='unauthorized'){syncView.state='signed_out';}
   renderSync();
-  if(manual||!r.ok&&r.reason==='unauthorized')toast(r.ok?'✅ Sincronizado':MESSAGES[r.reason]||MESSAGES.error);
+  if(manual||!r.ok&&r.reason==='unauthorized')toast(r.ok?t('set.sync.done'):t(MESSAGES[r.reason]||MESSAGES.error));
 }
 const MESSAGES={
-  offline:'⚠️ Sem conexão. Suas alterações ficam guardadas e serão enviadas depois.',
-  unauthorized:'⚠️ Sua sessão terminou. Entre de novo; nada foi perdido.',
-  server:'⚠️ O servidor não respondeu direito. Tente de novo em instantes.',
-  error:'⚠️ Não foi possível sincronizar agora.',
-  not_signed_in:'⚠️ Entre na sua conta para sincronizar.',
+  offline:'set.sync.msgOffline',
+  unauthorized:'set.sync.msgUnauthorized',
+  server:'set.sync.msgServer',
+  error:'set.sync.msgError',
+  not_signed_in:'set.sync.msgNotSignedIn',
 };
 async function signOut(){await api.logout();syncView.state='signed_out';syncView.user=null;renderSync();}
 

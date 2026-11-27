@@ -4,6 +4,7 @@
  * A WebView does not download a Blob link, so a backup goes through the system share sheet (save to Files, Drive, e-mail, ...).
  * The platform is a parameter (default: the global Capacitor object) so the logic runs in tests without a device.
  */
+import { t } from '../core/i18n.js';
 export const isNative=(cap=globalThis.Capacitor)=>!!(cap&&typeof cap.isNativePlatform==='function'&&cap.isNativePlatform());
 /**
  * Writes `text` to a file in the app's cache and opens the share sheet for it.
@@ -14,7 +15,7 @@ export async function shareTextFile(text,name,cap=globalThis.Capacitor){
   if(!isNative(cap)||!P||!P.Filesystem||!P.Share)return {ok:false,error:'sharing is not available here'};
   try{
     const file=await P.Filesystem.writeFile({path:name,data:text,directory:'CACHE',encoding:'utf8'});
-    await P.Share.share({title:name,dialogTitle:'Salvar backup',url:file.uri});
+    await P.Share.share({title:name,dialogTitle:t('sys.share.saveBackup'),url:file.uri});
     return {ok:true};
   }catch(e){
     const msg=String(e&&e.message||e);

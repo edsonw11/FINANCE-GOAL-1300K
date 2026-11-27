@@ -4,20 +4,21 @@
  * use the closest existing one or create the new one on purpose. A name that only differs in
  * accents or case is replaced by the existing one without asking.
  */
+import { t } from '../../core/i18n.js';
+import { storedName } from '../../core/stored-names.js';
 import { esc } from '../../core/dom.js';
 import { matchCategory, newCategories } from '../../domain/category-match.js';
 import { askConfirm } from '../components/confirm.js';
 async function askNewCategory(m){
-  const html=`A categoria <b>“${esc(m.name)}”</b> ainda não existe.`+
-    (m.suggestion?` Você quis dizer <b>“${esc(m.suggestion)}”</b>?`:' Deseja criar uma categoria nova?');
-  const r=await askConfirm({title:'Categoria nova',html,ok:'Criar “'+m.name+'”',alt:m.suggestion?'Usar “'+m.suggestion+'”':''});
+  const html=m.suggestion?t('set.catConfirm.htmlSuggest',{name:esc(m.name),suggestion:esc(m.suggestion)}):t('set.catConfirm.htmlCreate',{name:esc(m.name)});
+  const r=await askConfirm({title:t('set.catConfirm.title'),html,ok:t('set.catConfirm.create',{name:m.name}),alt:m.suggestion?t('set.catConfirm.use',{name:m.suggestion}):''});
   if(!r)return null;
   return r.alt?m.suggestion:m.name;
 }
 // accents/case fixed and the categories that would be new; nothing to ask means the list is empty
 export function prepareCategories(d){
   if(d.type!=='despesa'&&d.type!=='receita')return {record:d,ask:[]};
-  const fix=name=>{const n=(name||'').trim();return n&&(matchCategory(d.type,n).same||n);};
+  const fix=name=>{const n=storedName((name||'').trim());return n&&(matchCategory(d.type,n).same||n);};
   const record=Object.assign({},d,{cat:fix(d.cat),splits:(d.splits||[]).map(s=>Object.assign({},s,{cat:fix(s.cat)}))});
   return {record,ask:newCategories(d.type,[record.cat].concat(record.splits.map(s=>s.cat)))};
 }

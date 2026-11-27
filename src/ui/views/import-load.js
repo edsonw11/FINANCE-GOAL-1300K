@@ -6,6 +6,7 @@
  * Ignores the answer if the user closed the panel while the file was being read.
  */
 import { today } from '../../core/dates.js';
+import { t } from '../../core/i18n.js';
 import { IMPORT_LIMITS, readImportFile } from '../../domain/import-reader.js';
 import { parseCustody } from '../../domain/import-custody.js';
 import { suggestAccount } from '../../domain/import-account.js';
@@ -14,7 +15,7 @@ import { beginCustody, beginNote, beginSession, importState } from './import-ses
 import { pdfText } from './pdf-text.js';
 const PDF_TIMEOUT_MS=45000,SAMPLE_LINES=30; // first lines of the PDF text, shown when it cannot be read, to help adjust the reader
 // a reader that never answers (old phone browser) must not leave the screen waiting forever
-const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error('O leitor de PDF não respondeu neste aparelho. Use o CSV/OFX do banco ou abra o app no computador.')),ms))]);
+const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error(t('imp.load.pdfTimeout'))),ms))]);
 export async function fileText(file){
   const buf=await file.arrayBuffer();
   try{return new TextDecoder('utf-8',{fatal:true}).decode(buf);}
@@ -27,7 +28,7 @@ export async function loadImportFile(file,opts){
   const isPdf=/\.pdf$/i.test(file.name)||file.type==='application/pdf',tooBig=file.size>(isPdf?IMPORT_LIMITS.maxPdfBytes:IMPORT_LIMITS.maxBytes);
   let text;
   try{text=tooBig?'':isPdf?await withTimeout(pdfText(file),PDF_TIMEOUT_MS):await fileText(file);}
-  catch(e){return {error:isPdf&&e.message?e.message:'Não consegui ler o arquivo. Tente de novo ou exporte outro.'};}
+  catch(e){return {error:isPdf&&e.message?e.message:t('imp.load.readFail')};}
   if(token!==importState.token)return {cancelled:true};
   const note=parseBrokerageNote(text);
   if(note&&note.error)return {error:note.error,sample:text.split('\n').slice(0,SAMPLE_LINES).join('\n')};
