@@ -1,0 +1,41 @@
+/**
+ * Pure text lookup: placeholders, plural forms per language, fallback order and what a missing key shows.
+ */
+const {createContext,suite}=require('./harness');
+module.exports=()=>{const {eq,res}=suite('translate');
+  const {run}=createContext();
+  const fill=(s,p)=>run(`fillPlaceholders(${JSON.stringify(s)},${JSON.stringify(p)})`);
+  eq('one placeholder',fill('Hi {name}',{name:'Ana'}),'Hi Ana');
+  eq('the same placeholder twice',fill('{a} and {a}',{a:'x'}),'x and x');
+  eq('two placeholders',fill('{a}-{b}',{a:1,b:2}),'1-2');
+  eq('a number 0 is a value, not a gap',fill('{n} items',{n:0}),'0 items');
+  eq('a missing value leaves the placeholder visible',fill('Hi {name}',{}),'Hi {name}');
+  eq('no params at all',fill('Hi {name}',undefined),'Hi {name}');
+  eq('null is a gap',fill('Hi {name}',{name:null}),'Hi {name}');
+  eq('text without placeholders is unchanged',fill('plain',{a:1}),'plain');
+  eq('braces that are not placeholders stay',fill('{ not one }',{a:1}),'{ not one }');
+  eq('a value is never read as a pattern ($& is plain text)',fill('{a}',{a:'$&'}),'$&');
+  const plural=(e,c,l)=>run(`pickPlural(${JSON.stringify(e)},${JSON.stringify(c)},${JSON.stringify(l)})`);
+  const E={one:'ONE',other:'OTHER'};
+  eq('English 1 is one',plural(E,1,'en-US'),'ONE');
+  eq('English 0 is other',plural(E,0,'en-US'),'OTHER');
+  eq('English 2 is other',plural(E,2,'en-US'),'OTHER');
+  eq('Spanish 1 is one',plural(E,1,'es'),'ONE');
+  eq('Spanish 5 is other',plural(E,5,'es'),'OTHER');
+  eq('Portuguese 1 is one',plural(E,1,'pt-BR'),'ONE');
+  eq('Portuguese 0 is one (pt-BR counts zero as singular)',plural(E,0,'pt-BR'),'ONE');
+  eq('Portuguese 2 is other',plural(E,2,'pt-BR'),'OTHER');
+  eq('a form that does not exist falls to other',plural({other:'O'},1,'en-US'),'O');
+  eq('a plain string ignores the count',plural('S',3,'en-US'),'S');
+  eq('a count that is not a number does not crash',plural(E,'abc','en-US'),'OTHER');
+  const tr=(chain,k,p)=>run(`translate(${JSON.stringify(chain)},${JSON.stringify(k)},${JSON.stringify(p)})`);
+  const C1={locale:'en-US',messages:{a:'A-en',n:{one:'{count} thing',other:'{count} things'}}},C2={locale:'pt-BR',messages:{a:'A-pt',b:'B-pt'}};
+  eq('the first catalog wins',tr([C1,C2],'a'),'A-en');
+  eq('a key missing in the first falls to the next',tr([C1,C2],'b'),'B-pt');
+  eq('a key nowhere shows the key itself',tr([C1,C2],'zzz'),'zzz');
+  eq('plural + placeholder together (1)',tr([C1],'n',{count:1}),'1 thing');
+  eq('plural + placeholder together (3)',tr([C1],'n',{count:3}),'3 things');
+  eq('an empty chain shows the key',tr([],'k'),'k');
+  eq('a key like toString is not found on the prototype (own entries only)',tr([C1],'toString'),'toString');
+  eq('same for constructor',tr([C1],'constructor'),'constructor');
+  return res;};

@@ -11,7 +11,9 @@ import { avgContribution, realSeries } from '../../domain/investments.js';
 import { CARD } from '../../domain/card-cycle.js';
 import { setCardSettings, setGoalSettings, setPlannedContribution } from '../../domain/settings-commands.js';
 import { runCommand } from '../components/command.js';
+import { renderLanguageCard } from './language-settings.js';
 export function renderSettings(){
+  renderLanguageCard();
   if(document.activeElement!==$('goal'))$('goal').value=m2(S.goal);
   if(document.activeElement!==$('rate'))$('rate').value=String(S.rate).replace('.',',');
   $('cClose').value=CARD().best;$('cBiz').checked=CARD().biz!==false;$('cDue').value=CARD().due;

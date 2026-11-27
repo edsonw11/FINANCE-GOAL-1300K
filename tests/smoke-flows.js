@@ -301,6 +301,34 @@
     sel2.value='';sel2.dispatchEvent(new Event('change',{bubbles:true}));await tick();
     need(!stored().cats.despesa.find(c=>c.name===name).group,'"Sem grupo" did not clear the group');tab('resumo');});
 
+  await step('language: switch between Portuguese, English and Spanish, "Automático" follows the phone, the choice is saved',async()=>{
+    tab('cfg');await tick();
+    const sel=$('langSel'),title=()=>q('[data-i18n="language.title"]').textContent,pick=async v=>{sel.value=v;sel.dispatchEvent(new Event('change',{bubbles:true}));await tick();};
+    need(sel&&[...sel.options].map(o=>o.value).join()==='auto,pt-BR,en-US,es','options: '+(sel&&[...sel.options].map(o=>o.value).join()));
+    const names=[...sel.options].map(o=>o.textContent).slice(1);same(names,['Português','English','Español'],'each language is written in itself');
+    const T={'pt-BR':'🌐 Idioma','en-US':'🌐 Language','es':'🌐 Idioma'},LABEL={'pt-BR':'Idioma do app','en-US':'App language','es':'Idioma de la app'};
+    const L=['pt-BR','en-US','es'];
+    for(const a of L)for(const b of L){await pick(a);await pick(b);
+      need(document.documentElement.lang===b,a+' -> '+b+': <html lang> is '+document.documentElement.lang);
+      need(title()===T[b],a+' -> '+b+': title is '+title());
+      need(q('label[for=langSel]').textContent===LABEL[b],a+' -> '+b+': label is '+q('label[for=langSel]').textContent);
+      need(sel.value===b,a+' -> '+b+': the select shows '+sel.value);
+      need(localStorage.getItem('metaapp.language')===b,'the choice was not saved: '+localStorage.getItem('metaapp.language'));}
+    await pick('en-US');need(/In use now: English/.test($('langInfo').textContent)&&/3 languages available/.test($('langInfo').textContent),'info: '+$('langInfo').textContent);
+    await pick('es');need(/En uso ahora: Español/.test($('langInfo').textContent)&&/3 idiomas disponibles/.test($('langInfo').textContent),'info: '+$('langInfo').textContent);
+    need(sel.options[0].textContent==='Automático (idioma del teléfono)','the automatic option is not translated: '+sel.options[0].textContent);
+    // automatic: follows the language of the phone (here faked), and falls back to English for one the app does not have
+    const fake=l=>Object.defineProperty(navigator,'languages',{configurable:true,get:()=>l});
+    fake(['es-MX']);await pick('auto');need(document.documentElement.lang==='es'&&localStorage.getItem('metaapp.language')==='auto','auto on a Spanish phone: '+document.documentElement.lang);
+    need(/Idioma detectado en el dispositivo: Español/.test($('langInfo').textContent),'info: '+$('langInfo').textContent);
+    fake(['pt-PT']);await pick('en-US');await pick('auto');need(document.documentElement.lang==='pt-BR','auto on a Portuguese phone: '+document.documentElement.lang);
+    fake(['fr-FR','de']);await pick('es');await pick('auto');need(document.documentElement.lang==='en-US','auto on a French phone should fall back to English: '+document.documentElement.lang);
+    need(title()==='🌐 Language','the page is not in English after the fallback');
+    fake(['fr-FR','es-AR']);await pick('en-US');await pick('auto');need(document.documentElement.lang==='es','auto takes the first supported language of the phone: '+document.documentElement.lang);
+    // back to Portuguese so the rest of the checks (written in Portuguese) keep working
+    await pick('pt-BR');need(title()==='🌐 Idioma'&&document.documentElement.lang==='pt-BR','not back in Portuguese');
+    delete navigator.languages;tab('resumo');});
+
   await step('no script error so far',()=>{need(errs.length===0,errs.join(' / '));});
   document.documentElement.setAttribute('data-smoke',out.concat(errs).join(' | '));
 })();

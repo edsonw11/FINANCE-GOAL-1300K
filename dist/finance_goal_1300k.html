@@ -1089,6 +1089,12 @@ dialog.dlg-wide{width:min(580px,94vw)}
       <div class="f f-note f2">O <b>melhor dia de compra</b> é o dia em que começa a fatura nova (a anterior fecha no dia anterior). Veja no app do banco, na fatura: “melhor data de compra”.</div></div>
     <div class="help" id="avgHelp"></div>
     <div class="help">Referência: CDI 14,75% bruto ≈ 12,5% líquido (IR 15%). Se a Selic cair, use um valor menor (seu relatório usa 11,16%).</div></div>
+  <h2 data-i18n="language.title">🌐 Idioma</h2>
+  <div class="card">
+    <div class="f mw-260"><label for="langSel" data-i18n="language.label">Idioma do app</label><select id="langSel" class="ci"></select></div>
+    <div class="help" id="langInfo"></div>
+    <div class="help" data-i18n="language.help">“Automático” segue o idioma do aparelho. Se o aparelho usar um idioma que o app não tem, o app aparece em inglês.</div>
+  </div>
   <h2>🔁 Transferências entre suas contas</h2>
   <div class="card" id="ownCard">
     <div class="help m0">Dinheiro que você manda de um banco seu para outro (Santander → Nubank) não é receita nem despesa. Informe seu nome <b>como aparece no extrato</b>: na importação, Pix e TED com ele viram “🔁 Transferência minha” e o app reconhece o outro lado quando você importar o outro banco.</div>
@@ -6933,6 +6939,203 @@ $('catOk').onclick=()=>{if(!pendingCategoryDelete)return;const {t,i}=pendingCate
   $('catDlg').close();runCommand(()=>deleteCategoryAt(t,i,to),{ok:r=>'✅ Lançamentos movidos para “'+r.movedTo+'”'});};
 }
 
+// ---- src/core/locale-resolve.js
+/**
+ * core/locale-resolve.js
+ * Responsibility: which supported locale the app uses: maps device language tags (pt-PT, en-GB, es-MX...)
+ * to the three supported locales and applies the user's choice ("auto" follows the device).
+ */
+const SUPPORTED_LOCALES=['pt-BR','en-US','es'];
+const SOURCE_LOCALE='pt-BR'; // the language the code base was written in: the last stop before showing a bare key
+const FALLBACK_LOCALE='en-US'; // a device language we do not support
+const AUTO_LANGUAGE='auto';
+const LANGUAGE_CHOICES=[AUTO_LANGUAGE,...SUPPORTED_LOCALES];
+// each language is always written in itself, so a user who cannot read the current one can still find theirs
+const LANGUAGE_NAMES={'pt-BR':'Português','en-US':'English','es':'Español'};
+const BY_PRIMARY={pt:'pt-BR',en:'en-US',es:'es'};
+/** matchLocale('pt-PT') -> 'pt-BR'; null when the tag is empty or not supported. */
+function matchLocale(tag){
+  if(typeof tag!=='string')return null;
+  const primary=tag.trim().toLowerCase().split(/[-_]/)[0];
+  return BY_PRIMARY[primary]||null;
+}
+/** resolveLocale(choice, deviceLanguages): an explicit choice wins; "auto" (or anything unknown) uses the first supported device language, else English. */
+function resolveLocale(choice,deviceLanguages){
+  if(SUPPORTED_LOCALES.includes(choice))return choice;
+  const list=Array.isArray(deviceLanguages)?deviceLanguages:[deviceLanguages];
+  for(const tag of list){const m=matchLocale(tag);if(m)return m;}
+  return FALLBACK_LOCALE;
+}
+
+// ---- src/core/locale-pt-BR.js
+/**
+ * core/locale-pt-BR.js
+ * Responsibility: Portuguese (Brazil) texts. The reference catalog: the other languages must have the same keys.
+ * A value is a string or a plural entry {one,other}. Placeholders are written {name}.
+ */
+const MESSAGES_PT_BR={
+  'language.title':'🌐 Idioma',
+  'language.label':'Idioma do app',
+  'language.auto':'Automático (idioma do celular)',
+  'language.help':'“Automático” segue o idioma do aparelho. Se o aparelho usar um idioma que o app não tem, o app aparece em inglês.',
+  'language.device':'Idioma detectado no aparelho: {language}',
+  'language.inUse':'Em uso agora: {language}',
+  'language.count':{one:'{count} idioma disponível',other:'{count} idiomas disponíveis'}
+};
+
+// ---- src/core/locale-en-US.js
+/**
+ * core/locale-en-US.js
+ * Responsibility: English (United States) texts. Same keys as the Portuguese reference catalog.
+ */
+const MESSAGES_EN_US={
+  'language.title':'🌐 Language',
+  'language.label':'App language',
+  'language.auto':'Automatic (phone language)',
+  'language.help':'“Automatic” follows the device language. If the device uses a language the app does not have, the app is shown in English.',
+  'language.device':'Language detected on this device: {language}',
+  'language.inUse':'In use now: {language}',
+  'language.count':{one:'{count} language available',other:'{count} languages available'}
+};
+
+// ---- src/core/locale-es.js
+/**
+ * core/locale-es.js
+ * Responsibility: Spanish (neutral, understood in Latin America and Spain) texts. Same keys as the Portuguese reference catalog.
+ */
+const MESSAGES_ES={
+  'language.title':'🌐 Idioma',
+  'language.label':'Idioma de la app',
+  'language.auto':'Automático (idioma del teléfono)',
+  'language.help':'“Automático” sigue el idioma del dispositivo. Si el dispositivo usa un idioma que la app no tiene, la app se muestra en inglés.',
+  'language.device':'Idioma detectado en el dispositivo: {language}',
+  'language.inUse':'En uso ahora: {language}',
+  'language.count':{one:'{count} idioma disponible',other:'{count} idiomas disponibles'}
+};
+
+// ---- src/core/translate.js
+/**
+ * core/translate.js
+ * Responsibility: pure text lookup: finds a key in an ordered list of catalogs, picks the plural form
+ * and fills {placeholders}. Holds no state (the active language lives in i18n.js).
+ */
+/** fillPlaceholders('Hi {name}', {name:'Ana'}) -> 'Hi Ana'; a missing value leaves the {placeholder} visible so the gap is noticed. */
+function fillPlaceholders(text,params){
+  return String(text).replace(/\{(\w+)\}/g,(m,k)=>params&&params[k]!==undefined&&params[k]!==null?String(params[k]):m);
+}
+/** a plural entry is {one,other,...}: the category comes from Intl.PluralRules of the locale; "other" is always the last resort. */
+function pickPlural(entry,count,locale){
+  if(typeof entry==='string')return entry;
+  const n=Number(count);
+  const cat=new Intl.PluralRules(locale).select(Number.isFinite(n)?n:0);
+  return entry[cat]!==undefined?entry[cat]:entry.other;
+}
+/** chain: [{locale, messages}, ...] in order of preference. The first catalog that has the key wins; none: the key itself. */
+function translate(chain,key,params){
+  for(const c of chain){
+    if(!Object.prototype.hasOwnProperty.call(c.messages,key))continue;
+    const entry=c.messages[key];
+    return fillPlaceholders(pickPlural(entry,params&&params.count,c.locale),params);
+  }
+  return key;
+}
+
+// ---- src/core/i18n.js
+/**
+ * core/i18n.js
+ * Responsibility: the active language and t(key, params). The catalogs are registered here once;
+ * a key missing in the active language falls back to the source language, then to the key itself.
+ */
+
+
+
+
+
+const CATALOGS={'pt-BR':MESSAGES_PT_BR,'en-US':MESSAGES_EN_US,'es':MESSAGES_ES};
+let activeLocale=SOURCE_LOCALE;
+const getLocale=()=>activeLocale;
+/** setLocale('en-US') -> true; an unsupported locale is refused (false) and the active one stays. */
+function setLocale(locale){
+  if(!SUPPORTED_LOCALES.includes(locale))return false;
+  activeLocale=locale;return true;
+}
+function t(key,params){
+  const chain=[{locale:activeLocale,messages:CATALOGS[activeLocale]}];
+  if(activeLocale!==SOURCE_LOCALE)chain.push({locale:SOURCE_LOCALE,messages:CATALOGS[SOURCE_LOCALE]});
+  return translate(chain,key,params);
+}
+
+// ---- src/core/language-preference.js
+/**
+ * core/language-preference.js
+ * Responsibility: remembers the language choice ("auto", "pt-BR", "en-US" or "es") on this device.
+ * Storage is injected (DIP). It is a device setting: it is not part of the backup or the sync.
+ */
+
+const LANGUAGE_KEY='metaapp.language';
+function createLanguagePreference(storage,key=LANGUAGE_KEY){
+  return {
+    /** the saved choice; "auto" when nothing valid is saved or the storage cannot be read */
+    get(){try{const v=storage.getItem(key);return LANGUAGE_CHOICES.includes(v)?v:AUTO_LANGUAGE;}catch(e){return AUTO_LANGUAGE;}},
+    /** true when saved; an unknown choice or a storage failure returns false and changes nothing */
+    set(choice){
+      if(!LANGUAGE_CHOICES.includes(choice))return false;
+      try{storage.setItem(key,choice);return true;}catch(e){return false;}
+    }
+  };
+}
+
+// ---- src/ui/dom-i18n.js
+/**
+ * ui/dom-i18n.js
+ * Responsibility: puts the active language into the static HTML: data-i18n (text), data-i18n-title,
+ * data-i18n-placeholder and data-i18n-aria-label, plus <html lang>.
+ */
+
+const ATTRS=[['data-i18n-title','title'],['data-i18n-placeholder','placeholder'],['data-i18n-aria-label','aria-label']];
+function applyStaticTranslations(root=document){
+  document.documentElement.lang=getLocale();
+  root.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=t(el.dataset.i18n);});
+  ATTRS.forEach(([from,to])=>root.querySelectorAll('['+from+']').forEach(el=>el.setAttribute(to,t(el.getAttribute(from)))));
+}
+
+// ---- src/ui/views/language-settings.js
+/**
+ * ui/views/language-settings.js
+ * Responsibility: the language card in Ajustes and the language at start-up: reads the saved choice, resolves it
+ * against the device language and applies it. Choosing a language re-translates the page and redraws the screen.
+ */
+
+
+
+
+
+const preference=createLanguagePreference(localStorage);
+const deviceLanguages=()=>navigator.languages&&navigator.languages.length?navigator.languages:[navigator.language];
+const nameOf=locale=>LANGUAGE_NAMES[locale]||locale;
+function applyChoice(){
+  setLocale(resolveLocale(preference.get(),deviceLanguages()));
+  applyStaticTranslations();
+}
+/** called once at start-up, before the first render */
+function initLanguage(){applyChoice();}
+function renderLanguageCard(){
+  const sel=$('langSel'),choice=preference.get();
+  sel.innerHTML=`<option value="${AUTO_LANGUAGE}">${t('language.auto')}</option>`+
+    SUPPORTED_LOCALES.map(l=>`<option value="${l}">${nameOf(l)}</option>`).join('');
+  sel.value=choice;
+  const device=matchLocale(deviceLanguages()[0]);
+  $('langInfo').textContent=(choice===AUTO_LANGUAGE?(device?t('language.device',{language:nameOf(device)})+' · ':''):'')+
+    t('language.inUse',{language:nameOf(getLocale())})+' · '+t('language.count',{count:Object.keys(CATALOGS).length});
+}
+/** onChanged: what to redraw after the language changed (the caller passes render, so this file does not import the renderer) */
+function bindLanguageSettings(onChanged){
+  $('langSel').onchange=()=>{
+    if(!preference.set($('langSel').value))return;
+    applyChoice();onChanged();
+  };
+}
+
 // ---- src/ui/views/settings.js
 /**
  * ui/views/settings.js
@@ -6947,7 +7150,9 @@ $('catOk').onclick=()=>{if(!pendingCategoryDelete)return;const {t,i}=pendingCate
 
 
 
+
 function renderSettings(){
+  renderLanguageCard();
   if(document.activeElement!==$('goal'))$('goal').value=m2(S.goal);
   if(document.activeElement!==$('rate'))$('rate').value=String(S.rate).replace('.',',');
   $('cClose').value=CARD().best;$('cBiz').checked=CARD().biz!==false;$('cDue').value=CARD().due;
@@ -8299,6 +8504,8 @@ function bindLockSettings(lock,present){
 
 
 
+
+initLanguage();
 bindMoneyInputs();
 installCategoryChips();
 bindDateFields();
@@ -8321,6 +8528,7 @@ bindInsights();
 bindCategories();
 bindDemo();
 bindSettings();
+bindLanguageSettings(render);
 bindOwnNames();
 bindStart();
 bindReportPrint();
