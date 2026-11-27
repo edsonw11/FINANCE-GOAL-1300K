@@ -14,6 +14,7 @@ import { ui } from '../ui-state.js';
 import { Sheet } from '../components/sheet.js';
 import { clearFieldErrors } from '../components/field-error.js';
 import { endEdit, startEdit, updateFormHelp, updateSaveLabel } from './transaction-form.js';
+import { drawSplit, resetSplit } from './transaction-split.js';
 export let formInSheet=false;
 function formView(o){
   return {static:true,
@@ -35,6 +36,7 @@ function formView(o){
     leave(){
       showNote('');$('txForm').classList.remove('in-sheet');$('txFormHome').appendChild($('txForm'));formInSheet=false;
       if(ui.editId!==null){endEdit();$('fVal').value='';$('fDesc').value='';}
+      else if(o.prefill&&(o.prefill.splits||o.prefill.reinv)){resetSplit();$('fReinv').checked=false;} // a copy that was cancelled must not leave its split parts in the next new record
       clearFieldErrors($('txForm'));
     }};
 }
@@ -46,6 +48,9 @@ function applyPrefill(p){
   if(p.date)$('fDate').value=p.date;
   if(p.fonte&&[...$('fFonte').options].some(o=>o.value===p.fonte))$('fFonte').value=p.fonte;
   if(p.acc&&[...$('fAcc').options].some(o=>o.value===p.acc))$('fAcc').value=p.acc;
+  if(p.reinv)$('fReinv').checked=true;
+  if(p.splits&&p.splits.length){ // the split parts of the copied record come along (same as when editing it)
+    ui.splitRows=p.splits.map(s=>({cat:s.cat,val:s.value}));$('splitBox').hidden=false;$('wMore').open=true;drawSplit();}
   updateFormHelp();
 }
 // "Pago com" / "Entrou em" starts with the method of the last record of this type

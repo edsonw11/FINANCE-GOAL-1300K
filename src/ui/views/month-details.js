@@ -24,7 +24,9 @@ const MONTH_DETAILS={
            rows:s.expenses.undetailed.map(u=>txRow(u.invoice,{value:u.value,sign:'−',title:'❓ '+UNDETAILED_CAT,sub:'Parte da fatura paga em '+formatDateBR(u.invoice.date)+' sem compras lançadas'}))}],
         note:'Inclui compras no cartão e no VR/VA. O pagamento da fatura não entra de novo (as compras já contam).'}),
   contrib:(s,m,P)=>({title:'Aportes',sub:P,total:'→ '+f2(s.contributions.total),totalLabel:'Total investido',period:P,
-        groups:[{rows:txRows(s.contributions.items)}],empty:'Nenhum aporte neste mês.'}),
+        groups:[{rows:txRows(s.contributions.items)}].concat(s.reinvestments.items.length?[{label:'🔁 Reinvestimentos (não contam)',total:f2(s.reinvestments.total),rows:txRows(s.reinvestments.items)}]:[]),
+        note:s.reinvestments.items.length?'Reinvestimento é dinheiro que já estava investido (um CDB que venceu): aparece aqui só para você ver, e não entra no total investido nem na sobra do mês.':'',
+        empty:'Nenhum aporte neste mês.'}),
   cash:(s,m,P)=>{const c=s.cash,t=a=>f2(sumMoney(a.map(x=>x.value)));
         return {title:'Sobrou no caixa',sub:P,total:`<span class="${c.total>=0?'pos':'neg'}">${signedMoney(c.total)}</span>`,totalLabel:'Resultado do mês',period:P,
         count:c.cashIn.length+c.cashOut.length+c.invoices.length+c.contributions.length,

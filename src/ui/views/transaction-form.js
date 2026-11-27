@@ -22,13 +22,14 @@ export function startEdit(id){
   ui.editId=id;ui.type=t.type;document.querySelector(`input[name=tp][value=${t.type}]`).checked=true;fillCategoryOptions();
   $('fDate').value=t.date;$('fVal').value=m2(t.value);$('fDesc').value=t.desc||'';
   if(t.type==='aporte')$('fAcc').value=t.acc;else $('fCat').value=t.cat||'';
+  $('fReinv').checked=!!t.reinv;
   $('fFonte').value=t.fonte||'caixa';
   if(t.type==='fatura'){$('fFm').value=invoiceMonthOf(t);ui.invoiceSelection=new Set(alloc().map[t.id]||[]);drawInvoiceForm(id);}
   ui.splitRows=(t.splits||[]).map(s=>({cat:s.cat,val:s.value}));$('splitBox').hidden=!(ui.splitRows.length);$('wMore').open=ui.splitRows.length>0;drawSplit();
   const sib=futureSiblings(t);$('wApply').hidden=!(sib.length);$('fApply').checked=true;$('applyN').textContent=sib.length;
   ui.editId=id;$('fCancel').hidden=false;$('fRep').disabled=true;fillCategoryOptions();
 }
-export function endEdit(){resetSplit();ui.invoiceSelection=new Set();$('wApply').hidden=true;ui.editId=null;$('fCancel').hidden=true;$('fRep').disabled=false;$('fRep').value='1';ui.payAdvanced=false;fillCategoryOptions();}
+export function endEdit(){resetSplit();ui.invoiceSelection=new Set();$('wApply').hidden=true;ui.editId=null;$('fCancel').hidden=true;$('fRep').disabled=false;$('fRep').value='1';$('fReinv').checked=false;ui.payAdvanced=false;fillCategoryOptions();}
 const SAVE_LABEL={despesa:'Adicionar despesa',receita:'Adicionar receita',aporte:'Registrar aporte',fatura:'Registrar pagamento'};
 export function updateSaveLabel(){
   $('fSave').textContent=ui.editId!==null?'Salvar alterações':SAVE_LABEL[ui.type]||'Adicionar';
@@ -49,7 +50,7 @@ function drawCategoryChips(){
 export function fillCategoryOptions(){
   const set=new Set(((S.cats||{})[ui.type]||[]).filter(c=>!c.off).map(c=>c.name));
   $('catList').innerHTML=[...set].map(c=>`<option value="${esc(c)}">`).join('');
-  $('wCat').hidden=ui.type==='aporte';$('wAcc').hidden=!(ui.type==='aporte');
+  $('wCat').hidden=ui.type==='aporte';$('wAcc').hidden=!(ui.type==='aporte');$('wReinv').hidden=!(ui.type==='aporte');
   const kf=$('fFonte').value;
   $('lFonte').textContent=ui.type==='receita'?'Entrou em':'Pago com';
   $('fFonte').innerHTML=ui.type==='receita'
@@ -72,7 +73,7 @@ export function fillCategoryOptions(){
 function cardHint(){const d=$('fDate').value||today(),fm=dueMonth(d);
   return 'Entra na fatura que vence em '+formatDateBR(dueDateOf(fm))+' (ciclo fecha em '+formatDateBR(closeDateOf(fm))+'; a partir de '+formatDateBR(addDay(closeDateOf(fm),1))+' vai para a seguinte). O dinheiro só sai do caixa em “Pagar fatura”.';}
 export function updateFormHelp(){
-  $('fHelp').textContent=ui.type==='aporte'?'O aporte soma no saldo do investimento escolhido e sai da sua sobra do mês.'
+  $('fHelp').textContent=ui.type==='aporte'?'O aporte soma no saldo do investimento escolhido e sai da sua sobra do mês. Se o dinheiro já estava investido (um CDB que venceu), marque “É reinvestimento”.'
     :ui.type==='fatura'?'Use quando pagar a fatura: o dinheiro sai do caixa, mas não vira gasto de novo (as compras já foram lançadas como “Cartão de crédito”).'
     :(ui.type==='despesa'&&$('fFonte').value==='cartao')?cardHint():'';
 }

@@ -34,16 +34,16 @@ module.exports=()=>{const {run}=createContext(),{eq,ok,res}=suite('calc-audit');
   const balanceAt=(acc,d)=>{let sn=null;D.snaps.forEach(s=>{if(s.acc===acc&&s.date<=d&&(!sn||s.date>=sn.date))sn=s;});const from=sn?sn.date:'0000-00-00';
     return (sn?sn.value:0)+sumC(D.tx.filter(t=>t.type==='aporte'&&t.acc===acc&&t.date>from&&t.date<=d).map(t=>t.value));};
   const worth=d=>sumC(D.accounts.map(a=>balanceAt(a.id,d)));
-  const real=run("realSeries().map(r=>({m:r.m,t:r.t,ap:r.ap,y:r.y,prev:r.prev}))");
+  const real=run("realSeries().map(r=>({m:r.m,t:r.t,ap:r.ap,y:r.y,prev:r.prev,est:r.est}))");
   let worthOk=true,yieldOk=true,apOk=true;
   real.forEach((r,n)=>{
-    const d=monthEnd(r.m);if(!near(r.t,worth(d)))worthOk=false;
+    const d=monthEnd(r.m);if(!r.est&&!near(r.t,worth(d)))worthOk=false; // a month with an estimated yield between two typed balances is checked in yield-estimate.test.js
     const ap=sumC(D.tx.filter(t=>t.type==='aporte'&&t.date.slice(0,7)===r.m&&t.date<=d).map(t=>t.value));if(!near(r.ap,ap))apOk=false;
     if(n>0){const pd=monthEnd(real[n-1].m),upd=D.snaps.some(s=>s.date>pd&&s.date<=d);
       const y=upd?worth(d)-worth(pd)-ap:null;if((y===null)!==(r.y===null)||(y!==null&&!near(r.y,y,0.02)))yieldOk=false;
       if(!near(r.prev,worth(pd)))yieldOk=false;}
   });
-  ok('net worth per month = last balance + aportes after it, summed over accounts',worthOk);
+  ok('net worth per month = last balance + aportes after it, summed over accounts (months without an estimated yield)',worthOk);
   ok('aportes per month match',apOk);
   ok('yield = worth − previous worth − aportes (and previous worth is right)',yieldOk);
   // the demo data was built so the yield is real growth, not a missing aporte: every account that grows by an aporte has its records

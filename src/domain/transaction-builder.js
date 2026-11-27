@@ -3,7 +3,7 @@
  * Responsibility: rules for creating and editing a transaction, independent of the form.
  * validateTransaction(d) -> null | {field, msg}
  * saveTransaction(d)     -> {ids, siblings}   (new record, monthly series or edit + future siblings)
- * d = {editId, type, value, date, cat, fonte, desc, acc, splits:[{cat,value}], fm, items, repeat, applyToFuture, invoiceSelectedTotal}
+ * d = {editId, type, value, date, cat, fonte, desc, acc, reinv, splits:[{cat,value}], fm, items, repeat, applyToFuture, invoiceSelectedTotal}
  */
 import { addMonths } from '../core/dates.js';
 import { roundMoney, sumMoney } from '../core/money.js';
@@ -25,8 +25,8 @@ export function validateTransaction(d){
 function applyFields(t,d,date){
   if(date)t.date=date;
   t.type=d.type;t.value=roundMoney(d.value);t.desc=(d.desc||'').trim();
-  delete t.acc;delete t.cat;delete t.fonte;delete t.splits;delete t.fm;delete t.items;
-  if(d.type==='aporte')t.acc=d.acc;
+  delete t.acc;delete t.cat;delete t.fonte;delete t.splits;delete t.fm;delete t.items;delete t.reinv;
+  if(d.type==='aporte'){t.acc=d.acc;if(d.reinv)t.reinv=true;} // reinvestment: money that was already invested (see domain/reinvestment.js)
   else if(d.type==='fatura'){t.cat=INVOICE_CATEGORY;t.fm=d.fm;t.items=(d.items||[]).filter(id=>S.tx.some(x=>x.id===id));}
   else{t.cat=(d.cat||'').trim()||DEFAULT_CATEGORY[d.type];t.fonte=d.fonte||'caixa';const sp=cleanSplits(d);if(sp.length)t.splits=sp;}
   return t;

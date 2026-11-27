@@ -8,8 +8,9 @@ import { asOf, mOf } from '../core/dates.js';
 import { roundMoney, sumMoney } from '../core/money.js';
 import { S } from './store.js';
 import { alloc } from './card-invoices.js';
+import { isNewContribution } from './reinvestment.js';
 export const txIn=(m,type,upto)=>S.tx.filter(t=>t.type===type&&mOf(t.date)===m&&(!upto||t.date<=upto));
-export const contributionsInMonth=m=>sum(txIn(m,'aporte',asOf(m)).map(t=>t.value));
+export const contributionsInMonth=m=>sum(txIn(m,'aporte',asOf(m)).filter(isNewContribution).map(t=>t.value));
 // category parts of a transaction: the informed splits + the remainder in the main category
 export const catParts=t=>{const ex=t.splits||[];const rest=roundMoney(t.value-sumMoney(ex.map(s=>s.value)));return ex.concat(rest>0.004?[{cat:t.cat,value:rest}]:[]);};
 // "equal" future transactions (same Repeat series; for old ones, same data)

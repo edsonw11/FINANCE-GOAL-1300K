@@ -8,6 +8,8 @@ import { S } from './store.js';
 import { balance, total } from './accounts.js';
 import { contributionsInMonth } from './transactions.js';
 import { ASSET_LABEL } from './ticker-class.js';
+import { isNewContribution } from './reinvestment.js';
+import { estimatedBalance } from './yield-estimate.js';
 function firstMonth(){const ds=S.snaps.map(s=>s.date).concat(S.tx.filter(t=>t.type==='aporte').map(t=>t.date)).sort();return mOf(ds[0]||today());} // no balance or aporte yet (a blank app): start this month
 function monthsList(){const a=mIdx(firstMonth()),b=mIdx(mOf(today()));const r=[];for(let i=a;i<=b;i++)r.push(mKey(i));return r;}
 // where the money is, as {total, items:[{id, name, value, share, count}]} biggest first (share of the total).
@@ -40,7 +42,7 @@ export function investmentDistribution(day=today(),by='account'){
 const firstSnapshot=acc=>S.snaps.filter(s=>s.acc===acc).reduce((m,s)=>!m||s.date<m?s.date:m,null);
 // accounts whose FIRST balance was entered in (from, to]: that balance is where they start, not yield
 const startedIn=(from,to)=>S.accounts.map(a=>a.id).filter(id=>{const f=firstSnapshot(id);return f&&f>from&&f<=to;});
-const contributionsTo=(acc,m,to)=>sum(S.tx.filter(t=>t.type==='aporte'&&t.acc===acc&&mOf(t.date)===m&&t.date<=to).map(t=>t.value));
+const contributionsTo=(acc,m,to)=>sum(S.tx.filter(t=>isNewContribution(t)&&t.acc===acc&&mOf(t.date)===m&&t.date<=to).map(t=>t.value));
 export function realSeries(){
   const ms=monthsList();
   return ms.map((m,n)=>{
@@ -52,7 +54,9 @@ export function realSeries(){
       const upd=S.snaps.some(s=>s.date>pd&&s.date<=d&&!fresh.includes(s.acc));
       if(upd)y=t-total(pd)-ap-sum(fresh.map(a=>balance(a,d).v-balance(a,pd).v-contributionsTo(a,m,d)));
     }
-    return {m,d,t,ap,y,bal:S.accounts.map(a=>balance(a.id,d).v),prev:n>0?total(asOf(ms[n-1])):null};
+    // t and bal carry the yield between typed balances (est = true when part of them is estimated); y and prev stay on the real balances, they are what the person typed
+    const eb=S.accounts.map(a=>estimatedBalance(a.id,d));
+    return {m,d,t:sum(eb.map(x=>x.v)),ap,y,bal:eb.map(x=>x.v),est:eb.some(x=>x.estimated),prev:n>0?total(asOf(ms[n-1])):null};
   });
 }
 export function avgContribution(real){

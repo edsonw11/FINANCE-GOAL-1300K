@@ -8,6 +8,7 @@ import { esc } from '../../core/dom.js';
 import { f2 } from '../../core/format.js';
 import { formatDateBR, mShort } from '../../core/dates.js';
 import { accName } from '../../domain/accounts.js';
+import { isReinvestment } from '../../domain/reinvestment.js';
 import { catParts } from '../../domain/transactions.js';
 import { icon } from '../../domain/categories.js';
 import { dueDateOf, dueMonth, invoiceMonthOf } from '../../domain/card-cycle.js';
@@ -21,10 +22,11 @@ export function paymentLabel(t){
 }
 export function txTitle(t){
   if(t.type==='fatura')return 'Pagamento da fatura de '+formatDateBR(dueDateOf(invoiceMonthOf(t)));
+  if(isReinvestment(t))return 'Reinvestimento em '+accName(t.acc);
   if(t.type==='aporte')return 'Aporte em '+accName(t.acc);
   return t.desc||t.cat||'Sem descrição';
 }
-function txIcon(t){return t.type==='fatura'?'💳':t.type==='aporte'?'🏦':icon(t.type,t.cat);}
+function txIcon(t){return t.type==='fatura'?'💳':isReinvestment(t)?'🔁':t.type==='aporte'?'🏦':icon(t.type,t.cat);}
 // o: {value, sign, sub, title, actions, cls}
 export function txRow(t,o){
   o=o||{};

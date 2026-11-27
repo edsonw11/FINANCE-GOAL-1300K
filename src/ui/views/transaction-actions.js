@@ -4,6 +4,8 @@
  * Editar / Excluir / Fechar, the delete confirmation (naming the item and the value, with the
  * impact explained) and the global tap handling of rows with data-tx.
  */
+import { copyPrefill } from '../../domain/record-copy.js';
+import { isReinvestment } from '../../domain/reinvestment.js';
 import { esc } from '../../core/dom.js';
 import { f2 } from '../../core/format.js';
 import { formatDateBR, mLabel, mOf, today } from '../../core/dates.js';
@@ -33,7 +35,8 @@ function txDetailView(id){
       if(isCard(t)){const inv=invoiceOfPurchase(t),fm=dueMonth(t.date);
         extra+=row('Fatura',`Vence em ${formatDateBR(dueDateOf(fm))} · ${inv?'<span class="tag pay-vr">✔ Paga em '+formatDateBR(inv.date)+'</span>':'<span class="tag pay-cartao">Em aberto</span>'}`);}
     }
-    if(t.type==='aporte')extra+=row('Investido em','🏦 '+esc(accName(t.acc)));
+    if(t.type==='aporte')extra+=row(isReinvestment(t)?'Reinvestido em':'Investido em',(isReinvestment(t)?'🔁 ':'🏦 ')+esc(accName(t.acc)));
+    if(isReinvestment(t))extra+=row('Conta como','<span class="mut">Não é novo aporte: fora de “Investido”, da sobra e do saldo</span>');
     if(t.type==='fatura'){const its=invoiceItems(t),u=invoiceUndetailed(t);
       extra+=row('Fatura','Vence em '+formatDateBR(dueDateOf(invoiceMonthOf(t))));
       extra+=row('Compras identificadas',its.length+' · '+f2(sumMoney(its.map(x=>x.value))));
@@ -47,7 +50,7 @@ function txDetailView(id){
     foot.innerHTML=`<button type="button" class="btn dng" data-act="del">${t.type==='fatura'?'Cancelar pagamento':'Excluir'}</button>${t.type==='fatura'?'':'<button type="button" class="btn" data-act="dup">Repetir</button>'}<button type="button" class="btn pri" data-act="edit">Editar</button>`;
     foot.querySelector('[data-act=del]').onclick=()=>deleteTxFlow(t.id);
     const dup=foot.querySelector('[data-act=dup]');
-    if(dup)dup.onclick=()=>openTxForm({type:t.type,prefill:{cat:t.cat,desc:t.desc,value:t.value,fonte:t.fonte,acc:t.acc,date:today()},note:'Cópia de “'+txTitle(t)+'”: ajuste a data e o valor e salve. O original não muda.'});
+    if(dup)dup.onclick=()=>openTxForm({type:t.type,prefill:copyPrefill(t,today()),note:'Cópia de “'+txTitle(t)+'”: ajuste a data e o valor e salve. O original não muda.'});
     foot.querySelector('[data-act=edit]').onclick=()=>openTxForm({id:t.id});
     return {title:t.type==='fatura'?'Pagamento de fatura':'Detalhes do lançamento',sub:mLabel(mOf(t.date))};
   }};
@@ -59,7 +62,7 @@ export async function deleteTxFlow(id){
   const name=t.type==='aporte'?accName(t.acc):(t.desc||t.cat);
   let html=`Deseja excluir ${t.type==='receita'?'a receita':t.type==='aporte'?'o aporte em':'a despesa'} <b>“${esc(name)}”</b>, no valor de <b>${f2(t.value)}</b>, de ${formatDateBR(t.date)}?`;
   if(inv)html+=`<div class="bd-note mt-10">Esta compra está na fatura paga em ${formatDateBR(inv.date)}. O valor dela passa a aparecer como “Cartão (sem detalhe)”, então o total de despesas do mês não muda.</div>`;
-  if(t.type==='aporte')html+=`<div class="bd-note mt-10">O saldo de ${esc(accName(t.acc))} diminui ${f2(t.value)}.</div>`;
+  if(t.type==='aporte'&&!isReinvestment(t))html+=`<div class="bd-note mt-10">O saldo de ${esc(accName(t.acc))} diminui ${f2(t.value)}.</div>`;
   // a plain record is deleted at once (Desfazer brings it back); a choice or a side effect still asks first
   const ask=sib.length||inv||t.type==='aporte';
   const r=ask?await askConfirm({title:t.type==='aporte'?'Excluir aporte':'Excluir lançamento',html,ok:'Excluir',danger:true,

@@ -73,7 +73,7 @@
 
   // ---- 3. A series of monthly records, "apply to the next ones", delete one ----------------------------------------------------------------------------------
   const series=()=>stored().tx.filter(t=>t.desc==='Mensalidade').sort((a,b)=>a.date.localeCompare(b.date));
-  const openFromList=async(id)=>{tab('lanc');$('qBox').value='Mensalidade';$('qBox').dispatchEvent(new Event('input'));await tick();
+  const openFromList=async(id,query)=>{tab('lanc');$('qBox').value=query||'Mensalidade';$('qBox').dispatchEvent(new Event('input'));await tick();
     const row=q(`#txList [data-tx="${id}"]`);need(row,'record '+id+' not in the list');row.click();await tick();need(q('#shFoot [data-act=edit]'),'no detail');};
   await step('series: "Todo mês · 3x" creates three records, one per month, with their own ids and one series number',async()=>{
     await addRecord({cents:'4000',cat:'Academia',date:'2026-05-10',desc:'Mensalidade',rep:3,fonte:'caixa'});
@@ -199,6 +199,55 @@
     need(/Não identifiquei as colunas/.test($('sheet').textContent),'no explanation of why');
     $('impMapGo').click();await tick();need(/Escolha ao menos a coluna da data e a do valor/.test($('sheet').textContent),'no message');
     same(stored().tx.length,n,'nothing saved');closeSheet();});
+
+  // ---- 7. Owner-reported bugs: split + repeat, the "Repetir" button, reinvestment, what a group is made of -----------------------------------------------------
+  const splitRowsShown=()=>qa('#splitRows [data-sc]').map((c,i)=>[c.value,qa('#splitRows [data-sv]')[i].value]);
+  await step('split + repeat: a record with split parts and "Todo mês · 3x" creates three records that all carry the parts',async()=>{
+    $('fab').click();await tick();type($('fVal'),'10000');$('fCat').value='Mercado';$('fDate').value='2025-05-03';$('fDesc').value='Convenio e aluguel';
+    $('wMore').open=true;$('splitBtn').click();const c=q('[data-sc="0"]'),v=q('[data-sv="0"]');c.value='Saúde';c.dispatchEvent(new Event('input'));v.value='30,00';v.dispatchEvent(new Event('input'));
+    $('fRep').value='3';$('fSave').click();await tick();closeSheet();
+    const rows=stored().tx.filter(t=>t.desc==='Convenio e aluguel');
+    same(rows.map(t=>t.date),['2025-05-03','2025-06-03','2025-07-03'],'three months');
+    same(rows.map(t=>(t.splits||[]).map(x=>[x.cat,x.value])),[[['Saúde',30]],[['Saúde',30]],[['Saúde',30]]],'every month has the split part');});
+  await step('"Repetir" button: the copy opens with the split parts, saves them, and a cancelled copy leaves nothing in the next new record',async()=>{
+    const src=stored().tx.find(t=>t.desc==='Convenio e aluguel');await openFromList(src.id,'Convenio e aluguel');q('#shFoot [data-act=dup]').click();await tick();
+    need(!$('splitBox').hidden,'split box not open in the copy');same(splitRowsShown(),[['Saúde','R$ 30,00']],'the parts are in the copy');
+    $('fDate').value='2025-09-09';$('fSave').click();await tick();closeSheet();
+    const copy=stored().tx.filter(t=>t.desc==='Convenio e aluguel'&&t.date==='2025-09-09');
+    same(copy.map(t=>(t.splits||[]).map(x=>[x.cat,x.value])),[[['Saúde',30]]],'the saved copy has the split part');need(!copy[0].serie,'the copy is not part of the old series');
+    // a copy that is cancelled must not leave its parts in the next new record
+    await openFromList(src.id,'Convenio e aluguel');q('#shFoot [data-act=dup]').click();await tick();need(!$('splitBox').hidden,'copy opened without parts');closeSheet();
+    $('fab').click();await tick();need($('splitBox').hidden,'the next new record starts with the parts of the cancelled copy');$('splitBtn').click();same(splitRowsShown(),[['','']],'opening the split starts with one empty part, not the cancelled copy');closeSheet();});
+  await step('reinvestment: an aporte marked "É reinvestimento" is not "Investido", does not leave the month, and is shown apart',async()=>{
+    tab('meta');$('newAcc').value='CDB teste';$('addAcc').click();await tick();
+    const acc=stored().accounts.find(a=>a.name==='CDB teste');need(acc,'account not created');
+    await addRecord({type:'receita',cents:'300000',cat:'Salário',date:'2025-08-05',desc:'salário',fonte:'caixa'});
+    // a normal aporte of 1000 and a reinvestment of 500, both through the form
+    $('fab').click();await tick();let r=q('input[name=tp][value=aporte]');r.checked=true;r.dispatchEvent(new Event('change'));
+    need(!$('wReinv').hidden,'the reinvestment option is not shown for an aporte');need($('fReinv').checked===false,'it starts unchecked');
+    type($('fVal'),'100000');$('fAcc').value=acc.id;$('fDate').value='2025-08-10';$('fSave').click();await tick();closeSheet();
+    $('fab').click();await tick();r=q('input[name=tp][value=aporte]');r.checked=true;r.dispatchEvent(new Event('change'));
+    type($('fVal'),'50000');$('fAcc').value=acc.id;$('fDate').value='2025-08-12';$('fDesc').value='CDB venceu';$('fReinv').checked=true;$('fSave').click();await tick();closeSheet();
+    const ap=stored().tx.filter(t=>t.type==='aporte'&&t.date.startsWith('2025-08'));
+    same(ap.map(t=>[t.value,t.reinv===true]),[[1000,false],[500,true]],'the mark is stored only on the reinvestment');
+    $('fab').click();await tick();need($('fReinv').checked===false,'the mark stays on for the next record');closeSheet();
+    tab('resumo');
+    const kf=$('kFlow').textContent;need(/Investido/.test(kf)&&/1\.000,00/.test(kf)&&!/1\.500,00/.test(kf),'the Investido card should show 1.000,00 and not 1.500,00: '+kf);
+    need(/Investiu R\$\s?1\.000,00/.test(document.body.textContent),'the hero should say Investiu R$ 1.000,00');
+    need(/Ficou na conta R\$\s?2\.000,00/.test(document.body.textContent),'the leftover in the account must be 3000 - 1000 = 2.000,00 (the reinvestment does not leave it)');});
+  await step('reinvestment: the detail of "Investido" lists the reinvestment apart, and editing the mark back makes it a normal aporte',async()=>{
+    q('[data-kpi="contrib"]').click();await tick();
+    need(/Reinvestimentos/.test($('sheet').textContent),'no "Reinvestimentos" group: '+$('sheet').textContent.slice(0,200));closeSheet();
+    const re=stored().tx.find(t=>t.reinv);await openFromList(re.id,'CDB venceu');q('#shFoot [data-act=edit]').click();await tick();
+    need($('fReinv').checked,'the edit form does not show the mark');$('fReinv').checked=false;$('fSave').click();await tick();closeSheet();
+    same(stored().tx.filter(t=>t.type==='aporte'&&t.date.startsWith('2025-08')).map(t=>t.reinv===undefined),[true,true],'the mark is removed from the stored record');
+    need(/1\.500,00/.test($('kFlow').textContent),'after the edit it counts as new money again: '+$('kFlow').textContent);});
+  await step('spending by group: a phone bill under "Moradia" shows "Telefone" under the group name',async()=>{
+    await addRecord({cents:'3000',cat:'Telefone',date:'2025-10-14',desc:'Plano',fonte:'caixa'});tab('resumo');
+    const row=q('#cats .catrow');need(row&&/Moradia/.test(row.textContent),'the group row is not Moradia: '+(row&&row.textContent));
+    const sub=row.querySelector('[data-smoke=group-parts]');need(sub&&sub.textContent==='Telefone','the group does not say what it is made of: '+(sub&&sub.textContent));
+    await addRecord({cents:'8000',cat:'Luz',date:'2025-10-15',desc:'Conta de luz',fonte:'caixa'});
+    need(q('#cats .catrow [data-smoke=group-parts]').textContent==='Luz, Telefone','several categories are listed by value: '+q('#cats .catrow [data-smoke=group-parts]').textContent);});
 
   await step('no script error so far',()=>{need(errs.length===0,errs.join(' / '));});
   document.documentElement.setAttribute('data-smoke',out.concat(errs).join(' | '));

@@ -23,13 +23,14 @@ import { afterFormSave } from './transaction-form-sheet.js';
 import { confirmCategories, prepareCategories } from './category-confirm.js';
 function readTransactionForm(){
   return {editId:ui.editId,type:ui.type,value:parseMoney($('fVal').value),date:$('fDate').value,cat:$('fCat').value,fonte:$('fFonte').value,
-    desc:$('fDesc').value,acc:$('fAcc').value,splits:ui.splitRows.map(r=>({cat:r.cat,value:r.val})),
+    desc:$('fDesc').value,acc:$('fAcc').value,reinv:$('fReinv').checked,splits:ui.splitRows.map(r=>({cat:r.cat,value:r.val})),
     fm:$('fFm').value,items:[...ui.invoiceSelection],invoiceSelectedTotal:selectedInvoiceTotal(),
     repeat:+$('fRep').value,applyToFuture:$('fApply').checked};
 }
 const FORM_FIELD={value:'fVal',date:'fDate',acc:'fAcc'};
 function successMessage(d,r){
   if(d.editId!==null)return '✅ Lançamento atualizado'+(r.siblings?' e mais '+r.siblings+' futuro(s)':'');
+  if(d.type==='aporte'&&d.reinv)return `🔁 Reinvestimento de ${f2(d.value)} em ${accName(d.acc)} registrado (não conta como novo aporte)`;
   if(d.type==='aporte')return `🏦 Aporte de ${f2(d.value)} em ${accName(d.acc)}. Saldo agora: ${f2(balance(d.acc,today()).v)}`;
   if(d.type==='fatura')return '💳 Pagamento de fatura de '+f2(d.value)+' registrado';
   return (d.type==='receita'?'➕ Receita':'➖ Despesa')+' de '+f2(d.value)+' adicionada'+(r.ids.length>1?` (${r.ids.length}x)`:'');

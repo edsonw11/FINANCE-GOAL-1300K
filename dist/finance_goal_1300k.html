@@ -166,6 +166,7 @@ th{position:sticky;top:0}
 .ins-tile .kpi-go{position:absolute;right:12px;top:10px}
 .catrow.tap{border-radius:10px;padding:4px 6px;margin:4px -6px}.catrow.tap:hover{background:var(--soft)}
 .cr-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-sub{display:block;font-size:11.5px;color:var(--muted);font-weight:400;overflow:hidden;text-overflow:ellipsis}
 .mtoday{margin-left:6px}
 /* record rows */
 .lst{display:flex;flex-direction:column}
@@ -1020,6 +1021,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
       <div><label for="fDate">Data <span class="req" aria-hidden="true">*</span></label><input type="date" id="fDate" required></div>
       <div id="wCat" class="f-wide"><label for="fCat">Categoria</label><input id="fCat" list="catList" placeholder="Escolha abaixo ou digite"><datalist id="catList"></datalist><div class="chips qchips" id="catChips"></div></div>
       <div id="wAcc" hidden><label for="fAcc">Investir em</label><select id="fAcc"></select></div>
+      <div id="wReinv" class="f-wide" hidden><label class="apply-opt sm"><input class="w-auto mr-8" type="checkbox" id="fReinv" data-smoke="reinv">É reinvestimento (o dinheiro já estava investido, por exemplo um CDB que venceu)</label><div class="help" id="reinvHelp">Marcado: não conta como novo aporte, não entra em “Investido” nem sai da sobra do mês, e não muda o saldo (ele continua sendo o que você informa em “Atualizar saldos”).</div></div>
       <div id="wFonte"><label for="fFonte" id="lFonte">Pago com</label><select id="fFonte"></select></div>
       <div><label for="fDesc">Descrição <span class="opt">(opcional)</span></label><input id="fDesc" placeholder="Ex.: mercado" enterkeyhint="done"><div class="chips qchips" id="descSug" aria-live="polite"></div></div>
     </div>
@@ -1296,11 +1298,23 @@ function parse(s){s=String(s).trim().replace(/[R$\s%]/g,'');if(!s)return 0;
 // ---- R$ amount fields (mask) and dd/mm/yyyy dates ----
 const m2=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 
+// ---- src/domain/reinvestment.js
+/**
+ * domain/reinvestment.js
+ * Responsibility: tells new money put into an investment (an aporte) from a reinvestment: money that was already invested and went into a new
+ * application (a CDB that matured and was applied again). A reinvestment is a record of what happened, but it is not new money: it is not
+ * "Investido" in the month, it does not leave the month's cash (the money never left the bank), it does not count as a contribution in the
+ * yield or the average, and it does not change a balance (balances are what the person types in "Atualizar saldos").
+ */
+const isReinvestment=t=>t.type==='aporte'&&!!t.reinv;
+const isNewContribution=t=>t.type==='aporte'&&!t.reinv;
+
 // ---- src/domain/accounts.js
 /**
  * domain/accounts.js
  * Responsibility: Investment accounts: name, balances by date (net and gross).
  */
+
 
 
 const active=()=>S.accounts.filter(a=>!a.archived);
@@ -1309,7 +1323,7 @@ const accName=id=>(S.accounts.find(a=>a.id===id)||{name:'?'}).name;
 function balance(acc,date){
   let sn=null;S.snaps.forEach(s=>{if(s.acc===acc&&s.date<=date&&(!sn||s.date>=sn.date))sn=s;});
   const from=sn?sn.date:'0000-00-00';
-  const ap=sum(S.tx.filter(t=>t.type==='aporte'&&t.acc===acc&&t.date>from&&t.date<=date).map(t=>t.value));
+  const ap=sum(S.tx.filter(t=>isNewContribution(t)&&t.acc===acc&&t.date>from&&t.date<=date).map(t=>t.value));
   return {v:(sn?sn.value:0)+ap,snap:sn,g:(sn&&sn.gross>0)?sn.gross+ap:null};
 }
 const total=date=>sum(S.accounts.map(a=>balance(a.id,date).v));
@@ -1663,8 +1677,9 @@ function textHash(s){
 
 
 
+
 const txIn=(m,type,upto)=>S.tx.filter(t=>t.type===type&&mOf(t.date)===m&&(!upto||t.date<=upto));
-const contributionsInMonth=m=>sum(txIn(m,'aporte',asOf(m)).map(t=>t.value));
+const contributionsInMonth=m=>sum(txIn(m,'aporte',asOf(m)).filter(isNewContribution).map(t=>t.value));
 // category parts of a transaction: the informed splits + the remainder in the main category
 const catParts=t=>{const ex=t.splits||[];const rest=roundMoney(t.value-sumMoney(ex.map(s=>s.value)));return ex.concat(rest>0.004?[{cat:t.cat,value:rest}]:[]);};
 // "equal" future transactions (same Repeat series; for old ones, same data)
@@ -1921,11 +1936,61 @@ function classOfTicker(ticker,name){
   return ASSET_CLASS.stock;
 }
 
+// ---- src/domain/yield-estimate.js
+/**
+ * domain/yield-estimate.js
+ * Responsibility: the balance of an investment account on a past date, WITH the yield that happened between two balances the person typed.
+ * Between two typed balances (or from the first aporte to the first typed balance) the app used to add only the aportes, so the bars of the evolution
+ * chart climbed by the money put in and then jumped at the next typed balance. Here the yield between the two balances is spread over the days in
+ * between: one constant daily growth factor that makes the starting balance and the aportes (each growing from its own date) arrive exactly at the next typed
+ * balance. Only the net balance is estimated; after the LAST typed balance nothing is estimated (the real balance is shown, the projection takes over).
+ * An implied yield that is not plausible (more than MAX_ANNUAL a year or less than MIN_ANNUAL, for example when money was deposited without being entered as an aporte)
+ * is not spread: the old behaviour (aportes only) is kept for that stretch. Reinvestments are not new money, so they are not flows here either.
+ */
+
+
+
+
+const MAX_ANNUAL=1.0,MIN_ANNUAL=-0.5; // 100 % and -50 % a year
+const DAYS_PER_YEAR=365;
+const BOUND=Math.log(1+MAX_ANNUAL)/DAYS_PER_YEAR,LOW_BOUND=Math.log(1+MIN_ANNUAL)/DAYS_PER_YEAR;
+// value on `date` of a starting amount and aportes [{date, value}] growing at `rho` per day (continuous)
+const grown=(start,flows,rho,date)=>(start?start.value*Math.exp(rho*daysBetween(start.date,date)):0)
+  +flows.filter(f=>f.date<=date).reduce((a,f)=>a+f.value*Math.exp(rho*daysBetween(f.date,date)),0);
+// the daily rate (continuous) that takes start + flows to `target` on `end`; null when no plausible rate does
+function impliedRate(start,flows,end,target){
+  const f=r=>grown(start,flows,r,end)-target;
+  if(f(LOW_BOUND)>0||f(BOUND)<0)return null;
+  let lo=LOW_BOUND,hi=BOUND;
+  for(let i=0;i<80;i++){const mid=(lo+hi)/2;if(f(mid)<0)lo=mid;else hi=mid;}
+  return (lo+hi)/2;
+}
+// the stretch of the account that contains `date`: {start:{date,value}|null, flows, end:{date,value}} or null when the date is after the last typed balance
+function stretch(acc,date){
+  const snaps=S.snaps.filter(s=>s.acc===acc).sort((a,b)=>a.date.localeCompare(b.date));
+  const end=snaps.find(s=>s.date>date);if(!end)return null;
+  const start=snaps.filter(s=>s.date<=date).pop()||null;
+  const from=start?start.date:'0000-00-00';
+  const flows=S.tx.filter(t=>isNewContribution(t)&&t.acc===acc&&t.date>from&&t.date<=end.date).map(t=>({date:t.date,value:t.value}));
+  return {start:start?{date:start.date,value:start.value}:null,flows,end:{date:end.date,value:end.value}};
+}
+// {v, estimated}: the balance on `date` with the yield between typed balances; estimated=false when it is the real balance
+function estimatedBalance(acc,date){
+  const real=balance(acc,date).v,s=stretch(acc,date);
+  if(!s)return {v:real,estimated:false};
+  const rho=impliedRate(s.start,s.flows,s.end.date,s.end.value);
+  if(rho===null||Math.abs(rho)<1e-12)return {v:real,estimated:false};
+  const v=grown(s.start,s.flows,rho,date);
+  return {v:Math.round(v*100)/100,estimated:true};
+}
+
 // ---- src/domain/investments.js
 /**
  * domain/investments.js
  * Responsibility: Real net-worth series and projection (compound interest, scenarios).
  */
+
+
 
 
 
@@ -1964,7 +2029,7 @@ function investmentDistribution(day=today(),by='account'){
 const firstSnapshot=acc=>S.snaps.filter(s=>s.acc===acc).reduce((m,s)=>!m||s.date<m?s.date:m,null);
 // accounts whose FIRST balance was entered in (from, to]: that balance is where they start, not yield
 const startedIn=(from,to)=>S.accounts.map(a=>a.id).filter(id=>{const f=firstSnapshot(id);return f&&f>from&&f<=to;});
-const contributionsTo=(acc,m,to)=>sum(S.tx.filter(t=>t.type==='aporte'&&t.acc===acc&&mOf(t.date)===m&&t.date<=to).map(t=>t.value));
+const contributionsTo=(acc,m,to)=>sum(S.tx.filter(t=>isNewContribution(t)&&t.acc===acc&&mOf(t.date)===m&&t.date<=to).map(t=>t.value));
 function realSeries(){
   const ms=monthsList();
   return ms.map((m,n)=>{
@@ -1976,7 +2041,9 @@ function realSeries(){
       const upd=S.snaps.some(s=>s.date>pd&&s.date<=d&&!fresh.includes(s.acc));
       if(upd)y=t-total(pd)-ap-sum(fresh.map(a=>balance(a,d).v-balance(a,pd).v-contributionsTo(a,m,d)));
     }
-    return {m,d,t,ap,y,bal:S.accounts.map(a=>balance(a.id,d).v),prev:n>0?total(asOf(ms[n-1])):null};
+    // t and bal carry the yield between typed balances (est = true when part of them is estimated); y and prev stay on the real balances, they are what the person typed
+    const eb=S.accounts.map(a=>estimatedBalance(a.id,d));
+    return {m,d,t:sum(eb.map(x=>x.v)),ap,y,bal:eb.map(x=>x.v),est:eb.some(x=>x.estimated),prev:n>0?total(asOf(ms[n-1])):null};
   });
 }
 function avgContribution(real){
@@ -2114,7 +2181,7 @@ function drawTower(real,rows){
   const tip=$('tip'),box=$('box');
   svg.querySelectorAll('.hit').forEach(el=>{
     el.onmousemove=e=>{const j=+el.dataset.j,r=all[j];let h;
-      if(j<real.length)h=`<b>${mLabel(r.m)}</b><br>Total: ${f2(r.t)}<br>`+byType(r.bal).map(([id,v])=>`${esc(TYPE_NAME[id])}: ${f0(v)}`).join('<br>')+(r.ap?`<br>🏦 Aportes: ${f0(r.ap)}`:'')+`<br>Falta: ${f0(Math.max(goal-r.t,0))}`;
+      if(j<real.length)h=`<b>${mLabel(r.m)}</b><br>Total: ${f2(r.t)}${r.est?' <small>(com o rendimento estimado entre os saldos)</small>':''}<br>`+byType(r.bal).map(([id,v])=>`${esc(TYPE_NAME[id])}: ${f0(v)}`).join('<br>')+(r.ap?`<br>🏦 Aportes: ${f0(r.ap)}`:'')+`<br>Falta: ${f0(Math.max(goal-r.t,0))}`;
       else h=`<b>${mLabel(r.m)}</b> · projeção<br>Total: ${f0(r.t)}<br>Se juros caírem: ${f0(r.low)}<br>${r.t>=goal?'✅ meta atingida':'Falta: '+f0(goal-r.t)}`;
       tip.innerHTML=h;const bb=box.getBoundingClientRect();tip.style.left=Math.max(0,Math.min(e.clientX-bb.left+14,bb.width-240))+'px';tip.style.top=(e.clientY-bb.top+14)+'px';tip.style.opacity=1;};
     el.onclick=el.onmousemove;el.onmouseleave=()=>tip.style.opacity=0;});
@@ -2234,12 +2301,14 @@ function paceChip(real){
 
 
 
+
 const isVoucher=t=>t.fonte==='beneficio';
 const isCard=t=>t.fonte==='cartao';
 const signedVoucher=t=>t.type==='receita'?t.value:t.type==='despesa'?-t.value:0;
 function monthSummary(m){
   const end=monthEnd(m),start=m+'-01';
-  const income=txIn(m,'receita'),expenses=txIn(m,'despesa'),contributions=txIn(m,'aporte'),invoices=txIn(m,'fatura');
+  const income=txIn(m,'receita'),expenses=txIn(m,'despesa'),aportes=txIn(m,'aporte'),invoices=txIn(m,'fatura');
+  const contributions=aportes.filter(isNewContribution),reinvestments=aportes.filter(isReinvestment); // a reinvestment is not new money
   // part of a paid invoice with no purchase entered: it is still a cost of the month
   const undetailed=invoices.map(t=>({invoice:t,value:invoiceUndetailed(t)})).filter(x=>x.value>0.004);
   const cashIn=income.filter(t=>!isVoucher(t)),cashOut=expenses.filter(t=>!isVoucher(t)&&!isCard(t));
@@ -2252,6 +2321,7 @@ function monthSummary(m){
     income:{items:income,total:sumMoney(val(income))},
     expenses:{items:expenses,undetailed,total:sumMoney(val(expenses).concat(undetailed.map(u=>u.value)))},
     contributions:{items:contributions,total:sumMoney(val(contributions))},
+    reinvestments:{items:reinvestments,total:sumMoney(val(reinvestments))},
     cash:{cashIn,cashOut,invoices,contributions,
       total:sumMoney(val(cashIn).concat(val(cashOut).map(v=>-v),val(invoices).map(v=>-v),val(contributions).map(v=>-v)))},
     openCard:{items:openCardItems,total:sumMoney(val(openCardItems))},
@@ -2298,6 +2368,20 @@ function categoryItems(m,cat){
 }
 // {group: value} of a month: catMonth added up by group (same grand total)
 function groupMonth(m){const g={};Object.entries(catMonth(m)).forEach(([c,v])=>{const k=groupOf(c);g[k]=roundMoney((g[k]||0)+v);});return g;}
+// {group: [{cat, value}]} of a month, biggest category first: what each group is made of (the values add up to groupMonth(m)[group])
+function groupParts(m){
+  const g={};
+  Object.entries(catMonth(m)).forEach(([c,v])=>{const k=groupOf(c);(g[k]=g[k]||[]).push({cat:c,value:v});});
+  Object.values(g).forEach(list=>list.sort((a,b)=>b.value-a.value||a.cat.localeCompare(b.cat)));
+  return g;
+}
+// the categories a group is made of, as one short text ("Telefone", "Luz, Água, Internet +2"); '' when the group is a lone category with its own name
+const MAX_NAMED_PARTS=3;
+function partsText(list,group){
+  if(!list||!list.length||(list.length===1&&list[0].cat===group))return '';
+  const more=list.length-MAX_NAMED_PARTS;
+  return list.slice(0,MAX_NAMED_PARTS).map(x=>x.cat).join(', ')+(more>0?' +'+more:'');
+}
 // [{t, value, cats}] whose values add up to groupMonth(m)[group]; one row per record
 // (a record split into Água + Gás + Moradia shows once in Moradia, with the sum of those parts)
 function groupItems(m,group){
@@ -2344,6 +2428,8 @@ const ui={
 
 
 
+// what a group is made of, under its name ("Telefone" under Moradia): the phone bill must not look like rent
+const partsLabel=(list,group)=>{const t=partsText(list,group);return t?`<small class="cr-sub" data-smoke="group-parts">${esc(t)}</small>`:'';};
 function renderFlow(){
   ['mLab1','mLab2','mLab4'].forEach(id=>{const el=$(id);if(el)el.textContent=mLabel(ui.cur);});
   document.querySelectorAll('[data-mtoday]').forEach(b=>b.hidden=ui.cur===mOf(today()));
@@ -2355,11 +2441,11 @@ function renderFlow(){
     kpi('apo','📈','Investido','→ '+f2(apo),rec?`${pc(apo/rec)} do que entrou`:'Dinheiro enviado aos investimentos','','contrib')+
     (v.total||v.inMonth||v.outMonth?kpi('','💰','Saldo VR/VA',f2(v.total),`Recebido ${f2(v.inMonth)} · gasto ${f2(v.outMonth)} no mês`,'','voucher'):'');
   // spending by group (Moradia = condomínio + luz + água...; same totals as the analysis and the group detail)
-  const cats=groupMonth(ui.cur),pcats=groupMonth(mKey(mIdx(ui.cur)-1));
+  const cats=groupMonth(ui.cur),pcats=groupMonth(mKey(mIdx(ui.cur)-1)),parts=groupParts(ui.cur);
   const arr=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
   $('cats').innerHTML=arr.length?arr.map(([c,v])=>{const p=pcats[c];let d='<span class="mut">—</span>';
       if(p){const dl=(v-p)/p;d=`<span class="${dl>0?'neg':'pos'}">${dl>0?'▲':'▼'} ${Math.abs(Math.round(dl*100))}%</span>`;}
-      return `<div class="catrow tap" data-go="cat" data-c="${esc(c)}" data-m="${ui.cur}" role="button" tabindex="0" aria-label="${esc(c)}: ${f2(v)}. Ver lançamentos"><div class="cr-n">${groupIcon(c)} ${esc(c)}</div><div class="catbar"><div style="width:${v/arr[0][1]*100}%"></div></div><div class="r fw7">${f2(v)}</div><div class="r fs125" title="vs mês anterior">${d}</div></div>`;}).join('')
+      return `<div class="catrow tap" data-go="cat" data-c="${esc(c)}" data-m="${ui.cur}" role="button" tabindex="0" aria-label="${esc(c)}: ${f2(v)}. Ver lançamentos"><div class="cr-n">${groupIcon(c)} ${esc(c)}${partsLabel(parts[c],c)}</div><div class="catbar"><div style="width:${v/arr[0][1]*100}%"></div></div><div class="r fw7">${f2(v)}</div><div class="r fs125" title="vs mês anterior">${d}</div></div>`;}).join('')
     :'<div class="empty">Nenhuma despesa neste mês.<br>Toque em “+” para adicionar.</div>';
 }
 
@@ -2512,6 +2598,7 @@ function restoreIgnoredBills(){const n=(S.billsIgnored||[]).length;S.billsIgnore
 
 
 
+
 const MAX_ACTIONS=3;
 const ACTION={late:'invoice-late',due:'invoice-due',budget:'budget-over',bills:'bills-missing',contribute:'no-contribution',reserve:'no-reserve'};
 const DUE_SOON_DAYS=7;
@@ -2529,7 +2616,7 @@ function nextActions(day=today()){
   const missing=monthlyBills(m,day).items.filter(i=>i.status===BILL_STATUS.missing&&i.date<=day);
   if(missing.length)items.push({code:ACTION.bills,urgency:3,go:'bills',data:{count:missing.length}});
   // only worth saying when the user already invests (some account) and nothing went in this month
-  const invests=S.accounts.some(a=>!a.archived),contributed=S.tx.some(t=>t.type==='aporte'&&mOf(t.date)===m);
+  const invests=S.accounts.some(a=>!a.archived),contributed=S.tx.some(t=>isNewContribution(t)&&mOf(t.date)===m);
   if(invests&&!contributed&&day.slice(8)>='10')items.push({code:ACTION.contribute,urgency:4,go:'invest',data:{}});
   // investments exist but none is marked as the emergency reserve (the reserve card stays hidden until then)
   if(invests&&!S.accounts.some(a=>a.reserve&&!a.archived))items.push({code:ACTION.reserve,urgency:5,go:'invest',data:{}});
@@ -2665,7 +2752,7 @@ function openSplit(){$('splitBox').hidden=false;if(!ui.splitRows.length)ui.split
  * Responsibility: rules for creating and editing a transaction, independent of the form.
  * validateTransaction(d) -> null | {field, msg}
  * saveTransaction(d)     -> {ids, siblings}   (new record, monthly series or edit + future siblings)
- * d = {editId, type, value, date, cat, fonte, desc, acc, splits:[{cat,value}], fm, items, repeat, applyToFuture, invoiceSelectedTotal}
+ * d = {editId, type, value, date, cat, fonte, desc, acc, reinv, splits:[{cat,value}], fm, items, repeat, applyToFuture, invoiceSelectedTotal}
  */
 
 
@@ -2687,8 +2774,8 @@ function validateTransaction(d){
 function applyFields(t,d,date){
   if(date)t.date=date;
   t.type=d.type;t.value=roundMoney(d.value);t.desc=(d.desc||'').trim();
-  delete t.acc;delete t.cat;delete t.fonte;delete t.splits;delete t.fm;delete t.items;
-  if(d.type==='aporte')t.acc=d.acc;
+  delete t.acc;delete t.cat;delete t.fonte;delete t.splits;delete t.fm;delete t.items;delete t.reinv;
+  if(d.type==='aporte'){t.acc=d.acc;if(d.reinv)t.reinv=true;} // reinvestment: money that was already invested (see domain/reinvestment.js)
   else if(d.type==='fatura'){t.cat=INVOICE_CATEGORY;t.fm=d.fm;t.items=(d.items||[]).filter(id=>S.tx.some(x=>x.id===id));}
   else{t.cat=(d.cat||'').trim()||DEFAULT_CATEGORY[d.type];t.fonte=d.fonte||'caixa';const sp=cleanSplits(d);if(sp.length)t.splits=sp;}
   return t;
@@ -2707,6 +2794,20 @@ function saveTransaction(d){
   return {ids,siblings:0};
 }
 
+// ---- src/domain/record-copy.js
+/**
+ * domain/record-copy.js
+ * Responsibility: what "Repetir" (copy a record into a new one) fills in the form: everything that describes the record
+ * (category, text, value, how it was paid, investment, the split parts, the reinvestment mark) except what identifies it
+ * (id, series, bank import key, invoice items) and its date, which the caller chooses. The copy never shares objects with the original.
+ */
+function copyPrefill(t,date){
+  const p={cat:t.cat,desc:t.desc,value:t.value,fonte:t.fonte,acc:t.acc,date};
+  if(t.splits&&t.splits.length)p.splits=t.splits.map(s=>({cat:s.cat,value:s.value}));
+  if(t.reinv)p.reinv=true;
+  return p;
+}
+
 // ---- src/ui/components/breakdown.js
 /**
  * ui/components/breakdown.js
@@ -2714,6 +2815,7 @@ function saveTransaction(d){
  * value with sign); listView() builds a sheet view with total, count and grouped rows.
  * Rows with data-tx open the record detail (see transaction-actions.js).
  */
+
 
 
 
@@ -2731,10 +2833,11 @@ function paymentLabel(t){
 }
 function txTitle(t){
   if(t.type==='fatura')return 'Pagamento da fatura de '+formatDateBR(dueDateOf(invoiceMonthOf(t)));
+  if(isReinvestment(t))return 'Reinvestimento em '+accName(t.acc);
   if(t.type==='aporte')return 'Aporte em '+accName(t.acc);
   return t.desc||t.cat||'Sem descrição';
 }
-function txIcon(t){return t.type==='fatura'?'💳':t.type==='aporte'?'🏦':icon(t.type,t.cat);}
+function txIcon(t){return t.type==='fatura'?'💳':isReinvestment(t)?'🔁':t.type==='aporte'?'🏦':icon(t.type,t.cat);}
 // o: {value, sign, sub, title, actions, cls}
 function txRow(t,o){
   o=o||{};
@@ -2935,6 +3038,8 @@ function renderPay(){
 
 
 
+
+
 function txDetailView(id){
   return {render(body,foot){
     const t=S.tx.find(x=>x.id===id);if(!t)return null;
@@ -2946,7 +3051,8 @@ function txDetailView(id){
       if(isCard(t)){const inv=invoiceOfPurchase(t),fm=dueMonth(t.date);
         extra+=row('Fatura',`Vence em ${formatDateBR(dueDateOf(fm))} · ${inv?'<span class="tag pay-vr">✔ Paga em '+formatDateBR(inv.date)+'</span>':'<span class="tag pay-cartao">Em aberto</span>'}`);}
     }
-    if(t.type==='aporte')extra+=row('Investido em','🏦 '+esc(accName(t.acc)));
+    if(t.type==='aporte')extra+=row(isReinvestment(t)?'Reinvestido em':'Investido em',(isReinvestment(t)?'🔁 ':'🏦 ')+esc(accName(t.acc)));
+    if(isReinvestment(t))extra+=row('Conta como','<span class="mut">Não é novo aporte: fora de “Investido”, da sobra e do saldo</span>');
     if(t.type==='fatura'){const its=invoiceItems(t),u=invoiceUndetailed(t);
       extra+=row('Fatura','Vence em '+formatDateBR(dueDateOf(invoiceMonthOf(t))));
       extra+=row('Compras identificadas',its.length+' · '+f2(sumMoney(its.map(x=>x.value))));
@@ -2960,7 +3066,7 @@ function txDetailView(id){
     foot.innerHTML=`<button type="button" class="btn dng" data-act="del">${t.type==='fatura'?'Cancelar pagamento':'Excluir'}</button>${t.type==='fatura'?'':'<button type="button" class="btn" data-act="dup">Repetir</button>'}<button type="button" class="btn pri" data-act="edit">Editar</button>`;
     foot.querySelector('[data-act=del]').onclick=()=>deleteTxFlow(t.id);
     const dup=foot.querySelector('[data-act=dup]');
-    if(dup)dup.onclick=()=>openTxForm({type:t.type,prefill:{cat:t.cat,desc:t.desc,value:t.value,fonte:t.fonte,acc:t.acc,date:today()},note:'Cópia de “'+txTitle(t)+'”: ajuste a data e o valor e salve. O original não muda.'});
+    if(dup)dup.onclick=()=>openTxForm({type:t.type,prefill:copyPrefill(t,today()),note:'Cópia de “'+txTitle(t)+'”: ajuste a data e o valor e salve. O original não muda.'});
     foot.querySelector('[data-act=edit]').onclick=()=>openTxForm({id:t.id});
     return {title:t.type==='fatura'?'Pagamento de fatura':'Detalhes do lançamento',sub:mLabel(mOf(t.date))};
   }};
@@ -2972,7 +3078,7 @@ async function deleteTxFlow(id){
   const name=t.type==='aporte'?accName(t.acc):(t.desc||t.cat);
   let html=`Deseja excluir ${t.type==='receita'?'a receita':t.type==='aporte'?'o aporte em':'a despesa'} <b>“${esc(name)}”</b>, no valor de <b>${f2(t.value)}</b>, de ${formatDateBR(t.date)}?`;
   if(inv)html+=`<div class="bd-note mt-10">Esta compra está na fatura paga em ${formatDateBR(inv.date)}. O valor dela passa a aparecer como “Cartão (sem detalhe)”, então o total de despesas do mês não muda.</div>`;
-  if(t.type==='aporte')html+=`<div class="bd-note mt-10">O saldo de ${esc(accName(t.acc))} diminui ${f2(t.value)}.</div>`;
+  if(t.type==='aporte'&&!isReinvestment(t))html+=`<div class="bd-note mt-10">O saldo de ${esc(accName(t.acc))} diminui ${f2(t.value)}.</div>`;
   // a plain record is deleted at once (Desfazer brings it back); a choice or a side effect still asks first
   const ask=sib.length||inv||t.type==='aporte';
   const r=ask?await askConfirm({title:t.type==='aporte'?'Excluir aporte':'Excluir lançamento',html,ok:'Excluir',danger:true,
@@ -3126,13 +3232,14 @@ function startEdit(id){
   ui.editId=id;ui.type=t.type;document.querySelector(`input[name=tp][value=${t.type}]`).checked=true;fillCategoryOptions();
   $('fDate').value=t.date;$('fVal').value=m2(t.value);$('fDesc').value=t.desc||'';
   if(t.type==='aporte')$('fAcc').value=t.acc;else $('fCat').value=t.cat||'';
+  $('fReinv').checked=!!t.reinv;
   $('fFonte').value=t.fonte||'caixa';
   if(t.type==='fatura'){$('fFm').value=invoiceMonthOf(t);ui.invoiceSelection=new Set(alloc().map[t.id]||[]);drawInvoiceForm(id);}
   ui.splitRows=(t.splits||[]).map(s=>({cat:s.cat,val:s.value}));$('splitBox').hidden=!(ui.splitRows.length);$('wMore').open=ui.splitRows.length>0;drawSplit();
   const sib=futureSiblings(t);$('wApply').hidden=!(sib.length);$('fApply').checked=true;$('applyN').textContent=sib.length;
   ui.editId=id;$('fCancel').hidden=false;$('fRep').disabled=true;fillCategoryOptions();
 }
-function endEdit(){resetSplit();ui.invoiceSelection=new Set();$('wApply').hidden=true;ui.editId=null;$('fCancel').hidden=true;$('fRep').disabled=false;$('fRep').value='1';ui.payAdvanced=false;fillCategoryOptions();}
+function endEdit(){resetSplit();ui.invoiceSelection=new Set();$('wApply').hidden=true;ui.editId=null;$('fCancel').hidden=true;$('fRep').disabled=false;$('fRep').value='1';$('fReinv').checked=false;ui.payAdvanced=false;fillCategoryOptions();}
 const SAVE_LABEL={despesa:'Adicionar despesa',receita:'Adicionar receita',aporte:'Registrar aporte',fatura:'Registrar pagamento'};
 function updateSaveLabel(){
   $('fSave').textContent=ui.editId!==null?'Salvar alterações':SAVE_LABEL[ui.type]||'Adicionar';
@@ -3153,7 +3260,7 @@ function drawCategoryChips(){
 function fillCategoryOptions(){
   const set=new Set(((S.cats||{})[ui.type]||[]).filter(c=>!c.off).map(c=>c.name));
   $('catList').innerHTML=[...set].map(c=>`<option value="${esc(c)}">`).join('');
-  $('wCat').hidden=ui.type==='aporte';$('wAcc').hidden=!(ui.type==='aporte');
+  $('wCat').hidden=ui.type==='aporte';$('wAcc').hidden=!(ui.type==='aporte');$('wReinv').hidden=!(ui.type==='aporte');
   const kf=$('fFonte').value;
   $('lFonte').textContent=ui.type==='receita'?'Entrou em':'Pago com';
   $('fFonte').innerHTML=ui.type==='receita'
@@ -3176,7 +3283,7 @@ function fillCategoryOptions(){
 function cardHint(){const d=$('fDate').value||today(),fm=dueMonth(d);
   return 'Entra na fatura que vence em '+formatDateBR(dueDateOf(fm))+' (ciclo fecha em '+formatDateBR(closeDateOf(fm))+'; a partir de '+formatDateBR(addDay(closeDateOf(fm),1))+' vai para a seguinte). O dinheiro só sai do caixa em “Pagar fatura”.';}
 function updateFormHelp(){
-  $('fHelp').textContent=ui.type==='aporte'?'O aporte soma no saldo do investimento escolhido e sai da sua sobra do mês.'
+  $('fHelp').textContent=ui.type==='aporte'?'O aporte soma no saldo do investimento escolhido e sai da sua sobra do mês. Se o dinheiro já estava investido (um CDB que venceu), marque “É reinvestimento”.'
     :ui.type==='fatura'?'Use quando pagar a fatura: o dinheiro sai do caixa, mas não vira gasto de novo (as compras já foram lançadas como “Cartão de crédito”).'
     :(ui.type==='despesa'&&$('fFonte').value==='cartao')?cardHint():'';
 }
@@ -3190,6 +3297,7 @@ function updateFormHelp(){
  * come filled (prefill: cat, desc, value, date, fonte, acc) with a note saying where it came from
  * (quick entry sentence, repeated record): the user still reviews and saves.
  */
+
 
 
 
@@ -3219,6 +3327,7 @@ function formView(o){
     leave(){
       showNote('');$('txForm').classList.remove('in-sheet');$('txFormHome').appendChild($('txForm'));formInSheet=false;
       if(ui.editId!==null){endEdit();$('fVal').value='';$('fDesc').value='';}
+      else if(o.prefill&&(o.prefill.splits||o.prefill.reinv)){resetSplit();$('fReinv').checked=false;} // a copy that was cancelled must not leave its split parts in the next new record
       clearFieldErrors($('txForm'));
     }};
 }
@@ -3230,6 +3339,9 @@ function applyPrefill(p){
   if(p.date)$('fDate').value=p.date;
   if(p.fonte&&[...$('fFonte').options].some(o=>o.value===p.fonte))$('fFonte').value=p.fonte;
   if(p.acc&&[...$('fAcc').options].some(o=>o.value===p.acc))$('fAcc').value=p.acc;
+  if(p.reinv)$('fReinv').checked=true;
+  if(p.splits&&p.splits.length){ // the split parts of the copied record come along (same as when editing it)
+    ui.splitRows=p.splits.map(s=>({cat:s.cat,val:s.value}));$('splitBox').hidden=false;$('wMore').open=true;drawSplit();}
   updateFormHelp();
 }
 // "Pago com" / "Entrou em" starts with the method of the last record of this type
@@ -5771,7 +5883,9 @@ const MONTH_DETAILS={
            rows:s.expenses.undetailed.map(u=>txRow(u.invoice,{value:u.value,sign:'−',title:'❓ '+UNDETAILED_CAT,sub:'Parte da fatura paga em '+formatDateBR(u.invoice.date)+' sem compras lançadas'}))}],
         note:'Inclui compras no cartão e no VR/VA. O pagamento da fatura não entra de novo (as compras já contam).'}),
   contrib:(s,m,P)=>({title:'Aportes',sub:P,total:'→ '+f2(s.contributions.total),totalLabel:'Total investido',period:P,
-        groups:[{rows:txRows(s.contributions.items)}],empty:'Nenhum aporte neste mês.'}),
+        groups:[{rows:txRows(s.contributions.items)}].concat(s.reinvestments.items.length?[{label:'🔁 Reinvestimentos (não contam)',total:f2(s.reinvestments.total),rows:txRows(s.reinvestments.items)}]:[]),
+        note:s.reinvestments.items.length?'Reinvestimento é dinheiro que já estava investido (um CDB que venceu): aparece aqui só para você ver, e não entra no total investido nem na sobra do mês.':'',
+        empty:'Nenhum aporte neste mês.'}),
   cash:(s,m,P)=>{const c=s.cash,t=a=>f2(sumMoney(a.map(x=>x.value)));
         return {title:'Sobrou no caixa',sub:P,total:`<span class="${c.total>=0?'pos':'neg'}">${signedMoney(c.total)}</span>`,totalLabel:'Resultado do mês',period:P,
         count:c.cashIn.length+c.cashOut.length+c.invoices.length+c.contributions.length,
@@ -7707,13 +7821,14 @@ async function confirmCategories(record,ask){
 
 function readTransactionForm(){
   return {editId:ui.editId,type:ui.type,value:parseMoney($('fVal').value),date:$('fDate').value,cat:$('fCat').value,fonte:$('fFonte').value,
-    desc:$('fDesc').value,acc:$('fAcc').value,splits:ui.splitRows.map(r=>({cat:r.cat,value:r.val})),
+    desc:$('fDesc').value,acc:$('fAcc').value,reinv:$('fReinv').checked,splits:ui.splitRows.map(r=>({cat:r.cat,value:r.val})),
     fm:$('fFm').value,items:[...ui.invoiceSelection],invoiceSelectedTotal:selectedInvoiceTotal(),
     repeat:+$('fRep').value,applyToFuture:$('fApply').checked};
 }
 const FORM_FIELD={value:'fVal',date:'fDate',acc:'fAcc'};
 function successMessage(d,r){
   if(d.editId!==null)return '✅ Lançamento atualizado'+(r.siblings?' e mais '+r.siblings+' futuro(s)':'');
+  if(d.type==='aporte'&&d.reinv)return `🔁 Reinvestimento de ${f2(d.value)} em ${accName(d.acc)} registrado (não conta como novo aporte)`;
   if(d.type==='aporte')return `🏦 Aporte de ${f2(d.value)} em ${accName(d.acc)}. Saldo agora: ${f2(balance(d.acc,today()).v)}`;
   if(d.type==='fatura')return '💳 Pagamento de fatura de '+f2(d.value)+' registrado';
   return (d.type==='receita'?'➕ Receita':'➖ Despesa')+' de '+f2(d.value)+' adicionada'+(r.ids.length>1?` (${r.ids.length}x)`:'');

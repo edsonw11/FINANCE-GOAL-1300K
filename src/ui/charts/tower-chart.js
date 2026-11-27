@@ -52,7 +52,7 @@ export function drawTower(real,rows){
   const tip=$('tip'),box=$('box');
   svg.querySelectorAll('.hit').forEach(el=>{
     el.onmousemove=e=>{const j=+el.dataset.j,r=all[j];let h;
-      if(j<real.length)h=`<b>${mLabel(r.m)}</b><br>Total: ${f2(r.t)}<br>`+byType(r.bal).map(([id,v])=>`${esc(TYPE_NAME[id])}: ${f0(v)}`).join('<br>')+(r.ap?`<br>🏦 Aportes: ${f0(r.ap)}`:'')+`<br>Falta: ${f0(Math.max(goal-r.t,0))}`;
+      if(j<real.length)h=`<b>${mLabel(r.m)}</b><br>Total: ${f2(r.t)}${r.est?' <small>(com o rendimento estimado entre os saldos)</small>':''}<br>`+byType(r.bal).map(([id,v])=>`${esc(TYPE_NAME[id])}: ${f0(v)}`).join('<br>')+(r.ap?`<br>🏦 Aportes: ${f0(r.ap)}`:'')+`<br>Falta: ${f0(Math.max(goal-r.t,0))}`;
       else h=`<b>${mLabel(r.m)}</b> · projeção<br>Total: ${f0(r.t)}<br>Se juros caírem: ${f0(r.low)}<br>${r.t>=goal?'✅ meta atingida':'Falta: '+f0(goal-r.t)}`;
       tip.innerHTML=h;const bb=box.getBoundingClientRect();tip.style.left=Math.max(0,Math.min(e.clientX-bb.left+14,bb.width-240))+'px';tip.style.top=(e.clientY-bb.top+14)+'px';tip.style.opacity=1;};
     el.onclick=el.onmousemove;el.onmouseleave=()=>tip.style.opacity=0;});
