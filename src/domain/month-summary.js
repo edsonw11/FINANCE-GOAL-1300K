@@ -9,12 +9,14 @@ import { sumMoney } from '../core/money.js';
 import { S } from './store.js';
 import { txIn } from './transactions.js';
 import { invoiceUndetailed, openCard } from './card-invoices.js';
+import { isNewContribution, isReinvestment } from './reinvestment.js';
 const isVoucher=t=>t.fonte==='beneficio';
 export const isCard=t=>t.fonte==='cartao';
 const signedVoucher=t=>t.type==='receita'?t.value:t.type==='despesa'?-t.value:0;
 export function monthSummary(m){
   const end=monthEnd(m),start=m+'-01';
-  const income=txIn(m,'receita'),expenses=txIn(m,'despesa'),contributions=txIn(m,'aporte'),invoices=txIn(m,'fatura');
+  const income=txIn(m,'receita'),expenses=txIn(m,'despesa'),aportes=txIn(m,'aporte'),invoices=txIn(m,'fatura');
+  const contributions=aportes.filter(isNewContribution),reinvestments=aportes.filter(isReinvestment); // a reinvestment is not new money
   // part of a paid invoice with no purchase entered: it is still a cost of the month
   const undetailed=invoices.map(t=>({invoice:t,value:invoiceUndetailed(t)})).filter(x=>x.value>0.004);
   const cashIn=income.filter(t=>!isVoucher(t)),cashOut=expenses.filter(t=>!isVoucher(t)&&!isCard(t));
@@ -27,6 +29,7 @@ export function monthSummary(m){
     income:{items:income,total:sumMoney(val(income))},
     expenses:{items:expenses,undetailed,total:sumMoney(val(expenses).concat(undetailed.map(u=>u.value)))},
     contributions:{items:contributions,total:sumMoney(val(contributions))},
+    reinvestments:{items:reinvestments,total:sumMoney(val(reinvestments))},
     cash:{cashIn,cashOut,invoices,contributions,
       total:sumMoney(val(cashIn).concat(val(cashOut).map(v=>-v),val(invoices).map(v=>-v),val(contributions).map(v=>-v)))},
     openCard:{items:openCardItems,total:sumMoney(val(openCardItems))},

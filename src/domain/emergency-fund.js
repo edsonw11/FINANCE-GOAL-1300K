@@ -5,13 +5,14 @@
  */
 import { mIdx, mKey, mOf, today } from '../core/dates.js';
 import { roundMoney } from '../core/money.js';
+import { t } from '../core/i18n.js';
 import { S } from './store.js';
 import { balance } from './accounts.js';
 import { monthSummary } from './month-summary.js';
 export const RESERVE_TARGET_MONTHS=6,RESERVE_MIN_MONTHS=3,AVERAGE_MONTHS=3;
 export const reserveAccounts=()=>S.accounts.filter(a=>a.reserve&&!a.archived);
 export function setReserveAccount(id,flag){
-  const a=S.accounts.find(x=>x.id===id);if(!a)return {error:'Conta não encontrada'};
+  const a=S.accounts.find(x=>x.id===id);if(!a)return {error:t('sum.reserve.accountNotFound')};
   if(flag)a.reserve=true;else delete a.reserve;
   return {name:a.name};
 }

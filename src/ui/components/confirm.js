@@ -5,12 +5,13 @@
  * "also the future ones").
  * askConfirm({title,text,ok,alt,danger,check}) -> Promise of false (cancelled) or {checked, alt}.
  */
+import { t } from '../../core/i18n.js';
 import { $, esc } from '../../core/dom.js';
 export function askConfirm(o){
   const d=$('confirmDlg');
-  $('cfTitle').textContent=o.title||'Confirmar';
+  $('cfTitle').textContent=o.title||t('sys.confirm.title');
   $('cfText').innerHTML=o.html||esc(o.text||'').replace(/\n/g,'<br>');
-  const ok=$('cfOk');ok.textContent=o.ok||'Confirmar';ok.className='btn '+(o.danger?'dngf':'pri');
+  const ok=$('cfOk');ok.textContent=o.ok||t('sys.confirm.title');ok.className='btn '+(o.danger?'dngf':'pri');
   const alt=$('cfAlt');alt.hidden=!o.alt;alt.textContent=o.alt||'';
   $('cfCheckW').hidden=!o.check;$('cfCheckL').textContent=o.check||'';$('cfCheck').checked=!!o.checkDefault;
   if(d.open)d.close();

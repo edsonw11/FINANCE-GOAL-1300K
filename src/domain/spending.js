@@ -9,6 +9,7 @@ import { catParts, txIn } from './transactions.js';
 import { invoiceUndetailed } from './card-invoices.js';
 import { monthSpending } from './month-summary.js';
 import { roundMoney } from '../core/money.js';
+import { displayName } from '../core/stored-names.js';
 import { catMonth } from './categories.js';
 import { groupOf } from './category-groups.js';
 export const UNDETAILED_CAT='Cartão (sem detalhe)';
@@ -28,6 +29,20 @@ export function categoryItems(m,cat){
 }
 // {group: value} of a month: catMonth added up by group (same grand total)
 export function groupMonth(m){const g={};Object.entries(catMonth(m)).forEach(([c,v])=>{const k=groupOf(c);g[k]=roundMoney((g[k]||0)+v);});return g;}
+// {group: [{cat, value}]} of a month, biggest category first: what each group is made of (the values add up to groupMonth(m)[group])
+export function groupParts(m){
+  const g={};
+  Object.entries(catMonth(m)).forEach(([c,v])=>{const k=groupOf(c);(g[k]=g[k]||[]).push({cat:c,value:v});});
+  Object.values(g).forEach(list=>list.sort((a,b)=>b.value-a.value||a.cat.localeCompare(b.cat)));
+  return g;
+}
+// the categories a group is made of, as one short text ("Telefone", "Luz, Água, Internet +2"); '' when the group is a lone category with its own name
+export const MAX_NAMED_PARTS=3;
+export function partsText(list,group){
+  if(!list||!list.length||(list.length===1&&list[0].cat===group))return '';
+  const more=list.length-MAX_NAMED_PARTS;
+  return list.slice(0,MAX_NAMED_PARTS).map(x=>displayName(x.cat)).join(', ')+(more>0?' +'+more:'');
+}
 // [{t, value, cats}] whose values add up to groupMonth(m)[group]; one row per record
 // (a record split into Água + Gás + Moradia shows once in Moradia, with the sum of those parts)
 export function groupItems(m,group){

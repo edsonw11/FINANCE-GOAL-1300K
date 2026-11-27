@@ -73,7 +73,7 @@
 
   // ---- 3. A series of monthly records, "apply to the next ones", delete one ----------------------------------------------------------------------------------
   const series=()=>stored().tx.filter(t=>t.desc==='Mensalidade').sort((a,b)=>a.date.localeCompare(b.date));
-  const openFromList=async(id)=>{tab('lanc');$('qBox').value='Mensalidade';$('qBox').dispatchEvent(new Event('input'));await tick();
+  const openFromList=async(id,query)=>{tab('lanc');$('qBox').value=query||'Mensalidade';$('qBox').dispatchEvent(new Event('input'));await tick();
     const row=q(`#txList [data-tx="${id}"]`);need(row,'record '+id+' not in the list');row.click();await tick();need(q('#shFoot [data-act=edit]'),'no detail');};
   await step('series: "Todo mês · 3x" creates three records, one per month, with their own ids and one series number',async()=>{
     await addRecord({cents:'4000',cat:'Academia',date:'2026-05-10',desc:'Mensalidade',rep:3,fonte:'caixa'});
@@ -199,6 +199,150 @@
     need(/Não identifiquei as colunas/.test($('sheet').textContent),'no explanation of why');
     $('impMapGo').click();await tick();need(/Escolha ao menos a coluna da data e a do valor/.test($('sheet').textContent),'no message');
     same(stored().tx.length,n,'nothing saved');closeSheet();});
+
+  // ---- 7. Owner-reported bugs: split + repeat, the "Repetir" button, reinvestment, what a group is made of -----------------------------------------------------
+  const splitRowsShown=()=>qa('#splitRows [data-sc]').map((c,i)=>[c.value,qa('#splitRows [data-sv]')[i].value]);
+  await step('split + repeat: a record with split parts and "Todo mês · 3x" creates three records that all carry the parts',async()=>{
+    $('fab').click();await tick();type($('fVal'),'10000');$('fCat').value='Mercado';$('fDate').value='2025-05-03';$('fDesc').value='Convenio e aluguel';
+    $('wMore').open=true;$('splitBtn').click();const c=q('[data-sc="0"]'),v=q('[data-sv="0"]');c.value='Saúde';c.dispatchEvent(new Event('input'));v.value='30,00';v.dispatchEvent(new Event('input'));
+    $('fRep').value='3';$('fSave').click();await tick();closeSheet();
+    const rows=stored().tx.filter(t=>t.desc==='Convenio e aluguel');
+    same(rows.map(t=>t.date),['2025-05-03','2025-06-03','2025-07-03'],'three months');
+    same(rows.map(t=>(t.splits||[]).map(x=>[x.cat,x.value])),[[['Saúde',30]],[['Saúde',30]],[['Saúde',30]]],'every month has the split part');});
+  await step('"Repetir" button: the copy opens with the split parts, saves them, and a cancelled copy leaves nothing in the next new record',async()=>{
+    const src=stored().tx.find(t=>t.desc==='Convenio e aluguel');await openFromList(src.id,'Convenio e aluguel');q('#shFoot [data-act=dup]').click();await tick();
+    need(!$('splitBox').hidden,'split box not open in the copy');same(splitRowsShown(),[['Saúde','R$ 30,00']],'the parts are in the copy');
+    $('fDate').value='2025-09-09';$('fSave').click();await tick();closeSheet();
+    const copy=stored().tx.filter(t=>t.desc==='Convenio e aluguel'&&t.date==='2025-09-09');
+    same(copy.map(t=>(t.splits||[]).map(x=>[x.cat,x.value])),[[['Saúde',30]]],'the saved copy has the split part');need(!copy[0].serie,'the copy is not part of the old series');
+    // a copy that is cancelled must not leave its parts in the next new record
+    await openFromList(src.id,'Convenio e aluguel');q('#shFoot [data-act=dup]').click();await tick();need(!$('splitBox').hidden,'copy opened without parts');closeSheet();
+    $('fab').click();await tick();need($('splitBox').hidden,'the next new record starts with the parts of the cancelled copy');$('splitBtn').click();same(splitRowsShown(),[['','']],'opening the split starts with one empty part, not the cancelled copy');closeSheet();});
+  await step('reinvestment: an aporte marked "É reinvestimento" is not "Investido", does not leave the month, and is shown apart',async()=>{
+    tab('meta');$('newAcc').value='CDB teste';$('addAcc').click();await tick();
+    const acc=stored().accounts.find(a=>a.name==='CDB teste');need(acc,'account not created');
+    await addRecord({type:'receita',cents:'300000',cat:'Salário',date:'2025-08-05',desc:'salário',fonte:'caixa'});
+    // a normal aporte of 1000 and a reinvestment of 500, both through the form
+    $('fab').click();await tick();let r=q('input[name=tp][value=aporte]');r.checked=true;r.dispatchEvent(new Event('change'));
+    need(!$('wReinv').hidden,'the reinvestment option is not shown for an aporte');need($('fReinv').checked===false,'it starts unchecked');
+    type($('fVal'),'100000');$('fAcc').value=acc.id;$('fDate').value='2025-08-10';$('fSave').click();await tick();closeSheet();
+    $('fab').click();await tick();r=q('input[name=tp][value=aporte]');r.checked=true;r.dispatchEvent(new Event('change'));
+    type($('fVal'),'50000');$('fAcc').value=acc.id;$('fDate').value='2025-08-12';$('fDesc').value='CDB venceu';$('fReinv').checked=true;$('fSave').click();await tick();closeSheet();
+    const ap=stored().tx.filter(t=>t.type==='aporte'&&t.date.startsWith('2025-08'));
+    same(ap.map(t=>[t.value,t.reinv===true]),[[1000,false],[500,true]],'the mark is stored only on the reinvestment');
+    $('fab').click();await tick();need($('fReinv').checked===false,'the mark stays on for the next record');closeSheet();
+    tab('resumo');
+    const kf=$('kFlow').textContent;need(/Investido/.test(kf)&&/1\.000,00/.test(kf)&&!/1\.500,00/.test(kf),'the Investido card should show 1.000,00 and not 1.500,00: '+kf);
+    need(/Investiu R\$\s?1\.000,00/.test(document.body.textContent),'the hero should say Investiu R$ 1.000,00');
+    need(/Ficou na conta R\$\s?2\.000,00/.test(document.body.textContent),'the leftover in the account must be 3000 - 1000 = 2.000,00 (the reinvestment does not leave it)');});
+  await step('reinvestment: the detail of "Investido" lists the reinvestment apart, and editing the mark back makes it a normal aporte',async()=>{
+    q('[data-kpi="contrib"]').click();await tick();
+    need(/Reinvestimentos/.test($('sheet').textContent),'no "Reinvestimentos" group: '+$('sheet').textContent.slice(0,200));closeSheet();
+    const re=stored().tx.find(t=>t.reinv);await openFromList(re.id,'CDB venceu');q('#shFoot [data-act=edit]').click();await tick();
+    need($('fReinv').checked,'the edit form does not show the mark');$('fReinv').checked=false;$('fSave').click();await tick();closeSheet();
+    same(stored().tx.filter(t=>t.type==='aporte'&&t.date.startsWith('2025-08')).map(t=>t.reinv===undefined),[true,true],'the mark is removed from the stored record');
+    need(/1\.500,00/.test($('kFlow').textContent),'after the edit it counts as new money again: '+$('kFlow').textContent);});
+  await step('spending by group: a phone bill under "Moradia" shows "Telefone" under the group name',async()=>{
+    await addRecord({cents:'3000',cat:'Telefone',date:'2025-10-14',desc:'Plano',fonte:'caixa'});tab('resumo');
+    const row=q('#cats .catrow');need(row&&/Moradia/.test(row.textContent),'the group row is not Moradia: '+(row&&row.textContent));
+    const sub=row.querySelector('[data-smoke=group-parts]');need(sub&&sub.textContent==='Telefone','the group does not say what it is made of: '+(sub&&sub.textContent));
+    await addRecord({cents:'8000',cat:'Luz',date:'2025-10-15',desc:'Conta de luz',fonte:'caixa'});
+    need(q('#cats .catrow [data-smoke=group-parts]').textContent==='Luz, Telefone','several categories are listed by value: '+q('#cats .catrow [data-smoke=group-parts]').textContent);});
+
+  await step('import: the name typed for a new investment account is kept even if the field is never left (no change event)',async()=>{
+    const acc0=stored().accounts.length,tx0=stored().tx.length;tab('lanc');$('impOpen').click();
+    await sendFile('aporte-novo.csv','Data;Descrição;Valor\n06/11/2025;PIX ENVIADO CORRETORA NOVA;-3.000,00');await waitFor(()=>q('#impList .imp-row'),'review');
+    q('#impList .imp-main').click();
+    const ty=q('#impList [data-f=type]');ty.value='aporte';ty.dispatchEvent(new Event('change',{bubbles:true}));
+    const sel=q('#impList [data-f=acc]');sel.value='__new';sel.dispatchEvent(new Event('change',{bubbles:true}));
+    type(q('#impList [data-f=newAcc]'),'Banco Digitado'); // only input events, like a phone keyboard that is not closed before the tap
+    $('impGo').click();await tick();if($('confirmDlg').open)$('cfOk').click();await waitFor(()=>q('.imp-done'),'result');
+    const st=stored(),a=st.accounts.find(x=>x.name==='Banco Digitado');
+    need(st.accounts.length===acc0+1&&a,'the typed account was not created: '+JSON.stringify(st.accounts.map(x=>x.name)));
+    need(st.tx.length===tx0+1&&st.tx.some(t=>t.type==='aporte'&&t.value===3000&&t.acc===a.id),'aporte not saved in the typed account');
+    $('impDone').click();tab('lanc');$('impOpen').click();
+    await sendFile('aporte-novo2.csv','Data;Descrição;Valor\n07/11/2025;PIX ENVIADO CORRETORA NOVA;-1.000,00');await waitFor(()=>q('#impList .imp-row'),'second review');
+    q('#impList .imp-main').click();const ty2=q('#impList [data-f=type]');ty2.value='aporte';ty2.dispatchEvent(new Event('change',{bubbles:true}));
+    const sel2=q('#impList [data-f=acc]');need([...sel2.options].some(o=>o.textContent==='Banco Digitado'),'the created account is not offered in the next import');
+    $('impClose')&&$('impClose').click();closeSheet();});
+
+  await step('category chips under the field fill the category (new record)',async()=>{
+    $('fab').click();await tick();const r=q('input[name=tp][value=despesa]');r.checked=true;r.dispatchEvent(new Event('change'));await tick();
+    const chips=qa('#catChips .chip');need(chips.length>0,'no category chips');const pick=chips[chips.length-1];const name=pick.dataset.qc;
+    pick.click();await tick();need($('fCat').value===name,'the chip did not fill the category: "'+$('fCat').value+'" expected "'+name+'"');
+    need(q('#catChips .chip.on')&&q('#catChips .chip.on').dataset.qc===name,'the chosen chip is not marked');closeSheet();});
+
+  await step('split parts: editing a saved record shows one-tap categories on each part; tapping one changes the part',async()=>{
+    $('fab').click();await tick();type($('fVal'),'20000');$('fCat').value='Mercado';$('fDate').value='2025-11-03';$('fDesc').value='Compra com parte';
+    $('wMore').open=true;$('splitBtn').click();const c0=q('[data-sc="0"]'),v0=q('[data-sv="0"]');c0.value='Saúde';c0.dispatchEvent(new Event('input'));v0.value='50,00';v0.dispatchEvent(new Event('input'));
+    $('fSave').click();await tick();closeSheet();
+    const id=stored().tx.find(x=>x.desc==='Compra com parte').id;await openFromList(id,'Compra com parte');q('#shFoot [data-act=edit]').click();await tick();
+    need(!$('splitBox').hidden&&q('[data-sc="0"]').value==='Saúde','the edit form does not show the saved part');
+    need(q('#splitRows .sp-part:first-child [data-qchips] .chip'),'the part has no one-tap categories');
+    need(q('[data-sc="0"]').getBoundingClientRect().width>=$('fDesc').getBoundingClientRect().width*0.9,'the part category field is narrower than a normal field: '+q('[data-sc="0"]').getBoundingClientRect().width);
+    const chip=qa('#splitRows .sp-part:first-child [data-qchips] .chip').find(b=>b.dataset.qc!=='Saúde');need(chip,'no other category to pick');
+    chip.click();await tick();need(q('[data-sc="0"]').value===chip.dataset.qc,'the chip did not change the part: '+q('[data-sc="0"]').value);
+    need(q('#splitRows .sp-part:first-child [data-qchips] .chip.on')&&q('#splitRows .sp-part:first-child [data-qchips] .chip.on').dataset.qc===chip.dataset.qc,'the chosen chip is not marked');
+    const inView=c=>{const a=c.getBoundingClientRect(),b=c.parentElement.getBoundingClientRect();return a.left>=b.left-1&&a.right<=b.right+1;};
+    need(inView(q('#splitRows .sp-part:first-child [data-qchips] .chip.on')),'the chosen chip is hidden off the side of the row');
+    need(q('#splitRows .sp-part:first-child [data-qchips]').getBoundingClientRect().height<50,'the one-tap categories take more than one line: '+q('#splitRows .sp-part:first-child [data-qchips]').getBoundingClientRect().height);
+    const gap=q('#splitRows .sp-part:first-child [data-sv]').getBoundingClientRect().top-q('#splitRows .sp-part:first-child [data-qchips]').getBoundingClientRect().bottom;need(gap>=8,'the value field is stuck to the categories: '+gap);
+    $('fSave').click();await tick();if($('confirmDlg').open)$('cfOk').click();await tick();closeSheet();
+    const t=stored().tx.find(x=>x.desc==='Compra com parte');same((t.splits||[]).map(x=>[x.cat,x.value]),[[chip.dataset.qc,50]],'the stored part has the tapped category');});
+
+  await step('category group is a select: pick an existing group, or create a new one from "Novo grupo…"',async()=>{
+    tab('cad');await tick();qa('#catPage details.cat-det').forEach(d=>d.open=true);await tick();
+    const sel=q('#catPage select[data-cg]');need(sel,'the group of a category is not a select');
+    need([...sel.options].some(o=>/Novo grupo/.test(o.textContent))&&[...sel.options].some(o=>o.value===''),'options: '+[...sel.options].map(o=>o.textContent).join('|'));
+    const i=sel.dataset.cg,name=sel.getAttribute('aria-label').replace('Grupo de ','');
+    sel.value='__new_group';sel.dispatchEvent(new Event('change',{bubbles:true}));await tick();
+    const inp=q(`#catPage input[data-cg="${i}"]`);need(inp&&!q(`#catPage select[data-cg="${i}"]`),'"Novo grupo…" did not give a text field');
+    inp.value='Grupo Teste Novo';inp.dispatchEvent(new Event('change',{bubbles:true}));await tick();
+    const cat=stored().cats.despesa.find(c=>c.name===name);need(cat&&cat.group==='Grupo Teste Novo','the new group was not set on the category: '+JSON.stringify(cat));
+    need((stored().groups||[]).some(g=>g.name==='Grupo Teste Novo'),'the group was not created');
+    qa('#catPage details.cat-det').forEach(d=>d.open=true);await tick();
+    const sel2=qa('#catPage select[data-cg]').find(s=>s.getAttribute('aria-label')==='Grupo de '+name);need(sel2&&sel2.value==='Grupo Teste Novo','the select does not show the new group: '+(sel2&&sel2.value));
+    sel2.value='';sel2.dispatchEvent(new Event('change',{bubbles:true}));await tick();
+    need(!stored().cats.despesa.find(c=>c.name===name).group,'"Sem grupo" did not clear the group');tab('resumo');});
+
+  await step('language: flag buttons switch between Portuguese, English and Spanish, the whole screen follows, "Automático" follows the phone, the choice is saved',async()=>{
+    tab('cfg');await tick();
+    const btn=v=>q('#langBtns [data-lang="'+v+'"]'),pick=async v=>{btn(v).click();await tick();},nav=()=>q('#nav [data-t=resumo] [data-i18n]').textContent;
+    need([...qa('#langBtns [data-lang]')].map(b=>b.dataset.lang).join()==='auto,pt-BR,en-US,es','buttons: '+[...qa('#langBtns [data-lang]')].map(b=>b.dataset.lang).join());
+    need(!$('langSel'),'the old language combo is still on the page');
+    need(qa('#langBtns .lang-btn').every(b=>b.querySelector('.lang-flag svg')),'every button needs a flag or icon');
+    same(qa('#langBtns [data-lang]').slice(1).map(b=>b.querySelector('.lang-name').textContent),['Português','English','Español'],'each language is written in itself');
+    const NAV={'pt-BR':'Resumo','en-US':'Summary','es':'Resumen'},H1={'pt-BR':'Resumo do mês','en-US':'Monthly summary'},CFG={'pt-BR':'Ajustes','en-US':'Settings','es':'Ajustes'};
+    const L=['pt-BR','en-US','es'];
+    for(const a of L)for(const b of L){await pick(a);await pick(b);
+      need(document.documentElement.lang===b,a+' -> '+b+': <html lang> is '+document.documentElement.lang);
+      need(nav()===NAV[b],a+' -> '+b+': menu says '+nav());
+      need(q('#bnav [data-t=resumo] [data-i18n]').textContent===NAV[b],a+' -> '+b+': the phone menu says '+q('#bnav [data-t=resumo] [data-i18n]').textContent);
+      need(q('#nav [data-t=cfg] [data-i18n]').textContent===CFG[b],a+' -> '+b+': settings tab says '+q('#nav [data-t=cfg] [data-i18n]').textContent);
+      if(H1[b])need(q('#t-resumo h1').textContent===H1[b],a+' -> '+b+': page title is '+q('#t-resumo h1').textContent);
+      need(btn(b).getAttribute('aria-checked')==='true'&&qa('#langBtns [aria-checked=true]').length===1,a+' -> '+b+': the pressed flag is not '+b);
+      need(qa('#nav [data-t] svg').length>=7,a+' -> '+b+': the menu icons were lost');
+      need(localStorage.getItem('metaapp.language')===b,'the choice was not saved: '+localStorage.getItem('metaapp.language'));}
+    await pick('en-US');need(/In use now: English/.test($('langInfo').textContent)&&/3 languages available/.test($('langInfo').textContent),'info: '+$('langInfo').textContent);
+    need(!/Resumo|Lançamentos|Ajustes/.test(q('#nav').textContent),'the menu still has Portuguese words in English: '+q('#nav').textContent);
+    await pick('es');need(/En uso ahora: Español/.test($('langInfo').textContent)&&/3 idiomas disponibles/.test($('langInfo').textContent),'info: '+$('langInfo').textContent);
+    need(/Automático/.test(btn('auto').querySelector('.lang-name').textContent),'auto label: '+btn('auto').textContent);
+    // the date in the header is written in the chosen language
+    await pick('en-US');need(/^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/.test($('todayLbl').textContent),'date in English: '+$('todayLbl').textContent);
+    await pick('es');need(/^(lunes|martes|miércoles|jueves|viernes|sábado|domingo)/.test($('todayLbl').textContent),'date in Spanish: '+$('todayLbl').textContent);
+    await pick('pt-BR');need(/-feira|sábado|domingo/.test($('todayLbl').textContent),'date in Portuguese: '+$('todayLbl').textContent);
+    // automatic: follows the language of the phone (here faked), and falls back to English for one the app does not have
+    const fake=l=>Object.defineProperty(navigator,'languages',{configurable:true,get:()=>l});
+    fake(['es-MX']);await pick('auto');need(document.documentElement.lang==='es'&&localStorage.getItem('metaapp.language')==='auto','auto on a Spanish phone: '+document.documentElement.lang);
+    need(btn('auto').getAttribute('aria-checked')==='true','the automatic button is not marked');
+    need(/Idioma detectado en el dispositivo: Español/.test($('langInfo').textContent),'info: '+$('langInfo').textContent);
+    fake(['pt-PT']);await pick('en-US');await pick('auto');need(document.documentElement.lang==='pt-BR','auto on a Portuguese phone: '+document.documentElement.lang);
+    fake(['fr-FR','de']);await pick('es');await pick('auto');need(document.documentElement.lang==='en-US','auto on a French phone should fall back to English: '+document.documentElement.lang);
+    need(nav()==='Summary','the menu is not in English after the fallback: '+nav());
+    fake(['fr-FR','es-AR']);await pick('en-US');await pick('auto');need(document.documentElement.lang==='es','auto takes the first supported language of the phone: '+document.documentElement.lang);
+    // back to Portuguese so the rest of the checks (written in Portuguese) keep working
+    await pick('pt-BR');need(nav()==='Resumo'&&document.documentElement.lang==='pt-BR','not back in Portuguese');
+    delete navigator.languages;tab('resumo');});
 
   await step('no script error so far',()=>{need(errs.length===0,errs.join(' / '));});
   document.documentElement.setAttribute('data-smoke',out.concat(errs).join(' | '));

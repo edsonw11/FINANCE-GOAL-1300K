@@ -11,32 +11,37 @@ python3 -I - "$DIR" "$TMP" <<'PY'
 import sys
 d,t=sys.argv[1],sys.argv[2]
 h=open(d+'/index.html').read().replace('href="src/','href="../src/').replace('src="src/','src="../src/')
-open(d+'/tests/.smoke.html','w').write(h.replace('</body>','<script src="fixtures/statement-pdf.js"></script><script type="module" src="smoke.js"></script>\n</body>'))
+# the scenarios were written in Portuguese: the fake phone speaks Portuguese (the language scenarios choose their own)
+PHONE_PT='<script src="fixtures/phone-pt.js"></script>'
+h_pt=h.replace('<head>','<head>'+PHONE_PT,1)
+open(d+'/tests/.smoke.html','w').write(h_pt.replace('</body>','<script src="fixtures/statement-pdf.js"></script><script type="module" src="smoke.js"></script>\n</body>'))
 # the sync card: the same page with a scripted API in place of fetch (installed before the app starts)
-open(d+'/tests/.smoke-sync.html','w').write(h.replace('<script type="module" src="../src/app.js">','<script src="fixtures/fake-api.js"></script>\n<script type="module" src="../src/app.js">').replace('</body>','<script type="module" src="smoke-sync.js"></script>\n</body>'))
-open(d+'/tests/.smoke-xss.html','w').write(h.replace('</body>','<script type="module" src="smoke-xss.js"></script>\n</body>'))
+open(d+'/tests/.smoke-sync.html','w').write(h_pt.replace('<script type="module" src="../src/app.js">','<script src="fixtures/fake-api.js"></script>\n<script type="module" src="../src/app.js">').replace('</body>','<script type="module" src="smoke-sync.js"></script>\n</body>'))
+open(d+'/tests/.smoke-xss.html','w').write(h_pt.replace('</body>','<script type="module" src="smoke-xss.js"></script>\n</body>'))
 # the money flows (settings, balances, series, split, card invoices) on a blank app
-open(d+'/tests/.smoke-flows.html','w').write(h.replace('</body>','<script type="module" src="smoke-flows.js"></script>\n</body>'))
+open(d+'/tests/.smoke-flows.html','w').write(h_pt.replace('</body>','<script type="module" src="smoke-flows.js"></script>\n</body>'))
+# every screen in English and Spanish has no Portuguese (blank app, then with records)
+open(d+'/tests/.smoke-i18n.html','w').write(h.replace('</body>','<script type="module" src="smoke-i18n.js"></script>\n</body>'))
 import os
 os.makedirs(t+'/native',exist_ok=True)
 sys.path.insert(0,d+'/scripts')
 import importlib.util
 sp=importlib.util.spec_from_file_location('bm',d+'/scripts/build-mobile.py');bm=importlib.util.module_from_spec(sp);sp.loader.exec_module(bm)
 page=bm.build(open(d+'/dist/index.html').read())
-open(t+'/native/index.html','w').write(page.replace('</title>','</title>\n<script src="fake-native.js"></script>',1).replace('</body>','<script src="smoke-native.js"></script>\n</body>'))
+open(t+'/native/index.html','w').write(page.replace('</title>','</title>\n<script src="phone-pt.js"></script><script src="fake-native.js"></script>',1).replace('</body>','<script src="smoke-native.js"></script>\n</body>'))
 import shutil
-for f in ('fake-native.js','statement-pdf.js','import-samples.js'):shutil.copy(d+'/tests/fixtures/'+f,t+'/native/'+f)
+for f in ('fake-native.js','statement-pdf.js','import-samples.js','phone-pt.js'):shutil.copy(d+'/tests/fixtures/'+f,t+'/native/'+f)
 shutil.copy(d+'/tests/smoke-native.js',t+'/native/smoke-native.js')
 shutil.copy(d+'/tests/smoke-native-import.js',t+'/native/smoke-native-import.js')
 bm.copy_pdfjs(__import__('pathlib').Path(t+'/native'))
 # the same Android page with the file formats scenario instead of the lock one
 open(t+'/native/import.html','w').write(open(t+'/native/index.html').read().replace('<script src="smoke-native.js"></script>','<script src="statement-pdf.js"></script><script src="import-samples.js"></script><script src="smoke-native-import.js"></script>'))
-b=open(d+'/dist/finance_goal_1300k.html').read()
+b=open(d+'/dist/finance_goal_1300k.html').read().replace('<head>','<head><script>\n'+open(d+'/tests/fixtures/phone-pt.js').read()+'</script>',1)
 open(t+'/dist-smoke.html','w').write(b.replace('</body>','<script>\n'+open(d+'/tests/fixtures/statement-pdf.js').read()+'</script><script>\n'+open(d+'/tests/smoke.js').read()+'</script>\n</body>'))
 PY
 python3 "$DIR/scripts/serve-csp.py" 8767 "$DIR" >/dev/null 2>&1 & SRV=$!
 python3 -m http.server 8769 --bind 127.0.0.1 --directory "$TMP/native" >/dev/null 2>&1 & SRV2=$!
-trap 'kill $SRV $SRV2 2>/dev/null; rm -rf "$TMP" "$DIR/tests/.smoke.html" "$DIR/tests/.smoke-sync.html" "$DIR/tests/.smoke-xss.html" "$DIR/tests/.smoke-flows.html"' EXIT
+trap 'kill $SRV $SRV2 2>/dev/null; rm -rf "$TMP" "$DIR/tests/.smoke.html" "$DIR/tests/.smoke-sync.html" "$DIR/tests/.smoke-xss.html" "$DIR/tests/.smoke-flows.html" "$DIR/tests/.smoke-i18n.html"' EXIT
 sleep 0.6
 FAILED=0
 run(){ # $1 label, $2 url, $3 profile dir (SMOKE_ONLY=text runs only the scenarios whose label contains it)
@@ -53,6 +58,7 @@ run "source (ES modules over http)" "http://127.0.0.1:8767/tests/.smoke.html" "$
 run "sync card, signed in (scripted API)" "http://127.0.0.1:8767/tests/.smoke-sync.html" "$TMP/p3"
 run "sync card, signed out" "http://127.0.0.1:8767/tests/.smoke-sync.html#signedout" "$TMP/p4"
 run "money flows: settings, balances, series, split, card invoices (blank app)" "http://127.0.0.1:8767/tests/.smoke-flows.html" "$TMP/p9"
+run "languages: every screen in English and Spanish has no Portuguese" "http://127.0.0.1:8767/tests/.smoke-i18n.html" "$TMP/p10"
 run "XSS: hostile text in every field, every screen (two loads)" "http://127.0.0.1:8767/tests/.smoke-xss.html" "$TMP/p5"
 run "Android shell: page with its own CSP and a scripted Capacitor" "http://127.0.0.1:8769/index.html" "$TMP/p6"
 run "Android shell, app lock on: starts locked (scripted AppLock)" "http://127.0.0.1:8769/index.html#locked" "$TMP/p7"

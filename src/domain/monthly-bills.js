@@ -12,6 +12,7 @@
  */
 import { addMonths, mIdx, mKey, mOf, today } from '../core/dates.js';
 import { sumMoney } from '../core/money.js';
+import { t } from '../core/i18n.js';
 import { S } from './store.js';
 export const BILL_STATUS={paid:'paid',scheduled:'scheduled',missing:'missing'};
 export const LOOKBACK_MONTHS=3,MIN_OCCURRENCES=2;
@@ -49,7 +50,7 @@ export function monthlyBills(m,day=today()){
 }
 // "Não é conta": the user hides a bill the rule picked by mistake (kept until restored)
 export function ignoreBill(key){
-  if(!key)return {error:'Conta não encontrada'};
+  if(!key)return {error:t('sum.bills.notFound')};
   S.billsIgnored=S.billsIgnored||[];if(!S.billsIgnored.includes(key))S.billsIgnored.push(key);
   return {key};
 }

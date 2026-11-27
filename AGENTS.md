@@ -21,7 +21,7 @@ Everfox is a personal finance app. The owner's goal is an invested net worth of 
 index.html                 markup of the 7 tabs and dialogs (one page)
 src/app.js                 bootstrap: wires everything, no rules, no HTML
 src/core/                  pure helpers: config, DOM helpers, format, dates, money (integer cents), text-normalize
-src/domain/                the rules and the state: 55 files, no DOM, no toast, no render
+src/domain/                the rules and the state: 58 files, no DOM, no toast, no render
 src/sync/                  web sync client: outbox, records, apply, api-client, runner
 src/ui/                    screens (views/), components/, charts/, app-lock/, native-bridge.js, render.js
 src/styles/                13 CSS files in cascade order
@@ -32,7 +32,7 @@ android/ , capacitor.config.json , mobile/www/ (generated)   the Android shell
 services/telegram-apk/     developer tool: sends the debug APK to a Telegram chat (not part of the app)
 scripts/                   dev.sh, mobile.sh, build.py, smoke.sh, secret-scan.sh, device tests, lib/device.mjs
 dev/                       local Keycloak realm and PostgreSQL setup for docker compose
-tests/                     unit/ (68 files), fixtures/, smoke*.js (end to end), mobile-check.js
+tests/                     unit/ (72 files), fixtures/, smoke*.js (end to end), mobile-check.js
 docs/architecture/         00-current-state.md, decisions/ADR-0001..0014, diagrams/ (section 11)
 docs/security/             threat-model.md, security-test-plan.md, security-findings.md
 ```
@@ -114,7 +114,7 @@ Not done on Android: sign-in and sync (needs a system-browser login, an app link
 
 | Layer | Where | Run |
 |---|---|---|
-| Browser unit tests | `tests/unit/*.test.js` (67 files; architecture, golden calculations, app lock, sync, imports) | `npm run test:unit` |
+| Browser unit tests | `tests/unit/*.test.js` (72 files; architecture, golden calculations, app lock, sync, imports) | `npm run test:unit` |
 | End to end (headless Chrome) | `tests/smoke.js`, `smoke-sync.js`, `smoke-xss.js`, `smoke-native.js` (fake native layer in `tests/fixtures/fake-native.js`) | `npm run test:e2e` |
 | Phone widths | `tests/mobile-check.js` | `npm run test:mobile` |
 | Backend unit | `backend/test/unit` | `cd backend && npm test` |

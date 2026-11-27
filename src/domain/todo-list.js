@@ -11,6 +11,7 @@ import { payableInvoices } from './card-invoices.js';
 import { invoiceStatus } from './card-status.js';
 import { budgetStatus, BUDGET_LEVEL } from './budgets.js';
 import { monthlyBills, BILL_STATUS } from './monthly-bills.js';
+import { isNewContribution } from './reinvestment.js';
 export const MAX_ACTIONS=3;
 export const ACTION={late:'invoice-late',due:'invoice-due',budget:'budget-over',bills:'bills-missing',contribute:'no-contribution',reserve:'no-reserve'};
 const DUE_SOON_DAYS=7;
@@ -28,7 +29,7 @@ export function nextActions(day=today()){
   const missing=monthlyBills(m,day).items.filter(i=>i.status===BILL_STATUS.missing&&i.date<=day);
   if(missing.length)items.push({code:ACTION.bills,urgency:3,go:'bills',data:{count:missing.length}});
   // only worth saying when the user already invests (some account) and nothing went in this month
-  const invests=S.accounts.some(a=>!a.archived),contributed=S.tx.some(t=>t.type==='aporte'&&mOf(t.date)===m);
+  const invests=S.accounts.some(a=>!a.archived),contributed=S.tx.some(t=>isNewContribution(t)&&mOf(t.date)===m);
   if(invests&&!contributed&&day.slice(8)>='10')items.push({code:ACTION.contribute,urgency:4,go:'invest',data:{}});
   // investments exist but none is marked as the emergency reserve (the reserve card stays hidden until then)
   if(invests&&!S.accounts.some(a=>a.reserve&&!a.archived))items.push({code:ACTION.reserve,urgency:5,go:'invest',data:{}});

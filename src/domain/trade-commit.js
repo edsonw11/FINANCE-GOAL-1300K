@@ -12,26 +12,28 @@ import { textHash } from '../core/text-normalize.js';
 import { saveTransaction } from './transaction-builder.js';
 import { ASSET_LABEL } from './ticker-class.js';
 import { accName } from './accounts.js';
-const fmt=n=>String(n).replace('.',',');
+import { t, tt } from '../core/i18n.js';
+import { decimalSeparator } from '../core/locale-format.js';
+const fmt=n=>String(n).replace('.',decimalSeparator());
 function accountForClass(cls){
-  const name=ASSET_LABEL[cls]||'Ações';
+  const name=ASSET_LABEL[cls]||ASSET_LABEL.acao;
   const found=S.accounts.find(a=>!a.archived&&accName(a.id)===name);
   if(found)return found.id;
   const id='a'+(S.nid++);S.accounts.push({id,name});return id;
 }
 export const tradeKey=(date,t,n)=>'trade:'+textHash([date,t.side,t.ticker,t.qty,t.price].join('|'))+'#'+n;
 // what is wrong with a trade that makes it impossible to save; [] = ok
-export function tradeProblems(t){
+export function tradeProblems(tr){
   const p=[];
-  if(!/^[A-Z]{4}\d{1,2}$/.test(String(t.ticker||'').toUpperCase()))p.push('Código do ativo (ex.: PETR4)');
-  if(!(t.qty>0)||!(t.price>0))p.push('Quantidade ou preço inválido');
+  if(!/^[A-Z]{4}\d{1,2}$/.test(String(tr.ticker||'').toUpperCase()))p.push(t('imp.trade.ticker'));
+  if(!(tr.qty>0)||!(tr.price>0))p.push(t('imp.trade.qtyPrice'));
   return p;
 }
 export function commitTrades(trades,meta){
   const date=meta.date;
-  if(!date)return {error:'Data da nota inválida'};
+  if(!date)return {error:t('imp.trade.badDate')};
   const bad=trades.find(t=>tradeProblems(t).length);
-  if(bad)return {error:'Corrija: '+tradeProblems(bad)[0]};
+  if(bad)return {error:t('imp.trade.fix',{problem:tradeProblems(bad)[0]})};
   S.trades=S.trades||[];
   const taken=new Set(S.trades.map(t=>t.key)),seen={};let saved=0,skipped=0,bought=0;
   trades.forEach(t=>{
@@ -42,7 +44,7 @@ export function commitTrades(trades,meta){
     S.trades.push({id:'t'+(S.nid++),key,date,ticker,cls:t.cls,name:t.name||'',side:t.side,qty:t.qty,price:t.price,fees:roundMoney(t.fees||0)});
     if(t.side==='C'){
       const r=saveTransaction({editId:null,type:'aporte',value:roundMoney(t.qty*t.price+(t.fees||0)),date,cat:'',fonte:'caixa',acc:accountForClass(t.cls),
-        desc:'Compra '+ticker+' '+fmt(t.qty)+' × '+String(t.price).replace('.',','),splits:[],repeat:1});
+        desc:tt('data.tradeBuy',{ticker,qty:fmt(t.qty),price:fmt(t.price)}),splits:[],repeat:1});
       if(r&&r.error)throw new Error(r.error);
       r.ids.forEach(id=>{const x=S.tx.find(y=>y.id===id);if(x)x.imp=key;});bought++;
     }

@@ -14,6 +14,7 @@ import { IMPORT_TYPE, classifyEntry } from './import-classify.js';
 import { suggestFromHistory } from './import-history.js';
 import { NEW_ACCOUNT, defaultAccount } from './import-account.js';
 import { splitParts, splitRest } from './import-split.js';
+import { t } from '../core/i18n.js';
 export const SAVEABLE=[IMPORT_TYPE.expense,IMPORT_TYPE.income,IMPORT_TYPE.contribution];
 export const isSaveable=d=>SAVEABLE.includes(d.type);
 const MAX_VALUE=10000000;
@@ -56,12 +57,12 @@ export function buildDrafts(entries,o){
 // what is wrong with a draft that makes it impossible to save; [] = can be saved
 export function draftProblems(d){
   const p=[];
-  if(!SAVEABLE.includes(d.type))p.push('Tipo: escolha despesa, receita ou aporte');
-  if(d.type===IMPORT_TYPE.contribution&&!d.acc)p.push('Investimento: escolha para onde vai o aporte');
-  if(d.type===IMPORT_TYPE.contribution&&d.acc===NEW_ACCOUNT&&!(d.newAcc||'').trim())p.push('Investimento: digite o nome da conta nova');
-  if(!(d.value>0)||d.value>MAX_VALUE)p.push('Valor inválido');
-  if(parseBrDate(d.date)!==d.date)p.push('Data inválida'); // a real calendar day, ISO
-  if(splitParts(d).length&&splitRest(d)<0)p.push('Divisão: as partes somam mais que o valor');
+  if(!SAVEABLE.includes(d.type))p.push(t('imp.draft.pickType'));
+  if(d.type===IMPORT_TYPE.contribution&&!d.acc)p.push(t('imp.draft.pickAccount'));
+  if(d.type===IMPORT_TYPE.contribution&&d.acc===NEW_ACCOUNT&&!(d.newAcc||'').trim())p.push(t('imp.draft.newAccountName'));
+  if(!(d.value>0)||d.value>MAX_VALUE)p.push(t('imp.draft.badValue'));
+  if(parseBrDate(d.date)!==d.date)p.push(t('imp.draft.badDate')); // a real calendar day, ISO
+  if(splitParts(d).length&&splitRest(d)<0)p.push(t('imp.draft.splitTooBig'));
   return p;
 }
 // worth a second look: any flag, or no category (it would go to the default category)

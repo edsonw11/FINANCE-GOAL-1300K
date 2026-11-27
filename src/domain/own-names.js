@@ -4,6 +4,7 @@
  * and the rule that tells if a statement line mentions that person. A Pix/TED to or from yourself is
  * money changing banks, not income or expense. Commands: addOwnName, removeOwnName.
  */
+import { t } from '../core/i18n.js';
 import { normalizeText } from '../core/text-normalize.js';
 import { S } from './store.js';
 const PARTICLES=new Set(['da','de','do','das','dos','e']);
@@ -12,15 +13,15 @@ export const ownNames=()=>S.ownNames||[];
 const nameWords=name=>normalizeText(name).split(' ').filter(w=>w&&!PARTICLES.has(w));
 export function addOwnName(name){
   const n=String(name||'').trim().replace(/\s+/g,' ');
-  if(nameWords(n).length<2)return {error:'Digite nome e sobrenome, como aparece no extrato (ex.: Maria Souza)'};
-  if(ownNames().some(x=>normalizeText(x)===normalizeText(n)))return {error:'Este nome já está na lista'};
+  if(nameWords(n).length<2)return {error:t('tx.own.nameAndSurname')};
+  if(ownNames().some(x=>normalizeText(x)===normalizeText(n)))return {error:t('tx.own.alreadyListed')};
   S.ownNames=ownNames().concat([n]);
   return {name:n};
 }
 export function removeOwnName(name){
   const before=ownNames().length;
   S.ownNames=ownNames().filter(x=>x!==name);
-  return before===S.ownNames.length?{error:'Nome não encontrado'}:{name};
+  return before===S.ownNames.length?{error:t('tx.own.notFound')}:{name};
 }
 const MIN_CUT=3; // banks cut long names ("Edson Batista Da Silv"): a cut last name keeps at least this many letters
 // the first and the last word of one of the names appear in this order, at most a few words apart; the last

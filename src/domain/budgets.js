@@ -5,6 +5,7 @@
  */
 import { mOf, today } from '../core/dates.js';
 import { roundMoney, sumMoney } from '../core/money.js';
+import { t } from '../core/i18n.js';
 import { S } from './store.js';
 import { groupNames } from './category-groups.js';
 import { groupMonth } from './spending.js';
@@ -14,9 +15,9 @@ export const BUDGET_LEVEL={ok:'ok',near:'near',over:'over'};
 export const budgetOf=group=>((S.budgets||{})[group])||0;
 // value <= 0 (or empty) removes the budget
 export function setBudget(group,value){
-  if(!group)return {error:'Escolha o grupo'};
+  if(!group)return {error:t('sum.budgets.pickGroup')};
   const v=roundMoney(+value||0);
-  if(v<0)return {error:'O orçamento não pode ser negativo'};
+  if(v<0)return {error:t('sum.budgets.negative')};
   S.budgets=S.budgets||{};
   if(v===0){delete S.budgets[group];return {group,value:0};}
   S.budgets[group]=v;return {group,value:v};

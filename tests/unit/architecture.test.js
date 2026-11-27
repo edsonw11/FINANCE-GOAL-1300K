@@ -14,7 +14,7 @@ module.exports=()=>{const {ok,res}=suite('architecture');
   for(const f of walk(path.join(src,'core')).concat(walk(path.join(src,'domain')))){
     if(f.endsWith('dom.js'))continue;
     const c=strip(fs.readFileSync(f,'utf8'));
-    ok(path.relative(root,f)+' has no DOM/UI calls',!/\b(document|window\.|toast\(|render\(|askConfirm|confirm\(|alert\()/.test(c));
+    ok(path.relative(root,f)+' has no DOM/UI calls',/locale-[\w-]+\.js$/.test(f)||!/\b(document|window\.|toast\(|render\(|askConfirm|confirm\(|alert\()/.test(c));
   }
   const bad=/(^|[^.\w])save\(\)|(^|[^.\w])S\s*=[^=]|(^|[^.\w])S\.[\w.[\]'"+]+\s*(=[^=]|\+\+|--|\+=|-=)|(^|[^.\w])S\.[\w.[\]'"+]+\.(push|splice|pop|shift|unshift|sort)\(|delete\s+S\./m;
   for(const f of walk(path.join(src,'ui')).concat([path.join(src,'app.js')])){

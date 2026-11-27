@@ -11,6 +11,7 @@
 .ins-tile .kpi-go{position:absolute;right:12px;top:10px}
 .catrow.tap{border-radius:10px;padding:4px 6px;margin:4px -6px}.catrow.tap:hover{background:var(--soft)}
 .cr-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cr-sub{display:block;font-size:11.5px;color:var(--muted);font-weight:400;overflow:hidden;text-overflow:ellipsis}
 .mtoday{margin-left:6px}
 /* record rows */
 .lst{display:flex;flex-direction:column}
@@ -137,7 +138,7 @@ table.tl tr.rowclick{cursor:pointer}
 .cat-gh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--line);font-size:14.5px}
 .cat-gh .mut{font-size:12.5px;margin-left:auto}
 .cat-grp{display:flex;align-items:center;gap:8px;margin:0 0 12px 46px;font-size:12.5px;color:var(--ink2)}
-.cat-grp input{flex:1;min-width:0;max-width:260px;font-size:13.5px}
+.cat-grp input,.cat-grp select{flex:1 1 160px;min-width:150px;max-width:300px;font-size:13.5px}.cat-grp{flex-wrap:wrap}
 .cat-use{font-size:12.5px;white-space:nowrap;min-width:92px;text-align:right}
 .cat-use-sm,.cat-sub{display:none}
 @media (max-width:480px){
@@ -205,3 +206,21 @@ table.tl tr.rowclick{cursor:pointer}
 .cat-det>summary{list-style:none;cursor:pointer}.cat-det>summary::-webkit-details-marker{display:none}
 .cat-det>summary::before{content:'▸';color:var(--muted);margin-right:2px}.cat-det[open]>summary::before{content:'▾'}
 .li-month{font-size:15px;font-weight:800;color:var(--ink);padding:18px 6px 2px;border-top:1px solid var(--line);margin-top:6px}.li-month:first-of-type{border-top:0;margin-top:0}
+
+/* split of a record: each part is its own block (category on a full line, its one-tap categories, then the value) */
+.sp-part{margin-bottom:14px;padding-bottom:10px;border-bottom:1px dashed var(--line)}.sp-part>input{width:100%}
+.sp-chips{grid-column:1/-1}.sp-chips .chips{margin:2px 0 4px}
+/* one tidy row of one-tap categories under the field (scrolls sideways), then a clear gap before the value */
+.sp-part .qchips,.sp-chips .qchips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:8px 0 12px;padding:0 0 2px}
+.sp-part .qchips::-webkit-scrollbar,.sp-chips .qchips::-webkit-scrollbar{display:none}
+.sp-part .qchips .chip,.sp-chips .qchips .chip{flex:none;white-space:nowrap}
+.sp-part .row{align-items:center;gap:10px;flex-wrap:nowrap}.sp-part .row .f{flex:1 1 auto;min-width:0}.sp-part .row .btn{flex:none}
+
+/* language switch: one flag button per language */
+.lang-btns{display:flex;gap:8px}
+.lang-btn{display:flex;flex:1 1 0;flex-direction:column;align-items:center;gap:6px;min-width:0;min-height:72px;padding:10px 2px;border:2px solid var(--line);border-radius:12px;background:var(--card);color:inherit;font:inherit;cursor:pointer}
+.lang-btn .lang-flag{display:flex;border-radius:4px;overflow:hidden;box-shadow:0 0 0 1px rgba(0,0,0,.12)}
+.lang-btn[data-lang=auto] .lang-flag{box-shadow:none}
+.lang-btn .lang-name{font-size:12px;font-weight:600;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lang-btn.on{border-color:var(--brand);background:rgba(47,95,208,.08)}
+@media(max-width:420px){.lang-btns{display:grid;grid-template-columns:1fr 1fr}.lang-btn{padding:10px 6px}.lang-btn .lang-name{font-size:13px}}

@@ -5,9 +5,11 @@
  * a balance snapshot of one investment account. Saving the same statement again replaces the same day
  * (nothing is duplicated). It never creates contributions, income or expenses.
  */
+import { displayName } from '../core/stored-names.js';
 import { parseAmount, parseBrDate } from '../core/import-values.js';
 import { normalizeText, stripAccents } from '../core/text-normalize.js';
 import { roundMoney } from '../core/money.js';
+import { t } from '../core/i18n.js';
 import { S } from './store.js';
 import { balance } from './accounts.js';
 import { addAccount, saveSnapshots } from './account-commands.js';
@@ -25,7 +27,7 @@ const capital=w=>w.charAt(0).toUpperCase()+w.slice(1);
 export function custodyAccountName(n){
   const b=BROKERS.find(([re])=>re.test(n)),k=n.match(FIRST_KIND);
   const kind=k&&!/^total\b/.test(k[1])?k[1].trim().split(' ').map(capital).join(' '):'';
-  return [b?b[1]:'',kind].filter(Boolean).join(' ')||DEFAULT_NAME;
+  return [b?b[1]:'',kind].filter(Boolean).join(' ')||displayName(DEFAULT_NAME);
 }
 export const looksLikeCustody=text=>/extrato de custodia/.test(normalizeText(text));
 // -> null (not a custody statement) | {date, gross, ir, iof, net, name (suggested account)} | {error}
@@ -34,18 +36,18 @@ export function parseCustody(text){
   // keeps digits and punctuation (amounts and dates are matched on it); the column marks of the PDF reader
   // (" | ") are only spacing here
   const n=stripAccents(text).toLowerCase().replace(/\s*\|\s*/g,' ').replace(/\s+/g,' ');
-  const d=n.match(CUSTODY_DATE_ROW),t=n.match(CUSTODY_TOTAL_ROW);
+  const d=n.match(CUSTODY_DATE_ROW),tot=n.match(CUSTODY_TOTAL_ROW);
   const date=d?parseBrDate(d[1]):null;
-  if(!date)return {error:'Reconheci um extrato de custódia, mas não achei a data (“Custódia em”).'};
-  if(!t)return {error:'Reconheci um extrato de custódia, mas não achei a linha “Total geral” do resumo da posição.'};
-  const [gross,ir,iof,net]=t.slice(1,5).map(parseAmount);
+  if(!date)return {error:t('imp.custody.noDate')};
+  if(!tot)return {error:t('imp.custody.noTotal')};
+  const [gross,ir,iof,net]=tot.slice(1,5).map(parseAmount);
   return {date,gross,ir,iof,net,name:custodyAccountName(n)};
 }
 // c: parsed custody, acc: account id -> {error} | {acc, date}
 export function applyCustody(c,acc){
-  if(!c||c.error)return {error:'Extrato inválido'};
-  if(!S.accounts.some(a=>a.id===acc&&!a.archived))return {error:'Escolha a conta de investimento'};
-  if(!(c.net>0))return {error:'Saldo líquido inválido'};
+  if(!c||c.error)return {error:t('imp.custody.invalid')};
+  if(!S.accounts.some(a=>a.id===acc&&!a.archived))return {error:t('imp.custody.chooseAccount')};
+  if(!(c.net>0))return {error:t('imp.custody.invalidNet')};
   saveSnapshots(c.date,[{acc,value:roundMoney(c.net),gross:roundMoney(c.gross)}]);
   return {acc,date:c.date};
 }

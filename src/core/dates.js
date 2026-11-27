@@ -2,14 +2,14 @@
  * core/dates.js
  * Responsibility: Date and month arithmetic (ISO yyyy-mm-dd, month key yyyy-mm, dd/mm/yyyy display).
  */
-import { MONTH_NAMES } from './config.js';
+import { monthName, monthYearLabel } from './locale-format.js';
 export const today=()=>new Date().toLocaleDateString('sv');
 export const mOf=d=>d.slice(0,7);
 export const mIdx=m=>{const [y,k]=m.split('-').map(Number);return y*12+k-1};
 export const mKey=i=>Math.floor(i/12)+'-'+String(i%12+1).padStart(2,'0');
 export const monthEnd=m=>{const [y,k]=m.split('-').map(Number);return m+'-'+String(new Date(y,k,0).getDate()).padStart(2,'0')};
-export const mLabel=m=>{const [y,k]=m.split('-').map(Number);return MONTH_NAMES[k-1]+' de '+y};
-export const mShort=m=>{const [y,k]=m.split('-').map(Number);return MONTH_NAMES[k-1].slice(0,3)+'/'+String(y).slice(2)};
+export const mLabel=m=>{const [y,k]=m.split('-').map(Number);return monthYearLabel(y,k)};
+export const mShort=m=>{const [y,k]=m.split('-').map(Number);return monthName(k).slice(0,3)+'/'+String(y).slice(2)};
 export const asOf=m=>{const e=monthEnd(m),t=today();return e<t?e:t};
 export const formatDateBR=d=>d.split('-').reverse().join('/');
 export const addMonths=(d,n)=>{const [y,m,dd]=d.split('-').map(Number);const t=new Date(y,m-1+n,1);const last=new Date(t.getFullYear(),t.getMonth()+1,0).getDate();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(Math.min(dd,last)).padStart(2,'0')};

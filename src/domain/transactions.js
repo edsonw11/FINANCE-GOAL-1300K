@@ -3,13 +3,15 @@
  * Responsibility: Transaction queries (by month/type, contributions, category parts, future series)
  * and the delete / undo-delete commands.
  */
+import { t } from '../core/i18n.js';
 import { sum } from '../core/format.js';
 import { asOf, mOf } from '../core/dates.js';
 import { roundMoney, sumMoney } from '../core/money.js';
 import { S } from './store.js';
 import { alloc } from './card-invoices.js';
+import { isNewContribution } from './reinvestment.js';
 export const txIn=(m,type,upto)=>S.tx.filter(t=>t.type===type&&mOf(t.date)===m&&(!upto||t.date<=upto));
-export const contributionsInMonth=m=>sum(txIn(m,'aporte',asOf(m)).map(t=>t.value));
+export const contributionsInMonth=m=>sum(txIn(m,'aporte',asOf(m)).filter(isNewContribution).map(t=>t.value));
 // category parts of a transaction: the informed splits + the remainder in the main category
 export const catParts=t=>{const ex=t.splits||[];const rest=roundMoney(t.value-sumMoney(ex.map(s=>s.value)));return ex.concat(rest>0.004?[{cat:t.cat,value:rest}]:[]);};
 // "equal" future transactions (same Repeat series; for old ones, same data)
@@ -30,9 +32,9 @@ export function deleteTransactions(ids){
 }
 // undo of deleteTransactions: puts the records back with their ids and the invoices' lists as they were
 export function restoreTransactions(undo){
-  if(!undo||!undo.removed||!undo.removed.length)return {error:'Nada para desfazer'};
+  if(!undo||!undo.removed||!undo.removed.length)return {error:t('tx.undo.nothing')};
   const taken=new Set(S.tx.map(t=>t.id));
-  if(undo.removed.some(t=>taken.has(t.id)))return {error:'Esses lançamentos já existem'};
+  if(undo.removed.some(t=>taken.has(t.id)))return {error:t('tx.undo.exist')};
   S.tx=S.tx.concat(undo.removed.map(t=>JSON.parse(JSON.stringify(t))));
   Object.keys(undo.items||{}).forEach(id=>{const inv=S.tx.find(t=>String(t.id)===id);if(inv)inv.items=undo.items[id].slice();});
   return {restored:undo.removed.length};

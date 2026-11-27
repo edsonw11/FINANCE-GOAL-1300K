@@ -6,6 +6,7 @@
  * and is started from a blob, so it also works from file://. Never uploads the file anywhere.
  * Throws Error(message for the user) when the PDF cannot be read.
  */
+import { t } from '../../core/i18n.js';
 import { IMPORT_LIMITS } from '../../domain/import-reader.js';
 import { linesFromItems } from '../../domain/import-pdf.js';
 let pdfjs=null;
@@ -26,13 +27,13 @@ async function loadPdfjs(){
 }
 export async function pdfText(file){
   let lib;
-  try{lib=await loadPdfjs();}catch(e){throw new Error('Não consegui carregar o leitor de PDF. Use CSV ou OFX por enquanto.',{cause:e});}
+  try{lib=await loadPdfjs();}catch(e){throw new Error(t('imp.pdf.loadFail'),{cause:e});}
   // pdf.js takes ownership of the bytes it is given: always hand it a copy, so the same file can be read again
   const data=new Uint8Array((await file.arrayBuffer()).slice(0));
   let doc;
   try{doc=await lib.getDocument({data,isEvalSupported:false}).promise;}
-  catch(e){throw new Error(e&&e.name==='PasswordException'?'Este PDF tem senha. Baixe uma versão sem senha ou exporte CSV/OFX.':'Não consegui abrir este PDF (arquivo corrompido ou protegido).',{cause:e});}
-  if(doc.numPages>IMPORT_LIMITS.maxPdfPages){await doc.destroy();throw new Error(`PDF com ${doc.numPages} páginas (máximo ${IMPORT_LIMITS.maxPdfPages}). Baixe um período menor.`);}
+  catch(e){throw new Error(e&&e.name==='PasswordException'?t('imp.pdf.password'):t('imp.pdf.openFail'),{cause:e});}
+  if(doc.numPages>IMPORT_LIMITS.maxPdfPages){await doc.destroy();throw new Error(t('imp.pdf.tooManyPages',{pages:doc.numPages,max:IMPORT_LIMITS.maxPdfPages}));}
   const lines=[];
   for(let i=1;i<=doc.numPages;i++){
     const page=await doc.getPage(i),content=await page.getTextContent();

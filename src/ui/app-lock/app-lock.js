@@ -4,14 +4,16 @@
  * It is built from three parts it does not know the insides of: the gateway (the phone), the screen (the dialog) and the storage (the on/off flag).
  * If the phone has no screen lock any more, the lock cannot work, so it switches itself off instead of shutting the person out.
  */
+import { t } from '../../core/i18n.js';
 import { lockEnabled, setLockEnabled, shouldLockOnResume } from './lock-policy.js';
 const TEXT={
-  title:'Desbloquear o Everfox',subtitle:'Use sua digital, seu rosto ou o PIN do celular',
-  cancelled:'Desbloqueio cancelado. Toque em “Desbloquear” para tentar de novo.',
-  lockout:'Muitas tentativas. Aguarde um pouco e tente de novo.',
-  failed:'Não foi possível desbloquear. Tente de novo.',
-  gone:'O celular ficou sem bloqueio de tela, então o bloqueio do app foi desligado.',
-  needDeviceLock:'Para usar o bloqueio do app, ative uma tela de bloqueio (PIN, padrão ou biometria) nas configurações do celular.',
+  get title(){return t('sys.lock.title');},
+  get subtitle(){return t('sys.lock.subtitle');},
+  get cancelled(){return t('sys.lock.cancelled');},
+  get lockout(){return t('sys.lock.lockout');},
+  get failed(){return t('sys.lock.failed');},
+  get gone(){return t('sys.lock.gone');},
+  get needDeviceLock(){return t('sys.lock.needDeviceLock');},
 };
 export const LOCK_TEXT=TEXT;
 export function createAppLock({gateway,screen,storage,now=Date.now,notify=()=>{}}){
@@ -51,14 +53,14 @@ export function createAppLock({gateway,screen,storage,now=Date.now,notify=()=>{}
     async enable(){
       const st=await gateway.status();
       if(!st.available)return {ok:false,message:TEXT.needDeviceLock};
-      const r=await gateway.authenticate({title:'Ativar o bloqueio do app',subtitle:TEXT.subtitle});
+      const r=await gateway.authenticate({title:t('sys.lock.enableTitle'),subtitle:TEXT.subtitle});
       if(!r.ok)return {ok:false,message:r.code==='cancelled'?'':messageFor(r.code)};
       setLockEnabled(true,storage);await gateway.setSecure(true);
       return {ok:true};
     },
     /** Switching off also needs the confirmation: someone holding an unlocked phone cannot just remove the lock. */
     async disable(){
-      const r=await gateway.authenticate({title:'Desativar o bloqueio do app',subtitle:TEXT.subtitle});
+      const r=await gateway.authenticate({title:t('sys.lock.disableTitle'),subtitle:TEXT.subtitle});
       if(!r.ok)return {ok:false,message:r.code==='cancelled'?'':messageFor(r.code)};
       setLockEnabled(false,storage);await gateway.setSecure(false);
       return {ok:true};

@@ -109,7 +109,7 @@
     need(!qa('#trendIns [data-cm]').some(tr=>/^\s*\S+\s+Luz\s*$/.test(tr.querySelector('td').textContent)),'Luz listed apart');});
   await step('categories tab: move a category to a new group',()=>{q('#nav [data-t=cad]').click();need(q('#catPage .cat-gh'),'no group headers');
     const el=qa('#catPage [data-cg]').find(x=>x.closest('div').previousElementSibling.querySelector('[data-cn]').value==='Internet');need(el&&el.value==='Moradia','Internet group '+(el&&el.value));
-    el.value='Contas fixas';el.dispatchEvent(new Event('change'));
+    el.value='__new_group';el.dispatchEvent(new Event('change'));const typed=q('#catPage input[data-cg="'+el.dataset.cg+'"]');need(typed,'no text field for the new group name');typed.value='Contas fixas';typed.dispatchEvent(new Event('change'));
     need(qa('#catPage .cat-gh b').some(b=>b.textContent==='Contas fixas'),'new group not shown');
     q('#nav [data-t=resumo]').click();need(qa('#cats [data-go=cat]').some(r=>r.dataset.c==='Contas fixas')||!qa('#cats [data-go=cat]').length,'summary not by new group');
     q('#nav [data-t=cad]').click();const back=qa('#catPage [data-cg]').find(x=>x.value==='Contas fixas');back.value='Moradia';back.dispatchEvent(new Event('change'));

@@ -4,7 +4,6 @@
  */
 export const STORAGE_KEY='metaapp.v2';
 export const COLORS=['--c0','--c1','--c2','--c3','--c4','--c5','--c6','--c7','--c8','--c9','--c10','--c11'];
-export const MONTH_NAMES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
 export const DEFAULT_CATEGORIES={despesa:{'Moradia':'🏠','Mercado':'🛒','Transporte':'🚗','Saúde':'💊','Lazer':'🎬','Restaurantes':'🍽️','Alimentação (outros)':'🥐','Educação':'📚','Luz':'💡','Água':'💧','Internet':'🌐','Telefone':'📱','Gás':'🔥','Assinaturas':'📺','Cartão de crédito':'💳','Viagem':'✈️','Imprevistos / Outros':'⚠️'},
             receita:{'Salário':'💼','VR/VA (benefício)':'🍴','Freelance':'🧑‍💻','Rendimentos':'📈','Renda Extra':'➕','Serviços':'🛠️','Outros':'💰'}};
 // expense groups: each category belongs to one group (Luz, Água, Gás... are part of Moradia).
