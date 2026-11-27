@@ -109,7 +109,12 @@ export function bindReview(body,ctx){
     patchDraft(id,{splits:splitChanged(d,i,t.matches('[data-sp-cat]')?{cat:t.value}:{value:parseMoney(t.value)})});
     const sum=item(id)&&item(id).querySelector('[data-sp-sum]');if(sum)sum.innerHTML=splitRestHtml(draftById(id));
   }
-  body.oninput=e=>{const t=e.target,row=t.closest('[data-imp-item]');if(row&&t.matches('[data-sp-cat],[data-sp-val]'))editPart(row.dataset.impItem,t);};
+  // text typed into a draft is kept while typing, not only when the field is left: a phone keyboard or a tap on the import
+  // button may not blur the field first, and the new account name (or the category) would be lost on confirm
+  const LIVE_TEXT='[data-f="newAcc"],[data-f="desc"],[data-f="cat"]';
+  body.oninput=e=>{const t=e.target,row=t.closest('[data-imp-item]');if(!row)return;
+    if(t.matches('[data-sp-cat],[data-sp-val]'))editPart(row.dataset.impItem,t);
+    else if(t.matches(LIVE_TEXT)){patchDraft(row.dataset.impItem,{[t.dataset.f]:t.value});refreshSummary();}};
   body.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.imp-main')){e.preventDefault();e.target.click();}};
   body.onchange=e=>{
     const t=e.target,row=t.closest('[data-imp-item]'),id=row&&row.dataset.impItem;

@@ -147,7 +147,7 @@
     <div class="formgrid mt-14" id="fGrid">
       <div class="f-val"><label for="fVal">Valor <span class="req" aria-hidden="true">*</span></label><input id="fVal" data-money placeholder="R$ 0,00" required aria-required="true"></div>
       <div><label for="fDate">Data <span class="req" aria-hidden="true">*</span></label><input type="date" id="fDate" required></div>
-      <div id="wCat" class="f-wide"><label for="fCat">Categoria</label><input id="fCat" list="catList" placeholder="Escolha abaixo ou digite"><datalist id="catList"></datalist><div class="chips qchips" id="catChips"></div></div>
+      <div id="wCat" class="f-wide"><label for="fCat">Categoria</label><input id="fCat" list="catList" placeholder="Escolha abaixo ou digite"><datalist id="catList"></datalist><div class="chips qchips" id="catChips" data-qchips="despesa"></div></div>
       <div id="wAcc" hidden><label for="fAcc">Investir em</label><select id="fAcc"></select></div>
       <div id="wReinv" class="f-wide" hidden><label class="apply-opt sm"><input class="w-auto mr-8" type="checkbox" id="fReinv" data-smoke="reinv">É reinvestimento (o dinheiro já estava investido, por exemplo um CDB que venceu)</label><div class="help" id="reinvHelp">Marcado: não conta como novo aporte, não entra em “Investido” nem sai da sobra do mês, e não muda o saldo (ele continua sendo o que você informa em “Atualizar saldos”).</div></div>
       <div id="wFonte"><label for="fFonte" id="lFonte">Pago com</label><select id="fFonte"></select></div>
@@ -245,7 +245,7 @@
 <dialog id="itemDlg"><form class="m0" id="itemForm">
   <h3 class="dlg-h s14" id="itemTitle">Editar compra</h3>
   <div class="formgrid cols-2">
-    <div class="span-all"><label for="dCat">Categoria <span class="req" aria-hidden="true">*</span></label><input id="dCat" list="catListD" placeholder="Ex.: Transporte"></div>
+    <div class="span-all"><label for="dCat">Categoria <span class="req" aria-hidden="true">*</span></label><input id="dCat" list="catListD" placeholder="Ex.: Transporte"><div class="chips qchips" id="dCatChips" data-qchips="despesa"></div></div>
     <div class="span-all"><label for="dDesc">Descrição <span class="opt">(opcional)</span></label><input id="dDesc" placeholder="Ex.: Uber"></div>
     <div><label for="dVal">Valor <span class="req" aria-hidden="true">*</span></label><input id="dVal" data-money placeholder="R$ 0,00"></div>
     <div><label for="dDate">Data <span class="req" aria-hidden="true">*</span></label><input type="date" id="dDate"></div>

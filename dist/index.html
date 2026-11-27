@@ -293,7 +293,7 @@ table.tl tr.rowclick{cursor:pointer}
 .cat-gh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:16px 0 8px;padding-top:12px;border-top:1px solid var(--line);font-size:14.5px}
 .cat-gh .mut{font-size:12.5px;margin-left:auto}
 .cat-grp{display:flex;align-items:center;gap:8px;margin:0 0 12px 46px;font-size:12.5px;color:var(--ink2)}
-.cat-grp input{flex:1;min-width:0;max-width:260px;font-size:13.5px}
+.cat-grp input,.cat-grp select{flex:1 1 160px;min-width:150px;max-width:300px;font-size:13.5px}.cat-grp{flex-wrap:wrap}
 .cat-use{font-size:12.5px;white-space:nowrap;min-width:92px;text-align:right}
 .cat-use-sm,.cat-sub{display:none}
 @media (max-width:480px){
@@ -361,6 +361,10 @@ table.tl tr.rowclick{cursor:pointer}
 .cat-det>summary{list-style:none;cursor:pointer}.cat-det>summary::-webkit-details-marker{display:none}
 .cat-det>summary::before{content:'▸';color:var(--muted);margin-right:2px}.cat-det[open]>summary::before{content:'▾'}
 .li-month{font-size:15px;font-weight:800;color:var(--ink);padding:18px 6px 2px;border-top:1px solid var(--line);margin-top:6px}.li-month:first-of-type{border-top:0;margin-top:0}
+
+/* split of a record: each part is its own block (category on a full line, its one-tap categories, then the value) */
+.sp-part{margin-bottom:14px;padding-bottom:10px;border-bottom:1px dashed var(--line)}.sp-part>input{width:100%}
+.sp-chips{grid-column:1/-1}.sp-chips .chips{margin:2px 0 4px}
 </style>
 <style>
 /* 08-screens.css: the look of the larger screens (static styles that used to be inline).
@@ -1019,7 +1023,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
     <div class="formgrid mt-14" id="fGrid">
       <div class="f-val"><label for="fVal">Valor <span class="req" aria-hidden="true">*</span></label><input id="fVal" data-money placeholder="R$ 0,00" required aria-required="true"></div>
       <div><label for="fDate">Data <span class="req" aria-hidden="true">*</span></label><input type="date" id="fDate" required></div>
-      <div id="wCat" class="f-wide"><label for="fCat">Categoria</label><input id="fCat" list="catList" placeholder="Escolha abaixo ou digite"><datalist id="catList"></datalist><div class="chips qchips" id="catChips"></div></div>
+      <div id="wCat" class="f-wide"><label for="fCat">Categoria</label><input id="fCat" list="catList" placeholder="Escolha abaixo ou digite"><datalist id="catList"></datalist><div class="chips qchips" id="catChips" data-qchips="despesa"></div></div>
       <div id="wAcc" hidden><label for="fAcc">Investir em</label><select id="fAcc"></select></div>
       <div id="wReinv" class="f-wide" hidden><label class="apply-opt sm"><input class="w-auto mr-8" type="checkbox" id="fReinv" data-smoke="reinv">É reinvestimento (o dinheiro já estava investido, por exemplo um CDB que venceu)</label><div class="help" id="reinvHelp">Marcado: não conta como novo aporte, não entra em “Investido” nem sai da sobra do mês, e não muda o saldo (ele continua sendo o que você informa em “Atualizar saldos”).</div></div>
       <div id="wFonte"><label for="fFonte" id="lFonte">Pago com</label><select id="fFonte"></select></div>
@@ -1117,7 +1121,7 @@ dialog.dlg-wide{width:min(580px,94vw)}
 <dialog id="itemDlg"><form class="m0" id="itemForm">
   <h3 class="dlg-h s14" id="itemTitle">Editar compra</h3>
   <div class="formgrid cols-2">
-    <div class="span-all"><label for="dCat">Categoria <span class="req" aria-hidden="true">*</span></label><input id="dCat" list="catListD" placeholder="Ex.: Transporte"></div>
+    <div class="span-all"><label for="dCat">Categoria <span class="req" aria-hidden="true">*</span></label><input id="dCat" list="catListD" placeholder="Ex.: Transporte"><div class="chips qchips" id="dCatChips" data-qchips="despesa"></div></div>
     <div class="span-all"><label for="dDesc">Descrição <span class="opt">(opcional)</span></label><input id="dDesc" placeholder="Ex.: Uber"></div>
     <div><label for="dVal">Valor <span class="req" aria-hidden="true">*</span></label><input id="dVal" data-money placeholder="R$ 0,00"></div>
     <div><label for="dDate">Data <span class="req" aria-hidden="true">*</span></label><input type="date" id="dDate"></div>
@@ -2723,11 +2727,61 @@ function clearFieldError(el){
 function clearFieldErrors(root){(root||document).querySelectorAll('.ferr').forEach(m=>m.remove());
   (root||document).querySelectorAll('[aria-invalid]').forEach(e=>e.removeAttribute('aria-invalid'));}
 
+// ---- src/domain/category-suggestions.js
+/**
+ * domain/category-suggestions.js
+ * Responsibility: the few categories offered as one-tap choices when a record (or a part of a split) is typed:
+ * the most used in the last 6 months for that kind of record, completed with other active categories of the
+ * catalog until the limit. Archived (off) categories are never offered. Pure read.
+ */
+
+
+const CHIP_LIMIT=6;
+// -> category names, most used first
+function topCategories(type,limit){
+  const max=limit||CHIP_LIMIT,from=addMonths(today(),-6),cnt={};
+  const on=new Set(((S.cats||{})[type]||[]).filter(c=>!c.off).map(c=>c.name));
+  S.tx.forEach(t=>{if(t.type===type&&t.date>=from&&on.has(t.cat))cnt[t.cat]=(cnt[t.cat]||0)+1;});
+  const top=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]||a.localeCompare(b)).slice(0,max);
+  [...on].forEach(c=>{if(top.length<max&&!top.includes(c))top.push(c);});
+  return top;
+}
+
+// ---- src/ui/components/category-chips.js
+/**
+ * ui/components/category-chips.js
+ * Responsibility: one-tap category buttons (chips) next to a category field: html for them, and ONE click handler for all of them.
+ * A phone's own list for a field with a list is small and shows only what matches what is typed, so every such field also gets
+ * its chips: tapping one fills the field (input and change events fire, so each screen reacts as if it had been typed).
+ * The chips box must sit in the same wrapper as the field and carry data-qchips.
+ */
+
+
+
+// the buttons only, the one equal to `current` marked
+function chipsHtml(type,current){
+  const cur=String(current||'').trim();
+  return topCategories(type).map(c=>`<button type="button" class="chip${c===cur?' on':''}" data-qc="${esc(c)}" aria-pressed="${c===cur}">${icon(type,c)} ${esc(c)}</button>`).join('');
+}
+// the box with its buttons, to put right after a category field
+const chipsBox=(type,current)=>`<div class="chips qchips" data-qchips="${type}">${chipsHtml(type,current)}</div>`;
+// once, at start
+function installCategoryChips(){
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-qc]'),box=b&&b.closest('[data-qchips]'),input=box&&box.parentElement.querySelector('input[list]');
+    if(!input)return;
+    input.value=b.dataset.qc;
+    ['input','change'].forEach(n=>input.dispatchEvent(new Event(n,{bubbles:true})));
+    box.querySelectorAll('[data-qc]').forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-pressed',String(on));});
+  });
+}
+
 // ---- src/ui/views/transaction-split.js
 /**
  * ui/views/transaction-split.js
  * Responsibility: Form: split a transaction across categories.
  */
+
 
 
 
@@ -2738,7 +2792,8 @@ function updateSplitSum(){
   $('splitSum').innerHTML=tot>0?`Resto em <b>${esc($('fCat').value.trim()||(ui.type==='receita'?'Outros':'Imprevistos / Outros'))}</b>: <b class="${rest<0?'neg':''}">${f2(rest)}</b>`:'';
 }
 function drawSplit(){
-  $('splitRows').innerHTML=ui.splitRows.map((r,i)=>`<div class="row mb-6"><div class="f f2"><input data-sc="${i}" list="catList" placeholder="Categoria da parte (ex.: Saúde)" value="${esc(r.cat)}"></div><div class="f"><input data-sv="${i}" inputmode="decimal" placeholder="Valor (ex.: 99,90)" value="${r.val?m2(r.val):''}"></div><button type="button" class="btn sm dng" data-sx="${i}">remover</button></div>`).join('');
+  const kind=ui.type==='receita'?'receita':'despesa';
+  $('splitRows').innerHTML=ui.splitRows.map((r,i)=>`<div class="sp-part"><input data-sc="${i}" list="catList" placeholder="Categoria da parte (ex.: Saúde)" value="${esc(r.cat)}">${chipsBox(kind,r.cat)}<div class="row mb-6"><div class="f"><input data-sv="${i}" inputmode="decimal" placeholder="Valor (ex.: 99,90)" value="${r.val?m2(r.val):''}"></div><button type="button" class="btn sm dng" data-sx="${i}">remover</button></div></div>`).join('');
   document.querySelectorAll('[data-sc]').forEach(el=>el.oninput=()=>{ui.splitRows[+el.dataset.sc].cat=el.value;});
   document.querySelectorAll('[data-sv]').forEach(el=>{el.oninput=()=>{ui.splitRows[+el.dataset.sv].val=parse(el.value);updateSplitSum();};el.onblur=()=>{const v=parse(el.value);if(v)el.value=m2(v);};});
   document.querySelectorAll('[data-sx]').forEach(el=>el.onclick=()=>{ui.splitRows.splice(+el.dataset.sx,1);if(!ui.splitRows.length)$('splitBox').hidden=true;drawSplit();});
@@ -3119,12 +3174,13 @@ function bindTransactionTaps(){
 
 
 
+
 // ---- pop-up for a card purchase ----
 let dlgId=null;
 function openItem(id,defDate){
   dlgId=id;const t=id?S.tx.find(x=>x.id===id):null;
   $('itemTitle').textContent=t?'Editar compra no cartão':'Adicionar compra esquecida';
-  $('dCat').value=t?t.cat:'';$('dDesc').value=t?(t.desc||''):'';$('dVal').value=t?m2(t.value):'';
+  $('dCat').value=t?t.cat:'';$('dCatChips').innerHTML=chipsHtml('despesa',t?t.cat:'');$('dDesc').value=t?(t.desc||''):'';$('dVal').value=t?m2(t.value):'';
   $('dDate').value=t?t.date:(defDate||$('fDate').value||today());$('dDel').hidden=!(t);
   const sib=t?futureSiblings(t):[];$('dApplyW').hidden=!(sib.length);$('dApply').checked=true;$('dApplyN').textContent=sib.length;
   clearFieldErrors($('itemForm'));$('itemDlg').showModal();if(!t)$('dCat').focus();
@@ -3250,12 +3306,7 @@ function updateSaveLabel(){
 function drawCategoryChips(){
   const box=$('catChips');if(!box)return;
   if(ui.type!=='despesa'&&ui.type!=='receita'){box.innerHTML='';return;}
-  const from=addMonths(today(),-6),cnt={},on=new Set(((S.cats||{})[ui.type]||[]).filter(c=>!c.off).map(c=>c.name));
-  S.tx.forEach(t=>{if(t.type===ui.type&&t.date>=from&&on.has(t.cat))cnt[t.cat]=(cnt[t.cat]||0)+1;});
-  let top=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,6);
-  if(top.length<6)[...on].forEach(c=>{if(top.length<6&&!top.includes(c))top.push(c);});
-  const curV=$('fCat').value.trim();
-  box.innerHTML=top.map(c=>`<button type="button" class="chip${c===curV?' on':''}" data-qc="${esc(c)}" aria-pressed="${c===curV}">${icon(ui.type,c)} ${esc(c)}</button>`).join('');
+  box.dataset.qchips=ui.type;box.innerHTML=chipsHtml(ui.type,$('fCat').value);
 }
 function fillCategoryOptions(){
   const set=new Set(((S.cats||{})[ui.type]||[]).filter(c=>!c.off).map(c=>c.name));
@@ -5184,6 +5235,7 @@ function bindDateFields(){
 
 
 
+
 const IMPORT_TYPE_LABEL={despesa:'Despesa',receita:'Receita',aporte:'Aporte',transferencia:'🔁 Transferência minha',ignorar:'Não importar'};
 const IMPORT_SOURCE_LABEL={caixa:'Conta / Pix / débito',cartao:'Cartão de crédito',beneficio:'VR/VA'};
 const sourceOptions=d=>(d.type===IMPORT_TYPE.income?['caixa','beneficio']:['caixa','cartao','beneficio'])
@@ -5238,6 +5290,7 @@ function splitRestHtml(d){
 function splitHtml(d){
   const rows=(d.splits||[]).map((p,i)=>`<div class="imp-split-row">
     <input data-sp-cat="${i}" list="impCats" value="${esc(p.cat)}" placeholder="Categoria da parte (ex.: Saúde)" aria-label="Categoria da parte ${i+1}">
+    <div class="sp-chips">${chipsBox(d.type===IMPORT_TYPE.income?'receita':'despesa',p.cat)}</div>
     <input data-money data-sp-val="${i}" value="${p.value?m2(p.value):''}" placeholder="R$ 0,00" aria-label="Valor da parte ${i+1}">
     <button type="button" class="btn sm dng" data-sp-del="${i}">remover</button></div>`).join('');
   return `<div class="imp-split">${rows}${rows?`<div class="imp-split-sum" data-sp-sum>${splitRestHtml(d)}</div>`:''}
@@ -5255,7 +5308,7 @@ function rowEditor(d,catNames){
       <div><label>Tipo</label><select data-f="type">${typeOptions(d)}</select></div>
       ${d.type===IMPORT_TYPE.contribution?`<div class="span-all"><label>Investimento de destino</label><select data-f="acc"><option value="">Escolha…</option>${active().map(a=>`<option value="${a.id}"${d.acc===a.id?' selected':''}>${esc(a.name)}</option>`).join('')}<option value="${NEW_ACCOUNT}"${d.acc===NEW_ACCOUNT?' selected':''}>➕ Criar conta nova</option></select></div>
       ${d.acc===NEW_ACCOUNT?`<div class="span-all"><label>Nome da conta nova</label><input data-f="newAcc" value="${esc(d.newAcc||'')}" placeholder="Ex.: Itaú Investimentos, Nubank Caixinhas"><div class="help">A conta é criada quando você confirmar a importação.</div></div>`:''}`:''}
-      ${isSaveable(d)&&d.type!==IMPORT_TYPE.contribution?`<div><label>Categoria</label><input data-f="cat" list="impCats" value="${esc(d.cat)}" placeholder="Escolha ou digite"><datalist id="impCats">${catNames.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div>
+      ${isSaveable(d)&&d.type!==IMPORT_TYPE.contribution?`<div><label>Categoria</label><input data-f="cat" list="impCats" value="${esc(d.cat)}" placeholder="Escolha ou digite"><datalist id="impCats">${catNames.map(c=>`<option value="${esc(c)}">`).join('')}</datalist>${chipsBox(d.type===IMPORT_TYPE.income?'receita':'despesa',d.cat)}</div>
       <div><label>${d.type===IMPORT_TYPE.income?'Entrou em':'Pago com'}</label><select data-f="fonte">${sourceOptions(d)}</select></div>`:''}
     </div>
     ${canSplit(d)?splitHtml(d):''}
@@ -5404,7 +5457,12 @@ function bindReview(body,ctx){
     patchDraft(id,{splits:splitChanged(d,i,t.matches('[data-sp-cat]')?{cat:t.value}:{value:parseMoney(t.value)})});
     const sum=item(id)&&item(id).querySelector('[data-sp-sum]');if(sum)sum.innerHTML=splitRestHtml(draftById(id));
   }
-  body.oninput=e=>{const t=e.target,row=t.closest('[data-imp-item]');if(row&&t.matches('[data-sp-cat],[data-sp-val]'))editPart(row.dataset.impItem,t);};
+  // text typed into a draft is kept while typing, not only when the field is left: a phone keyboard or a tap on the import
+  // button may not blur the field first, and the new account name (or the category) would be lost on confirm
+  const LIVE_TEXT='[data-f="newAcc"],[data-f="desc"],[data-f="cat"]';
+  body.oninput=e=>{const t=e.target,row=t.closest('[data-imp-item]');if(!row)return;
+    if(t.matches('[data-sp-cat],[data-sp-val]'))editPart(row.dataset.impItem,t);
+    else if(t.matches(LIVE_TEXT)){patchDraft(row.dataset.impItem,{[t.dataset.f]:t.value});refreshSummary();}};
   body.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.imp-main')){e.preventDefault();e.target.click();}};
   body.onchange=e=>{
     const t=e.target,row=t.closest('[data-imp-item]'),id=row&&row.dataset.impItem;
@@ -6267,9 +6325,10 @@ function renderTrend(){
 
 
 
+
 const paymentsOf=fm=>S.tx.filter(t=>t.type==='fatura'&&invoiceMonthOf(t)===fm).sort((a,b)=>a.date.localeCompare(b.date));
 function classifyForm(f,u){
-  return `<div class="row cc-classify"><div class="f f2"><label>Classificar o que sobrou · categoria</label><input list="catListD" data-clc="${f.id}" placeholder="Ex.: Transporte"></div><div class="f f2"><label>Descrição</label><input data-cld="${f.id}" placeholder="Ex.: Uber"></div><div class="f"><label>Valor</label><input data-clv="${f.id}" data-money value="${m2(u)}"></div><button class="btn sm pri h-42" data-cls="${f.id}">Classificar</button></div>`;
+  return `<div class="row cc-classify"><div class="f f2"><label>Classificar o que sobrou · categoria</label><input list="catListD" data-clc="${f.id}" placeholder="Ex.: Transporte">${chipsBox('despesa','')}</div><div class="f f2"><label>Descrição</label><input data-cld="${f.id}" placeholder="Ex.: Uber"></div><div class="f"><label>Valor</label><input data-clv="${f.id}" data-money value="${m2(u)}"></div><button class="btn sm pri h-42" data-cls="${f.id}">Classificar</button></div>`;
 }
 function paymentBlock(f){
   const its=invoiceItems(f),u=invoiceUndetailed(f);
@@ -6800,6 +6859,7 @@ function setGroupIcon(name,ic){const g=(S.groups||[]).find(x=>x.name===name);if(
 
 
 
+const NEW_GROUP='__new_group';
 // groups the user opened stay open when the page is drawn again (every change redraws it)
 const openGroups=new Set();
 // one category line: switch, icon, name, usage and delete (+ the group field for expenses)
@@ -6807,7 +6867,7 @@ function categoryRow(t,c,i){const u=catUse(t,c.name),use=`${u.n} lanç. · ${f0(
   const line=`<div class="row cat-line${t==='despesa'?' exp':''}"><label class="sw" title="${c.off?'Desativada: não aparece nas listas de lançamento':'Ativa: aparece nas listas de lançamento'}"><input type="checkbox" data-co="${t}|${i}" ${c.off?'':'checked'}><span></span></label><div class="row cat-fields${c.off?' off':''}"><input class="ci icon-in" data-ci="${t}|${i}" value="${esc(c.icon)}" maxlength="4" aria-label="Ícone"><input class="ci grow" data-cn="${t}|${i}" value="${esc(c.name)}" aria-label="Nome"><span class="mut cat-use">${use}</span></div>${moreMenu([{label:'Excluir',attrs:`data-cd="${t}|${i}"`,danger:true}],'Mais ações de '+esc(c.name))}</div>`;
   // on phones the usage moves to this second line so the name keeps its width
   if(t!=='despesa')return line+`<div class="cat-sub"><span class="mut">${use}</span></div>`;
-  return line+`<div class="cat-grp"><span>Grupo</span><input class="ci" list="groupList" data-cg="${i}" value="${esc(c.group||'')}" placeholder="Sem grupo (digite para criar)" aria-label="Grupo de ${esc(c.name)}"><span class="mut cat-use-sm">${use}</span></div>`;
+  return line+`<div class="cat-grp"><span>Grupo</span><select class="ci" data-cg="${i}" aria-label="Grupo de ${esc(c.name)}"><option value="">Sem grupo</option>${(S.groups||[]).map(g=>`<option value="${esc(g.name)}"${g.name===c.group?' selected':''}>${esc(g.name)}</option>`).join('')}<option value="${NEW_GROUP}">➕ Novo grupo…</option></select><span class="mut cat-use-sm">${use}</span></div>`;
 }
 // expenses are shown by group: header (editable icon) and the categories inside it
 function expenseSections(){
@@ -6818,7 +6878,7 @@ function expenseSections(){
     return `<details class="cat-det" data-gd="${esc(g.name)}"${openGroups.has(g.name)?' open':''}>`+head(`<input class="ci icon-in sm" data-gi="${esc(g.name)}" value="${esc(g.icon)}" maxlength="4" aria-label="Ícone do grupo ${esc(g.name)}">`,g.name,items,budgetOf(g.name))+items.map(x=>categoryRow('despesa',x.c,x.i)).join('')+'</details>';});
   const lone=list.filter(x=>!x.c.group||!groups.some(g=>g.name===x.c.group));
   if(lone.length)sec.push(`<details class="cat-det" data-gd=""${openGroups.has('')?' open':''}>`+head('','Sem grupo',lone)+lone.map(x=>categoryRow('despesa',x.c,x.i)).join('')+'</details>');
-  return `<datalist id="groupList">${(S.groups||[]).map(g=>`<option value="${esc(g.name)}">`).join('')}</datalist>`+sec.join('');
+  return sec.join('');
 }
 function renderCategories(){
   const TT={despesa:'Despesas',receita:'Receitas'};
@@ -6838,8 +6898,12 @@ function renderCategories(){
     if(r&&r.unchanged)el.value=old;});
   document.querySelectorAll('[data-ca]').forEach(b=>b.onclick=()=>{const t=b.dataset.ca;
     runCommand(()=>addCategory(t,$('nn_'+t).value,$('ne_'+t).value),{ok:r=>'✅ Categoria “'+r.name+'” criada'+(r.group?' no grupo '+r.group:'')});});
-  document.querySelectorAll('[data-cg]').forEach(el=>el.onchange=()=>{const i=+el.dataset.cg;
-    runCommand(()=>setCategoryGroup(i,el.value),{ok:r=>r.group?'✅ “'+r.name+'” agora está em '+r.group:'“'+r.name+'” ficou sem grupo'});});
+  // a group is picked from the list; "Novo grupo…" swaps the list for a text field, and what is typed there is the new group's name
+  const bindGroupField=el=>el.onchange=()=>{const i=+el.dataset.cg;
+    if(el.value===NEW_GROUP){const inp=document.createElement('input');inp.className='ci';inp.dataset.cg=i;inp.placeholder='Nome do novo grupo';inp.setAttribute('aria-label',el.getAttribute('aria-label'));
+      el.replaceWith(inp);bindGroupField(inp);inp.focus();return;}
+    runCommand(()=>setCategoryGroup(i,el.value),{ok:r=>r.group?'✅ “'+r.name+'” agora está em '+r.group:'“'+r.name+'” ficou sem grupo'});};
+  document.querySelectorAll('[data-cg]').forEach(bindGroupField);
   document.querySelectorAll('[data-gb]').forEach(el=>el.onchange=()=>{const g=el.dataset.gb;
     runCommand(()=>setBudget(g,parseMoney(el.value)),{ok:r=>r.value?'✅ Orçamento de '+g+': '+f2(r.value)+'/mês':'Orçamento de '+g+' removido'});});
   document.querySelectorAll('[data-gi]').forEach(el=>el.onchange=()=>runCommand(()=>setGroupIcon(el.dataset.gi,el.value)));
@@ -8234,7 +8298,9 @@ function bindLockSettings(lock,present){
 
 
 
+
 bindMoneyInputs();
+installCategoryChips();
 bindDateFields();
 bindInvoiceMonthField();
 migrate();

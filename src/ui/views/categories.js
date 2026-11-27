@@ -15,6 +15,7 @@ import { toast } from '../toast.js';
 import { askConfirm } from '../components/confirm.js';
 import { runCommand } from '../components/command.js';
 import { moreMenu, bindMoreMenus } from '../components/more-menu.js';
+const NEW_GROUP='__new_group';
 // groups the user opened stay open when the page is drawn again (every change redraws it)
 const openGroups=new Set();
 // one category line: switch, icon, name, usage and delete (+ the group field for expenses)
@@ -22,7 +23,7 @@ function categoryRow(t,c,i){const u=catUse(t,c.name),use=`${u.n} lanç. · ${f0(
   const line=`<div class="row cat-line${t==='despesa'?' exp':''}"><label class="sw" title="${c.off?'Desativada: não aparece nas listas de lançamento':'Ativa: aparece nas listas de lançamento'}"><input type="checkbox" data-co="${t}|${i}" ${c.off?'':'checked'}><span></span></label><div class="row cat-fields${c.off?' off':''}"><input class="ci icon-in" data-ci="${t}|${i}" value="${esc(c.icon)}" maxlength="4" aria-label="Ícone"><input class="ci grow" data-cn="${t}|${i}" value="${esc(c.name)}" aria-label="Nome"><span class="mut cat-use">${use}</span></div>${moreMenu([{label:'Excluir',attrs:`data-cd="${t}|${i}"`,danger:true}],'Mais ações de '+esc(c.name))}</div>`;
   // on phones the usage moves to this second line so the name keeps its width
   if(t!=='despesa')return line+`<div class="cat-sub"><span class="mut">${use}</span></div>`;
-  return line+`<div class="cat-grp"><span>Grupo</span><input class="ci" list="groupList" data-cg="${i}" value="${esc(c.group||'')}" placeholder="Sem grupo (digite para criar)" aria-label="Grupo de ${esc(c.name)}"><span class="mut cat-use-sm">${use}</span></div>`;
+  return line+`<div class="cat-grp"><span>Grupo</span><select class="ci" data-cg="${i}" aria-label="Grupo de ${esc(c.name)}"><option value="">Sem grupo</option>${(S.groups||[]).map(g=>`<option value="${esc(g.name)}"${g.name===c.group?' selected':''}>${esc(g.name)}</option>`).join('')}<option value="${NEW_GROUP}">➕ Novo grupo…</option></select><span class="mut cat-use-sm">${use}</span></div>`;
 }
 // expenses are shown by group: header (editable icon) and the categories inside it
 function expenseSections(){
@@ -33,7 +34,7 @@ function expenseSections(){
     return `<details class="cat-det" data-gd="${esc(g.name)}"${openGroups.has(g.name)?' open':''}>`+head(`<input class="ci icon-in sm" data-gi="${esc(g.name)}" value="${esc(g.icon)}" maxlength="4" aria-label="Ícone do grupo ${esc(g.name)}">`,g.name,items,budgetOf(g.name))+items.map(x=>categoryRow('despesa',x.c,x.i)).join('')+'</details>';});
   const lone=list.filter(x=>!x.c.group||!groups.some(g=>g.name===x.c.group));
   if(lone.length)sec.push(`<details class="cat-det" data-gd=""${openGroups.has('')?' open':''}>`+head('','Sem grupo',lone)+lone.map(x=>categoryRow('despesa',x.c,x.i)).join('')+'</details>');
-  return `<datalist id="groupList">${(S.groups||[]).map(g=>`<option value="${esc(g.name)}">`).join('')}</datalist>`+sec.join('');
+  return sec.join('');
 }
 export function renderCategories(){
   const TT={despesa:'Despesas',receita:'Receitas'};
@@ -53,8 +54,12 @@ export function renderCategories(){
     if(r&&r.unchanged)el.value=old;});
   document.querySelectorAll('[data-ca]').forEach(b=>b.onclick=()=>{const t=b.dataset.ca;
     runCommand(()=>addCategory(t,$('nn_'+t).value,$('ne_'+t).value),{ok:r=>'✅ Categoria “'+r.name+'” criada'+(r.group?' no grupo '+r.group:'')});});
-  document.querySelectorAll('[data-cg]').forEach(el=>el.onchange=()=>{const i=+el.dataset.cg;
-    runCommand(()=>setCategoryGroup(i,el.value),{ok:r=>r.group?'✅ “'+r.name+'” agora está em '+r.group:'“'+r.name+'” ficou sem grupo'});});
+  // a group is picked from the list; "Novo grupo…" swaps the list for a text field, and what is typed there is the new group's name
+  const bindGroupField=el=>el.onchange=()=>{const i=+el.dataset.cg;
+    if(el.value===NEW_GROUP){const inp=document.createElement('input');inp.className='ci';inp.dataset.cg=i;inp.placeholder='Nome do novo grupo';inp.setAttribute('aria-label',el.getAttribute('aria-label'));
+      el.replaceWith(inp);bindGroupField(inp);inp.focus();return;}
+    runCommand(()=>setCategoryGroup(i,el.value),{ok:r=>r.group?'✅ “'+r.name+'” agora está em '+r.group:'“'+r.name+'” ficou sem grupo'});};
+  document.querySelectorAll('[data-cg]').forEach(bindGroupField);
   document.querySelectorAll('[data-gb]').forEach(el=>el.onchange=()=>{const g=el.dataset.gb;
     runCommand(()=>setBudget(g,parseMoney(el.value)),{ok:r=>r.value?'✅ Orçamento de '+g+': '+f2(r.value)+'/mês':'Orçamento de '+g+' removido'});});
   document.querySelectorAll('[data-gi]').forEach(el=>el.onchange=()=>runCommand(()=>setGroupIcon(el.dataset.gi,el.value)));

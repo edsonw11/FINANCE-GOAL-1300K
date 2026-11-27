@@ -13,6 +13,7 @@ import { PAIR_KIND, pairText } from '../../domain/transfers.js';
 import { active, accName } from '../../domain/accounts.js';
 import { NEW_ACCOUNT } from '../../domain/import-account.js';
 import { svg } from '../icons.js';
+import { chipsBox } from '../components/category-chips.js';
 import { canSplit, splitParts, splitRest } from '../../domain/import-split.js';
 import { draftProblems, invoiceMonth, isSaveable, needsReview, targetMonth } from '../../domain/import-draft.js';
 const IMPORT_TYPE_LABEL={despesa:'Despesa',receita:'Receita',aporte:'Aporte',transferencia:'🔁 Transferência minha',ignorar:'Não importar'};
@@ -69,6 +70,7 @@ export function splitRestHtml(d){
 function splitHtml(d){
   const rows=(d.splits||[]).map((p,i)=>`<div class="imp-split-row">
     <input data-sp-cat="${i}" list="impCats" value="${esc(p.cat)}" placeholder="Categoria da parte (ex.: Saúde)" aria-label="Categoria da parte ${i+1}">
+    <div class="sp-chips">${chipsBox(d.type===IMPORT_TYPE.income?'receita':'despesa',p.cat)}</div>
     <input data-money data-sp-val="${i}" value="${p.value?m2(p.value):''}" placeholder="R$ 0,00" aria-label="Valor da parte ${i+1}">
     <button type="button" class="btn sm dng" data-sp-del="${i}">remover</button></div>`).join('');
   return `<div class="imp-split">${rows}${rows?`<div class="imp-split-sum" data-sp-sum>${splitRestHtml(d)}</div>`:''}
@@ -86,7 +88,7 @@ export function rowEditor(d,catNames){
       <div><label>Tipo</label><select data-f="type">${typeOptions(d)}</select></div>
       ${d.type===IMPORT_TYPE.contribution?`<div class="span-all"><label>Investimento de destino</label><select data-f="acc"><option value="">Escolha…</option>${active().map(a=>`<option value="${a.id}"${d.acc===a.id?' selected':''}>${esc(a.name)}</option>`).join('')}<option value="${NEW_ACCOUNT}"${d.acc===NEW_ACCOUNT?' selected':''}>➕ Criar conta nova</option></select></div>
       ${d.acc===NEW_ACCOUNT?`<div class="span-all"><label>Nome da conta nova</label><input data-f="newAcc" value="${esc(d.newAcc||'')}" placeholder="Ex.: Itaú Investimentos, Nubank Caixinhas"><div class="help">A conta é criada quando você confirmar a importação.</div></div>`:''}`:''}
-      ${isSaveable(d)&&d.type!==IMPORT_TYPE.contribution?`<div><label>Categoria</label><input data-f="cat" list="impCats" value="${esc(d.cat)}" placeholder="Escolha ou digite"><datalist id="impCats">${catNames.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></div>
+      ${isSaveable(d)&&d.type!==IMPORT_TYPE.contribution?`<div><label>Categoria</label><input data-f="cat" list="impCats" value="${esc(d.cat)}" placeholder="Escolha ou digite"><datalist id="impCats">${catNames.map(c=>`<option value="${esc(c)}">`).join('')}</datalist>${chipsBox(d.type===IMPORT_TYPE.income?'receita':'despesa',d.cat)}</div>
       <div><label>${d.type===IMPORT_TYPE.income?'Entrou em':'Pago com'}</label><select data-f="fonte">${sourceOptions(d)}</select></div>`:''}
     </div>
     ${canSplit(d)?splitHtml(d):''}

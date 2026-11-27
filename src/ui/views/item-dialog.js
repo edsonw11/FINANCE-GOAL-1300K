@@ -2,6 +2,7 @@
  * ui/views/item-dialog.js
  * Responsibility: Pop-up for a single card purchase (create, edit, delete) inside the invoice forms.
  */
+import { chipsHtml } from '../components/category-chips.js';
 import { $ } from '../../core/dom.js';
 import { m2 } from '../../core/format.js';
 import { today } from '../../core/dates.js';
@@ -21,7 +22,7 @@ let dlgId=null;
 export function openItem(id,defDate){
   dlgId=id;const t=id?S.tx.find(x=>x.id===id):null;
   $('itemTitle').textContent=t?'Editar compra no cartão':'Adicionar compra esquecida';
-  $('dCat').value=t?t.cat:'';$('dDesc').value=t?(t.desc||''):'';$('dVal').value=t?m2(t.value):'';
+  $('dCat').value=t?t.cat:'';$('dCatChips').innerHTML=chipsHtml('despesa',t?t.cat:'');$('dDesc').value=t?(t.desc||''):'';$('dVal').value=t?m2(t.value):'';
   $('dDate').value=t?t.date:(defDate||$('fDate').value||today());$('dDel').hidden=!(t);
   const sib=t?futureSiblings(t):[];$('dApplyW').hidden=!(sib.length);$('dApply').checked=true;$('dApplyN').textContent=sib.length;
   clearFieldErrors($('itemForm'));$('itemDlg').showModal();if(!t)$('dCat').focus();

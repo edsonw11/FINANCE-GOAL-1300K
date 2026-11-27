@@ -13,9 +13,10 @@ import { invoiceItems, invoiceUndetailed } from '../../domain/card-invoices.js';
 import { classifyUndetailed } from '../../domain/invoice-payment.js';
 import { runCommand } from '../components/command.js';
 import { infoRow, txRow } from '../components/breakdown.js';
+import { chipsBox } from '../components/category-chips.js';
 const paymentsOf=fm=>S.tx.filter(t=>t.type==='fatura'&&invoiceMonthOf(t)===fm).sort((a,b)=>a.date.localeCompare(b.date));
 function classifyForm(f,u){
-  return `<div class="row cc-classify"><div class="f f2"><label>Classificar o que sobrou · categoria</label><input list="catListD" data-clc="${f.id}" placeholder="Ex.: Transporte"></div><div class="f f2"><label>Descrição</label><input data-cld="${f.id}" placeholder="Ex.: Uber"></div><div class="f"><label>Valor</label><input data-clv="${f.id}" data-money value="${m2(u)}"></div><button class="btn sm pri h-42" data-cls="${f.id}">Classificar</button></div>`;
+  return `<div class="row cc-classify"><div class="f f2"><label>Classificar o que sobrou · categoria</label><input list="catListD" data-clc="${f.id}" placeholder="Ex.: Transporte">${chipsBox('despesa','')}</div><div class="f f2"><label>Descrição</label><input data-cld="${f.id}" placeholder="Ex.: Uber"></div><div class="f"><label>Valor</label><input data-clv="${f.id}" data-money value="${m2(u)}"></div><button class="btn sm pri h-42" data-cls="${f.id}">Classificar</button></div>`;
 }
 function paymentBlock(f){
   const its=invoiceItems(f),u=invoiceUndetailed(f);

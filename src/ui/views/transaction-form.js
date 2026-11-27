@@ -4,11 +4,11 @@
  */
 import { $, esc } from '../../core/dom.js';
 import { m2 } from '../../core/format.js';
-import { addDay, addMonths, formatDateBR, today } from '../../core/dates.js';
+import { addDay, formatDateBR, today } from '../../core/dates.js';
 import { S } from '../../domain/store.js';
 import { active } from '../../domain/accounts.js';
 import { futureSiblings } from '../../domain/transactions.js';
-import { icon } from '../../domain/categories.js';
+import { chipsHtml } from '../components/category-chips.js';
 import { closeDateOf, dueDateOf, dueMonth, invoiceMonthOf } from '../../domain/card-cycle.js';
 import { alloc } from '../../domain/card-invoices.js';
 import { ui } from '../ui-state.js';
@@ -40,12 +40,7 @@ export function updateSaveLabel(){
 function drawCategoryChips(){
   const box=$('catChips');if(!box)return;
   if(ui.type!=='despesa'&&ui.type!=='receita'){box.innerHTML='';return;}
-  const from=addMonths(today(),-6),cnt={},on=new Set(((S.cats||{})[ui.type]||[]).filter(c=>!c.off).map(c=>c.name));
-  S.tx.forEach(t=>{if(t.type===ui.type&&t.date>=from&&on.has(t.cat))cnt[t.cat]=(cnt[t.cat]||0)+1;});
-  let top=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]).slice(0,6);
-  if(top.length<6)[...on].forEach(c=>{if(top.length<6&&!top.includes(c))top.push(c);});
-  const curV=$('fCat').value.trim();
-  box.innerHTML=top.map(c=>`<button type="button" class="chip${c===curV?' on':''}" data-qc="${esc(c)}" aria-pressed="${c===curV}">${icon(ui.type,c)} ${esc(c)}</button>`).join('');
+  box.dataset.qchips=ui.type;box.innerHTML=chipsHtml(ui.type,$('fCat').value);
 }
 export function fillCategoryOptions(){
   const set=new Set(((S.cats||{})[ui.type]||[]).filter(c=>!c.off).map(c=>c.name));

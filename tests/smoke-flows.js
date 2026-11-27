@@ -249,6 +249,58 @@
     await addRecord({cents:'8000',cat:'Luz',date:'2025-10-15',desc:'Conta de luz',fonte:'caixa'});
     need(q('#cats .catrow [data-smoke=group-parts]').textContent==='Luz, Telefone','several categories are listed by value: '+q('#cats .catrow [data-smoke=group-parts]').textContent);});
 
+  await step('import: the name typed for a new investment account is kept even if the field is never left (no change event)',async()=>{
+    const acc0=stored().accounts.length,tx0=stored().tx.length;tab('lanc');$('impOpen').click();
+    await sendFile('aporte-novo.csv','Data;Descrição;Valor\n06/11/2025;PIX ENVIADO CORRETORA NOVA;-3.000,00');await waitFor(()=>q('#impList .imp-row'),'review');
+    q('#impList .imp-main').click();
+    const ty=q('#impList [data-f=type]');ty.value='aporte';ty.dispatchEvent(new Event('change',{bubbles:true}));
+    const sel=q('#impList [data-f=acc]');sel.value='__new';sel.dispatchEvent(new Event('change',{bubbles:true}));
+    type(q('#impList [data-f=newAcc]'),'Banco Digitado'); // only input events, like a phone keyboard that is not closed before the tap
+    $('impGo').click();await tick();if($('confirmDlg').open)$('cfOk').click();await waitFor(()=>q('.imp-done'),'result');
+    const st=stored(),a=st.accounts.find(x=>x.name==='Banco Digitado');
+    need(st.accounts.length===acc0+1&&a,'the typed account was not created: '+JSON.stringify(st.accounts.map(x=>x.name)));
+    need(st.tx.length===tx0+1&&st.tx.some(t=>t.type==='aporte'&&t.value===3000&&t.acc===a.id),'aporte not saved in the typed account');
+    $('impDone').click();tab('lanc');$('impOpen').click();
+    await sendFile('aporte-novo2.csv','Data;Descrição;Valor\n07/11/2025;PIX ENVIADO CORRETORA NOVA;-1.000,00');await waitFor(()=>q('#impList .imp-row'),'second review');
+    q('#impList .imp-main').click();const ty2=q('#impList [data-f=type]');ty2.value='aporte';ty2.dispatchEvent(new Event('change',{bubbles:true}));
+    const sel2=q('#impList [data-f=acc]');need([...sel2.options].some(o=>o.textContent==='Banco Digitado'),'the created account is not offered in the next import');
+    $('impClose')&&$('impClose').click();closeSheet();});
+
+  await step('category chips under the field fill the category (new record)',async()=>{
+    $('fab').click();await tick();const r=q('input[name=tp][value=despesa]');r.checked=true;r.dispatchEvent(new Event('change'));await tick();
+    const chips=qa('#catChips .chip');need(chips.length>0,'no category chips');const pick=chips[chips.length-1];const name=pick.dataset.qc;
+    pick.click();await tick();need($('fCat').value===name,'the chip did not fill the category: "'+$('fCat').value+'" expected "'+name+'"');
+    need(q('#catChips .chip.on')&&q('#catChips .chip.on').dataset.qc===name,'the chosen chip is not marked');closeSheet();});
+
+  await step('split parts: editing a saved record shows one-tap categories on each part; tapping one changes the part',async()=>{
+    $('fab').click();await tick();type($('fVal'),'20000');$('fCat').value='Mercado';$('fDate').value='2025-11-03';$('fDesc').value='Compra com parte';
+    $('wMore').open=true;$('splitBtn').click();const c0=q('[data-sc="0"]'),v0=q('[data-sv="0"]');c0.value='Saúde';c0.dispatchEvent(new Event('input'));v0.value='50,00';v0.dispatchEvent(new Event('input'));
+    $('fSave').click();await tick();closeSheet();
+    const id=stored().tx.find(x=>x.desc==='Compra com parte').id;await openFromList(id,'Compra com parte');q('#shFoot [data-act=edit]').click();await tick();
+    need(!$('splitBox').hidden&&q('[data-sc="0"]').value==='Saúde','the edit form does not show the saved part');
+    need(q('#splitRows .sp-part:first-child [data-qchips] .chip'),'the part has no one-tap categories');
+    need(q('[data-sc="0"]').getBoundingClientRect().width>=$('fDesc').getBoundingClientRect().width*0.9,'the part category field is narrower than a normal field: '+q('[data-sc="0"]').getBoundingClientRect().width);
+    const chip=qa('#splitRows .sp-part:first-child [data-qchips] .chip').find(b=>b.dataset.qc!=='Saúde');need(chip,'no other category to pick');
+    chip.click();await tick();need(q('[data-sc="0"]').value===chip.dataset.qc,'the chip did not change the part: '+q('[data-sc="0"]').value);
+    need(q('#splitRows .sp-part:first-child [data-qchips] .chip.on')&&q('#splitRows .sp-part:first-child [data-qchips] .chip.on').dataset.qc===chip.dataset.qc,'the chosen chip is not marked');
+    $('fSave').click();await tick();if($('confirmDlg').open)$('cfOk').click();await tick();closeSheet();
+    const t=stored().tx.find(x=>x.desc==='Compra com parte');same((t.splits||[]).map(x=>[x.cat,x.value]),[[chip.dataset.qc,50]],'the stored part has the tapped category');});
+
+  await step('category group is a select: pick an existing group, or create a new one from "Novo grupo…"',async()=>{
+    tab('cad');await tick();qa('#catPage details.cat-det').forEach(d=>d.open=true);await tick();
+    const sel=q('#catPage select[data-cg]');need(sel,'the group of a category is not a select');
+    need([...sel.options].some(o=>/Novo grupo/.test(o.textContent))&&[...sel.options].some(o=>o.value===''),'options: '+[...sel.options].map(o=>o.textContent).join('|'));
+    const i=sel.dataset.cg,name=sel.getAttribute('aria-label').replace('Grupo de ','');
+    sel.value='__new_group';sel.dispatchEvent(new Event('change',{bubbles:true}));await tick();
+    const inp=q(`#catPage input[data-cg="${i}"]`);need(inp&&!q(`#catPage select[data-cg="${i}"]`),'"Novo grupo…" did not give a text field');
+    inp.value='Grupo Teste Novo';inp.dispatchEvent(new Event('change',{bubbles:true}));await tick();
+    const cat=stored().cats.despesa.find(c=>c.name===name);need(cat&&cat.group==='Grupo Teste Novo','the new group was not set on the category: '+JSON.stringify(cat));
+    need((stored().groups||[]).some(g=>g.name==='Grupo Teste Novo'),'the group was not created');
+    qa('#catPage details.cat-det').forEach(d=>d.open=true);await tick();
+    const sel2=qa('#catPage select[data-cg]').find(s=>s.getAttribute('aria-label')==='Grupo de '+name);need(sel2&&sel2.value==='Grupo Teste Novo','the select does not show the new group: '+(sel2&&sel2.value));
+    sel2.value='';sel2.dispatchEvent(new Event('change',{bubbles:true}));await tick();
+    need(!stored().cats.despesa.find(c=>c.name===name).group,'"Sem grupo" did not clear the group');tab('resumo');});
+
   await step('no script error so far',()=>{need(errs.length===0,errs.join(' / '));});
   document.documentElement.setAttribute('data-smoke',out.concat(errs).join(' | '));
 })();
